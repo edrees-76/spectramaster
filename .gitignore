@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Build outputs (installers/exes go to GitHub Releases, not the repo)
+build_exe/dist/
+build_exe/dist_onedir/
+build_exe/work/
+build_exe/work_onedir/
+build_exe/onedir_spec/
+build_exe/*.spec
+build_exe/*.log
+installer/Output/
+
+# Development scratch folders: they contain lab-internal data (archive catalog,
+# search index, detector QC records, files derived from lab spectra), disassembly
+# listings of third-party (Aptec) binaries, and copyrighted vendor manuals.
+scratch_*/
+aptec_verify/

@@ -1,0 +1,45 @@
+files: 284  read OK: 205
+
+By detected format:
+  (none)               files=  76 ok=   0 fail=  76 {'not_detected': 76}
+      e.g. BecqMoni/handover/g6-a253/cases/case23_rad_declared.n42  -> FormatError: cannot recognise the format of case23_rad_declared.n42
+      e.g. BecqMoni/handover/g6-a253/cases/case25_rad_realtime.n42  -> FormatError: cannot recognise the format of case25_rad_realtime.n42
+      e.g. BecqMoni/handover/g6-a253/cases/case26_rad_nolive.n42  -> FormatError: cannot recognise the format of case26_rad_nolive.n42
+      e.g. BecqMoni/handover/g6-a253/cases/case27_rad_realtime_iso.n42  -> FormatError: cannot recognise the format of case27_rad_realtime_iso.n42
+  amptek_mca           files=   8 ok=   8 fail=   0 
+  ascii1               files=   1 ok=   1 fail=   0 
+  ci_accuspec          files=   2 ok=   2 fail=   0 
+  ci_cnf               files=   5 ok=   5 fail=   0 
+  gadras_pcf           files=   4 ok=   4 fail=   0 
+  iaea_spe             files=  18 ok=  18 fail=   0 
+  iec1455              files=   6 ok=   6 fail=   0 
+  n42_2006             files=  21 ok=  21 fail=   0 
+  n42_2012             files=  90 ok=  87 fail=   3 {'FormatError': 3}
+      e.g. BecqMoni/handover/g6-a253/cases/case2_notanumber.n42  -> FormatError: case2_notanumber.n42: not a valid N42_2012 file (RuntimeError) @ specutils_bridge.py:222
+      e.g. BecqMoni/handover/g6-a253/cases/case36_boundary_nan.n42  -> FormatError: case36_boundary_nan.n42: not a valid N42_2012 file (RuntimeError) @ specutils_bridge.py:222
+      e.g. InterSpec/target/fuzzing/corpus/state_xml/minimal_n42.xml  -> FormatError: minimal_n42.xml: not a valid N42_2012 file (RuntimeError) @ specutils_bridge.py:222
+  ortec_chn            files=  29 ok=  29 fail=   0 
+  ortec_spc            files=   1 ok=   1 fail=   0 
+  radiacode_xml        files=  22 ok=  22 fail=   0 
+  spc_float            files=   1 ok=   1 fail=   0 
+
+Undetected files by extension (source):
+  .chn        1  {'MBFS': 1}
+  .h5         1  {'becquerel': 1}
+  .n42       11  {'BecqMoni': 11}
+  .spc        4  {'hdtv': 4}
+  .spe        4  {'pyne': 1, 'xylib': 3}
+  .txt       55  {'InterSpec': 55}
+
+By source:
+  BecqMoni   files=  59 ok=  46
+  InterSpec  files= 114 ok=  58
+  MBFS       files=  38 ok=  37
+  RASE       files=  31 ok=  31
+  SpecUtils  files=   1 ok=   1
+  becquerel  files=  18 ok=  17
+  curie      files=   1 ok=   1
+  hdtv       files=   5 ok=   1
+  muGPD      files=   8 ok=   8
+  pyne       files=   2 ok=   1
+  xylib      files=   7 ok=   4

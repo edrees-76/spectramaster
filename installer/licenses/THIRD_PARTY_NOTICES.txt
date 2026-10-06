@@ -1,0 +1,46 @@
+SpectraMaster 1.0.0 - third-party components
+============================================
+SpectraMaster (c) 2026 Edrees F. Hery. The program bundles the components below; each keeps
+its own license. The full license texts are in this folder.
+
+  Python runtime (incl. bzip2, libffi, OpenSSL, SQLite, zlib, xz, mpdecimal; Microsoft Visual C++ runtime)
+      version 3.14.0; license PSF-2.0 and the licenses listed inside; text: Python_PSF-2.0.txt
+  Qt 6 / Qt for Python (PySide6, Shiboken6)
+      version 6.11.1; license LGPL-3.0; text: Qt6_PySide6_Shiboken6_LGPL-3.0.txt
+  GNU GPL 3.0 (referenced by the LGPL-3.0)
+      version -; license GPL-3.0; text: GPL-3.0.txt
+  Sandia SpecUtils (Python bindings: sandiaspecutils)
+      version 0.0.11; license LGPL-2.1; text: SpecUtils_LGPL-2.1.txt
+  SandiaDecay nuclear data (sandia.decay.nocoinc.min.xml, extract)
+      version commit cd75314b; license LGPL-2.1; text: SandiaDecay_data_LGPL-2.1.txt
+  IAEA-NDS ndlab nuclear data (extract)
+      version commit cf7fc218; license MIT; text: IAEA_ndlab_data_MIT.txt
+  NumPy (incl. OpenBLAS, LAPACK, GCC runtime with exception)
+      version 2.3.5; license BSD-3-Clause and the licenses listed inside; text: numpy_BSD-3-Clause.txt
+  openpyxl
+      version 3.1.5; license MIT; text: openpyxl_MIT.txt
+  et_xmlfile
+      version 2.0.0; license MIT; text: et_xmlfile_MIT.txt
+  pywin32 (pywintypes, win32pdh)
+      version 312; license PSF-2.0; text: pywin32_PSF.txt
+  PyInstaller bootloader
+      version 6.22.3; license GPL-2.0 with the bootloader exception (allows distributing non-free programs); text: PyInstaller_bootloader_GPL-2.0-with-exception.txt
+
+LGPL components (Qt / PySide6 / Shiboken6, SpecUtils)
+-----------------------------------------------------
+These libraries are shipped as separate, unmodified dynamic libraries so that you may replace
+them with your own (modified or newer, binary-compatible) builds:
+  Qt / PySide6 / Shiboken6 : {app}\_internal\PySide6\*.dll, *.pyd and {app}\_internal\shiboken6\
+  SpecUtils                : {app}\_internal\SpecUtils\SpecUtils*.pyd
+Source code: Qt https://download.qt.io/official_releases/qt/ ,
+             Qt for Python https://download.qt.io/official_releases/QtForPython/ ,
+             SpecUtils https://github.com/sandialabs/SpecUtils ,
+             SandiaDecay https://github.com/sandialabs/SandiaDecay .
+On request, the publisher will provide the exact versions of the LGPL source code used.
+Reverse engineering of SpectraMaster for debugging such modifications is permitted.
+
+Nuclear data
+------------
+The gamma-line library (gamma_library.json) is derived from IAEA ENSDF data (IAEA-NDS ndlab,
+MIT) and SandiaDecay (LGPL-2.1). The sample spectra in {app}\Samples carry their own
+licenses (see Samples\README.txt).

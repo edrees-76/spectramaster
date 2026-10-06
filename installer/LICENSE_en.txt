@@ -1,0 +1,61 @@
+SpectraMaster 1.0.0 - License Agreement
+=======================================
+
+Copyright (c) 2026 Edrees F. Hery. All rights reserved.
+
+Please read this agreement before installing SpectraMaster. By installing or using the
+software you accept these terms.
+
+1. Permission to use
+   You may install and use SpectraMaster on any number of computers, for personal,
+   educational, research, laboratory or commercial work, and make backup copies.
+   You may not sell, rent or sublicense the software, or remove or change its copyright
+   notices. All rights not expressly granted here are reserved by the author.
+
+2. Analysis results - no warranty
+   SpectraMaster reads, converts and analyses gamma-ray spectra. Its results, including
+   peak search, nuclide identification, efficiency calibration, activity, specific activity,
+   uncertainties and minimum detectable activity (MDA), are produced automatically from the
+   data and parameters you provide. They MUST be reviewed and confirmed by a qualified expert
+   before they are used for any decision, report, regulatory, medical, safety or legal purpose.
+
+   THE SOFTWARE AND ITS RESULTS ARE PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+   OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF ACCURACY, MERCHANTABILITY AND
+   FITNESS FOR A PARTICULAR PURPOSE. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY CLAIM,
+   DAMAGES OR OTHER LIABILITY ARISING FROM THE USE OF THE SOFTWARE OR ITS RESULTS.
+
+3. Data files
+   File conversion is designed to keep spectra, calibrations and metadata intact, but some
+   formats cannot store every field. Keep your original files.
+
+4. Third-party components
+   SpectraMaster includes the following third-party components, each under its own license.
+   The full license texts are installed in the "licenses" folder of the program directory
+   (see licenses\THIRD_PARTY_NOTICES.txt):
+
+   - Python 3.14 runtime ................. PSF License 2.0 (with bzip2, libffi, OpenSSL,
+                                            SQLite, zlib and other libraries listed there)
+   - Qt 6 / Qt for Python (PySide6,
+     Shiboken6) 6.11 ..................... GNU LGPL 3.0
+   - Sandia SpecUtils .................... GNU LGPL 2.1
+   - SandiaDecay nuclear data (extract) .. GNU LGPL 2.1
+   - IAEA-NDS ndlab nuclear data (extract)  MIT
+   - NumPy 2.3 ........................... BSD 3-Clause (with OpenBLAS / LAPACK, BSD)
+   - openpyxl 3.1, et_xmlfile 2.0 ........ MIT
+   - pywin32 ............................. PSF License
+   - PyInstaller bootloader .............. GPL 2.0 with bootloader exception
+   - Microsoft Visual C++ runtime ........ Microsoft Distributable Code (you may not
+                                            alter its notices or use it on non-Microsoft
+                                            platforms)
+
+   LGPL notice: the LGPL libraries (Qt / PySide6 and SpecUtils) are installed as separate,
+   unmodified library files in the program's "_internal" folder. You may replace them with
+   your own modified or newer compatible versions; reverse engineering for debugging such
+   modifications is permitted. Their source code is available from the projects
+   (download.qt.io, github.com/sandialabs/SpecUtils) or on request from the publisher.
+
+   The sample spectra installed in the "Samples" folder are public example files from
+   open-source projects (becquerel BSD-3-Clause, curie MIT, RASE MIT, InterSpec LGPL 2.1);
+   see Samples\README.txt.
+
+5. Designer and publisher: Edrees F. Hery

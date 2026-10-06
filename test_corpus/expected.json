@@ -1,0 +1,146 @@
+[
+ {
+  "path": "pyne/tests/gv_format_spect.spe",
+  "oracle": "source_test",
+  "ref": "pyne tests/test_spectrometry.py::test_read_dollar_spe",
+  "num_channels": 1024,
+  "live_time": 199.0,
+  "real_time": 209.0,
+  "start_time": "2014-08-01T11:43:41",
+  "first_channel": 0
+ },
+ {
+  "path": "pyne/tests/test.spe",
+  "oracle": "source_test",
+  "ref": "pyne tests/test_spectrometry.py::test_read_spe (ORTEC 'ACQUISITION INFORMATION' text report)",
+  "num_channels": 1024,
+  "live_time": 199.800003,
+  "real_time": 209.100006,
+  "start_time": "2014-08-01T11:43:41",
+  "first_channel": 0,
+  "same_counts_index": {
+   "other": "pyne/tests/gv_format_spect.spe",
+   "index": 100
+  }
+ },
+ {
+  "path": "becquerel/tests/samples_converted/Alcatraz14.spe",
+  "oracle": "header_text",
+  "ref": "IAEA SPE text written by becquerel",
+  "num_channels": 8192,
+  "live_time": 900.0,
+  "real_time": 905.41998,
+  "start_time": "2012-09-17T13:41:07",
+  "total_counts": 132978.0,
+  "counts_probe": {
+   "0": 0.0,
+   "1": 0.0,
+   "2": 0.0,
+   "100": 136.0,
+   "500": 104.0,
+   "1000": 22.0,
+   "2000": 10.0
+  }
+ },
+ {
+  "path": "becquerel/tests/samples/Alcatraz14.Spc",
+  "oracle": "cross_format",
+  "ref": "becquerel's reading of this file, saved as becquerel/tests/samples_converted/Alcatraz14.spe",
+  "num_channels": 8192,
+  "live_time": 900.0,
+  "real_time": 905.41998,
+  "start_time": "2012-09-17T13:41:07",
+  "total_counts": 132978.0,
+  "counts_probe": {
+   "0": 0.0,
+   "1": 0.0,
+   "2": 0.0,
+   "100": 136.0,
+   "500": 104.0,
+   "1000": 22.0,
+   "2000": 10.0
+  }
+ },
+ {
+  "path": "becquerel/tests/samples_converted/01122014152731-GT01122014182338-GA37.4963000N-GO122.4633000W.spe",
+  "oracle": "header_text",
+  "ref": "IAEA SPE text written by becquerel",
+  "num_channels": 4096,
+  "live_time": 841.42,
+  "real_time": 849.51,
+  "start_time": "2014-01-12T15:12:28",
+  "total_counts": 683658.0,
+  "counts_probe": {
+   "0": 0.0,
+   "1": 0.0,
+   "2": 0.0,
+   "100": 1281.0,
+   "500": 287.0,
+   "1000": 94.0,
+   "2000": 27.0
+  }
+ },
+ {
+  "path": "becquerel/tests/samples/01122014152731-GT01122014182338-GA37.4963000N-GO122.4633000W.cnf",
+  "oracle": "cross_format",
+  "ref": "becquerel's reading of this file, saved as becquerel/tests/samples_converted/01122014152731-GT01122014182338-GA37.4963000N-GO122.4633000W.spe",
+  "num_channels": 4096,
+  "live_time": 841.42,
+  "real_time": 849.51,
+  "start_time": "2014-01-12T15:12:28",
+  "total_counts": 683658.0,
+  "counts_probe": {
+   "0": 0.0,
+   "1": 0.0,
+   "2": 0.0,
+   "100": 1576.0,
+   "500": 301.0,
+   "1000": 100.0,
+   "2000": 20.0
+  }
+ },
+ {
+  "path": "MBFS/MBFS/Converter/example/17_1113_3A.Spe",
+  "oracle": "header_text",
+  "ref": "$MEAS_TIM 83736 83925, $DATE_MEA 02/15/2016 17:12:17",
+  "num_channels": 8192,
+  "live_time": 83736.0,
+  "real_time": 83925.0,
+  "start_time": "2016-02-15T17:12:17",
+  "total_counts": 1111999.0,
+  "counts_probe": {
+   "0": 0.0,
+   "1": 0.0,
+   "2": 0.0,
+   "100": 639.0,
+   "500": 717.0,
+   "1000": 298.0,
+   "2000": 125.0
+  }
+ },
+ {
+  "path": "MBFS/MBFS/Converter/example/8H4275.Chn",
+  "oracle": "header_text",
+  "ref": "CHN header: real 1544549 ticks, live 1440000 ticks (x20 ms), date '30MAY85 ', time '1908', seconds field NUL",
+  "num_channels": 8192,
+  "live_time": 28800.0,
+  "real_time": 30890.98,
+  "start_time": "1985-05-30T19:08:00"
+ },
+ {
+  "path": "MBFS/MBFS/Converter/example/8H4275.Spc",
+  "oracle": "cross_format",
+  "ref": "same acquisition as 8H4275.Chn (stored by the lab in both formats)",
+  "num_channels": 8192,
+  "live_time": 28800.0,
+  "real_time": 30890.98,
+  "start_time": "1985-05-30T19:08:00",
+  "same_counts_as": "MBFS/MBFS/Converter/example/8H4275.Chn"
+ },
+ {
+  "path": "MBFS/MBFS/Converter/example/CERNIPf.Chn",
+  "oracle": "header_text",
+  "ref": "CHN header: 4096 channels, -102 calibration trailer at 32+4*4096, followed by ~17 kB extra bytes",
+  "num_channels": 4096
+ }
+]

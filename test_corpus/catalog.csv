@@ -1,0 +1,285 @@
+path,source,ext,size,magic,detected,read_ok,error_class,error,n_spectra,channels,total_counts,live_time,real_time,calibrated,seconds
+BecqMoni/handover/g6-a253/cases/case10_calibclass.n42,BecqMoni,.n42,1739,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,64,253.0,295.0,300.0,True,0.004
+BecqMoni/handover/g6-a253/cases/case11_intrinsic.n42,BecqMoni,.n42,1745,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,64,253.0,295.0,300.0,True,0.001
+BecqMoni/handover/g6-a253/cases/case12_calibonly.n42,BecqMoni,.n42,1243,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,64,253.0,295.0,300.0,True,0.001
+BecqMoni/handover/g6-a253/cases/case13_bgfirst.n42,BecqMoni,.n42,1738,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,64,253.0,295.0,300.0,True,0.001
+BecqMoni/handover/g6-a253/cases/case14_bgonly.n42,BecqMoni,.n42,1242,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,64,253.0,295.0,300.0,True,0.001
+BecqMoni/handover/g6-a253/cases/case15_twobg.n42,BecqMoni,.n42,2234,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,3,64,253.0,295.0,300.0,True,0.004
+BecqMoni/handover/g6-a253/cases/case16_baddate.n42,BecqMoni,.n42,1242,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,64,253.0,295.0,300.0,True,0.001
+BecqMoni/handover/g6-a253/cases/case17_negcount.n42,BecqMoni,.n42,1243,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,64,249.0,295.0,300.0,True,0.001
+BecqMoni/handover/g6-a253/cases/case18_n42_2006.n42,BecqMoni,.n42,921,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,1,64,253.0,295.0,300.0,True,0.001
+BecqMoni/handover/g6-a253/cases/case19_2006_baddate.n42,BecqMoni,.n42,921,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,1,64,253.0,295.0,300.0,True,0.001
+BecqMoni/handover/g6-a253/cases/case1_boundary.n42,BecqMoni,.n42,1588,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,64,253.0,295.0,300.0,True,0.217
+BecqMoni/handover/g6-a253/cases/case20_2006_over.n42,BecqMoni,.n42,18793,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,1,9000,35995.0,295.0,300.0,True,0.003
+BecqMoni/handover/g6-a253/cases/case21_2006_1024.n42,BecqMoni,.n42,2841,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,1,1024,4091.0,295.0,300.0,True,0.001
+BecqMoni/handover/g6-a253/cases/case22_2006_16384.n42,BecqMoni,.n42,33561,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,1,16384,65530.0,295.0,300.0,True,0.006
+BecqMoni/handover/g6-a253/cases/case23_rad_declared.n42,BecqMoni,.n42,1476,"3c3f786d6c207665 |<?xml version=""1|",,False,not_detected,FormatError: cannot recognise the format of case23_rad_declared.n42,,,,,,,0.0
+BecqMoni/handover/g6-a253/cases/case24_nostart.n42,BecqMoni,.n42,1222,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,64,253.0,295.0,300.0,True,0.001
+BecqMoni/handover/g6-a253/cases/case25_rad_realtime.n42,BecqMoni,.n42,13735,"3c3f786d6c207665 |<?xml version=""1|",,False,not_detected,FormatError: cannot recognise the format of case25_rad_realtime.n42,,,,,,,0.0
+BecqMoni/handover/g6-a253/cases/case26_rad_nolive.n42,BecqMoni,.n42,13669,"3c3f786d6c207665 |<?xml version=""1|",,False,not_detected,FormatError: cannot recognise the format of case26_rad_nolive.n42,,,,,,,0.0
+BecqMoni/handover/g6-a253/cases/case27_rad_realtime_iso.n42,BecqMoni,.n42,13738,"3c3f786d6c207665 |<?xml version=""1|",,False,not_detected,FormatError: cannot recognise the format of case27_rad_realtime_iso.n42,,,,,,,0.0
+BecqMoni/handover/g6-a253/cases/case28_rad_shortener.n42,BecqMoni,.n42,943,"3c3f786d6c207665 |<?xml version=""1|",,False,not_detected,FormatError: cannot recognise the format of case28_rad_shortener.n42,,,,,,,0.0
+BecqMoni/handover/g6-a253/cases/case29_2006_nocoeff.n42,BecqMoni,.n42,914,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,1,64,253.0,295.0,300.0,False,0.001
+BecqMoni/handover/g6-a253/cases/case2_notanumber.n42,BecqMoni,.n42,1275,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,False,FormatError,FormatError: case2_notanumber.n42: not a valid N42_2012 file (RuntimeError) @ specutils_bridge.py:222,,,,,,,0.002
+BecqMoni/handover/g6-a253/cases/case30_rad_live_iso.n42,BecqMoni,.n42,13704,"3c3f786d6c207665 |<?xml version=""1|",,False,not_detected,FormatError: cannot recognise the format of case30_rad_live_iso.n42,,,,,,,0.0
+BecqMoni/handover/g6-a253/cases/case31_rad_extra.n42,BecqMoni,.n42,1903,"3c3f786d6c207665 |<?xml version=""1|",,False,not_detected,FormatError: cannot recognise the format of case31_rad_extra.n42,,,,,,,0.0
+BecqMoni/handover/g6-a253/cases/case32_2006_badscale.n42,BecqMoni,.n42,922,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,1,64,253.0,295.0,300.0,False,0.001
+BecqMoni/handover/g6-a253/cases/case33_rad_badscale.n42,BecqMoni,.n42,1243,"3c3f786d6c207665 |<?xml version=""1|",,False,not_detected,FormatError: cannot recognise the format of case33_rad_badscale.n42,,,,,,,0.0
+BecqMoni/handover/g6-a253/cases/case34_boundary_nonmono.n42,BecqMoni,.n42,1592,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,64,253.0,295.0,300.0,True,0.001
+BecqMoni/handover/g6-a253/cases/case35_boundary_count.n42,BecqMoni,.n42,1566,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,64,253.0,295.0,300.0,False,0.001
+BecqMoni/handover/g6-a253/cases/case36_boundary_nan.n42,BecqMoni,.n42,1590,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,False,FormatError,FormatError: case36_boundary_nan.n42: not a valid N42_2012 file (RuntimeError) @ specutils_bridge.py:222,,,,,,,0.001
+BecqMoni/handover/g6-a253/cases/case37_boundary_n.n42,BecqMoni,.n42,1586,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,64,253.0,295.0,300.0,True,0.001
+BecqMoni/handover/g6-a253/cases/case3_order5.n42,BecqMoni,.n42,1279,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,64,253.0,295.0,300.0,True,0.001
+BecqMoni/handover/g6-a253/cases/case4_empty.n42,BecqMoni,.n42,1268,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,64,253.0,295.0,300.0,False,0.003
+BecqMoni/handover/g6-a253/cases/case5_healthy.n42,BecqMoni,.n42,1276,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,64,253.0,295.0,300.0,True,0.001
+BecqMoni/handover/g6-a253/cases/case6_nocalib.n42,BecqMoni,.n42,1170,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,64,253.0,295.0,300.0,False,0.001
+BecqMoni/handover/g6-a253/cases/case7_rad_few.n42,BecqMoni,.n42,767,"3c3f786d6c207665 |<?xml version=""1|",,False,not_detected,FormatError: cannot recognise the format of case7_rad_few.n42,,,,,,,0.0
+BecqMoni/handover/g6-a253/cases/case8_rad_many.n42,BecqMoni,.n42,13702,"3c3f786d6c207665 |<?xml version=""1|",,False,not_detected,FormatError: cannot recognise the format of case8_rad_many.n42,,,,,,,0.0
+BecqMoni/handover/g6-a253/cases/case9_rad_over.n42,BecqMoni,.n42,123481,"3c3f786d6c207665 |<?xml version=""1|",,False,not_detected,FormatError: cannot recognise the format of case9_rad_over.n42,,,,,,,0.0
+BecqMoni/tools/CORPUS/corpus/pinned/AS80_Lu176.xml,BecqMoni,.xml,608426,efbbbf3c3f786d6c |...<?xml version|,radiacode_xml,True,,,2,8192,1415341.0,3824.077,3826.0,True,0.01
+BecqMoni/tools/CORPUS/corpus/pinned/ASN16_Lu176.xml,BecqMoni,.xml,598826,efbbbf3c3f786d6c |...<?xml version|,radiacode_xml,True,,,2,8192,4475091.0,29229.32,29292.0,True,0.008
+BecqMoni/tools/CORPUS/corpus/pinned/G1S24_Rn222Coal_Mar_20m.xml,BecqMoni,.xml,77936,3c3f786d6c207665 |<?xml version='1|,radiacode_xml,True,,,2,1024,33110.0,1481.457,1482.039,True,0.002
+BecqMoni/tools/CORPUS/corpus/pinned/G1S24_Rn222Coal_Mar_2h.xml,BecqMoni,.xml,78124,3c3f786d6c207665 |<?xml version='1|,radiacode_xml,True,,,2,1024,73873.0,3529.053,3530.429,True,0.005
+BecqMoni/tools/CORPUS/corpus/pinned/G1S24_Rn222Coal_Mar_3h.xml,BecqMoni,.xml,78115,3c3f786d6c207665 |<?xml version='1|,radiacode_xml,True,,,2,1024,73528.0,3600.001,3601.399,True,0.002
+BecqMoni/tools/CORPUS/corpus/pinned/G1S24_Rn222Coal_Mar_eq01.xml,BecqMoni,.xml,78818,3c3f786d6c207665 |<?xml version='1|,radiacode_xml,True,,,2,1024,290572.0,14400.0,14405.59,True,0.001
+BecqMoni/tools/CORPUS/corpus/spectra/AS80_Am241.xml,BecqMoni,.xml,611920,efbbbf3c3f786d6c |...<?xml version|,radiacode_xml,True,,,2,8192,2316948.0,589.8525,593.0,True,0.011
+BecqMoni/tools/CORPUS/corpus/spectra/AS80_Cs137_0cm.xml,BecqMoni,.xml,623599,efbbbf3c3f786d6c |...<?xml version|,radiacode_xml,True,,,2,8192,9350355.0,10192.3,10205.0,True,0.008
+BecqMoni/tools/CORPUS/corpus/spectra/AS80_K40.xml,BecqMoni,.xml,614600,3c3f786d6c207665 |<?xml version='1|,radiacode_xml,True,,,2,8192,66756892.0,323624.3,323715.0,True,0.012
+BecqMoni/tools/CORPUS/corpus/spectra/ASN16_Cs137.xml,BecqMoni,.xml,619761,efbbbf3c3f786d6c |...<?xml version|,radiacode_xml,True,,,2,8192,250626474.0,356491.2,360002.0,True,0.015
+BecqMoni/tools/CORPUS/corpus/spectra/ASN16_Th232.xml,BecqMoni,.xml,602947,3c3f786d6c207665 |<?xml version='1|,radiacode_xml,True,,,2,8192,113998155.0,187685.0,187685.0,True,0.013
+BecqMoni/tools/CORPUS/corpus/spectra/ASN3_Tile.xml,BecqMoni,.xml,184429,3c3f786d6c207665 |<?xml version='1|,radiacode_xml,True,,,2,2500,4882357.0,179542.0,179542.0,True,0.003
+BecqMoni/tools/CORPUS/corpus/spectra/ASN8_Th232_1024.xml,BecqMoni,.xml,78178,3c3f786d6c207665 |<?xml version='1|,radiacode_xml,True,,,2,1024,12107327.0,55447.8,55447.8,True,0.001
+BecqMoni/tools/CORPUS/corpus/spectra/ASN8_Th232_2048.xml,BecqMoni,.xml,152183,3c3f786d6c207665 |<?xml version='1|,radiacode_xml,True,,,2,2048,12110720.0,55470.71,55470.71,True,0.002
+BecqMoni/tools/CORPUS/corpus/spectra/ASN8_Th232_3000.xml,BecqMoni,.xml,223041,3c3f786d6c207665 |<?xml version='1|,radiacode_xml,True,,,2,3000,28557145.0,130162.6,130162.6,True,0.007
+BecqMoni/tools/CORPUS/corpus/spectra/ASN8_Th232_4096.xml,BecqMoni,.xml,301353,3c3f786d6c207665 |<?xml version='1|,radiacode_xml,True,,,2,4096,28619731.0,131721.9,131721.9,True,0.004
+BecqMoni/tools/CORPUS/corpus/spectra/ASN8_Th232_8192.xml,BecqMoni,.xml,596713,3c3f786d6c207665 |<?xml version='1|,radiacode_xml,True,,,2,8192,28634199.0,131747.1,131747.1,True,0.011
+BecqMoni/tools/CORPUS/corpus/spectra/G1S16_Am241_P25.xml,BecqMoni,.xml,95461,efbbbf3c3f786d6c |...<?xml version|,radiacode_xml,True,,,2,1024,116115.0,600.001,600.437,True,0.002
+BecqMoni/tools/CORPUS/corpus/spectra/G1S16_Co60_P25.xml,BecqMoni,.xml,96317,efbbbf3c3f786d6c |...<?xml version|,radiacode_xml,True,,,2,1024,495775.0,1800.004,1802.014,True,0.002
+BecqMoni/tools/fsa_showcase/spectra/AS80_Th232_disk.xml,BecqMoni,.xml,615527,efbbbf3c3f786d6c |...<?xml version|,radiacode_xml,True,,,2,8192,2279916.0,3546.902,3550.0,True,0.012
+BecqMoni/tools/fsa_showcase/spectra/ASN16_Cs137_house.xml,BecqMoni,.xml,628103,efbbbf3c3f786d6c |...<?xml version|,radiacode_xml,True,,,2,8192,250626474.0,356491.2,360002.0,True,0.009
+BecqMoni/tools/fsa_showcase/spectra/ASN16_Radon_filter2.xml,BecqMoni,.xml,608812,"3c3f786d6c207665 |<?xml version=""1|",radiacode_xml,True,,,2,8192,452607.0,7018.0,7018.0,True,0.009
+becquerel/tests/samples/01122014152731-GT01122014182338-GA37.4963000N-GO122.4633000W.cnf,becquerel,.cnf,182272,00040400040c0008 |................|,ci_cnf,True,,,1,4096,683658.0,841.42,849.51,True,0.002
+becquerel/tests/samples/1110C NAA cave background May 2017.spe,becquerel,.spe,164275,24535045435f4944 |$SPEC_ID:..No sa|,iaea_spe,True,,,1,16384,1052900.0,437817.0,437903.0,True,0.022
+becquerel/tests/samples/1110C NAA cave pottery.Spe,becquerel,.spe,164400,24535045435f4944 |$SPEC_ID:..No sa|,iaea_spe,True,,,1,16384,304706.0,16543.0,16557.0,True,0.018
+becquerel/tests/samples/Alcatraz14.Spc,becquerel,.spc,35840,0100010000000000 |................|,ortec_spc,True,,,1,8192,132978.0,900.0,905.42,True,0.002
+becquerel/tests/samples/digibase_5min_30_1.spe,becquerel,.spe,10602,24535045435f4944 |$SPEC_ID:..No sa|,iaea_spe,True,,,1,1024,892301.0,296.0,300.0,False,0.001
+becquerel/tests/samples/hpge_dummy_test_01.iec,becquerel,.iec,29480,413030344e554349 |A004NUCICA   HPG|,iec1455,True,,,1,2048,74305419.0,3564.0,3600.0,True,0.004
+becquerel/tests/samples/hpge_dummy_test_02a.iec,becquerel,.iec,29480,4130303420202020 |A004         HPG|,iec1455,True,,,1,2048,74305419.0,3564.0,3600.0,True,0.008
+becquerel/tests/samples/hpge_dummy_test_02b.iec,becquerel,.iec,29480,4130303420202020 |A004         HPG|,iec1455,True,,,1,2048,74305419.0,3564.0,3600.0,True,0.004
+becquerel/tests/samples/hpge_dummy_test_03.iec,becquerel,.iec,29476,413030344e554349 |A004NUCICA   HPG|,iec1455,True,,,1,2048,74305419.0,3564.0,3600.0,True,0.004
+becquerel/tests/samples/hpge_dummy_test_04.iec,becquerel,.iec,29476,413030344e554349 |A004NUCICA   HPG|,iec1455,True,,,1,2048,74305419.0,3564.0,3600.0,True,0.009
+becquerel/tests/samples/hpge_dummy_test_05.iec,becquerel,.iec,29476,413030344e554349 |A004NUCICA   HPG|,iec1455,True,,,1,2048,74305419.0,3564.0,3600.0,True,0.004
+becquerel/tests/samples/Mendocino_07-10-13_Acq-10-10-13.h5,becquerel,.h5,132902,894844460d0a1a0a |.HDF............|,,False,not_detected,FormatError: cannot recognise the format of Mendocino_07-10-13_Acq-10-10-13.h5,,,,,,,0.0
+becquerel/tests/samples/Mendocino_07-10-13_Acq-10-10-13.Spe,becquerel,.spe,82306,24535045435f4944 |$SPEC_ID:..No sa|,iaea_spe,True,,,1,8192,2279915.0,595642.0,595798.0,True,0.01
+becquerel/tests/samples/nai_detector.spe,becquerel,.spe,7122,24535045435f4944 |$SPEC_ID:.Spectr|,iaea_spe,True,,,1,1001,398163.0,3600.0,3600.0,False,0.001
+becquerel/tests/samples/SGM102432.spe,becquerel,.spe,28797,24535045435f4944 |$SPEC_ID:.Spectr|,iaea_spe,True,,,1,4094,166239.0,300.0,300.0,False,0.003
+becquerel/tests/samples/sim_spec.spe,becquerel,.spe,7293,24535045435f4944 |$SPEC_ID:.Simula|,iaea_spe,True,,,1,1024,9964.0,100.0,100.0,False,0.001
+becquerel/tests/samples_converted/01122014152731-GT01122014182338-GA37.4963000N-GO122.4633000W.spe,becquerel,.spe,16698,24535045435f4944 |$SPEC_ID:..Sampl|,iaea_spe,True,,,1,4096,683658.0,841.42,849.51,True,0.003
+becquerel/tests/samples_converted/Alcatraz14.spe,becquerel,.spe,27424,24535045435f4944 |$SPEC_ID:..Descr|,iaea_spe,True,,,1,8192,132978.0,900.0,905.42,True,0.006
+curie/examples/eu_calib_7cm.Spe,curie,.spe,147816,24535045435f4944 |$SPEC_ID:.No sam|,iaea_spe,True,,,1,16384,4433622.0,2289.0,2454.0,True,0.018
+hdtv/src/hdtv/rootext/mfile-root/mfile/spec-samples/1k.txt,hdtv,.txt,4032,233a4d6174726978 |#:MatrixFormat:1|,ascii1,True,,,1,1024,522752.0,,,False,0.003
+hdtv/tests/mat/cut.spc,hdtv,.spc,16448,0000000000000000 |................|,,False,not_detected,FormatError: cannot recognise the format of cut.spc,,,,,,,0.0
+hdtv/tests/share/binning_root_h.spc,hdtv,.spc,278,10ffff8002000000 |................|,,False,not_detected,FormatError: cannot recognise the format of binning_root_h.spc,,,,,,,0.0
+hdtv/tests/share/binning_root_h2.spc,hdtv,.spc,437,10ffff8002000000 |................|,,False,not_detected,FormatError: cannot recognise the format of binning_root_h2.spc,,,,,,,0.0
+hdtv/tests/share/osiris_bg.spc,hdtv,.spc,5554,10ffff8002000000 |................|,,False,not_detected,FormatError: cannot recognise the format of osiris_bg.spc,,,,,,,0.001
+InterSpec/data/reference_spectra/Common_Field_Nuclides/2x4x16-NaI/Am241_Unshielded.txt,InterSpec,.txt,2314,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Am241_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/2x4x16-NaI/Ba133_Unshielded.txt,InterSpec,.txt,2342,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Ba133_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/2x4x16-NaI/Co60_Unshielded.txt,InterSpec,.txt,2405,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Co60_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/2x4x16-NaI/Cs137_Unshielded.txt,InterSpec,.txt,2388,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Cs137_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/2x4x16-NaI/Eu152_Unshielded.txt,InterSpec,.txt,2433,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Eu152_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/CZT_H3D_M400/Am241_Unshielded.txt,InterSpec,.txt,2614,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Am241_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/CZT_H3D_M400/Ba133_Unshielded.txt,InterSpec,.txt,3029,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Ba133_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/CZT_H3D_M400/Co60_Unshielded.txt,InterSpec,.txt,4428,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Co60_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/CZT_H3D_M400/Cs137_Unshielded.txt,InterSpec,.txt,3488,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Cs137_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/CZT_H3D_M400/Eu152_Unshielded.txt,InterSpec,.txt,4192,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Eu152_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Detective X/Am241_Unshielded.txt,InterSpec,.txt,4785,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Am241_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Detective X/Ba133_Unshielded.txt,InterSpec,.txt,5024,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Ba133_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Detective X/Co60_Unshielded.txt,InterSpec,.txt,6017,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Co60_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Detective X/Cs137_Unshielded.txt,InterSpec,.txt,5336,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Cs137_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Detective X/Eu152_Unshielded.txt,InterSpec,.txt,5886,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Eu152_Unshielded.txt,,,,,,,0.003
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Detective-EX/Am241_Unshielded.txt,InterSpec,.txt,5122,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Am241_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Detective-EX/Ba133_Unshielded.txt,InterSpec,.txt,5325,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Ba133_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Detective-EX/Co60_Unshielded.txt,InterSpec,.txt,6309,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Co60_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Detective-EX/Cs137_Unshielded.txt,InterSpec,.txt,5750,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Cs137_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Detective-EX/Eu152_Unshielded.txt,InterSpec,.txt,6021,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Eu152_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Fulcrum-40h/Am241_Unshielded.txt,InterSpec,.txt,14156,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Am241_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Fulcrum-40h/Ba133_Unshielded.txt,InterSpec,.txt,16205,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Ba133_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Fulcrum-40h/Co60_Unshielded.txt,InterSpec,.txt,24973,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Co60_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Fulcrum-40h/Cs137_Unshielded.txt,InterSpec,.txt,18541,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Cs137_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Fulcrum-40h/Eu152_Unshielded.txt,InterSpec,.txt,23528,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Eu152_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/IdentiFINDER-NG/Am241_Unshielded.txt,InterSpec,.txt,1538,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Am241_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/IdentiFINDER-NG/Ba133_Unshielded.txt,InterSpec,.txt,1564,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Ba133_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/IdentiFINDER-NG/Co60_Unshielded.txt,InterSpec,.txt,1773,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Co60_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/IdentiFINDER-NG/Cs137_Unshielded.txt,InterSpec,.txt,1561,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Cs137_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/IdentiFINDER-NG/Eu152_Unshielded.txt,InterSpec,.txt,1720,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Eu152_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/IdentiFINDER-R500-NaI/Am241_Unshielded.txt,InterSpec,.txt,1576,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Am241_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/IdentiFINDER-R500-NaI/Ba133_Unshielded.txt,InterSpec,.txt,1577,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Ba133_Unshielded.txt,,,,,,,0.001
+InterSpec/data/reference_spectra/Common_Field_Nuclides/IdentiFINDER-R500-NaI/Co60_Unshielded.txt,InterSpec,.txt,1764,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Co60_Unshielded.txt,,,,,,,0.001
+InterSpec/data/reference_spectra/Common_Field_Nuclides/IdentiFINDER-R500-NaI/Cs137_Unshielded.txt,InterSpec,.txt,1641,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Cs137_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/IdentiFINDER-R500-NaI/Eu152_Unshielded.txt,InterSpec,.txt,1732,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Eu152_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/RadEagle NaI 3x1/Am241_Unshielded.txt,InterSpec,.txt,1485,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Am241_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/RadEagle NaI 3x1/Ba133_Unshielded.txt,InterSpec,.txt,1498,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Ba133_Unshielded.txt,,,,,,,0.001
+InterSpec/data/reference_spectra/Common_Field_Nuclides/RadEagle NaI 3x1/Co60_Unshielded.txt,InterSpec,.txt,1697,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Co60_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/RadEagle NaI 3x1/Cs137_Unshielded.txt,InterSpec,.txt,1572,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Cs137_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/RadEagle NaI 3x1/Eu152_Unshielded.txt,InterSpec,.txt,1650,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Eu152_Unshielded.txt,,,,,,,0.001
+InterSpec/data/reference_spectra/Common_Field_Nuclides/RadiaCode-102/Am241_Unshielded.txt,InterSpec,.txt,785,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Am241_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/RadiaCode-102/Ba133_Unshielded.txt,InterSpec,.txt,976,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Ba133_Unshielded.txt,,,,,,,0.001
+InterSpec/data/reference_spectra/Common_Field_Nuclides/RadiaCode-102/Co60_Unshielded.txt,InterSpec,.txt,1402,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Co60_Unshielded.txt,,,,,,,0.001
+InterSpec/data/reference_spectra/Common_Field_Nuclides/RadiaCode-102/Cs137_Unshielded.txt,InterSpec,.txt,1142,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Cs137_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/RadiaCode-102/Eu152_Unshielded.txt,InterSpec,.txt,1402,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Eu152_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/RadSeeker-CL-LaBr/Am241_Unshielded.txt,InterSpec,.txt,1597,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Am241_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/RadSeeker-CL-LaBr/Ba133_Unshielded.txt,InterSpec,.txt,1601,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Ba133_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/RadSeeker-CL-LaBr/Co60_Unshielded.txt,InterSpec,.txt,1829,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Co60_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/RadSeeker-CL-LaBr/Cs137_Unshielded.txt,InterSpec,.txt,1674,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Cs137_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/RadSeeker-CL-LaBr/Eu152_Unshielded.txt,InterSpec,.txt,1772,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Eu152_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Verifinder-NaI/Am241_Unshielded.txt,InterSpec,.txt,1290,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Am241_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Verifinder-NaI/Ba133_Unshielded.txt,InterSpec,.txt,1318,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Ba133_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Verifinder-NaI/Co60_Unshielded.txt,InterSpec,.txt,1446,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Co60_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Verifinder-NaI/Cs137_Unshielded.txt,InterSpec,.txt,1373,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Cs137_Unshielded.txt,,,,,,,0.0
+InterSpec/data/reference_spectra/Common_Field_Nuclides/Verifinder-NaI/Eu152_Unshielded.txt,InterSpec,.txt,1389,524144444154413a |RADDATA://G0/100|,,False,not_detected,FormatError: cannot recognise the format of Eu152_Unshielded.txt,,,,,,,0.0
+InterSpec/example_spectra/ba133_source_640s_20100317.n42,InterSpec,.n42,211213,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,8,16384,305570.0,629.17,639.92,True,0.032
+InterSpec/example_spectra/background_20100317.n42,InterSpec,.n42,197451,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,8,16384,65494.0,597.43,599.94,True,0.033
+InterSpec/example_spectra/passthrough.n42,InterSpec,.n42,3356074,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,1064,16384,33.0,0.24,0.25,True,2.324
+InterSpec/target/fuzzing/corpus/state_xml/minimal_n42.xml,InterSpec,.xml,347,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,False,FormatError,FormatError: minimal_n42.xml: not a valid N42_2012 file (RuntimeError) @ specutils_bridge.py:222,,,,,,,0.001
+InterSpec/target/fuzzing/corpus/state_xml/NaI_I131_Phantom_with_info.n42,InterSpec,.n42,17531,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,1024,780775.0,1800.0,1801.96,True,0.368
+InterSpec/target/testing/analysis_tests/AEGIS_Eu152_surface_contamination.n42_20230622T113239.276178.n42,InterSpec,.n42,62253,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,8192,1411753.0,7200.0,7249.271,True,0.004
+InterSpec/target/testing/analysis_tests/option_permutation_fits/DetectorX/backsub_Ra226 Shielded.n42,InterSpec,.n42,129370,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,16384,689196.0,1800.0,1824.3,True,0.006
+InterSpec/target/testing/analysis_tests/option_permutation_fits/DetectorX/cylindrical_fe_shielded_Eu152 Shielded.n42,InterSpec,.n42,80525,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,16384,657543.0,1800.0,1823.2,True,0.009
+InterSpec/target/testing/analysis_tests/option_permutation_fits/DetectorX/Eu152 Shielded.n42,InterSpec,.n42,80536,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,16384,657543.0,1800.0,1823.2,True,0.006
+InterSpec/target/testing/analysis_tests/option_permutation_fits/DetectorX/fe_shielded_Eu152 Shielded.n42,InterSpec,.n42,80303,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,16384,657543.0,1800.0,1823.2,True,0.012
+InterSpec/target/testing/analysis_tests/option_permutation_fits/DetectorX/no_shielding_Eu152 Shielded.n42,InterSpec,.n42,79840,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,16384,657543.0,1800.0,1823.2,True,0.009
+InterSpec/target/testing/analysis_tests/option_permutation_fits/DetectorX/rectangular_fe_extra_shield_Eu152 Shielded.n42,InterSpec,.n42,81393,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,16384,657543.0,1800.0,1823.2,True,0.005
+InterSpec/target/testing/analysis_tests/option_permutation_fits/DetectorX/rectangular_fe_shielded_Eu152 Shielded.n42,InterSpec,.n42,80766,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,16384,657543.0,1800.0,1823.2,True,0.01
+InterSpec/target/testing/analysis_tests/option_permutation_fits/DetectorX/side_cylindrical_fe_shielded_trace_src_Eu152 Shielded.n42,InterSpec,.n42,81321,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,16384,657543.0,1800.0,1823.2,True,0.005
+InterSpec/target/testing/analysis_tests/option_permutation_fits/DetectorX/trace_rectangular_fe_shielded_Eu152 Shielded.n42,InterSpec,.n42,81624,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,16384,657543.0,1800.0,1823.2,True,0.005
+InterSpec/target/testing/analysis_tests/option_permutation_fits/misc/AEGIS_Eu152_surface_contamination_exp_surface_with_shielding.n42,InterSpec,.n42,123561,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,8192,1411753.0,7200.0,7249.271,True,0.008
+InterSpec/target/testing/analysis_tests/option_permutation_fits/misc/AEGIS_Eu152_surface_contamination_extra_shield.n42,InterSpec,.n42,123481,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,8192,1411753.0,7200.0,7249.271,True,0.004
+InterSpec/target/testing/analysis_tests/option_permutation_fits/misc/AEGIS_Eu152_surface_contamination_fixed_act_fit_shielding.n42,InterSpec,.n42,123758,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,8192,1411753.0,7200.0,7249.271,True,0.003
+InterSpec/target/testing/analysis_tests/option_permutation_fits/misc/AEGIS_Eu152_surface_contamination_fixed_total_act_fit_shielding.n42,InterSpec,.n42,123689,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,8192,1411753.0,7200.0,7249.271,True,0.008
+InterSpec/target/testing/analysis_tests/option_permutation_fits/misc/fixed_geom_with_shield_batch_example_location2.n42,InterSpec,.n42,82073,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,16384,569401.0,280.46,300.86,True,0.005
+InterSpec/target/testing/analysis_tests/option_permutation_fits/misc/u238_u235_1kg_with_fe_shield.n42,InterSpec,.n42,160978,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,8192,11737686.0,3478.563,3600.0,True,0.008
+InterSpec/target/testing/analysis_tests/option_permutation_fits/misc/u_np_1kg_with_ext_fe_shielding.n42,InterSpec,.n42,78075,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,8192,11737686.0,3478.563,3600.0,True,0.004
+InterSpec/target/testing/analysis_tests/u238_other_1kg.n42,InterSpec,.n42,76218,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,8192,11737686.0,3478.563,3600.0,True,0.004
+InterSpec/target/testing/analysis_tests/u238_u235_1kg.n42,InterSpec,.n42,55765,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,8192,11737686.0,3478.563,3600.0,True,0.008
+InterSpec/target/testing/analysis_tests/u_np_1kg.n42,InterSpec,.n42,77271,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,8192,11737686.0,3478.563,3600.0,True,0.004
+InterSpec/target/testing/test_data/AnalystTests/Ba133_Cs137_RandomSummingOnly.n42,InterSpec,.n42,124653,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,16384,77841957.0,3600.0,7666.635,True,0.005
+InterSpec/target/testing/test_data/AnalystTests/BetaCheck/detx_background.n42,InterSpec,.n42,9864,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,16384,24794.0,300.0,300.8652,True,0.008
+InterSpec/target/testing/test_data/AnalystTests/BetaCheck/detx_cs137_shielded.pcf,InterSpec,.pcf,284160,0101444853202020 |..DHS           |,gadras_pcf,True,,,4,16384,118931.0,300.0,304.1881,True,0.006
+InterSpec/target/testing/test_data/AnalystTests/BetaCheck/detx_p32_shielded.n42,InterSpec,.n42,13335,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,16384,102291.0,300.0,303.5827,True,0.008
+InterSpec/target/testing/test_data/AnalystTests/BetaCheck/detx_p32_unshielded.n42,InterSpec,.n42,10401,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,16384,76944.0,300.0,302.6893,True,0.003
+InterSpec/target/testing/test_data/AnalystTests/BetaCheck/detx_sr90_shielded.n42,InterSpec,.n42,11160,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,16384,105896.0,300.0,303.7333,True,0.003
+InterSpec/target/testing/test_data/AnalystTests/BetaCheck/detx_sr90_unshielded.n42,InterSpec,.n42,10952,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,16384,98451.0,300.0,303.4855,True,0.007
+InterSpec/target/testing/test_data/AnalystTests/BetaCheck/detx_sr90_unshielded.pcf,InterSpec,.pcf,284160,0101444853202020 |..DHS           |,gadras_pcf,True,,,4,16384,98451.0,300.0,303.4855,True,0.007
+InterSpec/target/testing/test_data/AnalystTests/BetaCheck/detx_y90_phantom.n42,InterSpec,.n42,12564,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,16384,40058.0,300.0,301.4061,True,0.008
+InterSpec/target/testing/test_data/AnalystTests/BetaCheck/nai3x3_sr90_unshielded.pcf,InterSpec,.pcf,5376,0500444853202020 |..DHS           |,gadras_pcf,True,,,4,256,426847.0,300.0,304.3016,True,0.002
+InterSpec/target/testing/test_data/AnalystTests/BetaCheck/nai3x3_tl204_unshielded.pcf,InterSpec,.pcf,5376,0500444853202020 |..DHS           |,gadras_pcf,True,,,4,256,407219.0,300.0,304.0885,True,0.002
+InterSpec/target/testing/test_data/AnalystTests/escape_peak_check_Co56_Shielded_Fulcrum40h.n42,InterSpec,.n42,166834,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,24000,8514413.0,1800.0,1887.16,True,0.017
+InterSpec/target/testing/test_data/CamLibrary/Ba-133.cnf,InterSpec,.cnf,197120,00040400040c0008 |................|,ci_cnf,True,,,1,8192,106965.0,300.0,301.54,True,0.002
+InterSpec/target/testing/test_data/CamLibrary/cs137.CNF,InterSpec,.cnf,69120,0004000000040008 |................|,ci_cnf,True,,,1,4096,27590839.0,7400.01,7675.919,True,0.006
+InterSpec/target/testing/test_data/ExportSpecFile/13samples_1det_peaks_on_8.n42,InterSpec,.n42,52696,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,13,1024,10339.999999,300.0,315.0,True,0.004
+InterSpec/target/testing/test_data/ExportSpecFile/5samples_2dets_peaks_on_3.n42,InterSpec,.n42,40591,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,10,1024,10339.999999,300.0,315.0,True,0.003
+InterSpec/target/testing/test_data/ExportSpecFile/6samples_nonuniform_dets_peaks_on_3.n42,InterSpec,.n42,37078,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,9,1024,10339.999999,300.0,315.0,True,0.006
+InterSpec/target/testing/test_data/ExportSpecFile/fore_plus_back_peaks_on_1_2.n42,InterSpec,.n42,14346,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,3,1024,10339.999999,300.0,315.0,True,0.002
+InterSpec/target/testing/test_data/ExportSpecFile/gapped_samples_peaks_on_9.n42,InterSpec,.n42,22032,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,5,1024,10440.000004,300.0,315.0,True,0.002
+InterSpec/target/testing/test_data/findCharacteristics/202204_example_problem_1.n42,InterSpec,.n42,361254,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,8192,289875.0,1200.0,1210.48,True,0.006
+InterSpec/target/testing/test_data/FitPeaksForSource/trinitite_sample_b.n42,InterSpec,.n42,33197,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,8192,7783306.0,15569.38,15882.02,True,0.008
+InterSpec/target/testing/test_data/FitPeaksForSource/trinitite_sample_b_background.n42,InterSpec,.n42,34515,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,8192,10873456.0,41610.32,42101.54,True,0.003
+InterSpec/target/testing/test_data/llm_time_history/Q345_Racetrack.n42,InterSpec,.n42,391593,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,153,1024,5034.0,0.999492,0.99999,True,0.051
+InterSpec/target/testing/test_data/llm_time_history/Q67_Mobile.N42,InterSpec,.n42,2709497,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,980,1024,1869.0,0.99959,0.99999,True,0.54
+InterSpec/target/testing/test_data/llm_time_history/Q8910_Helicopter.N42,InterSpec,.n42,243454,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,81,1024,9828.0,0.999718,0.999998,True,0.076
+InterSpec/target/testing/test_data/manual_rel_eff/spec184_235U_12.9543.n42,InterSpec,.n42,215858,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,16383,13165343.0,693.0,900.0,True,0.013
+InterSpec/target/testing/test_data/multicurve/easy_background_long.n42,InterSpec,.n42,20025,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,16384,3568849.0,43200.0,43200.0,True,0.007
+InterSpec/target/testing/test_data/multicurve/easy_two_disk_fore.n42,InterSpec,.n42,18506,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,16384,1757747.0,14400.0,14400.0,True,0.004
+InterSpec/target/testing/test_data/PeakFitLM/Ba133_Unshielded.n42,InterSpec,.n42,29048,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,1024,835193.0,1800.0,1802.09,True,0.002
+InterSpec/target/testing/test_data/RelActAutoBatch/Eu152/exemplar.n42,InterSpec,.n42,38031,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,16384,540892.0,1800.0,1818.98,True,0.011
+InterSpec/target/testing/test_data/RelActAutoBatch/Eu152/other_eu152_shielded.n42,InterSpec,.n42,70413,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,16384,657543.0,1800.0,1823.2,True,0.004
+InterSpec/target/testing/test_data/RelActAutoReport/ex_for_RelActAuto_report_Lu177m_Shielded.n42,InterSpec,.n42,35720,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,16384,613938.0,1800.0,1821.63,True,0.005
+InterSpec/target/testing/test_data/RelActAutoReport/U235_Unshielded_6000.n42,InterSpec,.n42,41071,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,16384,247264.0,1800.0,1808.69,True,0.011
+InterSpec/target/testing/test_data/SimpleActivityCalc/Ra226 Shielded.n42,InterSpec,.n42,104261,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,2,16384,689196.0,1800.0,1824.3,True,0.012
+MBFS/MBFS/Converter/example/17_1113_3A.Spe,MBFS,.spe,74217,24535045435f4944 |$SPEC_ID:.No sam|,iaea_spe,True,,,1,8192,1111999.0,83736.0,83925.0,True,0.014
+MBFS/MBFS/Converter/example/17_1113_3AHH.Spe,MBFS,.spe,74217,24535045435f4944 |$SPEC_ID:.No sam|,iaea_spe,True,,,1,8192,1111999.0,83736.0,83925.0,True,0.008
+MBFS/MBFS/Converter/example/17_1113_4A.Spe,MBFS,.spe,74216,24535045435f4944 |$SPEC_ID:.No sam|,iaea_spe,True,,,1,8192,1111999.0,83736.0,83925.0,True,0.013
+MBFS/MBFS/Converter/example/17_1113_5A.Spe,MBFS,.spe,82604,24535045435f4944 |$SPEC_ID:.No sam|,iaea_spe,True,,,1,8192,1111999.0,83736.0,83925.0,True,0.012
+MBFS/MBFS/Converter/example/8H4275.Chn,MBFS,.chn,33312,ffff010001000000 |........e.......|,ortec_chn,True,,,1,8192,50183753.0,28800.0,30890.98,True,0.002
+MBFS/MBFS/Converter/example/8H4275.Spc,MBFS,.spc,34432,0100050000000000 |................|,spc_float,True,,,1,8192,50183753.0,28800.0,30890.98,True,0.002
+MBFS/MBFS/Converter/example/B132D3_2K.Chn,MBFS,.chn,33312,ffff010001003433 |......43....0...|,ortec_chn,True,,,1,8192,79645.0,804.8000000000001,809.16,True,0.001
+MBFS/MBFS/Converter/example/B135D3_2k.Chn,MBFS,.chn,33312,ffff010001003038 |......08f;..V:..|,ortec_chn,True,,,1,8192,73973.0,298.68,304.12,True,0.001
+MBFS/MBFS/Converter/example/B141D3_2K.Chn,MBFS,.chn,33312,ffff010001003234 |......24d ......|,ortec_chn,True,,,1,8192,29981.0,163.46,165.84,True,0.001
+MBFS/MBFS/Converter/example/B144D3_2K.Chn,MBFS,.chn,33312,ffff010001003435 |......45k(...'..|,ortec_chn,True,,,1,8192,27089.0,204.22,206.94,True,0.002
+MBFS/MBFS/Converter/example/B150D3_2K.Chn,MBFS,.chn,33312,ffff010001003039 |......09C&...%..|,ortec_chn,True,,,1,8192,117802.0,189.94,195.9,True,0.001
+MBFS/MBFS/Converter/example/B153D3_2K.Chn,MBFS,.chn,33312,"ffff010001003238 |......28.-...,..|",ortec_chn,True,,,1,8192,137984.0,227.84,234.92000000000002,True,0.001
+MBFS/MBFS/Converter/example/B156D3_2K.Chn,MBFS,.chn,33312,ffff010001003533 |......53....y...|,ortec_chn,True,,,1,8192,46670.0,120.18,122.94,True,0.001
+MBFS/MBFS/Converter/example/B159D3_2K.Chn,MBFS,.chn,33312,ffff010001003531 |......51........|,ortec_chn,True,,,1,8192,81385.0,118.0,122.02,True,0.001
+MBFS/MBFS/Converter/example/CERNIPf.Chn,MBFS,.chn,33912,ffff020001003030 |......00.pr..pr.|,,False,not_detected,FormatError: cannot recognise the format of CERNIPf.Chn,,,,,,,0.0
+MBFS/MBFS/Converter/example/Converter_17_1113_3ATo.Chn,MBFS,.chn,33209,ffff010001003137 |......17..@...?.|,ortec_chn,True,,,1,8191,1111999.0,83736.0,83925.0,False,0.001
+MBFS/MBFS/Converter/example/Converter_17_1113_3To.Chn,MBFS,.chn,33209,ffff010001003137 |......17..@...?.|,ortec_chn,True,,,1,8191,1111999.0,83736.0,83925.0,False,0.005
+MBFS/MBFS/Converter/example/Converter_8H4275ModifiedTo.Chn,MBFS,.chn,33213,ffff010001003333 |......33E....W..|,ortec_chn,True,,,1,8192,79645.0,18800.0,20890.98,False,0.002
+MBFS/MBFS/Converter/example/Converter_8H4275To.Spe,MBFS,.spe,93050,24535045435f4944 |$SPEC_ID:.NBS SR|,iaea_spe,True,,,1,8193,50183753.0,28800.0,30890.98,True,0.007
+MBFS/MBFS/Converter/example/Converter_date8H4275To.Chn,MBFS,.chn,33213,ffff010001003030 |......00e.......|,ortec_chn,True,,,1,8192,50183753.0,28800.0,30890.98,False,0.004
+MBFS/MBFS/Converter/example/Converter_dateCHNTo.Chn,MBFS,.chn,33209,ffff010001003137 |......17..@...?.|,ortec_chn,True,,,1,8191,1111999.0,83736.0,83925.0,False,0.002
+MBFS/MBFS/Converter/example/Converter_GENIE17_1113_3ATo.Chn,MBFS,.chn,33209,ffff010001003137 |......17..@...?.|,ortec_chn,True,,,1,8191,1111999.0,83736.0,83925.0,False,0.001
+MBFS/MBFS/Converter/example/Converter_MAJUSCUL8H4275To.Chn,MBFS,.chn,33213,ffff010001003030 |......00e.......|,ortec_chn,True,,,1,8192,50183753.0,28800.0,30890.98,False,0.001
+MBFS/MBFS/Converter/example/Converter_MERETo.Spe,MBFS,.spe,82601,24535045435f4944 |$SPEC_ID:.No sam|,iaea_spe,True,,,1,8192,1111999.0,83736.0,83925.0,True,0.013
+MBFS/MBFS/Converter/example/Converter_minuscul8H4275To.Chn,MBFS,.chn,33213,ffff010001003030 |......00e.......|,ortec_chn,True,,,1,8192,50183753.0,28800.0,30890.98,False,0.001
+MBFS/MBFS/Converter/example/Converter_MOHCINCCTo.Chn,MBFS,.chn,33213,ffff010001003030 |......00e.......|,ortec_chn,True,,,1,8192,50183753.0,28800.0,30890.98,False,0.001
+MBFS/MBFS/Converter/example/Converter_MOHCINCSTo.Chn,MBFS,.chn,33213,ffff010001003030 |......00e.......|,ortec_chn,True,,,1,8192,50183753.0,28800.0,30890.98,False,0.001
+MBFS/MBFS/Converter/example/Converter_MOHCINSCTo.Chn,MBFS,.chn,33209,ffff010001003137 |......17..@...?.|,ortec_chn,True,,,1,8191,1111999.0,83736.0,83925.0,False,0.001
+MBFS/MBFS/Converter/example/Converter_MOHCINSSTo.Spe,MBFS,.spe,82604,24535045435f4944 |$SPEC_ID:.No sam|,iaea_spe,True,,,1,8192,1111999.0,83736.0,83925.0,True,0.013
+MBFS/MBFS/Converter/example/D057D3_2K.Chn,MBFS,.chn,33312,ffff010001003538 |......58(...0...|,ortec_chn,True,,,1,8192,3659651.0,1096.64,1239.84,True,0.001
+MBFS/MBFS/Converter/example/D060D3_2K.Chn,MBFS,.chn,33312,ffff010001003437 |......47........|,ortec_chn,True,,,1,8192,1272479.0,813.98,869.28,True,0.001
+MBFS/MBFS/Converter/example/D063D3_2K.Chn,MBFS,.chn,33312,ffff010001003231 |......21........|,ortec_chn,True,,,1,8192,1243763.0,751.16,803.66,True,0.001
+MBFS/MBFS/Converter/example/D066D3_2K.Chn,MBFS,.chn,33312,ffff010001003338 |......38w.......|,ortec_chn,True,,,1,8192,1697894.0,714.78,785.74,True,0.001
+MBFS/MBFS/Converter/example/D069D3_2K.Chn,MBFS,.chn,33312,ffff010001003039 |......09.G...-..|,ortec_chn,True,,,1,8192,3197512.0,1545.3400000000001,1677.9,True,0.004
+MBFS/MBFS/Converter/example/D091D3_2K.Chn,MBFS,.chn,33312,ffff010001003039 |......09.p...k..|,ortec_chn,True,,,1,8192,572886.0,552.1,578.02,True,0.001
+MBFS/MBFS/Converter/example/D094D3_2K.Chn,MBFS,.chn,33312,ffff010001003536 |......56........|,ortec_chn,True,,,1,8192,997309.0,744.96,788.14,True,0.001
+MBFS/MBFS/Converter/example/D097D3_2K.Chn,MBFS,.chn,33312,ffff010001003339 |......39.o..Zk..|,ortec_chn,True,,,1,8192,498421.0,549.64,572.66,True,0.001
+MBFS/MBFS/Converter/example/D100D3_2K.Chn,MBFS,.chn,33312,ffff010001003331 |......31.....~..|,ortec_chn,True,,,1,8192,85080.0,649.1,658.12,True,0.001
+muGPD/data/251118/live_data_chip_w2b_86p6_18112025_D1000_B330.mca,muGPD,.mca,1835,3c3c504d43412053 |<<PMCA SPECTRUM>|,amptek_mca,True,,,1,512,4840.0,298.0933,298.16,True,0.001
+muGPD/data/251127/live_data_chip27112025b_w7b_86p6_D1000_B320.mca,muGPD,.mca,2020,3c3c504d43412053 |<<PMCA SPECTRUM>|,amptek_mca,True,,,1,512,280010.0,139.9733,144.4133,True,0.001
+muGPD/data/251128/live_data_chip28112025_w8b_86p6_CI5_10_15mV.mca,muGPD,.mca,1865,3c3c504d43412053 |<<PMCA SPECTRUM>|,amptek_mca,True,,,1,512,13315.0,132.64,132.9333,True,0.006
+muGPD/data/251128/other/live_data_chip28112025b_w8b_86p6_D1300_B360.mca,muGPD,.mca,1998,3c3c504d43412053 |<<PMCA SPECTRUM>|,amptek_mca,True,,,1,512,58985.0,2953.747,2966.733,True,0.001
+muGPD/data/251201/1000/live_data_chip01122025_w8b_86p6L_CI5_10_15mV_0.mca,muGPD,.mca,1922,3c3c504d43412053 |<<PMCA SPECTRUM>|,amptek_mca,True,,,1,512,20815.0,251.7867,252.1867,True,0.001
+muGPD/data/251201/1300/live_data_chip01122025_w8b_86p6L_CI5_10_15mV_0.mca,muGPD,.mca,1922,3c3c504d43412053 |<<PMCA SPECTRUM>|,amptek_mca,True,,,1,512,20815.0,251.7867,252.1867,True,0.001
+muGPD/data/251201/drift/live_data_chip01122025_w8b_86p6L_CI5_10_15mV_0.mca,muGPD,.mca,1922,3c3c504d43412053 |<<PMCA SPECTRUM>|,amptek_mca,True,,,1,512,20815.0,251.7867,252.1867,True,0.001
+muGPD/data/251201/live_data_chip01122025_w8b_86p6L_CI5_10_15mV_0.mca,muGPD,.mca,1922,3c3c504d43412053 |<<PMCA SPECTRUM>|,amptek_mca,True,,,1,512,20815.0,251.7867,252.1867,True,0.001
+pyne/tests/gv_format_spect.spe,pyne,.spe,9562,24535045435f4944 |$SPEC_ID:.No sam|,iaea_spe,True,,,1,1024,256038.0,199.0,209.0,True,0.001
+pyne/tests/test.spe,pyne,.spe,26406,4143515549534954 |ACQUISITION INFO|,,False,not_detected,FormatError: cannot recognise the format of test.spe,,,,,,,0.0
+RASE/baseSpectra/DummySpectra/DUMMY_M001_Delta_Delta.n42,RASE,.n42,1588,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,2,8192,1000.0,1200.0,1206.0,True,0.007
+RASE/baseSpectra/DummySpectra/DUMMY_M001_Delta_Flat.n42,RASE,.n42,3084,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,2,8292,1000.0,1200.0,1276.8,True,0.003
+RASE/baseSpectra/DummySpectra/DUMMY_M001_Flat_Delta.n42,RASE,.n42,3083,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,2,8192,5000.0,1200.0,1261.0,True,0.003
+RASE/baseSpectra/DummySpectra/DUMMY_M001_Flat_Flat.n42,RASE,.n42,4578,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,2,8192,5000.0,1200.0,1215.0,True,0.003
+RASE/baseSpectra/DummySpectra/DUMMY_M001_SawTooth_Delta.n42,RASE,.n42,3481,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,2,8192,125250.0,1200.0,1205.76,True,0.009
+RASE/baseSpectra/DummySpectra/DUMMY_M001_SawTooth_Flat.n42,RASE,.n42,4976,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,2,8192,125250.0,1200.0,1310.18,True,0.002
+RASE/baseSpectra/DummySpectra/DUMMY_M001_Teeth_Teeth.n42,RASE,.n42,13619,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,2,8192,20000.0,1200.0,1203.12,True,0.003
+RASE/baseSpectra/DummySpectra/DUMMY_M001_Uniform_Uniform.n42,RASE,.n42,50708,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,2,8192,81920.0,1200.0,1276.8,True,0.01
+RASE/baseSpectra/genericNaI/VGeneric_MNaI2x2_Am241.n42,RASE,.n42,7949,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,1,1024,8851632.219687,3510.358,3600.0,True,0.001
+RASE/baseSpectra/genericNaI/VGeneric_MNaI2x2_Ba133.n42,RASE,.n42,8453,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,1,1024,44373338.396966,3123.197,3600.0,True,0.001
+RASE/baseSpectra/genericNaI/VGeneric_MNaI2x2_Bgnd.n42,RASE,.n42,8910,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,1,1024,319025.900023,3596.808,3600.0,True,0.001
+RASE/baseSpectra/genericNaI/VGeneric_MNaI2x2_Co60.n42,RASE,.n42,9793,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,1,1024,31820965.560117,3265.772,3600.0,True,0.001
+RASE/baseSpectra/genericNaI/VGeneric_MNaI2x2_Cs137.n42,RASE,.n42,8785,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,1,1024,18105966.828432,3414.053,3600.0,True,0.007
+RASE/baseSpectra/genericNaI/VGeneric_MNaI2x2_Ga67.n42,RASE,.n42,8644,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,1,1024,21161212.475361,3381.626,3600.0,True,0.001
+RASE/baseSpectra/genericNaI/VGeneric_MNaI2x2_I131.n42,RASE,.n42,8788,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,1,1024,23867059.620093,3352.629,3600.0,True,0.001
+RASE/baseSpectra/genericNaI/VGeneric_MNaI2x2_Ra226.n42,RASE,.n42,10978,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,1,1024,43205997.176856,3136.77,3600.0,True,0.001
+RASE/baseSpectra/genericNaI/VGeneric_MNaI2x2_Tc99m.n42,RASE,.n42,8025,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,1,1024,21945798.222595,3373.247,3600.0,True,0.001
+RASE/baseSpectra/genericNaI/VGeneric_MNaI2x2_Th232.n42,RASE,.n42,11042,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,1,1024,55932565.885574,2984.836,3600.0,True,0.001
+RASE/baseSpectra/genericNaI/VGeneric_MNaI2x2_Tl201.n42,RASE,.n42,8070,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,1,1024,24169300.656082,3349.373,3600.0,True,0.001
+RASE/tests/data/VGeneric_MNaI2x2_Co60.n42,RASE,.n42,10318,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,1,1024,31820965.560117,3265.772,3600.0,True,0.002
+RASE/tests/example_base/multisec/VTest_MTest_Co60_multisec.n42,RASE,.n42,14189,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,3,1024,14646.0,300.1437,300.1908,True,0.002
+RASE/tests/example_raw/example_1/Bgnd/Bgnd1.n42,RASE,.n42,9074,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,3,1024,33098.0,300.0853,300.1966,True,0.002
+RASE/tests/example_raw/example_1/Bgnd/Bgnd2.n42,RASE,.n42,9080,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,3,1024,33526.0,300.0717,300.1839,True,0.002
+RASE/tests/example_raw/example_1/Bgnd/Bgnd3.n42,RASE,.n42,9071,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,3,1024,33577.0,300.072,300.185,True,0.001
+RASE/tests/example_raw/example_1/Bgnd/Bgnd4.n42,RASE,.n42,9068,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,3,1024,33469.0,299.9064,300.0191,True,0.005
+RASE/tests/example_raw/example_1/Co60/Co60_1.n42,RASE,.n42,9558,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,3,1024,33098.0,300.0853,300.1966,True,0.003
+RASE/tests/example_raw/example_1/Co60/Co60_2.n42,RASE,.n42,9561,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,3,1024,33098.0,300.0853,300.1966,True,0.002
+RASE/tests/example_remove_results/VGeneric_MNaI2x2_Ba133.n42,RASE,.n42,9008,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,1,1024,44373338.396966,3123.197,3600.0,True,0.001
+RASE/tests/example_remove_results/VGeneric_MNaI2x2_Bgnd.n42,RASE,.n42,8910,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,1,1024,319025.900023,3596.808,3600.0,True,0.001
+RASE/tests/example_remove_results/VGeneric_MNaI2x2_Co60.n42,RASE,.n42,10318,3c3f786d6c207665 |<?xml version='1|,n42_2012,True,,,1,1024,31820965.560117,3265.772,3600.0,True,0.001
+RASE/tests/example_template_conversion/in/DUMMY_M001_Delta_Delta.n42,RASE,.n42,1592,"3c3f786d6c207665 |<?xml version=""1|",n42_2006,True,,,2,8192,1000.0,1200.0,1206.0,True,0.009
+SpecUtils/unit_tests/test_data/spectra/Mn56_DetX_Shielded.n42,SpecUtils,.n42,54346,"3c3f786d6c207665 |<?xml version=""1|",n42_2012,True,,,1,16384,698514.0,1800.0,1824.65,True,0.005
+xylib/samples/03yag02.mca,xylib,.mca,9216,"00002c0100000000 |..,.............|",ci_accuspec,True,,,1,2048,150140.0,,,True,0.009
+xylib/samples/04nacl02.mca,xylib,.mca,9216,"00002c0100000000 |..,.............|",ci_accuspec,True,,,1,2048,341488.0,,,True,0.002
+xylib/samples/1d-1.spe,xylib,.spe,6780,0000010000003c05 |......<......@..|,,False,not_detected,FormatError: cannot recognise the format of 1d-1.spe,,,,,,,0.0
+xylib/samples/1d-2.spe,xylib,.spe,6780,0000010000003c05 |......<......@..|,,False,not_detected,FormatError: cannot recognise the format of 1d-2.spe,,,,,,,0.001
+xylib/samples/1d-3.spe,xylib,.spe,6780,0000010000003c05 |......<......@..|,,False,not_detected,FormatError: cannot recognise the format of 1d-3.spe,,,,,,,0.0
+xylib/samples/background_8.CNF,xylib,.cnf,224256,0004040004040008 |...........l....|,ci_cnf,True,,,1,8192,17714.0,160.84,161.1,True,0.009
+xylib/samples/SMP00011.CNF,xylib,.cnf,72704,0004040004040008 |................|,ci_cnf,True,,,1,8192,430160.0,53.17,60.0,True,0.003

@@ -1,0 +1,29 @@
+# UTF-8
+# Windows version resource for SpectraMaster.exe (PyInstaller --version-file). Generated for SpectraMaster 1.0.0.
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(1, 0, 0, 0),
+    prodvers=(1, 0, 0, 0),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo([
+      StringTable(
+        '040904B0',
+        [StringStruct('CompanyName', 'Edrees F. Hery'),
+         StringStruct('FileDescription', 'SpectraMaster gamma-spectrum analysis'),
+         StringStruct('FileVersion', '1.0.0.0'),
+         StringStruct('InternalName', 'SpectraMaster'),
+         StringStruct('LegalCopyright', '© 2026 Edrees F. Hery. All rights reserved.'),
+         StringStruct('OriginalFilename', 'SpectraMaster.exe'),
+         StringStruct('ProductName', 'SpectraMaster'),
+         StringStruct('ProductVersion', '1.0.0')])
+    ]),
+    VarFileInfo([VarStruct('Translation', [0x0409, 1200])])
+  ]
+)

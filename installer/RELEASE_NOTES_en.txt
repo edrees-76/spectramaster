@@ -1,0 +1,65 @@
+SpectraMaster 1.0.0 - Release Notes
+===================================
+Gamma-spectrum file conversion, viewing and analysis for the laboratory.
+Designed and developed by Edrees F. Hery. Release date: October 2026.
+
+This is the first public release.
+
+File formats
+------------
+* Reads 59 spectrum formats and writes 35 of them, one file at a time or whole folder trees
+  (with the DataMaster output-naming rule and resumable archive "rescue" conversion).
+* All ORTEC DataMaster (A49-B32) formats with the same format numbers, and all Aptec formats
+  (S0 v6.3 and the older Aptec binary/text variants).
+* ORTEC CHN / SPC / SPE, Canberra CAM (Genie-2000 CNF), S100, AccuSpec, IAEA SPE, IEC 1455,
+  ANSI N42.42 (2006/2012), SpecUtils formats, CSV/TXT, Excel and many legacy lab formats.
+* Automatic format detection, preview before opening, multi-spectrum files.
+
+Viewer
+------
+* Fast interactive plot: zoom with history, overview strip, go to energy/channel, linear /
+  logarithmic / square-root counts axis, channel or energy axis.
+* Regions of interest (ROI) with net area and uncertainty, overlays of several spectra,
+  image export.
+
+Analysis
+--------
+* Automatic peak search and fitting, nuclide identification with a curated gamma-line library
+  built from IAEA ENSDF data (IAEA-NDS ndlab) and SandiaDecay.
+* Energy and FWHM recalibration; sum, background subtraction and rebinning of spectra.
+* Efficiency calibration from certified standards; activity, specific activity (Bq, Bq/kg),
+  uncertainty budget and MDA (Currie or ISO 11929).
+
+Reports, archive and quality control
+------------------------------------
+* Printed and PDF reports with templates, also for many files at once.
+* Archive search across tens of thousands of old spectra (text, nuclides, date, detector),
+  with Arabic text normalisation.
+* Detector quality control: QC tracks, control charts and Westgard rules (ISO/IEC 17025, 7.7).
+
+Integration and tools
+---------------------
+* GammaVision / MAESTRO integration: the ORTEC programs can call SpectraMaster as their
+  external import/export converter in place of DataMaster ("-i in -j out" command line,
+  Help > GammaVision / MAESTRO Integration shows the settings to enter).
+* Command-line tool smconvert: convert, info, formats, peaks, identify, index, rescue, sum,
+  subtract, rebin, calibrate, effcal, activity.
+
+Interface
+---------
+* Fully bilingual interface (English and Arabic, with right-to-left layout). The program
+  starts in English; switch with View > Language (the choice is remembered).
+* User manuals in English and Arabic (Help > User Manual, F1).
+
+Installer
+---------
+* Installs for all users in C:\Program Files\SpectraMaster (64-bit Windows 10/11).
+* Optional desktop icon, Start-menu group, file associations (.s0 .chn .cnf .spe .spc .iec
+  .n42) and "Open with SpectraMaster", smconvert on the system PATH, sample spectra.
+* To pin SpectraMaster to the taskbar: right-click the Start-menu entry > Pin to taskbar.
+
+Important
+---------
+Analysis results (nuclide identification, activity, MDA) must be reviewed by a qualified expert.
+The program is not code-signed: Windows SmartScreen may show a warning the first time
+(More info > Run anyway).

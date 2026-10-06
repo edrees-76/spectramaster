@@ -1,0 +1,737 @@
+<section class="cover">
+  <img class="logo" src="images/logo_full.png" alt="SpectraMaster">
+  <h1>User Manual</h1>
+  <p class="sub">Gamma-spectrum file conversion, viewing and analysis</p>
+  <p><span class="ver">Version {{VERSION}} · Windows</span></p>
+  <div class="designer">
+    <img src="images/designer_logo.png" alt="EFH">
+    <span class="by">Designed &amp; developed by</span>
+    <span class="name">Edrees F. Hery</span>
+  </div>
+  <p class="meta">Edition {{BUILD_DATE}} · for gamma-spectrometry experts and technicians</p>
+</section>
+
+{{TOC}}
+
+<!-- ================================================================== 1 -->
+<h2 id="ch-intro">1. Introduction and installation</h2>
+
+<h3 id="intro-what">1.1 What SpectraMaster does</h3>
+<p>SpectraMaster is a gamma-spectrum <b>file converter, viewer and analysis tool</b> for the
+laboratory. It works in the style of ORTEC <i>DataMaster</i> (A49-B32): the same "open – choose output
+format – save" workflow, the same output-file naming rule and the same command line
+(<code>-i input -j output</code> with the DataMaster format numbers). On top of that it offers:</p>
+<ul>
+  <li>reading of <b>59 spectrum formats</b> (Aptec, ORTEC, Canberra/Genie, IAEA, N42, Excel, many legacy
+      lab formats) and writing of 35 of them, one file at a time or whole folder trees;</li>
+  <li>a fast interactive spectrum plot (zoom, history, overview strip, ROIs, overlays, image export);</li>
+  <li>automatic <b>peak search and nuclide identification</b> with a library built from IAEA ENSDF data;</li>
+  <li>energy recalibration, spectrum sum / background subtraction / rebinning (command line);</li>
+  <li><b>efficiency calibration</b> and <b>activity</b> calculation (Bq, Bq/kg, uncertainty budget, MDA after
+      Currie or ISO 11929);</li>
+  <li>printed and PDF <b>reports</b> with templates, also for many files at once;</li>
+  <li><b>archive search</b> across tens of thousands of old spectra (text, nuclides, date, detector);</li>
+  <li><b>detector quality control</b> with control charts and Westgard rules (ISO/IEC 17025, 7.7).</li>
+</ul>
+<p>The interface is fully bilingual (Arabic and English) and remembers your choices between sessions.</p>
+
+<h3 id="intro-install">1.2 Installation</h3>
+<p>SpectraMaster consists of two programs. Python or any other runtime is <b>not</b> needed.</p>
+<table class="grid kv">
+  <tr><td>SpectraMaster.exe</td><td>The graphical program (windows, plots, analysis, reports). Started with
+      the DataMaster arguments <code>-i in -j out</code> it converts silently without opening a window.</td></tr>
+  <tr><td>smconvert.exe</td><td>The command-line converter and tool box for batch files, scripts and the
+      Windows task scheduler (chapter <a href="#ch-convert">4</a> and appendix <a href="#app-cli">B</a>).</td></tr>
+</table>
+<h4>Installer (recommended)</h4>
+<ol class="steps">
+  <li>Run <code>SpectraMaster_Setup_1.0.0.exe</code> (administrator rights are needed) and choose the
+      language of the setup wizard (English or Arabic).</li>
+  <li>Accept the license, keep the folder <code>C:\Program Files\SpectraMaster</code> and choose the
+      components: main program, command-line tool <code>smconvert</code> (optionally added to the
+      system <code>PATH</code>), user manuals and sample spectra.</li>
+  <li>Choose the tasks: desktop icon and the file associations (<code>.s0 .chn .cnf .spe .spc .iec
+      .n42</code>, each can be switched off). Associated files open in SpectraMaster with a double-click;
+      all of them also get <span class="menu">Open with › SpectraMaster</span>.</li>
+</ol>
+<p>The Start menu group <span class="menu">SpectraMaster</span> contains the program, both user manuals,
+the release notes, the sample spectra folder and the uninstaller. To pin SpectraMaster to the taskbar,
+right-click its Start-menu entry (or the running program's taskbar button) and choose
+<span class="menu">Pin to taskbar</span>.</p>
+<p>Uninstall with <span class="menu">Settings › Apps</span> or the Start-menu entry. The uninstaller asks
+whether your own data (archive index, efficiency curves, QC tracks in <code>%APPDATA%\SpectraMaster</code>
+and the settings) should be deleted too; the default answer keeps them. It removes only SpectraMaster's
+own file associations and <code>PATH</code> entry.</p>
+<h4>Portable copy</h4>
+<p>The two programs are also available as single packed executables: copy them into any folder (even a
+USB stick) and start <code>SpectraMaster.exe</code>; nothing has to be installed. The first start after a
+reboot can take a few seconds while Windows unpacks the program.</p>
+<div class="note"><b>Note.</b> The programs are not code-signed, so Windows SmartScreen may ask for
+confirmation the first time (<span class="menu">More info › Run anyway</span>, after checking with your IT
+department).</div>
+
+<h3 id="intro-start">1.3 First start, splash screen and language</h3>
+<p>At start-up a splash screen shows the product logo, the designer and the version for about
+1.5 seconds (click it to close it at once). It can be switched off with
+<span class="menu">Help › Show Splash Screen at Startup</span>.</p>
+<figure class="small"><img src="images/en/splash.png" alt="Splash screen"><figcaption>Splash screen.</figcaption></figure>
+<p>The program starts in <b>English</b> the first time. Switch the language with
+<span class="menu">View › Language › English / العربية</span>; the whole interface changes at once
+(including the right-to-left layout) and the choice is remembered. The spectrum plot always runs left to
+right (low energy on the left) in both languages.</p>
+
+<!-- ================================================================== 2 -->
+<h2 id="ch-tour">2. The main window</h2>
+<figure><img src="images/en/main_annotated.png" alt="Main window"><figcaption>The main window with
+a calibration spectrum (Eu-152, Aptec S0) on a logarithmic scale.</figcaption></figure>
+<ol class="legend">
+  <li><b>Menu bar</b> — File, View, Analyze, Tools, Help.</li>
+  <li><b>Main toolbar</b> — Open, Convert Files, Convert Folder, Save As, Input Format, Analyze,
+      Overlay, Print.</li>
+  <li><b>Navigation toolbar</b> — zoom Back / Forward, Reset Zoom, Y scale (Linear / Log / √),
+      Auto Y, Energy axis, <i>Go to</i> energy or channel with window width, Export image.</li>
+  <li><b>Spectrum plot</b> — counts versus energy (keV) or channel; mouse read-out in the status bar.</li>
+  <li><b>Overview strip</b> — the whole spectrum with the visible window; drag it to pan.</li>
+  <li><b>Spectrum information</b> — file, sample ID, live/real/dead time, start time, channels, total
+      counts, energy calibration, input format, detector, description and all additional metadata.
+      For files that contain several spectra a selector "Spectrum i of n" appears here.</li>
+  <li><b>Status bar</b> — file path or messages, cursor position (channel, keV, counts), current format,
+      input mode (auto-detect or a fixed format).</li>
+</ol>
+
+<h3 id="tour-menus">2.1 Menus</h3>
+<figure class="pair"><img src="images/en/menu_file.png" alt="File menu"><img src="images/en/menu_view.png" alt="View menu"><figcaption>The File and View menus.</figcaption></figure>
+<table class="grid kv">
+  <tr><td>File</td><td>Open (spectrum / multiple files), Open Input Files As, Save As, Convert Folder,
+      Archive Search, Export / Copy plot image, Print, Print Preview, Export Report as PDF, Print Reports
+      for Multiple Files, Exit.</td></tr>
+  <tr><td>View</td><td>Zoom history, Reset Zoom, Go to Energy / Channel, Y Scale, Logarithmic, Auto-scale Y,
+      Energy Axis, Overview Strip, Peak Labels, Overlays, the ROI and Analysis panels, Clear All ROIs,
+      Language.</td></tr>
+  <tr><td>Analyze</td><td>Peak Search &amp; Identify (<kbd>F5</kbd>), Auto-analyze on Open, Peak Labels,
+      Efficiency Calibration, Activity Calculation.</td></tr>
+  <tr><td>Tools</td><td>Detector QC.</td></tr>
+  <tr><td>Help</td><td>User Manual (Arabic / English, <kbd>F1</kbd>), Mouse &amp; Keyboard Shortcuts,
+      GammaVision / MAESTRO Integration, splash-screen option, About SpectraMaster (version, designer and
+      the full list of formats).</td></tr>
+</table>
+<figure class="pair"><img src="images/en/menu_analyze.png" alt="Analyze menu"><img src="images/en/menu_help.png" alt="Help menu"><figcaption>The Analyze and Help menus.</figcaption></figure>
+<p>A right click on the plot opens a context menu with the zoom history, Y scale, ROI deletion,
+analysis, labels, overlay and image export.</p>
+
+<!-- ================================================================== 3 -->
+<h2 id="ch-open">3. Opening spectra</h2>
+
+<h3 id="open-open">3.1 Open a spectrum</h3>
+<ol class="steps">
+  <li>Choose <span class="menu">File › Open › Spectrum…</span> (<kbd>Ctrl</kbd>+<kbd>O</kbd>) or the
+      <b>Open</b> button.</li>
+  <li>Select the file. With <b>Show description</b> ticked, the panel on the right shows the detected
+      format, sample ID, description, channels, live/real time, start time and a thumbnail of the spectrum
+      <i>before</i> you open it — useful when browsing archives with cryptic file names.</li>
+  <li>Click <b>Open</b>. The spectrum is drawn and its details appear in the information panel.</li>
+</ol>
+<figure><img src="images/en/open_preview.png" alt="Open dialog with preview"><figcaption>Open dialog with
+the description preview.</figcaption></figure>
+<p>The file filter lists all readable extensions; choose <i>All files (*)</i> for files with unusual
+extensions — the content is recognised, not the name.</p>
+
+<h3 id="open-as">3.2 Input format: auto-detect or fixed</h3>
+<p>By default the input format is <b>detected automatically</b> from the file content (binary signatures
+and header keywords), then from the extension. <span class="menu">File › Open Input Files As…</span>
+(<kbd>Ctrl</kbd>+<kbd>I</kbd>) lets you force one format, exactly like DataMaster. The choice applies to
+Open, batch conversion and overlays and is shown in the status bar (<i>Input: …</i>).</p>
+<figure class="medium"><img src="images/en/input_format.png" alt="Input format dialog"><figcaption>Choosing the
+input format (keep <i>Auto-detect</i> unless a file is not recognised).</figcaption></figure>
+<div class="tip"><b>Tip.</b> Several formats share an extension (<code>.spc</code>, <code>.dat</code>,
+<code>.txt</code>, <code>.xml</code>, <code>.s0</code>). Auto-detect distinguishes them by content. Force a
+format only when auto-detect fails; if a forced format cannot read the file, the error message suggests
+returning to auto-detect.</div>
+
+<h3 id="open-drop">3.3 Drag and drop, command line, multi-spectrum files</h3>
+<ul>
+  <li>Drop <b>one file</b> on the window to open it; drop <b>a folder</b> to open the Convert Folder dialog;
+      drop <b>several files</b> to open the Convert Files dialog.</li>
+  <li><code>SpectraMaster.exe file1.S0</code> opens the file at start-up (also used by "Open with…" in
+      Windows Explorer).</li>
+  <li>Files holding several spectra (e.g. N42, PCF, some CNF) show a selector <i>Spectrum i of n</i> in the
+      information panel.</li>
+</ul>
+
+<h3 id="open-formats">3.4 Supported formats</h3>
+<p>The complete table with codes is in appendix <a href="#app-formats">A</a> and in
+<span class="menu">Help › About SpectraMaster</span>. The most used ones in our laboratory:</p>
+<table class="grid">
+  <thead><tr><th>Code</th><th>Format</th><th>Notes</th></tr></thead>
+  <tbody>
+  <tr><td class="num">13</td><td>Aptec v6.3 <code>.S0</code></td><td>Read and write; counts, times, energy and
+      FWHM calibration, Aptec sample/source records and ROIs. Aptec v3.0 (78) and v4.3 (79) are read only.</td></tr>
+  <tr><td class="num">1</td><td>ORTEC CHN</td><td>MAESTRO / GammaVision; 3 calibration terms.</td></tr>
+  <tr><td class="num">7</td><td>IAEA SPE</td><td>Open text format; keeps Unicode text and the calibration.</td></tr>
+  <tr><td class="num">16</td><td>Canberra CAM <code>.CNF</code> (Genie-2000)</td><td>3 calibration terms; text
+      fields are Latin-1 only (see below).</td></tr>
+  <tr><td class="num">20 / 21</td><td>ANSI N42.42 XML</td><td>Recommended long-term archive format.</td></tr>
+  <tr><td class="num">50</td><td>Excel <code>.xlsx</code></td><td>Sheets <i>Spectrum</i> (channel, energy,
+      counts) and <i>Info</i>.</td></tr>
+  <tr><td class="num">60–79</td><td>Aptec import/export family</td><td>Aptec ASCII, Channel-Data CSV, Davidson,
+      IAEA DAT, NPL, Rump, Wallac, Laval, BTI, CI-90, JCAC, ND66, Norland, Oxford, …</td></tr>
+  </tbody>
+</table>
+<div class="warn"><b>Calibration terms.</b> Some formats store fewer energy-calibration coefficients than the
+source (e.g. CHN, SPC, CNF, S100 keep 3 terms; Laval and Norland 2). SpectraMaster then <b>refits</b> the
+calibration by least squares over the stored channels and warns:
+<code>… stores only 3 calibration terms: energy calibration refitted (max deviation 0.206 keV)</code>.
+Check the deviation: a few hundredths of a keV are harmless, larger values (cubic terms on 8k spectra)
+may shift high-energy peaks. The original coefficients are kept in the metadata
+(<code>original_energy_coeffs</code>) of formats that store metadata.</div>
+<div class="warn"><b>Arabic text in CNF, CHN and SPC.</b> These binary formats store sample ID and
+description as 8-bit Latin text. Arabic letters become <code>?</code> (CNF, CHN) or are dropped (integer SPC)
+— without a warning. Use Latin sample IDs for files destined to Genie-2000 / MAESTRO, or keep an Aptec S0,
+IAEA SPE, N42, JSON or Excel copy, which preserve Arabic text.</div>
+<div class="note"><b>Genie channel numbering.</b> Genie-2000 numbers channels from 1, SpectraMaster (like ORTEC
+and Aptec) from 0. The calibration polynomial is shifted automatically on reading and writing CNF, so peak
+energies are identical in both programs; only the channel numbers differ by one.</div>
+
+<!-- ================================================================== 4 -->
+<h2 id="ch-convert">4. Converting spectra</h2>
+
+<h3 id="conv-saveas">4.1 Save the displayed spectrum (Save As)</h3>
+<ol class="steps">
+  <li>Open the spectrum (chapter 3).</li>
+  <li><span class="menu">File › Save As…</span> (<kbd>Ctrl</kbd>+<kbd>S</kbd>): choose the <b>output format</b>
+      in the list (code, name, extensions) and click OK.</li>
+  <li>Confirm the file name. The proposed name follows the DataMaster rule (below); the last output folder is
+      remembered.</li>
+</ol>
+<figure class="medium"><img src="images/en/output_format.png" alt="Output format"><figcaption>Choosing the output format.</figcaption></figure>
+<p>Warnings (for example a refitted calibration) appear in the status bar after saving.</p>
+
+<h3 id="conv-naming">4.2 The DataMaster naming rule</h3>
+<p>The output name is the input name with its extension appended after an underscore, plus the extension of
+the output format: <code>CHERN.S0</code> → <code>CHERN_S0.chn</code>. Files with several spectra get a
+running number: <code>RUN.n42</code> → <code>RUN_n42_1.spe</code>, <code>RUN_n42_2.spe</code>, … This avoids
+overwriting when <code>A.S0</code> and <code>A.CHN</code> are both converted to SPE.</p>
+
+<h3 id="conv-batch">4.3 Converting many files or whole folders</h3>
+<ul>
+  <li><span class="menu">File › Open › Select Multiple Files to Convert…</span> (<kbd>Ctrl</kbd>+<kbd>M</kbd>):
+      pick any number of files.</li>
+  <li><span class="menu">File › Convert Folder…</span> (<kbd>Ctrl</kbd>+<kbd>D</kbd>): choose a folder, optionally
+      <b>Include sub-folders</b>, then <b>Find Files</b>. With <i>All files (ignore extensions)</i> every file is
+      sniffed by content.</li>
+</ul>
+<figure><img src="images/en/batch_folder.png" alt="Convert folder"><figcaption>Convert Folder: 22 Aptec
+spectra found, output to CHN next to each input file.</figcaption></figure>
+<p>Choose the output format, then the output folder: <b>Same folder as each input file</b>, or one folder —
+with <b>Keep sub-folder structure</b> the input tree is recreated inside it. <b>Overwrite existing files</b>
+controls replacement. Click <b>Convert</b>; each line shows OK, the number of outputs, a warning or the error.
+A failure never stops the batch. <b>Open Output Folder</b> opens Explorer at the result.</p>
+<div class="note"><b>Input format in batches.</b> In auto-detect mode only files whose content is recognised
+(or whose extension belongs to a plain-text format) are converted, so reports, Word files and pictures in the
+same folder are skipped. With a fixed input format the extension decides, as in DataMaster.</div>
+
+<h3 id="conv-cli">4.4 Command line (smconvert.exe)</h3>
+<h4>DataMaster syntax</h4>
+<pre>smconvert -i InputFile -j OutputFile          (i, j = format codes, i = 0 auto-detects)
+
+smconvert -13 CHERN.S0 -1 "C:\Spectra\Converted Chern.chn"
+smconvert -0  SAMPLE.CNF -7 SAMPLE.SPE
+SpectraMaster.exe -13 CHERN.S0 -16 CHERN.CNF  (silent, no window; on error the window opens)</pre>
+<p>The exit code is 0 on success and 1 on failure (2 for wrong arguments), so batch files can test
+<code>%ERRORLEVEL%</code>. A calibration refit is printed as a warning.</p>
+<h4>Modern subcommands</h4>
+<pre>smconvert formats                                   list all formats with codes
+smconvert info CHERN.S0                             all metadata of a file
+smconvert convert D:\Archive --to n42_2012 -r --out E:\N42 --keep-tree
+smconvert convert *.S0 --to chn                     glob patterns are accepted
+smconvert convert D:\In --from aptec_s0 --to 7 --no-overwrite -q</pre>
+<p><code>--to</code> and <code>--from</code> accept the code (<code>7</code>), the key (<code>iaea_spe</code>) or
+an alias (<code>spe</code>, <code>chn</code>, <code>cnf</code>). Other subcommands: <code>peaks</code>,
+<code>identify</code>, <code>calibrate</code>, <code>sum</code>, <code>subtract</code>, <code>rebin</code>,
+<code>effcal</code>, <code>activity</code>, <code>index</code>, <code>rescue</code> — see the following chapters and
+appendix <a href="#app-cli">B</a>.</p>
+<div class="tip"><b>Archive rescue.</b> <code class="wrap">smconvert rescue D:\OldArchive -o E:\Rescued --to n42_2012 --to ci_cnf
+--resume</code> converts a whole archive, re-reads every output to verify counts and times, writes a log
+workbook and can be resumed after an interruption. The archive itself is only read.
+<code>smconvert index ROOT -o catalog.xlsx</code> writes a catalogue of all spectra.</div>
+
+<h3 id="conv-gv">4.5 GammaVision / MAESTRO integration</h3>
+<p>GammaVision and MAESTRO can call SpectraMaster as their external converter instead of DataMaster.
+<span class="menu">Help › GammaVision / MAESTRO Integration…</span> shows the exact <b>Program</b> and
+<b>Arguments</b> to enter in GammaVision (<span class="menu">File › Settings › Import/Export</span>) with
+<b>Copy</b> buttons.</p>
+<figure><img src="images/en/integration.png" alt="Integration"><figcaption>Values for GammaVision /
+MAESTRO.</figcaption></figure>
+<p><code>$(FullName)</code> and <code>$(FullBase)</code> are GammaVision macros (full path, path without
+extension). If a conversion fails, SpectraMaster opens its window with the input file and the error message,
+as DataMaster does.</p>
+
+<!-- ================================================================== 5 -->
+<h2 id="ch-view">5. Viewing and zooming</h2>
+
+<h3 id="view-mouse">5.1 Mouse and keyboard</h3>
+<p>The same list is available in the program under <span class="menu">Help › Mouse &amp; Keyboard Shortcuts</span>.</p>
+{{SHORTCUTS_TABLE}}
+
+<h3 id="view-zoom">5.2 Zoom, history and overview strip</h3>
+<ul>
+  <li><b>Horizontal drag</b> zooms to the dragged channel range (counts axis automatic); dragging a
+      <b>box</b> zooms both axes.</li>
+  <li>Every zoom is stored in a <b>history</b>: <b>Back</b> (<kbd>Backspace</kbd>) and <b>Forward</b>
+      (<kbd>Alt</kbd>+<kbd>→</kbd>). <b>Reset Zoom</b>, <kbd>Home</kbd> or a double click shows the full spectrum.</li>
+  <li>The <b>overview strip</b> under the plot always shows the whole spectrum: drag the blue window to pan,
+      drag its edges to change the width, click elsewhere to jump, use the wheel to zoom.</li>
+</ul>
+
+<h3 id="view-goto">5.3 Go to an energy or channel</h3>
+<p>Type an energy in the <b>Go to</b> box (<kbd>Ctrl</kbd>+<kbd>G</kbd>), e.g. <code>661.66</code>, and press
+<kbd>Enter</kbd>. The unit box selects keV or channel; the width box selects ±3/5/10 FWHM (from the FWHM
+calibration or the detector model) or ±5…100 keV. Uncalibrated spectra accept channels only.</p>
+
+<h3 id="view-y">5.4 Counts axis and energy axis</h3>
+<p>The counts axis can be <b>Linear</b>, <b>Log</b> or <b>√ (square root)</b> (<kbd>Ctrl</kbd>+<kbd>L</kbd>
+toggles linear/log). <b>Auto Y</b> fits the counts axis to the visible part. <b>Energy</b>
+(<kbd>Ctrl</kbd>+<kbd>E</kbd>) switches the horizontal axis between keV and channel (keV only for calibrated
+spectra).</p>
+
+<h3 id="view-roi">5.5 Regions of interest (ROI)</h3>
+<p><kbd>Ctrl</kbd> + drag on the plot marks an ROI. The <i>Regions of Interest</i> panel lists start, end,
+centroid, energy, FWHM (channels and keV), gross and net area with ±1σ and the net count rate.
+The background is a straight line between the 3-channel averages at both ends. Delete an ROI with
+<kbd>Delete</kbd> in the table, from the context menu or with <b>Clear All</b>; <b>Export CSV…</b> saves the table.</p>
+<figure><img src="images/en/zoom_roi_overlay.png" alt="ROI and overlay"><figcaption>Zoom on the 344.3 keV
+Eu-152 line with an ROI and the background spectrum CHERNBKG.S0 as a live-time normalised overlay.</figcaption></figure>
+
+<h3 id="view-overlay">5.6 Overlays</h3>
+<p><b>Overlay</b> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>O</kbd>) draws other spectra — typically the background
+or a previous measurement — over the displayed one, each in its own colour with a legend.
+<span class="menu">View › Overlays › Normalize Overlays to Live Time</span> scales each overlay by
+LT<sub>displayed</sub>/LT<sub>overlay</sub> (the factor is shown in the legend). Overlays of different
+calibration are aligned in energy. Remove them one by one or all at once from the same menu.</p>
+
+<h3 id="view-export">5.7 Exporting the plot</h3>
+<p><b>Export</b> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>E</kbd>) saves the current view as a PNG image or as an
+SVG vector drawing (for reports and publications); <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>C</kbd> copies it to the
+clipboard for Word or PowerPoint.</p>
+
+<!-- ================================================================== 6 -->
+<h2 id="ch-analysis">6. Peak search and nuclide identification</h2>
+
+<h3 id="ana-run">6.1 Running the analysis</h3>
+<p>Press <kbd>F5</kbd> (<span class="menu">Analyze › Peak Search &amp; Identify</span>) or the <b>Analyze</b>
+button. The analysis runs in the background (a few seconds for an 8k HPGe spectrum) and opens the
+<i>Analysis Results</i> panel. <span class="menu">Analyze › Auto-analyze on Open</span> analyses every
+spectrum as soon as it is opened.</p>
+<figure><img src="images/en/analysis.png" alt="Analysis"><figcaption>Eu-152 calibration spectrum after
+F5: 44 peaks, nuclides Eu-152, Eu-154 and Co-60; Eu-152 selected, its lines marked on the plot.</figcaption></figure>
+
+<h3 id="ana-peaks">6.2 The peaks table</h3>
+<p>For each peak: energy (keV), centroid (channel), FWHM (keV), net area ± 1σ, count rate (cps),
+significance (net area / its uncertainty) and the assigned nuclide. A double click zooms to the peak.
+Notes mark special peaks: <i>X-ray region</i>, <i>annihilation</i> (511 keV), <i>single / double escape</i>,
+<i>sum peak</i> (e.g. 1173+1332), <i>possible backscatter</i>.</p>
+<p>How it works, in brief: the FWHM model comes from the FWHM calibration (or the energy calibration and a
+detector-type guess) and is rescaled to the strongest isolated peaks; peaks are searched with a
+Gaussian matched filter (second-difference method) and accepted above a significance of 3; neighbouring
+peaks are fitted together as multiplets (Gaussians + linear background + step), and areas and
+uncertainties come from the fit covariance.</p>
+
+<h3 id="ana-nuc">6.3 The nuclides table and the confidence value</h3>
+<p>Each candidate nuclide shows its <b>confidence</b>, half-life, category (natural, fission, activation,
+calibration, medical, industrial, actinide; nuclides with two common origins show both, e.g. Cs-137
+"fission / calibration"), the number of lines found / expected and a note
+(series membership, "typical background", interferences such as U-235 185.7 keV under Ra-226 186.2 keV).
+Selecting a nuclide marks all its library lines on the plot; peaks that match are highlighted.</p>
+<div class="warn"><b>The confidence is a heuristic score (0–100 %), not a probability.</b> It combines how much
+of the expected (detectable) line pattern is explained, the energy agreement, the statistical significance,
+penalties for a missing strongest line or inconsistent area ratios, and a greedy treatment of shared peaks.
+Weak lines below the local detection limit are not counted as missing. Results — especially low-confidence
+ones, single-line nuclides and short-lived nuclides in old spectra — <b>must be reviewed by an expert</b>.
+The identification does not replace the laboratory's validated analysis procedure.</div>
+<p><b>Peak labels</b> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>) write the nuclide names on the plot;
+<b>Export…</b> in the results panel saves peaks, nuclides and spectrum details to Excel or CSV.</p>
+
+<h3 id="ana-uncal">6.4 Uncalibrated spectra</h3>
+<p>Without an energy calibration peaks are listed by channel only and no nuclide is identified (a message
+explains this). Calibrate the spectrum first (chapter <a href="#ch-tools">7</a>), e.g. with Eu-152 or
+Co-60/Cs-137 lines.</p>
+
+<h3 id="ana-lib">6.5 The nuclide library</h3>
+<p>The built-in library contains 200 nuclides with 2,732 gamma and X-ray lines. Values are taken from the
+IAEA ENSDF evaluation (IAEA <i>ndlab</i> database behind LiveChart of Nuclides) and cross-checked against
+Sandia National Laboratories' <i>SandiaDecay</i>. Short-lived daughters in equilibrium (Ba-137m, Pr-144,
+Rh-106, La-140 …) are included in the parent's intensities; natural-series members are separate entries.
+On the command line another library can be used: <code>smconvert identify FILE --lib mylib.csv</code> with
+lines <code>nuclide, energy_keV, intensity_%[, half_life, category]</code>.</p>
+<h4>Limitations</h4>
+<ul>
+  <li>No true-coincidence summing correction and no detailed efficiency model: the expected line ratios use a
+      generic HPGe/NaI efficiency shape.</li>
+  <li>Strongly overlapping multiplets and very low-statistics spectra can give false or missed identifications.</li>
+  <li>Decay since the measurement is not considered: a nuclide is proposed if its lines are present, even if it
+      is implausible for the sample history.</li>
+</ul>
+
+<!-- ================================================================== 7 -->
+<h2 id="ch-tools">7. Energy recalibration and spectrum arithmetic</h2>
+<p>These tools are available on the command line (<code>smconvert</code>); the results are ordinary spectrum
+files that can be opened in the program. The input files are never modified.</p>
+
+<h3 id="tools-cal">7.1 Energy (and FWHM) recalibration</h3>
+<pre>smconvert calibrate Eu-152.S0 --source Eu-152                 propose a calibration from source lines
+smconvert calibrate *.S0 --source Co-60,Cs-137 -o D:\Recal     write recalibrated copies
+smconvert calibrate X.spe --pairs 1893.7:661.66,3364:1173.23,3812:1332.49 --order 2 -o D:\Recal
+smconvert calibrate X.spe --coeffs 0.12,0.3501,1.2e-8 -o D:\Recal  apply known coefficients
+smconvert calibrate *.chn --source Eu-152 --only-uncalibrated -o D:\Recal</pre>
+<p><code>--source</code> finds the peaks of the given nuclide(s) (using the existing calibration as a guide when
+present), fits an energy polynomial (order 1–3) and, from the peak widths, a FWHM calibration; it prints a
+table with channel, given and fitted energy and residuals (RMS and maximum). Without <code>-o</code> nothing is
+written. <code>--fwhm ch:keV,…</code> fits a FWHM calibration from given pairs.</p>
+<pre>Energy calibration, order 2: c0=2.85491689  c1=0.33842267  c2=-4.33136557e-08
+  #     channel       given      fitted   residual
+  1     351.149     121.782     121.686    +0.0957  Eu-152 121.78
+  ...
+RMS residual 0.0615 keV, max |residual| 0.1460 keV, 8 degree(s) of freedom</pre>
+
+<h3 id="tools-sum">7.2 Sum of spectra</h3>
+<pre>smconvert sum A.S0 B.S0 C.S0 -o SUM.spe [--align auto|channel|energy]</pre>
+<p>Counts, live and real times are added. With different calibrations the spectra are aligned in energy
+(rebinned onto the first spectrum's calibration); <code>--align channel</code> forces a channel-by-channel sum.</p>
+
+<h3 id="tools-sub">7.3 Background subtraction</h3>
+<pre>smconvert subtract CHERN.S0 CHERNBKG.S0 -o CHERN_net.spe [--scale K] [--clip] [--sigma-csv net.csv]
+net = sample - 3.31379 x background; net counts 301801 +- 1071</pre>
+<p>The background is scaled by LT<sub>sample</sub>/LT<sub>background</sub> unless <code>--scale</code> is given.
+<code>--clip</code> sets negative channels to zero; <code>--sigma-csv</code> also writes channel, energy, net
+counts and the propagated 1σ per channel.</p>
+
+<h3 id="tools-rebin">7.4 Rebinning and truncation</h3>
+<pre>smconvert rebin CHERN.S0 --factor 2 -o CHERN_4k.spe          8192 -> 4096 channels
+smconvert rebin X.S0 --start 100 --stop 4196 --renumber -o part.spe</pre>
+<p>The calibration is transformed so that energies stay correct.</p>
+
+<!-- ================================================================== 8 -->
+<h2 id="ch-quant">8. Efficiency calibration and activity</h2>
+<div class="warn"><b>Before you start.</b> The efficiency curve is valid only for the <b>same detector, geometry
+(container, filling height, distance) and matrix density</b> as the standard. True-coincidence summing (TCS) is
+<b>not</b> corrected (cascade emitters such as Co-60, Cs-134, Y-88, Eu-152 are flagged), and self-attenuation is
+corrected only by a <b>manual factor</b>. Results must be validated by the laboratory.</div>
+
+<h3 id="q-eff">8.1 Efficiency calibration</h3>
+<ol class="steps">
+  <li>Open the standard spectrum (here <code>QCY48CAL.S0</code>, 10 ml bottle at 10 cm, HPGe) and choose
+      <span class="menu">Analyze › Efficiency Calibration…</span>. The displayed spectrum becomes the standard
+      (or use <b>Browse…</b>).</li>
+  <li>Fill the <b>certificate</b>: one row per nuclide with activity (Bq), uncertainty %, reference date,
+      half-life (s) and optionally the lines <code>keV:yield%</code> (empty = library values). Sources:
+      <b>Aptec records</b> (the source records stored in Aptec <code>.S0</code> files), a <b>Preset</b>
+      (QCY48, QCRB1241, Eu-152 point source), <b>Import CSV…</b> or typing.</li>
+  <li>Choose the <b>model</b>: <i>two-branch log-log</i> (recommended for HPGe: low- and high-energy branches
+      joined at a crossover energy, automatic or fixed) or a single <i>log-log polynomial</i> of order 1–5.
+      Enter geometry and detector names.</li>
+  <li>Click <b>Measure &amp; Fit</b>. Each line becomes a point: net area (with background-peak subtraction
+      if a background spectrum is used in the CLI), efficiency, uncertainty, fitted value and residual.
+      Untick <b>Use</b> for doubtful points (e.g. TCS-affected lines) and press <b>Refit</b>.</li>
+  <li>Check χ²/ν and the residual plot (points should scatter within their error bars), then <b>Save curve…</b>
+      The curve (JSON) is stored in <code>%APPDATA%\SpectraMaster\efficiency\</code> and appears in the activity
+      dialog.</li>
+</ol>
+<figure><img src="images/en/efficiency.png" alt="Efficiency calibration"><figcaption>Efficiency calibration
+of QCY48CAL.S0 from the Aptec source records: two-branch model, χ²/ν = 0.35, ε(661.7 keV) = 0.00687 ±
+2.6 %.</figcaption></figure>
+<p>Point efficiency: ε = N / (t<sub>live</sub> · A(t<sub>0</sub>) · C · I), with the activity decay-corrected from
+the reference date to the start of counting and C the decay during counting. The curve uncertainty combines the
+fit covariance (scaled by χ²/ν when &gt; 1) with the part of the certificate uncertainty common to all lines.</p>
+
+<h3 id="q-act">8.2 Activity calculation</h3>
+<ol class="steps">
+  <li>Open the sample spectrum (calibrated in energy) and choose <span class="menu">Analyze › Activity
+      Calculation…</span>.</li>
+  <li>Select the <b>efficiency curve</b>. Optionally load a <b>background</b> spectrum: <i>peak by peak</i>
+      (the background peak, scaled by live time, is subtracted from each sample peak) or <i>full spectrum</i>.</li>
+  <li>Enter the <b>sample quantity</b> and unit (kg, g, L, mL) with its uncertainty, and the <b>reference date</b>
+      (sampling date; default = acquisition start). All activities are decay-corrected to this date.</li>
+  <li>List the <b>nuclides of interest</b>, choose <i>key line</i> or <i>weighted mean of lines</i>, the
+      <b>detection limit</b> method (Currie or ISO 11929) and, if needed, the <b>self-attenuation correction
+      factor</b> (default 1.000).</li>
+  <li>Click <b>Calculate</b>. <b>Export CSV/Excel…</b> saves the table and the uncertainty budget.</li>
+</ol>
+<figure><img src="images/en/activity.png" alt="Activity"><figcaption>Activities of CHERN.S0 (Turku fallout,
+1986) with the QCY48 curve and peak-by-peak background subtraction.</figcaption></figure>
+<table class="grid kv">
+  <tr><td>Activity Bq ± u</td><td>Activity with its combined standard uncertainty (k = 1).</td></tr>
+  <tr><td>Specific ± U (k=2)</td><td>Activity per kg (or L …) with the <b>expanded</b> uncertainty U = 2u.</td></tr>
+  <tr><td>MDA</td><td>Minimum detectable activity (Bq and per unit quantity), from the continuum under the
+      expected peak (Currie: L<sub>D</sub> = k² + 2L<sub>C</sub>, k = 1.645; ISO 11929: detection limit y#).</td></tr>
+  <tr><td>Decision</td><td><i>detected</i> when the net signal exceeds the decision threshold (Currie L<sub>C</sub> or
+      ISO y*); otherwise <i>&lt; MDA</i>. A nuclide can be <i>detected</i> with an activity below its MDA
+      (between L<sub>C</sub> and L<sub>D</sub>) — report it with its uncertainty.</td></tr>
+  <tr><td>Budget</td><td>Relative components (k = 1): counting, efficiency, emission probability, quantity,
+      attenuation.</td></tr>
+</table>
+
+<h3 id="q-example">8.3 Worked example: QCY48CAL → CHERN (command line)</h3>
+<pre>smconvert effcal QCY48CAL.S0 -o qcy48.json --model two_branch --compare
+model: two-branch log-log, Ec = 583.2 keV, orders 3/2   chi2/dof = 0.35   u_sys = 1.00 %
+nuclide       keV        net        eps    u %        fit  resid %
+Am-241      59.54       3616  0.0050092   4.46  0.0049762     0.66
+Cs-137     661.62      10909   0.007029   3.71   0.006877     2.21
+Co-60     1332.51       6873    0.00315   2.03  0.0031219     0.90   ...
+comparison with Aptec's stored efficiencies:  Cs-137 661.62  Aptec 0.0071482  ours 0.007029  -1.67 %
+
+smconvert activity CHERN.S0 --eff qcy48.json --bkg CHERNBKG.S0 --nuclides Cs-137,Cs-134,I-131,Ru-103,K-40 ^
+          --mass 1 --unit kg -o chern.xlsx
+Nuclide  Line(s) keV  Net area   Activity Bq (k=1)  Bq/kg (k=2)  MDA Bq  Decision
+Cs-137   661.7        1157 ± 68  41.11 ± 2.6        41.11 ± 5.3  6.73    detected
+Cs-134   604.7        683 ± 40   18.81 ± 1.3        18.81 ± 2.5  3.4     detected
+I-131    364.5        120 ± 36   2.323 ± 0.71       2.323 ± 1.4  3.12    detected
+Ru-103   497.1        5591 ± 90  138.5 ± 3.9        138.5 ± 7.8  3.99    detected
+  Cs-134: true-coincidence summing not corrected</pre>
+<p>Without <code>--cert</code> the certificate is taken from the Aptec records in the <code>.S0</code> file;
+<code>--compare</code> lists the difference to Aptec's own stored efficiencies (here within ±6 %). A certificate
+CSV has the columns <code>nuclide,activity_bq,unc_percent,ref_date[,half_life_s,energy_kev,intensity_percent]</code>.</p>
+<div class="note"><b>About this example.</b> The two files were measured in different set-ups (a 10 ml bottle
+on a 10 % HPGe and a rag wipe in another geometry); the example only shows the workflow. In practice the
+standard and the sample must share detector and geometry. Note also I-131: detected (above L<sub>C</sub>) but
+below its MDA.</div>
+
+<!-- ================================================================== 9 -->
+<h2 id="ch-reports">9. Printing and PDF reports</h2>
+
+<h3 id="rep-one">9.1 Report of the displayed spectrum</h3>
+<p><span class="menu">File › Print Report…</span> (<kbd>Ctrl</kbd>+<kbd>P</kbd>), <span class="menu">Print
+Preview…</span> and <span class="menu">Export Report as PDF…</span> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>P</kbd>)
+first open the <b>Report Options</b> dialog. If the report should contain peaks or nuclides and the spectrum
+has not been analysed yet, the program offers to run the analysis.</p>
+<figure class="pair"><img src="images/en/report_opt_header.png" alt="Header"><img src="images/en/report_opt_content.png" alt="Content"><figcaption>Report options: Header and Content tabs.</figcaption></figure>
+<table class="grid kv">
+  <tr><td>Header</td><td>Laboratory, department, address/phone, laboratory logo, report title, report number /
+      sample reference, analyst, date.</td></tr>
+  <tr><td>Content</td><td>Spectrum information, plot, peaks table (only identified peaks, minimum significance),
+      nuclides table (minimum confidence, hide typical background nuclides), ROI table, additional metadata,
+      notes, signature block (prepared / reviewed / approved).</td></tr>
+  <tr><td>Plot</td><td>Current zoom or full spectrum, counts scale, energy or channel axis, peak labels, ROI
+      shading, overlays, plot height, vector graphics or 300 dpi image.</td></tr>
+  <tr><td>Page &amp; Footer</td><td>Paper, orientation, margins, report language (Arabic, English or as the
+      interface), footer items (page X of Y, file name, program credit, print date and time).</td></tr>
+</table>
+<figure class="pair"><img src="images/en/report_page1.png" alt="Report page 1"><img src="images/en/report_page2.png" alt="Report page 2"><figcaption>First two pages of a full report (Eu-152.S0).</figcaption></figure>
+
+<h3 id="rep-tmpl">9.2 Templates</h3>
+<p>The dialog always starts with the last used settings. <b>Save as Template…</b> stores the current options
+under a name (e.g. "Food samples – Arabic"); choose it later in the <b>Template</b> list. Built-in presets:
+<i>Full report</i>, <i>Plot only</i>, <i>Nuclides summary</i>. <b>Delete Template</b> removes a user template.</p>
+
+<h3 id="rep-batch">9.3 Reports for many files</h3>
+<p><span class="menu">File › Print Reports for Multiple Files…</span>: add files or a whole folder, set the
+<b>Report Options…</b> once, choose <b>One PDF per spectrum file</b> (into an output folder) or <b>One
+combined PDF</b>, and optionally <b>Run peak search &amp; identification for every file</b>. Click
+<b>Create PDFs</b>; the list shows the pages written or the error for each file.</p>
+<figure class="medium"><img src="images/en/report_batch.png" alt="Batch reports"><figcaption>Batch reports.</figcaption></figure>
+
+<!-- ================================================================== 10 -->
+<h2 id="ch-archive">10. Archive search</h2>
+<p><span class="menu">File › Archive Search…</span> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>F</kbd>) finds spectra
+in large archives — by sample name, words in the description, nuclides found, date, detector, folder or live
+time — without moving or changing the original files.</p>
+<figure><img src="images/en/archive_search.png" alt="Archive search"><figcaption>Archive search on an index of
+5,501 unique spectra (5,454 duplicate copies): all spectra with Cs-137 (confidence ≥ 0.50), results per year below.</figcaption></figure>
+
+<h3 id="arch-build">10.1 Building and updating the index</h3>
+<ol class="steps">
+  <li><b>Add folder…</b> for each archive root (local disk or network share).</li>
+  <li>Click <b>Build / update index</b>. The program lists the files, reads the metadata of every spectrum and
+      then analyses each unique spectrum (peak search + identification) in parallel. Progress and the remaining
+      time are shown; <b>Cancel</b> stops safely and the next build resumes.</li>
+  <li>Later builds only process new or changed files and drop deleted ones, so updating is quick.</li>
+</ol>
+<p>The index is a single SQLite file, by default <code>%APPDATA%\SpectraMaster\archive.sqlite</code>
+(<b>Change…</b> selects another file, e.g. a shared copy on the network). Byte-identical copies of a spectrum are
+recognised as duplicates and analysed once. The original files are only read.</p>
+
+<h3 id="arch-filter">10.2 Filters</h3>
+<table class="grid kv">
+  <tr><td>Text</td><td>Words in the sample ID, description, comments, file or folder name. All words must match.</td></tr>
+  <tr><td>Nuclides</td><td>Add one or more nuclides (with auto-completion: <code>Cs-137</code>, <code>cs137</code>,
+      <code>137Cs</code> are equivalent); match <i>all of them</i> or <i>any of them</i>, with a <b>minimum
+      confidence</b> slider.</td></tr>
+  <tr><td>Date, detector, folder</td><td>From / to date, detector name, part of the folder path.</td></tr>
+  <tr><td>Other</td><td>Minimum live time, calibrated spectra only, include duplicate copies.</td></tr>
+</table>
+<div class="note"><b>Arabic normalisation.</b> The text search ignores the differences <bdi>أ</bdi> <bdi>إ</bdi> <bdi>آ</bdi> → <bdi>ا</bdi>, <bdi>ة</bdi> → <bdi>ه</bdi>,
+<bdi>ى</bdi> → <bdi>ي</bdi>, diacritics (tashkeel) and tatweel, and treats Arabic-Indic digits like Latin digits — <code>شاى</code>
+finds <code>شاي</code>. The definite article is removed from the search words (also وال، بال، كال، فال، لل) when at
+least three letters remain, so <code>الشاي</code> finds <code>شاي</code>, <code>الشاي</code> and <code>بالشاي</code> alike.</div>
+
+<h3 id="arch-results">10.3 Working with the results</h3>
+<p>Double-click a row to open the spectrum in the main window. The right-click menu offers <b>Open in main
+window</b>, <b>Add as overlay</b>, <b>Open containing folder</b> and <b>Copy path</b>. Columns can be sorted; the
+bar chart shows the results per year. <b>Export results to Excel / CSV…</b> saves the list with date, sample,
+description, nuclides, times, detector, path and number of copies.</p>
+<p>The same index can be built from the command line for very large archives with
+<code>smconvert index</code> (Excel catalogue) — the window's index is built from the window itself.</p>
+
+<!-- ================================================================== 11 -->
+<h2 id="ch-qc">11. Detector quality control</h2>
+<p><span class="menu">Tools › Detector QC…</span> keeps control charts of the check-source and background
+measurements of each detector, as required by ISO/IEC 17025 (7.7). For every measurement it records the
+<b>centroid energy</b> (gain/offset drift), the <b>FWHM</b> (resolution), the <b>net count rate</b> decay-corrected
+to a reference date (efficiency stability), the <b>background rate</b> in an energy window, and live/dead time.</p>
+<figure><img src="images/en/qc_charts.png" alt="QC charts"><figcaption>Control charts of a Cs-137 + Co-60
+check source on detector G4 (101 measurements, 2012–2013): baseline (shaded), mean, ±2σ, ±3σ and
+tolerance lines, violations labelled.</figcaption></figure>
+
+<h3 id="qc-track">11.1 Creating a QC track</h3>
+<p>A <b>track</b> is one detector + one check source (or a background measurement). Click <b>New…</b> and fill in:</p>
+<ul>
+  <li>name, detector, detector type (HPGe, NaI, LaBr3, CZT), type (check source / background);</li>
+  <li><b>monitored lines</b> — from a preset (Cs-137, Co-60, Cs-137 + Co-60, Eu-152, Ba-133, Am-241, Na-22,
+      Background) or typed as <code>keV[:nuclide[:FWHM max]]</code>, e.g.
+      <code>661.657:Cs-137, 1332.492:Co-60:2.0</code>;</li>
+  <li>reference date and reference activity (for decay correction), peak match tolerance;</li>
+  <li><b>centroid energy from</b> each file's calibration, or a <b>fixed reference calibration</b> — the
+      latter shows real gain drift even when each spectrum was recalibrated;</li>
+  <li>background window, <b>baseline</b> (first N points or a period), the <b>Westgard rules</b> to apply and
+      fixed tolerances (centroid ± keV, rate ± %, background ± %).</li>
+</ul>
+<figure class="small"><img src="images/en/qc_track.png" alt="Track dialog"><figcaption>QC track settings.</figcaption></figure>
+
+<h3 id="qc-add">11.2 Adding measurements</h3>
+<p><b>Add Files…</b>, <b>Add Folder…</b> (e.g. the whole year's QC folder) or <b>Add Displayed Spectrum</b>.
+Each spectrum is analysed once and its peak list stored, so lines and tolerances can be changed later without
+re-reading the files; duplicates are ignored. <b>Re-analyse</b> re-reads all source files. In the
+<i>Measurements</i> table a right click can <b>exclude</b> a point from the statistics (with a note, e.g.
+"source repositioned"), remove it, or show the spectrum in the main window.</p>
+
+<h3 id="qc-rules">11.3 Control charts and Westgard rules</h3>
+<p>Mean and standard deviation are computed from the baseline points; warning limits are ±2σ and action limits
+±3σ. The rules are evaluated on all non-excluded points in date order:</p>
+<table class="grid">
+  <thead><tr><th>Rule</th><th>Meaning</th><th>Severity</th></tr></thead>
+  <tbody>
+  <tr><td><code>1-2s</code></td><td>one point beyond ±2σ</td><td>warning</td></tr>
+  <tr><td><code>1-3s</code></td><td>one point beyond ±3σ</td><td>out of control</td></tr>
+  <tr><td><code>2-2s</code></td><td>two consecutive points beyond 2σ on the same side</td><td>out of control</td></tr>
+  <tr><td><code>R-4s</code></td><td>two consecutive points beyond 2σ on opposite sides</td><td>out of control</td></tr>
+  <tr><td><code>4-1s</code></td><td>four consecutive points beyond 1σ on the same side</td><td>out of control</td></tr>
+  <tr><td><code>10-x</code></td><td>ten consecutive points on the same side of the mean</td><td>out of control</td></tr>
+  <tr><td><code>TOL</code></td><td>fixed tolerance exceeded (centroid, FWHM max, rate, background)</td><td>out of control</td></tr>
+  <tr><td><code>SPLIT</code></td><td>line found split into two peaks (gain or zero jump during the count)</td><td>out of control</td></tr>
+  </tbody>
+</table>
+<p>The <i>Violations</i> tab lists every rule hit with date, file, series and value; the <i>Statistics</i> tab
+gives N, mean, SD, CV % and the trend per year for each line and quantity.</p>
+<figure><img src="images/en/qc_violations.png" alt="Violations"><figcaption>Violations tab.</figcaption></figure>
+
+<h3 id="qc-report">11.4 Exporting and reports</h3>
+<p><b>Charts PNG… / SVG…</b> save the charts, <b>Excel…</b> a workbook with measurements, statistics and
+violations, and <b>PDF Report…</b> a complete QC report (track settings, summary, charts, statistics,
+measurements, violations and a signature line) in the interface language. Tracks are stored as JSON files in
+<code>%APPDATA%\SpectraMaster\qc\</code>.</p>
+
+<!-- ================================================================== 12 -->
+<h2 id="ch-faq">12. Troubleshooting and FAQ</h2>
+
+<h4>The file is not recognised ("cannot recognise the format")</h4>
+<p>Check that the file is a spectrum (not a report or a calibration file) and not empty. Try
+<span class="menu">File › Open Input Files As…</span> with the expected format; the
+<code>smconvert info FILE --from CODE</code> command shows the reader's exact error. If <i>Auto-detect</i> is not
+active, a wrong fixed format is the most common cause — the status bar shows the active input mode.</p>
+
+<h4>Peaks are at the wrong energies</h4>
+<ul>
+  <li>The file may be uncalibrated or carry an old calibration: check <i>Energy Calibration</i> in the information
+      panel and recalibrate (chapter 7).</li>
+  <li>After conversion to CHN/CNF/SPC, read the refit warning: the deviation of the refitted calibration is
+      printed.</li>
+  <li>Genie-2000 shows channel numbers one higher than SpectraMaster — energies are the same.</li>
+</ul>
+
+<h4>Arabic sample names became "????" in Genie or MAESTRO</h4>
+<p>CNF, CHN and SPC store only Latin text (section <a href="#open-formats">3.4</a>). Keep the Aptec S0, SPE, N42 or
+Excel file as the reference copy. Saving or converting to a format that stores only ASCII text (CHN, SPC, CNF,
+S100, ND66) prints a warning when the sample ID or description contains Arabic (non-ASCII) characters.</p>
+
+<h4>"stores only 3 calibration terms: energy calibration refitted"</h4>
+<p>Not an error: the target format cannot hold the source polynomial. Accept small deviations (≲ 0.05 keV);
+for larger ones choose a format that keeps the full calibration (Aptec S0, IAEA SPE, N42, JSON, Excel).</p>
+
+<h4>"The peak-search engine is not available" / F5 is disabled</h4>
+<p>No spectrum is open, or the spectrum is empty. Nuclides are not identified in uncalibrated spectra.</p>
+
+<h4>GammaVision does not call SpectraMaster</h4>
+<p>Copy Program and Arguments again from <span class="menu">Help › GammaVision / MAESTRO Integration…</span>; put
+quotes around paths with spaces when not using the macros.</p>
+
+<h4>Where are settings and data stored?</h4>
+<table class="grid kv">
+  <tr><td>Preferences</td><td>Language, last folders, input/output formats, window layout, view options and report
+      templates: Windows registry <code>HKEY_CURRENT_USER\Software\SpectraMaster\SpectraMaster</code>.</td></tr>
+  <tr><td>Archive index</td><td><code>%APPDATA%\SpectraMaster\archive.sqlite</code> (changeable in the window).</td></tr>
+  <tr><td>Efficiency curves</td><td><code>%APPDATA%\SpectraMaster\efficiency\*.json</code></td></tr>
+  <tr><td>QC tracks</td><td><code>%APPDATA%\SpectraMaster\qc\*.json</code></td></tr>
+</table>
+<p><code>%APPDATA%</code> is usually <code>C:\Users\&lt;name&gt;\AppData\Roaming</code>. Back up the
+<code>SpectraMaster</code> folder together with the laboratory data. Deleting the registry key resets all
+preferences.</p>
+
+<!-- ================================================================== 13 -->
+<h2 id="ch-appendix">13. Appendices</h2>
+
+<h3 id="app-formats">A. Supported formats</h3>
+<p>Codes 1–16 are the DataMaster numbers; use them with <code>-i</code>/<code>-j</code>, <code>--to</code> and
+<code>--from</code>.</p>
+{{FORMATS_TABLE}}
+
+<h3 id="app-cli">B. Command-line reference</h3>
+<p>Output of <code>smconvert --help</code> and <code>smconvert COMMAND --help</code>. Format arguments accept a code,
+key or alias. <code>smconvert</code> without arguments prints the usage summary and a reminder that the graphical
+program is <code>SpectraMaster.exe</code>.</p>
+{{CLI_REFERENCE}}
+
+<h3 id="app-glossary">C. Glossary (English – Arabic)</h3>
+<table class="grid glossary">
+  <thead><tr><th>English</th><th>Arabic</th><th>Meaning</th></tr></thead>
+  <tbody>
+  <tr><td>Live time / real time / dead time</td><td dir="rtl">الزمن الحي / الحقيقي / الميت</td><td>Counting time corrected for dead time / clock time / their difference in %.</td></tr>
+  <tr><td>Channel, centroid</td><td dir="rtl">القناة، مركز القمة</td><td>MCA bin; fitted peak position in channels.</td></tr>
+  <tr><td>Energy calibration</td><td dir="rtl">معايرة الطاقة</td><td>Polynomial E(channel) in keV.</td></tr>
+  <tr><td>FWHM</td><td dir="rtl">قدرة الفصل (العرض عند نصف الارتفاع)</td><td>Full width at half maximum of a peak.</td></tr>
+  <tr><td>Net / gross area</td><td dir="rtl">المساحة الصافية / الإجمالية</td><td>Peak counts above / including the background.</td></tr>
+  <tr><td>Significance</td><td dir="rtl">الدلالة الإحصائية</td><td>Net area divided by its 1σ uncertainty.</td></tr>
+  <tr><td>Region of interest (ROI)</td><td dir="rtl">منطقة الاهتمام</td><td>Marked channel range with gross/net counts.</td></tr>
+  <tr><td>Overlay</td><td dir="rtl">طيف متراكب</td><td>Second spectrum drawn on the same plot.</td></tr>
+  <tr><td>Nuclide identification</td><td dir="rtl">التعرّف على النويدات</td><td>Matching peaks to library lines.</td></tr>
+  <tr><td>Confidence</td><td dir="rtl">الثقة</td><td>Heuristic identification score 0–100 %.</td></tr>
+  <tr><td>Full-energy-peak efficiency</td><td dir="rtl">كفاءة قمة الطاقة الكاملة</td><td>Counts in the peak per emitted photon.</td></tr>
+  <tr><td>Emission probability (yield)</td><td dir="rtl">احتمال الانبعاث (الشدة)</td><td>Photons per 100 decays.</td></tr>
+  <tr><td>Specific activity</td><td dir="rtl">النشاط النوعي</td><td>Bq per kg or per litre.</td></tr>
+  <tr><td>Expanded uncertainty (k = 2)</td><td dir="rtl">الارتياب الموسَّع</td><td>2 × combined standard uncertainty (≈ 95 %).</td></tr>
+  <tr><td>Decision threshold / detection limit</td><td dir="rtl">عتبة القرار / حد الكشف</td><td>L<sub>C</sub> or y* / L<sub>D</sub> or y#.</td></tr>
+  <tr><td>MDA</td><td dir="rtl">أدنى نشاط قابل للكشف</td><td>Minimum detectable activity.</td></tr>
+  <tr><td>True-coincidence summing</td><td dir="rtl">جمع التوافق الحقيقي</td><td>Loss/gain of counts by cascade gamma rays.</td></tr>
+  <tr><td>Self-attenuation</td><td dir="rtl">الامتصاص الذاتي</td><td>Absorption of gamma rays inside the sample.</td></tr>
+  <tr><td>Decay correction</td><td dir="rtl">تصحيح الاضمحلال</td><td>Activity referred to the sampling date.</td></tr>
+  <tr><td>Check source, control chart</td><td dir="rtl">مصدر الفحص، مخطط التحكم</td><td>QC measurement and its chart.</td></tr>
+  <tr><td>Baseline</td><td dir="rtl">خط الأساس</td><td>Points that define mean and σ of a control chart.</td></tr>
+  <tr><td>Gain drift</td><td dir="rtl">انجراف الكسب</td><td>Slow change of the energy scale.</td></tr>
+  </tbody>
+</table>
+
+<h3 id="app-credits">D. Credits, licences and version</h3>
+<table class="grid kv">
+  <tr><td>Program</td><td>SpectraMaster {{VERSION}} — designed &amp; developed by <b>Edrees F. Hery</b>.</td></tr>
+  <tr><td>Qt / PySide6</td><td>Graphical interface; © The Qt Company, LGPL v3.</td></tr>
+  <tr><td>SpecUtils</td><td>Reading/writing of many formats (N42, PCF, SPE, CNF, SPC …); © Sandia National
+      Laboratories, LGPL 2.1.</td></tr>
+  <tr><td>SandiaDecay</td><td>Nuclear decay data used to build and cross-check the library; © Sandia National
+      Laboratories, LGPL 2.1.</td></tr>
+  <tr><td>IAEA ndlab</td><td>ENSDF-based decay data (LiveChart of Nuclides database); © IAEA, MIT licence.</td></tr>
+  <tr><td>NumPy, SciPy, openpyxl</td><td>Numerics, fitting and Excel files (BSD / MIT licences).</td></tr>
+</table>
+<p>DataMaster, GammaVision and MAESTRO are trademarks of ORTEC / AMETEK; Genie-2000 of Mirion (Canberra); Aptec of
+its owners. They are named only to describe compatibility.</p>
+<div class="cover" style="height:auto;padding:20px 0;page-break-after:auto;break-after:auto">
+  <div class="designer" style="margin-top:10px"><img src="images/designer_logo.png" alt="EFH" style="height:90px">
+  <span class="by">Designed &amp; developed by</span><span class="name">Edrees F. Hery</span></div>
+</div>

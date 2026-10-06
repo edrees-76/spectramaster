@@ -1,0 +1,612 @@
+"""Activity, specific activity, uncertainty budget and detection limits.
+
+Pure functions, no GUI imports.  Formulas (all uncertainties standard, k = 1)
+-----------------------------------------------------------------------------
+Per gamma line (energy E, emission probability I as a fraction)::
+
+    A_line = N / (eps(E) * I * t_live * C * D * F_att)
+    D      = exp(-lambda * (t_start - t_ref))      decay from the reference (sampling) date to the start
+    C      = (1 - exp(-lambda * t_real)) / (lambda * t_real)   decay during counting
+    N      = net peak area, minus the live-time-normalised background-spectrum peak
+             (peak-by-peak mode, N = N_s - (t_s/t_b) N_b) or measured on the net spectrum
+             (full-spectrum mode)
+    F_att  = 1 / (self-attenuation correction factor)  (user value, default 1)
+
+    u_rel^2 = u_count^2 + u_eff^2 + u_I^2 + u_mass^2 + u_att^2
+
+Nuclide activity: the chosen key line, or the inverse-variance weighted mean of the lines
+(weights fixed from the line uncertainties without the efficiency part; the efficiency
+component is treated as fully correlated between lines).  Natural-series parents are
+derived from daughters assuming secular equilibrium: A_parent = A_daughter / b
+(b = branching, e.g. 0.3594 for Tl-208 in the Th-232 chain).
+
+Specific activity a = A / m (Bq/kg, Bq/L ...); expanded uncertainty U = 2 u.
+
+Detection limits (counts), continuum B under the expected peak region of n channels
+(+-1.25 FWHM from the FWHM model), estimated from m channels on each side::
+
+    sigma0^2 = B (1 + n / (2 m)) + k_b^2 N_bkgpeak-variance      (blank variance)
+    Currie:  L_C = k * sigma0,   L_D = k^2 + 2 L_C   (k = 1.645, alpha = beta = 5 %)
+    MDA      = L_D / (f_w * eps * I * t_live * C * D * F_att)   f_w = window fraction of the peak
+
+ISO 11929 (simple formulation, activity domain, w = 1/(eps I t C D F_att)):
+
+    decision threshold  y* = k_{1-a} * w * sigma0
+    detection limit     y# = y* + k_{1-b} * sqrt( w^2 (y#/w + sigma0^2) + y#^2 u_rel(w)^2 )  (iterated)
+
+A nuclide is "detected" when its activity exceeds the decision threshold (Currie L_C or
+ISO y*); otherwise "< MDA" is reported.  True-coincidence summing is NOT corrected
+(a note is attached to cascade emitters).
+"""
+from __future__ import annotations
+
+import csv
+import math
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Optional, Sequence, Union
+
+import numpy as np
+
+from .efficiency import (EfficiencyCurve, counting_decay_factor, decay_factor, match_peak)
+
+K_DEFAULT = 1.645
+
+# Default definitions: reported nuclide -> list of (library nuclide, energy keV, factor b).
+# factor b = activity of the line's nuclide relative to the reported parent at equilibrium.
+KEY_LINES: dict[str, dict] = {
+    "Cs-137": {"lines": [("Cs-137", 661.657, 1.0)]},
+    "K-40": {"lines": [("K-40", 1460.82, 1.0)]},
+    "Cs-134": {"lines": [("Cs-134", 604.721, 1.0), ("Cs-134", 795.864, 1.0)]},
+    "Co-60": {"lines": [("Co-60", 1173.228, 1.0), ("Co-60", 1332.492, 1.0)]},
+    "I-131": {"lines": [("I-131", 364.489, 1.0)]},
+    "Be-7": {"lines": [("Be-7", 477.603, 1.0)]},
+    "Am-241": {"lines": [("Am-241", 59.541, 1.0)]},
+    "Ra-226": {"lines": [("Pb-214", 351.932, 1.0), ("Bi-214", 609.321, 1.0), ("Pb-214", 295.224, 1.0),
+                         ("Bi-214", 1764.491, 1.0)],
+               "note": "via Pb-214/Bi-214: assumes Ra-226/Rn-222 equilibrium (sealed container >= 3-4 weeks)"},
+    "Th-232": {"lines": [("Ac-228", 911.204, 1.0), ("Pb-212", 238.632, 1.0), ("Tl-208", 583.187, 0.3594),
+                         ("Ac-228", 968.971, 1.0)],
+               "note": "via Ac-228 (Ra-228) / Pb-212, Tl-208 (Th-228, branching 0.3594): assumes Th-232 series equilibrium"},
+    "Ra-228": {"lines": [("Ac-228", 911.204, 1.0), ("Ac-228", 968.971, 1.0)],
+               "note": "via Ac-228 (equilibrium Ra-228/Ac-228)"},
+    "Th-228": {"lines": [("Pb-212", 238.632, 1.0), ("Tl-208", 583.187, 0.3594)],
+               "note": "via Pb-212 / Tl-208 (equilibrium Th-228 daughters)"},
+    "U-235": {"lines": [("U-235", 143.76, 1.0), ("U-235", 185.715, 1.0)],
+              "note": "185.7 keV interferes with Ra-226 186.2 keV"},
+    "Pb-210": {"lines": [("Pb-210", 46.539, 1.0)], "note": "46.5 keV: strong self-attenuation"},
+}
+
+DEFAULT_NUCLIDES = ["Cs-137", "K-40", "Ra-226", "Th-232", "Cs-134", "Co-60", "I-131", "Be-7", "Am-241"]
+
+# cascade emitters (true-coincidence summing relevant in close geometries)
+TCS_NUCLIDES = {"Co-60", "Cs-134", "Bi-214", "Tl-208", "Ac-228", "Eu-152", "Y-88", "Ba-133",
+                "Ra-226", "Th-232", "Th-228", "Ra-228", "Na-22", "Sb-125", "Eu-154", "Co-58"}
+
+UNIT_FACTORS = {"kg": 1.0, "g": 1e-3, "l": 1.0, "ml": 1e-3, "m3": 1.0}   # quantity -> base unit (kg or L)
+
+
+def _base_unit(unit: str) -> str:
+    u = (unit or "").strip().lower()
+    return "kg" if u in ("kg", "g") else ("L" if u in ("l", "ml") else ("m3" if u == "m3" else unit))
+
+
+# ------------------------------------------------------------------ results
+
+
+@dataclass
+class LineResult:
+    nuclide: str                 # library nuclide of the line (e.g. "Bi-214")
+    energy: float
+    intensity: float             # fraction
+    factor: float = 1.0          # b: parent activity = line activity / b
+    net_area: float = 0.0
+    net_unc: float = 0.0
+    bkg_peak: float = 0.0        # subtracted background-spectrum peak (scaled)
+    continuum: float = 0.0       # B counts under the window
+    efficiency: float = 0.0
+    eff_rel_unc: float = 0.0
+    activity: Optional[float] = None       # parent Bq at reference date
+    u_count_rel: float = 0.0
+    lc_counts: float = 0.0
+    ld_counts: float = 0.0
+    decision_threshold: float = 0.0        # Bq (parent)
+    mda: float = 0.0                       # Bq (parent)
+    detected: bool = False
+    peak_found: bool = False
+    in_range: bool = True
+    note: str = ""
+
+
+@dataclass
+class NuclideResult:
+    nuclide: str
+    lines: list[LineResult] = field(default_factory=list)
+    key_energy: Optional[float] = None
+    method: str = "key"
+    activity: Optional[float] = None       # Bq at reference date
+    u: Optional[float] = None              # k=1, Bq
+    budget: dict = field(default_factory=dict)   # component -> relative % (k=1)
+    used_energies: list[float] = field(default_factory=list)   # lines entering the value
+    decision_threshold: float = 0.0        # Bq
+    mda: float = 0.0                       # Bq
+    detected: bool = False
+    specific: Optional[float] = None       # Bq/unit
+    specific_u: Optional[float] = None     # k=1
+    specific_mda: Optional[float] = None
+    unit: str = ""
+    half_life_s: Optional[float] = None
+    note: str = ""
+
+    @property
+    def U(self) -> Optional[float]:
+        return None if self.u is None else 2.0 * self.u
+
+    @property
+    def specific_U(self) -> Optional[float]:
+        return None if self.specific_u is None else 2.0 * self.specific_u
+
+    @property
+    def decision(self) -> str:
+        return "detected" if self.detected else "< MDA"
+
+    @property
+    def lines_text(self) -> str:
+        es = self.used_energies or ([self.key_energy] if self.key_energy is not None else [])
+        return ", ".join(f"{e:.1f}" for e in es)
+
+    @property
+    def net_area(self) -> Optional[float]:
+        k = self.key_line
+        return k.net_area if k else None
+
+    @property
+    def key_line(self) -> Optional[LineResult]:
+        return next((l for l in self.lines if self.key_energy is not None and abs(l.energy - self.key_energy) < 1e-6),
+                    self.lines[0] if self.lines else None)
+
+
+@dataclass
+class ActivityOptions:
+    nuclides: Sequence[str] = tuple(DEFAULT_NUCLIDES)
+    method: str = "key"                  # "key" | "mean"
+    key_lines: dict = field(default_factory=dict)   # nuclide -> energy override
+    ref_date: Optional[datetime] = None  # None = acquisition start
+    quantity: Optional[float] = None
+    quantity_unit: str = "kg"
+    quantity_rel_unc: float = 0.0        # fraction
+    attenuation: Union[float, dict] = 1.0   # correction factor(s) (multiplies the activity), per nuclide dict ok
+    attenuation_rel_unc: float = 0.0
+    intensity_rel_unc: float = 0.0       # library intensities carry no uncertainty; optional extra
+    bkg_mode: str = "peak"               # "peak" | "spectrum"
+    mda_method: str = "currie"           # "currie" | "iso11929"
+    k_alpha: float = K_DEFAULT
+    k_beta: float = K_DEFAULT
+    min_sig: float = 3.0
+    min_intensity_pct: float = 1.0       # generic nuclides: lines used
+
+
+@dataclass
+class QuantResults:
+    """Everything a report needs (``MainWindow.quant_results``)."""
+    sample: str
+    source_path: str
+    start_time: Optional[datetime]
+    live_time: float
+    real_time: Optional[float]
+    ref_date: Optional[datetime]
+    curve_name: str
+    curve_model: str
+    background: str
+    options: ActivityOptions
+    nuclides: list[NuclideResult]
+    notes: list[str] = field(default_factory=list)
+
+    def rows(self) -> list[dict]:
+        return [result_row(r) for r in self.nuclides]
+
+
+# ------------------------------------------------------------------ helpers
+
+
+def _channel_of_energy(spectrum, energy: float) -> Optional[float]:
+    e = np.asarray(spectrum.energies(), dtype=float)
+    if len(e) < 2 or not (min(e[0], e[-1]) <= energy <= max(e[0], e[-1])):
+        return None
+    if e[-1] < e[0]:
+        e = e[::-1]
+        return float(len(e) - 1 - np.interp(energy, e, np.arange(len(e))))
+    return float(np.interp(energy, e, np.arange(len(e))))
+
+
+def continuum_under(spectrum, energy: float, fwhm_ch: np.ndarray, counts=None
+                    ) -> Optional[tuple[float, int, int, float]]:
+    """(B, n, m, window_fraction) for the region E +- 1.25 FWHM; m side channels each side."""
+    idx = _channel_of_energy(spectrum, energy)
+    if idx is None:
+        return None
+    y = np.asarray(spectrum.counts if counts is None else counts, dtype=float)
+    fw = float(fwhm_ch[int(min(max(round(idx), 0), len(fwhm_ch) - 1))])
+    half = max(1.25 * fw, 1.0)
+    lo, hi = int(math.floor(idx - half + 0.5)), int(math.floor(idx + half + 0.5))
+    m = max(2, int(round(1.5 * fw)))
+    if lo - m < 0 or hi + m >= len(y):
+        return None
+    n = hi - lo + 1
+    side = float(y[lo - m:lo].sum() + y[hi + 1:hi + 1 + m].sum())
+    b = max(side * n / (2.0 * m), 0.0)
+    s = fw / (2.0 * math.sqrt(2.0 * math.log(2.0)))
+    r2 = s * math.sqrt(2.0)
+    frac = 0.5 * (math.erf((idx - (lo - 0.5)) / r2) + math.erf((hi + 0.5 - idx) / r2))
+    return b, n, m, min(max(frac, 0.5), 1.0)
+
+
+def currie_limits(sigma0: float, k_alpha: float = K_DEFAULT, k_beta: float = K_DEFAULT) -> tuple[float, float]:
+    """(L_C, L_D) in counts from the blank standard deviation sigma0."""
+    lc = k_alpha * sigma0
+    if abs(k_alpha - k_beta) < 1e-12:
+        return lc, k_beta ** 2 + 2.0 * lc
+    # general Currie: L_D = L_C + k_b sqrt(L_D + sigma0^2) (solve quadratic)
+    a = k_beta ** 2
+    ld = lc + (a + math.sqrt(a * a + 4 * a * (lc + sigma0 ** 2))) / 2.0
+    return lc, ld
+
+
+def iso11929_limits(sigma0: float, w: float, w_rel_unc: float, k_alpha: float = K_DEFAULT,
+                    k_beta: float = K_DEFAULT) -> tuple[float, float]:
+    """(decision threshold y*, detection limit y#) in activity units (simple formulation)."""
+    ys = k_alpha * w * sigma0
+    yd = 2.0 * ys if ys > 0 else w * k_beta ** 2
+    for _ in range(200):
+        u = math.sqrt(w * w * (yd / w + sigma0 ** 2) + (yd * w_rel_unc) ** 2)
+        new = ys + k_beta * u
+        if abs(new - yd) < 1e-12 * max(new, 1e-300):
+            yd = new
+            break
+        yd = new
+    if k_beta * w_rel_unc >= 1:
+        yd = float("inf")
+    return ys, yd
+
+
+def nuclide_lines(name: str, curve: Optional[EfficiencyCurve] = None, min_intensity_pct: float = 1.0
+                  ) -> tuple[list[tuple[str, float, float, float]], str]:
+    """[(line nuclide, energy, intensity fraction, factor)] and a note for a reported nuclide."""
+    from .library import load_library
+    lib = load_library()
+    if name in KEY_LINES:
+        out = []
+        for ln, e, b in KEY_LINES[name]["lines"]:
+            nd = lib.get(ln)
+            if nd is None:
+                continue
+            l = min(nd.lines, key=lambda q: abs(q.energy - e))
+            if abs(l.energy - e) < 1.0:
+                out.append((ln, l.energy, l.intensity / 100.0, b))
+        return out, KEY_LINES[name].get("note", "")
+    nd = lib.get(name)
+    if nd is None:
+        raise KeyError(f"{name}: not in the nuclide library")
+    lines = [l for l in nd.gammas(min_intensity_pct) if l.energy >= 30.0]
+    if curve is not None:
+        inr = [l for l in lines if curve.in_range(l.energy, 0.1)]
+        lines = inr or lines
+    lines.sort(key=lambda l: -l.intensity * (curve.efficiency(l.energy) if curve else 1.0))
+    return [(name, l.energy, l.intensity / 100.0, 1.0) for l in lines[:6]], ""
+
+
+def _half_life(name: str) -> Optional[float]:
+    from .library import load_library
+    nd = load_library().get(name)
+    return nd.half_life_s if nd else None
+
+
+def _as_float(v) -> float:
+    return float(v) if v is not None else 0.0
+
+
+# ------------------------------------------------------------------ main entry
+
+
+def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[ActivityOptions] = None,
+                       background=None, peaks=None, bkg_peaks=None) -> QuantResults:
+    """Activities / MDAs for ``options.nuclides`` in ``spectrum`` (see module docstring)."""
+    from .peaks import find_peaks, fwhm_model
+    opt = options or ActivityOptions()
+    if not spectrum.energy_coeffs:
+        raise ValueError("the spectrum has no energy calibration")
+    if not spectrum.live_time:
+        raise ValueError("the spectrum has no live time")
+    t_live = float(spectrum.live_time)
+    t_real = float(spectrum.real_time or spectrum.live_time)
+    ref = opt.ref_date or spectrum.start_time
+    notes: list[str] = []
+    k_b = 0.0
+    work = spectrum
+    extra_var = None
+    if background is not None:
+        if not background.live_time:
+            raise ValueError("the background spectrum has no live time")
+        k_b = t_live / float(background.live_time)
+        if opt.bkg_mode == "spectrum":
+            from ..tools.arithmetic import align_to, same_calibration, subtract_background
+            net, _sig = subtract_background(spectrum, background)
+            bal = background if same_calibration(spectrum, background) else align_to(background, spectrum)
+            bcounts = np.clip(np.asarray(bal.counts, dtype=float), 0, None)
+            extra_var = k_b * (1.0 + k_b) * bcounts      # var(S - kB) - var_fit(net)
+            from dataclasses import replace
+            work = replace(net, counts=[max(c, 0.0) for c in net.counts])
+            peaks = None
+        else:
+            if bkg_peaks is None:
+                bkg_peaks = find_peaks(background, min_sig=opt.min_sig) if background.energy_coeffs else []
+    if peaks is None:
+        peaks = find_peaks(work, min_sig=opt.min_sig)
+    y = np.asarray(spectrum.counts, dtype=float)
+    fw_ch, _src = fwhm_model(spectrum, y)
+    if spectrum.start_time is None and opt.ref_date is not None:
+        notes.append("acquisition start unknown: no decay correction")
+    dt = (spectrum.start_time - ref).total_seconds() if (spectrum.start_time and ref) else 0.0
+
+    used_peaks: dict[int, list[str]] = {}
+    results = []
+    for name in opt.nuclides:
+        name = name.strip()
+        if not name:
+            continue
+        try:
+            lines, note = nuclide_lines(name, curve, opt.min_intensity_pct)
+        except KeyError as exc:
+            results.append(NuclideResult(nuclide=name, note=str(exc).strip("'\"")))
+            continue
+        hl = _half_life(name)
+        D =decay_factor(hl, dt)
+        C = counting_decay_factor(hl, t_real)
+        att = opt.attenuation.get(name, 1.0) if isinstance(opt.attenuation, dict) else float(opt.attenuation or 1.0)
+        res = NuclideResult(nuclide=name, method=opt.method, half_life_s=hl, note=note)
+        if D < 1e-3:
+            res.note = (res.note + f"; decay correction factor {1 / D:.3g} - check the reference date "
+                        "and parent/daughter equilibrium").strip("; ")
+        for ln_name, e, inten, b in lines:
+            lr = LineResult(ln_name, e, inten, b)
+            eff = float(curve.efficiency(e))
+            lr.efficiency = eff
+            lr.eff_rel_unc = float(curve.rel_uncertainty(e))
+            lr.in_range = curve.in_range(e)
+            if not lr.in_range:
+                lr.note = "efficiency extrapolated"
+            w = att / (eff * inten * t_live * C * D) / b       # Bq (parent) per net count
+            # blank (continuum) under the expected peak
+            cu = continuum_under(spectrum, e, fw_ch)
+            if cu is None:
+                lr.note = (lr.note + "; outside spectrum").strip("; ")
+                res.lines.append(lr)
+                continue
+            B, n, m, fwin = cu
+            lr.continuum = B
+            var0 = B * (1.0 + n / (2.0 * m))
+            p = match_peak(peaks, e)
+            bp = match_peak(bkg_peaks, e) if (bkg_peaks and opt.bkg_mode == "peak") else None
+            if bp is not None:
+                lr.bkg_peak = k_b * bp.net_area
+                var0 += lr.bkg_peak + (k_b * bp.net_area_unc) ** 2
+            if extra_var is not None:
+                idx = _channel_of_energy(spectrum, e)
+                if idx is not None:
+                    h = max(1, int(round(1.25 * fw_ch[int(round(idx))])))
+                    var0 += float(extra_var[max(0, int(idx) - h):int(idx) + h + 1].sum())
+            sigma0 = math.sqrt(max(var0, 0.0))
+            w_rel = math.sqrt(lr.eff_rel_unc ** 2 + opt.intensity_rel_unc ** 2 + opt.attenuation_rel_unc ** 2)
+            if opt.mda_method == "iso11929":
+                ys, yd = iso11929_limits(sigma0, w / fwin, w_rel, opt.k_alpha, opt.k_beta)
+                lr.lc_counts, lr.ld_counts = ys / w * fwin, yd / w * fwin
+                lr.decision_threshold, lr.mda = ys, yd
+            else:
+                lc, ld = currie_limits(sigma0, opt.k_alpha, opt.k_beta)
+                lr.lc_counts, lr.ld_counts = lc, ld
+                lr.decision_threshold, lr.mda = lc * w / fwin, ld * w / fwin
+            if p is not None:
+                lr.peak_found = True
+                nnet, unet = float(p.net_area), float(p.net_area_unc)
+                if extra_var is not None:
+                    lo, hi = max(0, p.left), min(len(extra_var) - 1, p.right)
+                    unet = math.sqrt(unet ** 2 + float(extra_var[lo:hi + 1].sum()))
+                if bp is not None:
+                    nnet -= lr.bkg_peak
+                    unet = math.hypot(unet, k_b * bp.net_area_unc)
+                lr.net_area, lr.net_unc = nnet, unet
+                used_peaks.setdefault(id(p), []).append(name)
+                lr.activity = nnet * w
+                lr.u_count_rel = unet / abs(nnet) if nnet else float("inf")
+                lr.detected = nnet > lr.lc_counts
+            else:
+                lr.note = (lr.note + "; no peak").strip("; ")
+            res.lines.append(lr)
+        _combine(res, opt)
+        results.append(res)
+    # shared peaks
+    shared: dict[str, set] = {}
+    for names in used_peaks.values():
+        for n in set(names):
+            shared.setdefault(n, set()).update(set(names) - {n})
+    for r in results:
+        if shared.get(r.nuclide):
+            r.note = (r.note + "; peak shared with " + ", ".join(sorted(shared[r.nuclide]))).strip("; ")
+    # specific activity
+    q = opt.quantity
+    unit = _base_unit(opt.quantity_unit)
+    for r in results:
+        if r.nuclide in TCS_NUCLIDES:
+            r.note = (r.note + "; true-coincidence summing not corrected").strip("; ")
+        if q and q > 0:
+            qb = q * UNIT_FACTORS.get((opt.quantity_unit or "").lower(), 1.0)
+            r.unit = f"Bq/{unit}"
+            if r.activity is not None:
+                r.specific = r.activity / qb
+                r.specific_u = (r.u or 0.0) / qb
+            r.specific_mda = r.mda / qb if r.mda else None
+    if background is not None:
+        notes.append(f"background: {background.source_path or background.sample_id or '?'} "
+                     f"({'peak-by-peak' if opt.bkg_mode == 'peak' else 'full spectrum'}, k = {k_b:.4g})")
+    return QuantResults(sample=spectrum.sample_id, source_path=spectrum.source_path,
+                        start_time=spectrum.start_time, live_time=t_live, real_time=spectrum.real_time,
+                        ref_date=ref, curve_name=curve.name or curve.geometry, curve_model=curve.describe(),
+                        background=(background.source_path or background.sample_id) if background is not None else "",
+                        options=opt, nuclides=results, notes=notes)
+
+
+def _combine(res: NuclideResult, opt: ActivityOptions) -> None:
+    lines = [l for l in res.lines if l.mda > 0]
+    if not lines:
+        res.note = (res.note + "; no usable line").strip("; ")
+        return
+    want = opt.key_lines.get(res.nuclide)
+    if want is not None:
+        key = min(lines, key=lambda l: abs(l.energy - float(want)))
+    else:
+        found = [l for l in lines if l.activity is not None and l.detected]
+        if res.nuclide in KEY_LINES:
+            key = found[0] if found else lines[0]
+        else:
+            key = min(found or lines, key=lambda l: l.mda)
+    res.key_energy = key.energy
+    ui, ua, um = opt.intensity_rel_unc, opt.attenuation_rel_unc, opt.quantity_rel_unc
+    if opt.method == "mean":
+        cand = [l for l in lines if l.activity is not None and l.detected and l.net_area > 0]
+        if not cand:
+            cand = [key] if key.activity is not None else []
+    else:
+        cand = [key] if key.activity is not None else []
+    res.mda = key.mda
+    res.decision_threshold = key.decision_threshold
+    if not cand:
+        res.detected = False
+        return
+    res.used_energies = [l.energy for l in cand]
+    if len(cand) == 1:
+        l = cand[0]
+        a = l.activity
+        uc, ue = abs(a) * l.u_count_rel, abs(a) * l.eff_rel_unc
+        res.detected = l.detected
+    else:
+        # weights from the uncorrelated part (counting + intensity)
+        var_unc = [(l.activity * l.u_count_rel) ** 2 + (l.activity * ui) ** 2 for l in cand]
+        wts = [1.0 / v if v > 0 else 0.0 for v in var_unc]
+        sw = sum(wts)
+        a = sum(w * l.activity for w, l in zip(wts, cand)) / sw
+        uc = math.sqrt(sum((w * l.activity * l.u_count_rel) ** 2 for w, l in zip(wts, cand))) / sw
+        ue = sum(w * abs(l.activity) * l.eff_rel_unc for w, l in zip(wts, cand)) / sw
+        # decision threshold of the combination
+        s0 = [l.decision_threshold / opt.k_alpha for l in cand]
+        res.decision_threshold = opt.k_alpha / math.sqrt(sum(1.0 / (s * s) for s in s0 if s > 0))
+        res.mda = min(l.mda for l in cand)
+        res.detected = a > res.decision_threshold
+        chi2 = sum((l.activity - a) ** 2 / v for l, v in zip(cand, var_unc) if v > 0)
+        if chi2 / (len(cand) - 1) > 4.0:
+            res.note = (res.note + f"; lines inconsistent (chi2/dof = {chi2 / (len(cand) - 1):.1f})").strip("; ")
+    a_abs = abs(a) if a else 0.0
+    comp = {"counting": uc, "efficiency": ue, "intensity": a_abs * ui, "quantity": a_abs * um,
+            "attenuation": a_abs * ua}
+    res.activity = a
+    res.u = math.sqrt(sum(v * v for v in comp.values()))
+    res.budget = {k: (100.0 * v / a_abs if a_abs else 0.0) for k, v in comp.items()}
+
+
+# ------------------------------------------------------------------ table / export
+
+ROW_KEYS = ["nuclide", "lines", "net_area", "net_unc", "activity_bq", "u_bq", "specific", "specific_U2",
+            "unit", "mda_bq", "mda_specific", "decision", "budget", "note"]
+
+
+def result_row(r: NuclideResult) -> dict:
+    k = r.key_line
+    bud = ", ".join(f"{name} {v:.1f}%" for name, v in r.budget.items() if v > 0.005)
+    return {"nuclide": r.nuclide, "lines": r.lines_text, "net_area": k.net_area if k and k.peak_found else None,
+            "net_unc": k.net_unc if k and k.peak_found else None,
+            "activity_bq": r.activity if r.detected else None, "u_bq": r.u if r.detected else None,
+            "specific": r.specific if r.detected else None,
+            "specific_U2": r.specific_U if r.detected else None, "unit": r.unit,
+            "mda_bq": r.mda or None, "mda_specific": r.specific_mda, "decision": r.decision,
+            "budget": bud, "note": r.note}
+
+
+def _fmt(v, digits=4) -> str:
+    if v is None:
+        return ""
+    if v == 0 or not math.isfinite(v):
+        return f"{v:g}"
+    return f"{v:.{digits}g}"
+
+
+def format_table(res: QuantResults) -> str:
+    unit = next((r.unit for r in res.nuclides if r.unit), "")
+    hdr = ["Nuclide", "Line(s) keV", "Net area", "Activity Bq (k=1)", f"{unit or 'Specific'} (k=2)",
+           "MDA Bq", f"MDA {unit}".strip(), "Decision"]
+    rows = []
+    for r in res.nuclides:
+        k = r.key_line
+        net = f"{k.net_area:.0f} ± {k.net_unc:.0f}" if k and k.peak_found else "-"
+        if r.detected and r.activity is not None:
+            act = f"{_fmt(r.activity)} ± {_fmt(r.u, 2)}"
+            spec = f"{_fmt(r.specific)} ± {_fmt(r.specific_U, 2)}" if r.specific is not None else ""
+        else:
+            act = f"< {_fmt(r.mda, 3)}" if r.mda else "-"
+            spec = f"< {_fmt(r.specific_mda, 3)}" if r.specific_mda else ""
+        rows.append([r.nuclide, r.lines_text, net, act, spec, _fmt(r.mda, 3), _fmt(r.specific_mda, 3), r.decision])
+    w = [max(len(str(x)) for x in col) for col in zip(hdr, *rows)]
+    out = ["  ".join(str(x).ljust(n) for x, n in zip(hdr, w))]
+    out += ["  ".join(str(x).ljust(n) for x, n in zip(row, w)) for row in rows]
+    return "\n".join(out)
+
+
+def export_results(path, res: QuantResults) -> Path:
+    """CSV (utf-8-sig) or XLSX (by extension): metadata, results, per-line details."""
+    path = Path(path)
+    meta = [("Sample", res.sample), ("File", res.source_path),
+            ("Acquisition start", res.start_time.isoformat(sep=" ") if res.start_time else ""),
+            ("Live time s", res.live_time), ("Real time s", res.real_time or ""),
+            ("Reference date", res.ref_date.isoformat(sep=" ") if res.ref_date else ""),
+            ("Efficiency curve", f"{res.curve_name} ({res.curve_model})"), ("Background", res.background),
+            ("Quantity", f"{res.options.quantity or ''} {res.options.quantity_unit if res.options.quantity else ''}"),
+            ("Method", res.options.method), ("Detection limit", res.options.mda_method),
+            ("Notes", "; ".join(res.notes))]
+    header = ROW_KEYS
+    rows = [[result_row(r)[k] for k in header] for r in res.nuclides]
+    lhead = ["nuclide", "line_nuclide", "energy_keV", "intensity_%", "factor", "net_area", "net_unc",
+             "bkg_peak", "continuum", "efficiency", "eff_rel_unc_%", "activity_Bq", "LC_counts", "LD_counts",
+             "decision_threshold_Bq", "MDA_Bq", "detected", "note"]
+    lrows = [[r.nuclide, l.nuclide, round(l.energy, 3), 100 * l.intensity, l.factor, l.net_area, l.net_unc,
+              l.bkg_peak, l.continuum, l.efficiency, 100 * l.eff_rel_unc, l.activity, l.lc_counts, l.ld_counts,
+              l.decision_threshold, l.mda, l.detected, l.note] for r in res.nuclides for l in r.lines]
+    if path.suffix.lower() == ".xlsx":
+        from openpyxl import Workbook
+        from openpyxl.styles import Font
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Sample"
+        for kv in meta:
+            ws.append(list(kv))
+        for title, h, rr in (("Activity", header, rows), ("Lines", lhead, lrows)):
+            s = wb.create_sheet(title)
+            s.append(h)
+            for c in s[1]:
+                c.font = Font(bold=True)
+            for r in rr:
+                s.append(r)
+            s.freeze_panes = "A2"
+        wb.save(path)
+        return path
+    with path.open("w", newline="", encoding="utf-8-sig") as fh:
+        w = csv.writer(fh)
+        for k, v in meta:
+            w.writerow([f"# {k}", v])
+        w.writerow([])
+        w.writerow(header)
+        for r in rows:
+            w.writerow(["" if v is None else v for v in r])
+        w.writerow([])
+        w.writerow(lhead)
+        for r in lrows:
+            w.writerow(["" if v is None else v for v in r])
+    return path

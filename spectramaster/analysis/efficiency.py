@@ -1,0 +1,648 @@
+"""Full-energy-peak (FEP) efficiency calibration.
+
+Pure functions, no GUI imports.  Conventions
+--------------------------------------------
+* Activities in Bq, energies in keV, times in s, dates naive local ``datetime``.
+* Gamma intensities ``I`` are *fractions* per decay (the bundled library stores percent;
+  :func:`certificate_lines` converts).
+* Measured efficiency point of a certified line::
+
+      eps = N / (t_live * A(t0) * C * I)
+      A(t0) = A_ref * exp(-lambda * (t0 - t_ref))          decay to the measurement start t0
+      C     = (1 - exp(-lambda * t_real)) / (lambda * t_real)  decay during counting
+
+  relative uncertainty  u(eps)/eps = sqrt( (uN/N)^2 + (uA/A)^2 + (uI/I)^2 ).
+* Fit models (weighted linear least squares on ln eps, weights 1/u_rel^2):
+
+  - ``loglog``      ln eps = sum_i a_i * x^i,          x = ln(E / E0)   (order 1..5, E0 = 1000 keV)
+  - ``two_branch``  ln eps = a_0 + sum_i b_i x^i  (E <  Ec)
+                    ln eps = a_0 + sum_i c_i x^i  (E >= Ec),  x = ln(E / Ec)
+                    the shared a_0 makes the curve continuous at the crossover Ec.
+
+  The parameter covariance is (J^T W J)^-1, multiplied by the reduced chi^2 when that is
+  > 1 (Birge scaling).  u(eps(E))/eps = sqrt(g^T C g + u_sys^2) with g = d ln eps / d a;
+  ``u_sys`` (relative) is the part of the certificate uncertainty common to all points
+  (fully correlated, it does not average down) - by default the smallest relative
+  activity uncertainty of the certificate.
+* Curves are saved as JSON (``EfficiencyCurve.save`` / ``load_curve``), by default in
+  :func:`default_curve_dir`.
+
+Aptec ``.S0`` files carry Aptec's own efficiency/source records (130 bytes each, see
+:func:`aptec_source_records`), which can serve as the certificate.
+"""
+from __future__ import annotations
+
+import csv
+import json
+import math
+import os
+import struct
+from dataclasses import asdict, dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Iterable, Optional, Sequence
+
+import numpy as np
+
+LN2 = math.log(2.0)
+YEAR_S = 365.2422 * 86400.0
+E0_LOGLOG = 1000.0
+
+# ------------------------------------------------------------------ decay helpers
+
+
+def decay_constant(half_life_s: Optional[float]) -> float:
+    return LN2 / half_life_s if half_life_s and half_life_s > 0 else 0.0
+
+
+def decay_factor(half_life_s: Optional[float], dt_s: float) -> float:
+    """exp(-lambda * dt): fraction left after dt seconds (dt may be negative)."""
+    return math.exp(-decay_constant(half_life_s) * dt_s)
+
+
+def counting_decay_factor(half_life_s: Optional[float], t_real: Optional[float]) -> float:
+    """Mean activity during counting / activity at the start: (1-e^-lt)/(lt) (1 if stable)."""
+    lam = decay_constant(half_life_s)
+    if not t_real or lam * t_real < 1e-9:
+        return 1.0
+    x = lam * t_real
+    return -math.expm1(-x) / x
+
+
+def parse_date(text) -> Optional[datetime]:
+    """ISO-like date/time ('2004-07-22', '2004-07-22 11:02', '22/07/2004', '22.07.2004 11:02')."""
+    if text is None or isinstance(text, datetime):
+        return text
+    s = str(text).strip()
+    if not s:
+        return None
+    s = s.replace("T", " ")
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M", "%Y-%m-%d", "%d/%m/%Y %H:%M:%S", "%d/%m/%Y %H:%M",
+                "%d/%m/%Y", "%d.%m.%Y %H:%M", "%d.%m.%Y", "%Y/%m/%d %H:%M", "%Y/%m/%d"):
+        try:
+            return datetime.strptime(s, fmt)
+        except ValueError:
+            pass
+    try:
+        return datetime.fromisoformat(s)
+    except ValueError:
+        raise ValueError(f"unrecognised date: {text!r}") from None
+
+
+# ------------------------------------------------------------------ certificate
+
+
+@dataclass
+class CertLine:
+    """One certified gamma line of a calibration standard."""
+    nuclide: str
+    energy: float                   # keV
+    intensity: float                # photons per decay (fraction)
+    activity: float                 # Bq at ref_date
+    activity_unc: float             # Bq, 1 sigma
+    ref_date: Optional[datetime]
+    half_life_s: Optional[float]
+    intensity_unc: float = 0.0      # absolute, fraction
+    use: bool = True
+
+
+@dataclass
+class CertNuclide:
+    """Certificate entry per nuclide (what the user types in)."""
+    nuclide: str
+    activity: float                 # Bq
+    activity_unc: float = 0.0       # Bq, 1 sigma
+    ref_date: Optional[datetime] = None
+    half_life_s: Optional[float] = None    # None = from the library
+    lines: Optional[list[tuple[float, float]]] = None   # (keV, fraction); None = library lines
+
+
+def _library():
+    from .library import load_library
+    return load_library()
+
+
+def half_life_of(nuclide: str) -> Optional[float]:
+    nd = _library().get(nuclide)
+    return nd.half_life_s if nd else None
+
+
+def certificate_lines(entries: Iterable[CertNuclide], min_intensity_pct: float = 2.0,
+                      e_min: float = 40.0, e_max: float = 3000.0) -> list[CertLine]:
+    """Expand nuclide entries into lines using the bundled library (gammas >= min_intensity_pct)."""
+    lib = _library()
+    out: list[CertLine] = []
+    for c in entries:
+        nd = lib.get(c.nuclide)
+        hl = c.half_life_s if c.half_life_s else (nd.half_life_s if nd else None)
+        if c.lines:
+            lines = list(c.lines)
+        elif nd:
+            lines = [(l.energy, l.intensity / 100.0) for l in nd.gammas(min_intensity_pct)
+                     if e_min <= l.energy <= e_max]
+        else:
+            raise KeyError(f"{c.nuclide}: not in the nuclide library - give the lines explicitly")
+        for e, i in lines:
+            if any(o.nuclide == c.nuclide and abs(o.energy - float(e)) < 0.01 for o in out):
+                continue        # duplicated row
+            out.append(CertLine(c.nuclide, float(e), float(i), float(c.activity), float(c.activity_unc),
+                                c.ref_date, hl))
+    return sorted(out, key=lambda l: l.energy)
+
+
+def read_certificate_csv(path) -> list[CertNuclide]:
+    """CSV certificate.  Header names (case-insensitive, any order)::
+
+        nuclide, activity_bq, unc_percent | unc_bq, ref_date [, half_life_s] [, energy_kev, intensity_percent]
+
+    Without a header the column order is nuclide, activity_bq, unc_percent, ref_date.
+    Rows of the same nuclide that give energy+intensity define that nuclide's lines explicitly.
+    """
+    rows = []
+    with open(path, newline="", encoding="utf-8-sig") as fh:
+        for r in csv.reader(fh):
+            r = [c.strip() for c in r]
+            if r and r[0] and not r[0].startswith("#"):
+                rows.append(r)
+    if not rows:
+        return []
+    try:
+        float(rows[0][1])
+        header = ["nuclide", "activity_bq", "unc_percent", "ref_date", "half_life_s", "energy_kev",
+                  "intensity_percent"]
+    except (ValueError, IndexError):
+        header = [h.lower().replace(" ", "_") for h in rows.pop(0)]
+    by: dict[str, CertNuclide] = {}
+    for r in rows:
+        d = {header[i]: r[i] for i in range(min(len(header), len(r)))}
+        name = d.get("nuclide", "")
+        act = float(d.get("activity_bq") or d.get("activity") or 0)
+        if d.get("unc_bq"):
+            unc = float(d["unc_bq"])
+        else:
+            unc = act * float(d.get("unc_percent") or d.get("unc_%") or 0) / 100.0
+        c = by.get(name)
+        if c is None:
+            hl = d.get("half_life_s")
+            c = by[name] = CertNuclide(name, act, unc, parse_date(d.get("ref_date")),
+                                       float(hl) if hl else None)
+        if d.get("energy_kev") and d.get("intensity_percent"):
+            c.lines = (c.lines or []) + [(float(d["energy_kev"]), float(d["intensity_percent"]) / 100.0)]
+    return list(by.values())
+
+
+def write_certificate_csv(path, entries: Sequence[CertNuclide]) -> Path:
+    path = Path(path)
+    with path.open("w", newline="", encoding="utf-8-sig") as fh:
+        w = csv.writer(fh)
+        w.writerow(["nuclide", "activity_bq", "unc_percent", "ref_date", "half_life_s", "energy_kev",
+                    "intensity_percent"])
+        for c in entries:
+            pct = 100.0 * c.activity_unc / c.activity if c.activity else 0.0
+            base = [c.nuclide, f"{c.activity:.6g}", f"{pct:.4g}",
+                    c.ref_date.strftime("%Y-%m-%d %H:%M") if c.ref_date else "",
+                    f"{c.half_life_s:.6g}" if c.half_life_s else ""]
+            if c.lines:
+                for e, i in c.lines:
+                    w.writerow(base + [f"{e:.3f}", f"{100 * i:.5g}"])
+            else:
+                w.writerow(base + ["", ""])
+    return path
+
+
+# Editable presets (activities are *examples* - always type the values of your certificate).
+PRESETS: dict[str, dict] = {
+    "QCY48 (typical mixed standard)": {
+        "note": "Amersham QCY48-type mixture; activities = the lab's QCY48CAL.S0 record (10 ml, ref 1988-02-01)",
+        "ref_date": "1988-02-01 12:00",
+        "nuclides": [("Am-241", 671.1, 3.0), ("Cd-109", 3654.0, 4.0), ("Co-57", 148.4, 2.5),
+                     ("Ce-139", 177.8, 2.5), ("Hg-203", 556.6, 5.0), ("Sn-113", 717.0, 5.0),
+                     ("Sr-85", 873.6, 2.5), ("Cs-137", 619.8, 3.5), ("Y-88", 1430.0, 3.0),
+                     ("Co-60", 743.1, 1.0)],
+    },
+    "QCRB1241 (lab, 1 L Marinelli)": {
+        "note": "the lab's QCRB1241 solution as stored in EFF-GOOD.S0 (Bq/ml x 1000 ml, ref 2003-04-01)",
+        "ref_date": "2003-04-01 12:00",
+        "nuclides": [("Ba-133", 1980.0, 3.0), ("Co-57", 2040.0, 3.0), ("Ce-139", 2050.0, 3.0),
+                     ("Sr-85", 9950.0, 3.0), ("Cs-137", 4000.0, 3.0), ("Mn-54", 4010.0, 3.0),
+                     ("Y-88", 9930.0, 3.0), ("Zn-65", 10000.0, 3.0)],
+    },
+    "Eu-152 point source": {"note": "", "ref_date": "", "nuclides": [("Eu-152", 10000.0, 2.0)]},
+}
+
+
+def preset_entries(name: str) -> list[CertNuclide]:
+    p = PRESETS[name]
+    ref = parse_date(p.get("ref_date"))
+    return [CertNuclide(n, a, a * u / 100.0, ref) for n, a, u in p["nuclides"]]
+
+
+# ------------------------------------------------------------------ Aptec source records
+
+_APTEC_UNITS = {"bq": 1.0, "kbq": 1e3, "mbq": 1e6, "uci": 3.7e4, "µci": 3.7e4, "mci": 3.7e7,
+                "nci": 37.0, "pci": 0.037, "ci": 3.7e10, "dps": 1.0, "gamma/s": None, "gps": None}
+
+
+@dataclass
+class AptecSourceRecord:
+    """One 130-byte efficiency/source record of an Aptec ``.S0`` file.
+
+    Layout (decoded from the lab's QCY48CAL/EFF/EFF-GOOD/EFFNEW/Eu-152 files and verified
+    arithmetically, e.g. efficiency = rate / (activity * quantity * decay * yield))::
+
+        +0x02 c16 nuclide        +0x12 f32 energy keV     +0x16 f32 gamma yield (fraction)
+        +0x1A f64 half-life s    +0x26 DT reference date  +0x2E f32 activity (per quantity unit)
+        +0x32 f32 activity unc % +0x36 c16 activity units ('Bq', 'uCi', 'gamma/s' ...)
+        +0x46 f32 quantity (multiplier, e.g. 1000 ml)     +0x4A f32 (unknown)  +0x4E c16 quantity units
+        +0x5E f64 net count rate (cps)                    +0x66 f32 rate unc %
+        +0x6A f32 efficiency     +0x6E f32 efficiency unc % = sqrt(rate%^2 + activity%^2)
+        +0x7A DT measurement (acquisition start) of the calibration spectrum
+    """
+    nuclide: str
+    energy: float
+    yield_: float
+    half_life_s: float
+    ref_date: Optional[datetime]
+    activity: float
+    activity_unc_pct: float
+    activity_units: str
+    quantity: float
+    quantity_units: str
+    rate_cps: float
+    rate_unc_pct: float
+    efficiency: float
+    efficiency_unc_pct: float
+    measured: Optional[datetime]
+
+    @property
+    def total_activity_bq(self) -> Optional[float]:
+        """Total source activity in Bq at ref_date (activity x quantity, units converted)."""
+        q = self.quantity if self.quantity and math.isfinite(self.quantity) and self.quantity > 0 else 1.0
+        u = self.activity_units.strip().lower()
+        f = _APTEC_UNITS.get(u, 1.0 if not u else -1)
+        if f is None:   # emission rate
+            return self.activity * q / self.yield_ if self.yield_ > 0 else None
+        if f < 0:
+            return None
+        return self.activity * q * f
+
+
+def aptec_source_records(data) -> list[AptecSourceRecord]:
+    """Decode the efficiency/source records of an Aptec ``.S0`` file (path or bytes)."""
+    from ..formats.aptec import EFF_REC, HEADER_SIZE, MAGIC, O_NEFF, _dt, _f32, _str, _u16
+    if not isinstance(data, (bytes, bytearray)):
+        data = Path(data).read_bytes()
+    d = bytes(data)
+    if not d.startswith(MAGIC) or len(d) < HEADER_SIZE:
+        return []
+    out = []
+    for i in range(_u16(d, O_NEFF)):
+        o = HEADER_SIZE + EFF_REC * i
+        if o + EFF_REC > len(d):
+            break
+        out.append(AptecSourceRecord(
+            nuclide=_str(d, o + 0x02, 16), energy=_f32(d, o + 0x12), yield_=_f32(d, o + 0x16),
+            half_life_s=struct.unpack_from("<d", d, o + 0x1A)[0], ref_date=_dt(d, o + 0x26),
+            activity=_f32(d, o + 0x2E), activity_unc_pct=_f32(d, o + 0x32),
+            activity_units=_str(d, o + 0x36, 16), quantity=_f32(d, o + 0x46),
+            quantity_units=_str(d, o + 0x4E, 16), rate_cps=struct.unpack_from("<d", d, o + 0x5E)[0],
+            rate_unc_pct=_f32(d, o + 0x66), efficiency=_f32(d, o + 0x6A),
+            efficiency_unc_pct=_f32(d, o + 0x6E), measured=_dt(d, o + 0x7A)))
+    return out
+
+
+def certificate_from_aptec(records: Sequence[AptecSourceRecord]) -> list[CertLine]:
+    """Certificate lines (Aptec's own energies, yields, half-lives and activities)."""
+    out = []
+    for r in records:
+        a = r.total_activity_bq
+        if not r.nuclide or not a or a <= 0 or r.yield_ <= 0:
+            continue
+        out.append(CertLine(r.nuclide, float(r.energy), float(r.yield_), float(a),
+                            float(a) * max(r.activity_unc_pct, 0.0) / 100.0, r.ref_date,
+                            r.half_life_s if r.half_life_s > 0 else None))
+    return sorted(out, key=lambda l: l.energy)
+
+
+# ------------------------------------------------------------------ measured points
+
+
+@dataclass
+class EfficiencyPoint:
+    energy: float
+    efficiency: float
+    unc: float                       # absolute, 1 sigma
+    nuclide: str = ""
+    net_area: Optional[float] = None
+    net_unc: Optional[float] = None
+    activity_t0: Optional[float] = None   # Bq at measurement start
+    intensity: Optional[float] = None
+    u_count_rel: float = 0.0
+    u_ref_rel: float = 0.0           # certificate activity + intensity
+    use: bool = True
+    manual: bool = False
+    note: str = ""
+
+    @property
+    def rel_unc(self) -> float:
+        return self.unc / self.efficiency if self.efficiency > 0 else float("inf")
+
+
+def _peak_tolerance(p, energy: float) -> float:
+    fw = p.fwhm_kev or 0.0
+    return max(1.0, 0.6 * fw, 0.002 * energy)
+
+
+def match_peak(peaks, energy: float, used: Optional[set] = None):
+    """Nearest fitted peak to `energy` within tolerance, or None."""
+    best, bd = None, None
+    for p in peaks:
+        if p.energy is None or p.net_area <= 0:
+            continue
+        dd = abs(p.energy - energy)
+        if dd <= _peak_tolerance(p, energy) and (bd is None or dd < bd):
+            best, bd = p, dd
+    return best
+
+
+def measure_efficiency(spectrum, cert: Sequence[CertLine], peaks=None,
+                       background=None, min_sig: float = 3.0) -> list[EfficiencyPoint]:
+    """Measured FEP efficiency points of the certified lines found in `spectrum`.
+
+    `background`: optional background spectrum; its peaks at the same energies (live-time
+    normalised) are subtracted peak by peak.  Lines without a matching peak are skipped.
+    Lines of different nuclides falling on the same peak are flagged and not used.
+    """
+    from .peaks import find_peaks
+    if not spectrum.energy_coeffs:
+        raise ValueError("the calibration spectrum has no energy calibration")
+    if not spectrum.live_time:
+        raise ValueError("the calibration spectrum has no live time")
+    if peaks is None:
+        peaks = find_peaks(spectrum, min_sig=min_sig)
+    bkg_peaks, k = [], 0.0
+    if background is not None and background.live_time:
+        bkg_peaks = find_peaks(background, min_sig=min_sig) if background.energy_coeffs else []
+        k = spectrum.live_time / background.live_time
+    t0 = spectrum.start_time
+    owners: dict[int, list[CertLine]] = {}
+    found = []
+    for ln in cert:
+        if not ln.use:
+            continue
+        p = match_peak(peaks, ln.energy)
+        if p is None:
+            continue
+        owners.setdefault(id(p), []).append(ln)
+        found.append((ln, p))
+    pts = []
+    for ln, p in found:
+        others = {o.nuclide for o in owners[id(p)]} - {ln.nuclide}
+        n, un = float(p.net_area), float(p.net_area_unc)
+        note = ""
+        if bkg_peaks:
+            bp = match_peak(bkg_peaks, ln.energy)
+            if bp is not None:
+                n -= k * bp.net_area
+                un = math.hypot(un, k * bp.net_area_unc)
+                note = "background peak subtracted"
+        # sum of intensities of lines of the same nuclide on that peak (unresolved doublets)
+        same = [o for o in owners[id(p)] if o.nuclide == ln.nuclide]
+        if same and same[0] is not ln:
+            continue
+        inten = sum(o.intensity for o in same)
+        dt = (t0 - ln.ref_date).total_seconds() if (t0 and ln.ref_date) else 0.0
+        a0 = ln.activity * decay_factor(ln.half_life_s, dt)
+        c = counting_decay_factor(ln.half_life_s, spectrum.real_time or spectrum.live_time)
+        if n <= 0 or a0 <= 0 or inten <= 0:
+            continue
+        eff = n / (spectrum.live_time * a0 * c * inten)
+        ur = (un / n) if n > 0 else 1.0
+        uref = math.hypot(ln.activity_unc / ln.activity if ln.activity else 0.0,
+                          ln.intensity_unc / ln.intensity if ln.intensity else 0.0)
+        pt = EfficiencyPoint(ln.energy if len(same) == 1 else p.energy, eff, eff * math.hypot(ur, uref),
+                             ln.nuclide, n, un, a0, inten, ur, uref, note=note)
+        if others:
+            pt.use = False
+            pt.note = ("interference: " + ", ".join(sorted(others)) + "; " + pt.note).strip("; ")
+        if not ln.ref_date or not t0:
+            pt.note = (pt.note + "; no decay correction (date missing)").strip("; ")
+        pts.append(pt)
+    return sorted(pts, key=lambda q: q.energy)
+
+
+# ------------------------------------------------------------------ curve
+
+
+@dataclass
+class EfficiencyCurve:
+    model: str = "loglog"            # "loglog" | "two_branch"
+    params: list[float] = field(default_factory=list)
+    cov: list[list[float]] = field(default_factory=list)
+    order: int = 3                   # loglog order, or low branch order
+    order_high: int = 2              # two_branch: high branch order
+    e_ref: float = E0_LOGLOG         # E0 (loglog) or crossover Ec (two_branch), keV
+    u_sys_rel: float = 0.0
+    chi2: float = 0.0
+    dof: int = 0
+    e_min: float = 0.0
+    e_max: float = 0.0
+    points: list[EfficiencyPoint] = field(default_factory=list)
+    geometry: str = ""
+    detector: str = ""
+    date: str = ""
+    name: str = ""
+    source: str = ""
+    note: str = ""
+
+    # --- evaluation
+    def _design(self, e) -> np.ndarray:
+        e = np.atleast_1d(np.asarray(e, dtype=float))
+        x = np.log(e / self.e_ref)
+        if self.model == "two_branch":
+            lo, hi = self.order, self.order_high
+            m = np.zeros((len(e), 1 + lo + hi))
+            m[:, 0] = 1.0
+            low = e < self.e_ref
+            for i in range(1, lo + 1):
+                m[:, i] = np.where(low, x ** i, 0.0)
+            for i in range(1, hi + 1):
+                m[:, lo + i] = np.where(low, 0.0, x ** i)
+            return m
+        return np.vander(x, self.order + 1, increasing=True)
+
+    def efficiency(self, energy):
+        v = np.exp(self._design(energy) @ np.asarray(self.params, dtype=float))
+        return float(v[0]) if np.ndim(energy) == 0 else v
+
+    def rel_uncertainty(self, energy):
+        """Relative 1-sigma uncertainty of eps(E) (fit covariance + u_sys)."""
+        g = self._design(energy)
+        c = np.asarray(self.cov, dtype=float) if self.cov else np.zeros((g.shape[1], g.shape[1]))
+        v = np.einsum("ij,jk,ik->i", g, c, g) + self.u_sys_rel ** 2
+        r = np.sqrt(np.maximum(v, 0.0))
+        return float(r[0]) if np.ndim(energy) == 0 else r
+
+    def uncertainty(self, energy):
+        return self.efficiency(energy) * self.rel_uncertainty(energy)
+
+    def in_range(self, energy: float, margin: float = 0.05) -> bool:
+        return self.e_min * (1 - margin) <= energy <= self.e_max * (1 + margin)
+
+    def residuals(self) -> list[tuple[EfficiencyPoint, float, float]]:
+        """(point, residual %, normalised residual) for every point."""
+        out = []
+        for p in self.points:
+            f = self.efficiency(p.energy)
+            out.append((p, 100.0 * (p.efficiency - f) / f, (p.efficiency - f) / p.unc if p.unc > 0 else 0.0))
+        return out
+
+    @property
+    def reduced_chi2(self) -> float:
+        return self.chi2 / self.dof if self.dof > 0 else 0.0
+
+    def describe(self) -> str:
+        if self.model == "two_branch":
+            return f"two-branch log-log, Ec = {self.e_ref:g} keV, orders {self.order}/{self.order_high}"
+        return f"log-log polynomial, order {self.order}"
+
+    # --- persistence
+    def to_dict(self) -> dict:
+        d = asdict(self)
+        d["format"] = "spectramaster-efficiency-1"
+        return d
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "EfficiencyCurve":
+        d = dict(d)
+        d.pop("format", None)
+        pts = [EfficiencyPoint(**p) for p in d.pop("points", [])]
+        known = {f for f in cls.__dataclass_fields__}
+        c = cls(**{k: v for k, v in d.items() if k in known})
+        c.points = pts
+        return c
+
+    def save(self, path) -> Path:
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(self.to_dict(), indent=1, ensure_ascii=False), encoding="utf-8")
+        return path
+
+
+def load_curve(path) -> EfficiencyCurve:
+    return EfficiencyCurve.from_dict(json.loads(Path(path).read_text(encoding="utf-8")))
+
+
+def default_curve_dir() -> Path:
+    """User folder for efficiency curves (env SPECTRAMASTER_EFF_DIR overrides)."""
+    env = os.environ.get("SPECTRAMASTER_EFF_DIR")
+    if env:
+        return Path(env)
+    base = os.environ.get("APPDATA")
+    return (Path(base) / "SpectraMaster" / "efficiency") if base else (Path.home() / ".spectramaster" / "efficiency")
+
+
+def list_curves(folder=None) -> list[Path]:
+    f = Path(folder) if folder else default_curve_dir()
+    return sorted(f.glob("*.json")) if f.is_dir() else []
+
+
+def fit_efficiency(points: Sequence[EfficiencyPoint], model: str = "loglog", order: int = 3,
+                   crossover: float = 200.0, order_high: int = 2, u_sys_rel: Optional[float] = None,
+                   birge: bool = True, **meta) -> EfficiencyCurve:
+    """Weighted least-squares fit of ln(eps); see the module docstring for the models.
+
+    ``u_sys_rel`` None = the smallest certificate (reference) relative uncertainty among the
+    used points (the correlated part of the standard's uncertainty).
+    """
+    use = [p for p in points if p.use and p.efficiency > 0 and p.energy > 0]
+    if model == "two_branch" and (crossover is None or str(crossover).lower() == "auto"):
+        crossover = auto_crossover(points, order, order_high)
+    if model not in ("loglog", "two_branch"):
+        raise ValueError(f"unknown efficiency model {model!r}")
+    if model == "loglog":
+        if not 1 <= order <= 5:
+            raise ValueError("log-log order must be 1..5")
+        curve = EfficiencyCurve(model="loglog", order=order, e_ref=E0_LOGLOG)
+    else:
+        curve = EfficiencyCurve(model="two_branch", order=order, order_high=order_high, e_ref=float(crossover))
+    npar = curve._design(np.array([100.0])).shape[1]
+    if len(use) < npar:
+        raise ValueError(f"{len(use)} usable points for {npar} parameters - lower the order or add points")
+    if model == "two_branch":
+        nlo = sum(1 for p in use if p.energy < crossover)
+        nhi = len(use) - nlo
+        if nlo < order or nhi < order_high:
+            raise ValueError(f"crossover {crossover:g} keV leaves {nlo} points below / {nhi} above")
+    e = np.array([p.energy for p in use])
+    y = np.log([p.efficiency for p in use])
+    s = np.array([max(p.rel_unc, 1e-6) if math.isfinite(p.rel_unc) else 1.0 for p in use])
+    a = curve._design(e)
+    w = 1.0 / s
+    aw = a * w[:, None]
+    yw = y * w
+    params, *_ = np.linalg.lstsq(aw, yw, rcond=None)
+    cov = np.linalg.pinv(aw.T @ aw)
+    res = (y - a @ params) / s
+    chi2 = float(res @ res)
+    dof = len(use) - npar
+    if birge and dof > 0 and chi2 / dof > 1.0:
+        cov = cov * (chi2 / dof)
+    if u_sys_rel is None:
+        refs = [p.u_ref_rel for p in use if p.u_ref_rel > 0 and not p.manual]
+        u_sys_rel = min(refs) if refs else 0.0
+    curve.params = [float(v) for v in params]
+    curve.cov = [[float(v) for v in row] for row in cov]
+    curve.chi2, curve.dof = chi2, dof
+    curve.u_sys_rel = float(u_sys_rel)
+    curve.e_min, curve.e_max = float(e.min()), float(e.max())
+    curve.points = list(points)
+    curve.date = meta.pop("date", "") or datetime.now().strftime("%Y-%m-%d %H:%M")
+    for k, v in meta.items():
+        if hasattr(curve, k):
+            setattr(curve, k, v)
+    return curve
+
+
+def auto_crossover(points: Sequence[EfficiencyPoint], order: int = 2, order_high: int = 2,
+                   e_lo: float = 80.0, e_hi: float = 600.0) -> float:
+    """Crossover energy (between two measured points) giving the smallest reduced chi^2."""
+    es = sorted({p.energy for p in points if p.use and p.efficiency > 0})
+    cands = [math.sqrt(a * b) for a, b in zip(es, es[1:]) if e_lo <= math.sqrt(a * b) <= e_hi]
+    best, bc = None, None
+    for c in cands:
+        try:
+            cv = fit_efficiency(points, "two_branch", order=order, crossover=c, order_high=order_high,
+                                birge=False)
+        except (ValueError, np.linalg.LinAlgError):
+            continue
+        score = cv.reduced_chi2 if cv.dof > 0 else cv.chi2
+        if bc is None or score < bc - 1e-12:
+            best, bc = c, score
+    if best is None:
+        raise ValueError("no valid crossover energy for the two-branch model - use the log-log model")
+    return float(round(best, 1))
+
+
+def manual_point(energy: float, efficiency: float, rel_unc_pct: float = 2.0, note: str = "") -> EfficiencyPoint:
+    return EfficiencyPoint(float(energy), float(efficiency), float(efficiency) * rel_unc_pct / 100.0,
+                           nuclide="manual", u_count_rel=rel_unc_pct / 100.0, manual=True, note=note)
+
+
+def compare_with_aptec(points: Sequence[EfficiencyPoint], records: Sequence[AptecSourceRecord],
+                       tol_kev: float = 1.5) -> list[dict]:
+    """Our measured points vs Aptec's stored efficiencies (same energies)."""
+    out = []
+    for r in records:
+        if r.efficiency <= 0:
+            continue
+        p = min(points, key=lambda q: abs(q.energy - r.energy), default=None)
+        if p is None or abs(p.energy - r.energy) > tol_kev:
+            out.append({"nuclide": r.nuclide, "energy": r.energy, "aptec": r.efficiency, "ours": None,
+                        "diff_pct": None, "aptec_unc_pct": r.efficiency_unc_pct})
+            continue
+        out.append({"nuclide": r.nuclide, "energy": r.energy, "aptec": r.efficiency, "ours": p.efficiency,
+                    "ours_unc_pct": 100 * p.rel_unc, "aptec_unc_pct": r.efficiency_unc_pct,
+                    "diff_pct": 100.0 * (p.efficiency - r.efficiency) / r.efficiency,
+                    "aptec_rate": r.rate_cps, "ours_rate": None})
+    return out
