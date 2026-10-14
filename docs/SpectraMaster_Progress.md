@@ -124,6 +124,24 @@ false detections due to subtraction"), synthetic evidence only:
   correlation is ignored (documented in `analysis/background.py`).
 - The live times are taken as exact (no uncertainty on k).
 
+## Public measured spectra (kept outside the repository)
+
+Folder `SPECTRAMASTER_PUBLIC_DATA` (default `D:/SpectraMaster_public_data`); the files are not
+redistributed with SpectraMaster. Tests that use them are skipped when the folder is absent.
+
+| Source | Contents | Licence | Used for |
+|---|---|---|---|
+| InterSpec `example_spectra` (Sandia National Laboratories, github.com/sandialabs/InterSpec) | ORTEC portal, 8 HPGe detectors ("HPGe 50%"), 16384 channels: Ba-133 source 640 s and a background measured the same day (N42-2006); a 1064-spectrum pass-through | LGPL-2.1 | `tests/test_public_spectra.py`: N42 detector type; measured-background subtraction on real pairs |
+| IAEA IDB, reference gamma spectra for U/Pu isotopics (nds.iaea.org/idb, v2024-01, 1591 SPE files) | real spectra with detector metadata and certificates | CC BY 4.0, cite Dipti et al., Sci Data 12, 1868 (2025) | pending: the site refuses automated download; to be downloaded by the user |
+
+Result on the InterSpec pairs (8 detectors): Ba-133 net areas from peak-by-peak and full-spectrum
+subtraction agree within 0.3 % (276-384 keV); natural lines that are in both spectra (K-40, Tl-208,
+Bi-214) net to z = 0.0 ± 1.0 on average. A slight positive excess of Bi-214 at 1120/1238 keV
+(z ≈ +1 to +1.5) is consistent with radon-progeny change between the morning and evening
+measurements. Found while doing this: the N42 reader did not pass `<DetectorType>` on, so two
+weak background spectra were guessed as NaI; it is now read (`extra["detector_type"]`) and used
+first by `guess_detector`.
+
 ## Skipped tests in the existing suite (2026-10-14, this machine)
 
 - 64: test_corpus files whose format is not detected (InterSpec RADDATA `.txt`, non-gamma xylib files, and others).

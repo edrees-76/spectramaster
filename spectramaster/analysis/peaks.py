@@ -79,7 +79,9 @@ def _dpoly(coeffs, x):
 
 def guess_detector(spectrum) -> str:
     """'HPGe', 'NaI', 'LaBr3', 'CZT' or '' (unknown), from metadata, channel count and gain."""
-    text = " ".join(str(v) for v in (spectrum.detector, spectrum.sample_id, spectrum.description)).lower()
+    # the file's own detector-type field first (e.g. N42 <DetectorType>), then free text
+    text = " ".join(str(v) for v in ((getattr(spectrum, "extra", None) or {}).get("detector_type", ""),
+                                     spectrum.detector, spectrum.sample_id, spectrum.description)).lower()
     for key, det in (("hpge", "HPGe"), ("ge(li)", "HPGe"), ("germanium", "HPGe"), ("nai", "NaI"),
                      ("labr", "LaBr3"), ("czt", "CZT"), ("cdznte", "CZT")):
         if key in text:
