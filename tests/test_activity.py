@@ -197,9 +197,12 @@ def test_activity_exact_recovery(cal_curve):
     assert by["Cs-137"].detected and by["Cs-137"].decision == "detected"
     assert by["Cs-137"].specific_U == pytest.approx(2 * by["Cs-137"].specific_u)
     b = by["Cs-137"].budget
-    assert b["quantity"] == pytest.approx(1.0) and b["efficiency"] > 1.0 and b["counting"] > 0
+    # the Bq budget must not contain the mass uncertainty (it only affects Bq/kg)
+    assert "quantity" not in b and b["efficiency"] > 1.0 and b["counting"] > 0
     tot = math.sqrt(sum(v * v for v in b.values()))
     assert 100 * by["Cs-137"].u / by["Cs-137"].activity == pytest.approx(tot)
+    cs = by["Cs-137"]
+    assert cs.specific_u / cs.specific == pytest.approx(math.hypot(cs.u / cs.activity, 0.01))
     co = by["Co-60"]
     assert not co.detected and co.activity is None and co.mda > 0 and co.decision == "< MDA"
     assert co.specific_mda == pytest.approx(co.mda / 0.5)
@@ -421,3 +424,19 @@ def test_gui_menu_hook(qapp, gui_settings):
         d1.close(), d2.close()
     finally:
         w.close()
+
+
+def test_quantity_uncertainty_only_affects_specific_activity(cal_curve):
+    """The Bq activity does not depend on the sample mass/volume, so its uncertainty must not
+    change with quantity_rel_unc; the specific activity adds it in quadrature."""
+    _pts, curve = cal_curve
+    s = make_spectrum(sample_peaks())
+    base = dict(nuclides=["Cs-137"], ref_date=SAMPLE_REF)
+    r0 = act.compute_activities(s, curve, act.ActivityOptions(**base)).nuclides[0]
+    r1 = act.compute_activities(s, curve, act.ActivityOptions(**base, quantity_rel_unc=0.10)).nuclides[0]
+    r2 = act.compute_activities(s, curve, act.ActivityOptions(**base, quantity=2.0, quantity_unit="kg",
+                                                              quantity_rel_unc=0.10)).nuclides[0]
+    assert r1.u == pytest.approx(r0.u, rel=1e-12) and r2.u == pytest.approx(r0.u, rel=1e-12)
+    assert r1.specific is None and r1.specific_u is None
+    assert r2.specific == pytest.approx(r0.activity / 2.0)
+    assert r2.specific_u == pytest.approx(math.hypot(r0.u / 2.0, 0.10 * r2.specific))

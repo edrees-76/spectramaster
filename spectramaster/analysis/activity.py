@@ -444,7 +444,8 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             r.unit = f"Bq/{unit}"
             if r.activity is not None:
                 r.specific = r.activity / qb
-                r.specific_u = (r.u or 0.0) / qb
+                # u(a/q)/(a/q) = sqrt(u_rel(a)^2 + u_rel(q)^2): quantity uncertainty added here only
+                r.specific_u = math.hypot((r.u or 0.0) / qb, abs(r.specific) * opt.quantity_rel_unc)
             r.specific_mda = r.mda / qb if r.mda else None
     if background is not None:
         notes.append(f"background: {background.source_path or background.sample_id or '?'} "
@@ -506,8 +507,9 @@ def _combine(res: NuclideResult, opt: ActivityOptions) -> None:
         if chi2 / (len(cand) - 1) > 4.0:
             res.note = (res.note + f"; lines inconsistent (chi2/dof = {chi2 / (len(cand) - 1):.1f})").strip("; ")
     a_abs = abs(a) if a else 0.0
-    comp = {"counting": uc, "efficiency": ue, "intensity": a_abs * ui, "quantity": a_abs * um,
-            "attenuation": a_abs * ua}
+    # Budget of the activity in Bq.  The mass/volume uncertainty does not belong here: it only
+    # enters the specific activity (Bq/kg, Bq/L, ...), see compute_activities.
+    comp = {"counting": uc, "efficiency": ue, "intensity": a_abs * ui, "attenuation": a_abs * ua}
     res.activity = a
     res.u = math.sqrt(sum(v * v for v in comp.values()))
     res.budget = {k: (100.0 * v / a_abs if a_abs else 0.0) for k, v in comp.items()}

@@ -206,6 +206,7 @@ with a script during the review. Those scripts were scratch files and are not in
 | **P1 fixed**. When a singlet fit hits its upper width bound, `peaks.py` now also tries the doublet with symmetric starts (±0.3 model FWHM) before the "Compton hump" rule can discard it. Tailed or asymmetric peaks are below the bound and keep the old behaviour. | HPGe, 1 FWHM, 3:1: resolved 12.5 % → 100 %, total-area bias −88 % → −0.01 %. New regression test `test_strong_doublet_one_fwhm_not_discarded` fails on the old code (2 of 4 seeds) and passes on the new. | Re-run in `docs/baseline/after_P1/`. All 69 criteria have the same status as the baseline (51 pass, 9 fail, 9 report). |
 | A first version of the fix used a looser trigger (FWHM > 1.15 × model). It split the slightly asymmetric G1100 peaks at 1823, 1904 and 1947 into tail components, and the existing G-1 test caught it. That version was discarded. | `test_g1_reference_spectrum_all_peaks` | – |
 | EML doublet window corrected in the harness (see P1). | `docs/baseline/after_P1/` | report-only |
+| **The mass/volume uncertainty no longer enters u(Bq)**. It is added in quadrature only to the specific activity: u_rel(A/q)² = u_rel(A)² + u_rel(q)². The Bq budget no longer lists "quantity". | `test_quantity_uncertainty_only_affects_specific_activity`. The existing test, which asserted the old behaviour, was corrected. | not covered by the peak benchmark |
 
 For NaI, a 3:1 doublet 1 FWHM apart is still reported as one peak, as before. Splitting it is not
 required by the plan (no separation beyond NaI resolution). Its total area is within −5.2 %.
@@ -214,8 +215,9 @@ required by the plan (no separation beyond NaI resolution). Its total area is wi
 
 1. ~~P1~~ done (section 5). Still open: features that the engine discards should be reported as
    visible warnings rather than dropped. This belongs to the Release B fit-inspection window.
-2. **The Bq uncertainty defect and the zero emission-probability uncertainty.** These are small,
-   well-defined fixes with independent tests. They are planned for Release E, but they are cheap.
+2. ~~Bq uncertainty defect~~ done (section 5). Still open: the emission-probability uncertainty of
+   efficiency points is 0. This is a **data gap**, not just code: `gamma_library.json` stores no
+   intensity uncertainties, so they must first be added from ENSDF/DDEP, with provenance (Release D).
 3. **P2 (detector-type guess).** Prefer the session's `DetectorProfile.type` when one is available,
    and stop guessing HPGe from channel count alone.
 4. **The calibration-tool search and drift handling (P3)**, in Release B.
