@@ -226,6 +226,33 @@ for det in ("HPGe", "NaI"):
         _c(f"{det}.bkg_{mode}.recall", det, f"background_{mode}", "present_detected_fraction", "report", None,
            "Fraction of present lines declared detected (informational).")
 
+# ------------------------------------------------- experimental efficiency (Release D, pre-registered D0)
+# Synthetic mixed-standard calibration spectra with a known true efficiency curve.  In each
+# realisation every nuclide's true activity differs from its certificate value by N(0, u_cert)
+# (independent per nuclide, 2 %), so the certificate error is real and is shared by all lines
+# of that nuclide.  The curve is evaluated at test energies between the calibration lines.
+for det in ("HPGe", "NaI"):
+    _c(f"{det}.eff.bias", det, "efficiency", "mean_rel_dev", "abs<=", 0.01,
+       "Mean relative deviation of the fitted curve from the true efficiency at interpolation "
+       "energies: > 1 % is a model or method bias (the random part averages over ~40 realisations).")
+    _c(f"{det}.eff.cov1", det, "efficiency", "z_cov1", "in", (0.55, 0.81),
+       "The curve uncertainty must cover the true efficiency at the nominal 68 % (counting, "
+       "certificate and intensity components, correlations included, none counted twice).")
+    _c(f"{det}.eff.cov2", det, "efficiency", "z_cov2", "in", (0.89, 1.0),
+       "Same at 2 sigma.")
+    _c(f"{det}.eff.extrapolation_flagged", det, "efficiency", "extrapolation_flagged", ">=", 1.0,
+       "Every activity line outside the calibrated energy range must be flagged.")
+    _c(f"{det}.eff.tcs_flagged", det, "efficiency", "tcs_flagged", ">=", 1.0,
+       "Every calibration point from a cascade emitter (Co-60, Y-88, ...) must carry a "
+       "coincidence-summing warning; summing is not negligible in close geometries.")
+    _c(f"{det}.eff.geometry_guard", det, "efficiency", "geometry_guard", ">=", 1.0,
+       "An efficiency calibration of another geometry (e.g. point source for a Marinelli sample) "
+       "must not be used silently: refused, or used only with an explicit override that is reported.")
+    _c(f"{det}.eff.validation_shown", det, "efficiency", "validation_shown", ">=", 1.0,
+       "Results computed with an imported or unvalidated calibration must say so.")
+    _c(f"{det}.eff.max_dev", det, "efficiency", "median_max_rel_dev", "report", None,
+       "Median over realisations of the largest deviation within the calibrated range (informational).")
+
 # -------------------------------------------------------------------- IAEA G-1 (HPGe-like Ge(Li))
 _c("G1.G1100.found", "HPGe", "G1", "G1100_found", ">=", 20,
    "Reference spectrum: 20 strong peaks (~65 000 counts each) must all be found.")
