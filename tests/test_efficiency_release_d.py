@@ -134,3 +134,9 @@ def test_independent_validation_accepts_a_consistent_source_and_rejects_a_wrong_
     wrong.params[0] += math.log(1.10)                     # curve 10 % too high
     assert not eff.validate_curve(wrong, other)["consistent"]
     assert eff.validate_curve(c, c.points)["n"] == 0      # the fit's own points are not a check
+
+
+def test_loglog_auto_order_accepts_any_crossover_argument(cal):
+    _syn, pts, _c = cal
+    c = eff.fit_efficiency(pts, "loglog", order=None, crossover="auto")
+    assert c.model == "loglog" and 1 <= c.order <= 4 and "leave-one-out" in c.selection

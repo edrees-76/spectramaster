@@ -597,8 +597,8 @@ def fit_efficiency(points: Sequence[EfficiencyPoint], model: str = "loglog", ord
     auto_x = model == "two_branch" and (crossover is None or str(crossover).lower() == "auto")
     selection = ""
     if order is None or (model == "two_branch" and order_high is None):
-        order, order_high, crossover, score = select_orders(points, model, None if auto_x else float(crossover),
-                                                            order, order_high)
+        fixed_x = None if (auto_x or model != "two_branch") else float(crossover)
+        order, order_high, crossover, score = select_orders(points, model, fixed_x, order, order_high)
         selection = (f"orders chosen by leave-one-out cross-validation (mean squared normalised "
                      f"prediction error {score:.2f})")
     elif auto_x:

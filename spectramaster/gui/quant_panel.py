@@ -20,18 +20,21 @@ from typing import Optional
 from PySide6.QtCore import QDateTime, Qt
 from PySide6.QtGui import QAction, QBrush, QColor
 from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDateTimeEdit, QDialog,
-                               QDoubleSpinBox, QFileDialog, QFormLayout, QHBoxLayout, QHeaderView,
+                               QDoubleSpinBox, QFileDialog, QFormLayout, QGroupBox, QHBoxLayout, QHeaderView,
                                QLabel, QLineEdit, QMessageBox, QPlainTextEdit, QPushButton, QSplitter,
                                QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
 
 from ..analysis import activity as act
 from ..analysis import efficiency as eff
 from . import i18n
+from .efficiency_dialog import is_record_file, load_curve_file, status_text
+from .geometry_editor import GeometryEditor
 from .quant_strings import qtr
 
 RES_COLS = ["res_col_nuclide", "res_col_lines", "res_col_net", "res_col_act", "res_col_spec", "res_col_mda",
             "res_col_mda_spec", "res_col_decision", "res_col_note"]
 UNITS = ["kg", "g", "L", "mL"]
+GEOMETRY_REFUSED = "the efficiency calibration belongs to another measurement geometry"
 LTR = "⁦{}⁩"
 
 
@@ -94,6 +97,10 @@ class ActivityDialog(QDialog):
         b.clicked.connect(self.browse_curve)
         row.addWidget(b)
         form.addRow(qtr("act_curve"), row)
+        self.curve_status = QLabel("")
+        self.curve_status.setWordWrap(True)
+        form.addRow("", self.curve_status)
+        self.curve_combo.currentIndexChanged.connect(self._curve_changed)
 
         row = QHBoxLayout()
         self.bkg_edit = QLineEdit()
@@ -180,6 +187,18 @@ class ActivityDialog(QDialog):
         form.addRow(qtr("act_method"), row)
         lay.addLayout(form)
 
+        self.geo_check = QCheckBox(qtr("act_geo_check"))
+        self.geo_check.setToolTip(qtr("tip_act_geo_check"))
+        lay.addWidget(self.geo_check)
+        self.geo_box = QGroupBox(qtr("act_geo_group"))
+        gl = QVBoxLayout(self.geo_box)
+        self.geo = GeometryEditor(self.geo_box)
+        gl.addWidget(self.geo)
+        self.geo_box.setVisible(False)
+        self.geo_check.toggled.connect(self.geo_box.setVisible)
+        lay.addWidget(self.geo_box)
+        self.last_error = ""
+
         row = QHBoxLayout()
         self.btn_calc = QPushButton(qtr("act_calc"))
         self.btn_calc.clicked.connect(self.calculate)
@@ -192,6 +211,11 @@ class ActivityDialog(QDialog):
         b = QPushButton(qtr("eff_close"))
         b.clicked.connect(self.accept)
         row.addWidget(b)
+
+        self.notes_label = QLabel("")
+        self.notes_label.setWordWrap(True)
+        self.notes_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        lay.addWidget(self.notes_label)
 
         split = QSplitter(Qt.Vertical)
         self.table = QTableWidget(0, len(RES_COLS))
@@ -213,6 +237,7 @@ class ActivityDialog(QDialog):
         split.setSizes([420, 160])
         lay.addWidget(split, 1)
         lay.addLayout(row)
+        self._curve_changed()
 
     # ------------------------------------------------------------------ helpers
     @staticmethod
@@ -232,7 +257,8 @@ class ActivityDialog(QDialog):
     def _fill_curves(self, select: Optional[str] = None) -> None:
         self.curve_combo.clear()
         for p in eff.list_curves():
-            self.curve_combo.addItem(p.stem, str(p))
+            if not is_record_file(p):            # <stem>.calibration.json belongs to <stem>.json
+                self.curve_combo.addItem(p.stem, str(p))
         last = select or (self.settings.get("quant/curve", "") if self.settings is not None else "")
         if last:
             i = self.curve_combo.findData(str(last))
@@ -285,7 +311,42 @@ class ActivityDialog(QDialog):
             method=self.method_combo.currentData(), ref_date=ref, quantity=q if q > 0 else None,
             quantity_unit=self.unit_combo.currentText(), quantity_rel_unc=self.qty_unc.value() / 100.0,
             attenuation=self.att_spin.value(), bkg_mode=self.bkg_mode.currentData(),
-            mda_method=self.mda_combo.currentData())
+            mda_method=self.mda_combo.currentData(), geometry=self.sample_geometry(),
+            allow_geometry_mismatch=False)
+
+    def sample_geometry(self):
+        """The sample geometry to check the calibration against (None = not given)."""
+        return self.geo.geometry() if self.geo_check.isChecked() else None
+
+    def message(self, text: str) -> None:
+        self.last_error = text
+        QMessageBox.warning(self, qtr("act_title"), text)
+
+    def confirm_mismatch(self, text: str) -> bool:
+        """Ask whether to use a calibration of another geometry anyway (default: Cancel).
+        Tests replace this method."""
+        box = QMessageBox(QMessageBox.Warning, qtr("act_title"), qtr("act_geo_mismatch", reasons=text),
+                          QMessageBox.NoButton, self)
+        use = box.addButton(qtr("act_use_anyway"), QMessageBox.AcceptRole)
+        cancel = box.addButton(QMessageBox.Cancel)
+        box.setDefaultButton(cancel)
+        box.exec()
+        return box.clickedButton() is use
+
+    def _curve_changed(self, *_):
+        path = self.curve_combo.currentData()
+        if not path:
+            self.curve_status.setText("")
+            return
+        try:
+            c, _rec, _issues = load_curve_file(path)
+        except Exception as exc:
+            self.curve_status.setText(qtr("act_failed", msg=str(exc)))
+            return
+        geo = (c.geometry_record or {}).get("name") or c.geometry or qtr("act_geo_not_recorded")
+        st = c.validation_status
+        self.curve_status.setText(qtr("act_curve_status", status=status_text(st), geometry=geo))
+        self.curve_status.setStyleSheet("color: %s;" % ("#2e7d32" if st == "validated" else "#e65100"))
 
     # ------------------------------------------------------------------ actions
     def calculate(self) -> Optional[act.QuantResults]:
@@ -297,12 +358,29 @@ class ActivityDialog(QDialog):
             QMessageBox.warning(self, qtr("act_title"), qtr("act_no_curve"))
             return None
         try:
-            curve = eff.load_curve(path)
+            curve, _rec, issues = load_curve_file(path)
             opt = self.options()
-            self.results = act.compute_activities(self.spectrum, curve, opt, background=self.background)
         except Exception as exc:
-            QMessageBox.warning(self, qtr("act_title"), qtr("act_failed", msg=f"{type(exc).__name__}: {exc}"))
+            self.message(qtr("act_failed", msg=f"{type(exc).__name__}: {exc}"))
             return None
+        try:
+            try:
+                self.results = act.compute_activities(self.spectrum, curve, opt, background=self.background)
+            except ValueError as exc:
+                if not str(exc).startswith(GEOMETRY_REFUSED):
+                    raise
+                reasons = str(exc).split("): ", 1)[-1]
+                if not self.confirm_mismatch(reasons):
+                    self.last_error = str(exc)
+                    self.notes_label.setText(qtr("act_geo_refused", reasons=reasons))
+                    self.notes_label.setStyleSheet("color: #c62828; font-weight: bold;")
+                    return None
+                opt.allow_geometry_mismatch = True       # the engine records it in the result notes
+                self.results = act.compute_activities(self.spectrum, curve, opt, background=self.background)
+        except Exception as exc:
+            self.message(qtr("act_failed", msg=f"{type(exc).__name__}: {exc}"))
+            return None
+        self.results.notes.extend(issues)
         if self.settings is not None:
             self.settings.set("quant/curve", str(path))
             self.settings.set("quant/nuclides", ", ".join(opt.nuclides))
@@ -334,6 +412,25 @@ class ActivityDialog(QDialog):
         lines += [f"note: {n}" for n in res.notes]
         lines.append(qtr("act_notes_tcs"))
         self.details.setPlainText("\n".join(lines))
+        self._show_notes(res.notes)
+
+    def _show_notes(self, notes) -> None:
+        """The calibration / geometry notes of the results, translated, above the table."""
+        out, severe = [], False
+        for n in notes:
+            if n.startswith("efficiency calibration") and "not independently validated" in n:
+                out.append(qtr("act_note_unvalidated"))
+            elif n.startswith("geometry mismatch accepted"):
+                out.append(qtr("act_note_mismatch", text=n.split("): ", 1)[-1]))
+                severe = True
+            elif n.startswith("calibration geometry not recorded"):
+                out.append(qtr("act_note_geo_unrecorded"))
+            elif n.startswith("sample geometry not given"):
+                out.append(qtr("act_note_geo_not_given"))
+            elif "treated as unvalidated" in n:
+                out.append(qtr("act_note_record", text=n))
+        self.notes_label.setText("\n".join("\u26a0 " + t for t in out))
+        self.notes_label.setStyleSheet("color: %s; font-weight: bold;" % ("#c62828" if severe else "#e65100"))
 
     def export(self, path: Optional[str] = None) -> Optional[Path]:
         if self.results is None:
