@@ -893,7 +893,7 @@ def _neighbour_lines(nuclides) -> set[float]:
 
 
 def check_drift(spec: Spectrum, lines: Optional[Sequence[tuple[str, float]]] = None, max_drift: float = 0.03,
-                threshold_fwhm: float = 0.1, threshold_sigma: float = 3.0) -> DriftCheck:
+                threshold_fwhm: float = 0.1, threshold_sigma: float = 3.0, peaks=None) -> DriftCheck:
     """Compare the stored energy calibration with known lines in the spectrum itself.
 
     `lines` defaults to natural-background lines (:data:`BACKGROUND_LINES`); a nuclide string
@@ -902,6 +902,7 @@ def check_drift(spec: Spectrum, lines: Optional[Sequence[tuple[str, float]]] = N
     with the centroid uncertainties.  Drift is reported when the implied shift exceeds both
     `threshold_fwhm` of the resolution and `threshold_sigma` standard uncertainties somewhere
     in the range of the lines.  Nothing is changed: the corrected coefficients are a proposal.
+    `peaks`: the engine's peaks of `spec` when already found (avoids a second search).
     """
     from ..analysis.peaks import find_peaks as engine_find_peaks
     if not spec.energy_coeffs:
@@ -914,7 +915,8 @@ def check_drift(spec: Spectrum, lines: Optional[Sequence[tuple[str, float]]] = N
         ref = list(lines)
     # every known line of these nuclides (shared library, >= 5 % emission), to recognise blends
     others = _neighbour_lines({n for n, _e in ref}) | {e for _n, e in ref}
-    pk = [p for p in engine_find_peaks(spec) if p.energy is not None and p.significance >= 5 and p.fwhm_kev]
+    pk = [p for p in (peaks if peaks is not None else engine_find_peaks(spec))
+          if p.energy is not None and p.significance >= 5 and p.fwhm_kev]
     if not pk:
         return DriftCheck(False, "no significant peaks: drift cannot be checked")
     pe = np.array([p.energy for p in pk])

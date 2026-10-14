@@ -413,6 +413,19 @@ def _n_gamma_matched(c) -> int:
     return max(1, min(len(peaks), 6))
 
 
+DRIFT_ACCEPT_GAIN = 1.05         # the drift-corrected identification must explain 5 % more
+
+
+def _explained_score(ctx, claimed: dict) -> float:
+    """Significance-weighted share of the peaks explained by accepted nuclides."""
+    tot = 0.0
+    for j, d in claimed.items():
+        p = ctx.peaks[j]
+        frac = min(sum(d.values()) / p.net_area, 1.0) if p.net_area > 0 else 0.0
+        tot += frac * min(p.significance, 100.0)
+    return tot
+
+
 def _explain(ctx, libd, include_xrays, min_confidence):
     cands = []
     for nd in libd.values():
@@ -499,8 +512,13 @@ def _calibration_correction(ctx: _Context, accepted: list):
 
 def identify(spectrum, peaks: Optional[list[Peak]] = None, library=None, lib=None,
              min_confidence: float = 0.25, include_xrays: bool = True, max_results: int = 40,
-             _debug: bool = False, **_ignored) -> list[NuclideMatch]:
-    """Identify nuclides. `library`/`lib`: path or parsed library (default: bundled)."""
+             correct_drift: bool = True, _debug: bool = False, **_ignored) -> list[NuclideMatch]:
+    """Identify nuclides. `library`/`lib`: path or parsed library (default: bundled).
+
+    `correct_drift`: first compare the stored energy calibration with the natural-background
+    lines in the spectrum (tools.calibrate.check_drift); when a drift is detected, the peak
+    energies are corrected for the identification only and every result says so.  The stored
+    calibration is never changed (review and apply it with the drift check)."""
     if not spectrum.energy_coeffs:
         return []
     if peaks is None:
@@ -518,6 +536,29 @@ def identify(spectrum, peaks: Optional[list[Peak]] = None, library=None, lib=Non
     _INCLUDES.clear()
     _INCLUDES.update({n: tuple(nd.includes) for n, nd in libd.items() if nd.includes})
     accepted, claimed = _explain(ctx, libd, include_xrays, min_confidence)
+    drift_note = ""
+    if correct_drift:
+        try:
+            from ..tools.calibrate import check_drift
+            dc = check_drift(spectrum, peaks=peaks)
+        except Exception:          # no calibration lines, too few peaks ...: identify as stored
+            dc = None
+        if dc is not None and dc.detected and dc.correction:
+            # keep the correction only if it explains the significant peaks better: a drift check
+            # can be fooled where few natural lines exist (U/Pu spectra), and identification must
+            # not get worse because of it
+            a, b = dc.correction
+            pe0 = ctx.pe
+            ctx.pe = a + b * pe0
+            ctx._ld.clear()
+            acc2, cl2 = _explain(ctx, libd, include_xrays, min_confidence)
+            if _explained_score(ctx, cl2) > DRIFT_ACCEPT_GAIN * _explained_score(ctx, claimed):
+                accepted, claimed = acc2, cl2
+                drift_note = (f"calibration drift detected (gain {100 * (b - 1):+.2f} %, offset {a:+.2f} keV): "
+                              "energies corrected for identification only, stored calibration unchanged")
+            else:
+                ctx.pe = pe0
+                ctx._ld.clear()
     # energy-calibration refinement from confidently identified lines, then a second pass
     corr = _calibration_correction(ctx, accepted)
     if corr is not None:
@@ -580,6 +621,8 @@ def identify(spectrum, peaks: Optional[list[Peak]] = None, library=None, lib=Non
             notes.append(nd.note)
         if nd.name in extra_note:
             notes.append(extra_note[nd.name])
+        if drift_note:
+            notes.append(drift_note)
         if _debug:
             notes.append("[" + c.detail + "]")
         results.append(NuclideMatch(nuclide=nd.name, confidence=round(c.conf, 3), matched=matched,

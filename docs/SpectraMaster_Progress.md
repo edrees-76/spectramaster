@@ -170,6 +170,17 @@ pair; totals FAIL 20 → 13, no other criterion changed.
 | E0. Criteria pre-registered: recall at 0.3 % drift; IAEA IDB real spectra (HPGe implausible identifications ≤ 1 per spectrum, U-235 recall ≥ 0.90; others report only). A first look at IDB preceded the registration (disclosed); the synthetic HPGe false-identification limit is 0.5, the IDB limit 1.0 was chosen for the much richer U/Pu spectra | done | `acceptance.py` (8c8fb27); `docs/baseline/before_E1/` (0e90aa1) |
 | E1. Identification scoring: unmatched lines below 30 keV (L X-rays, absorbed unpredictably) no longer count as missing; the weak-emitter penalty applies only with ≤ 2 matched gamma lines; at good resolution (FWHM/E ≤ 4 % at 662 keV) the greedy explanation ranks a nuclide matching several distinct peaks first (parsimony) | done | `analysis/identify.py`; `docs/baseline/after_E1/`; `tests/test_public_spectra.py` |
 
+| E2. Drift before identification (P3): the B1 drift check (natural-background lines) runs first; its correction is applied to the peak energies for the identification only, and kept only when it explains the significant peaks ≥ 5 % better; every result then says so; the stored calibration is never changed | done | `analysis/identify.py`, `tools/calibrate.py` (`check_drift(peaks=)`); `tests/test_identify_drift.py` |
+
+E2 result (synthetic, 4 seeds per mixture): HPGe recall at 0.1 / 0.3 / 1 % drift
+0.98 / 0.06 / 0.06 → 1.0 / 1.0 / 1.0; false identifications at drift ≤ 0.09 per spectrum; NaI
+unchanged (0.88 at 0.3 %). A first version applied every detected drift. On IAEA IDB
+plutonium spectra, which have few natural lines, the check matched Pu lines to background lines,
+and Pu-239 fell from 6/12 to 1/12; the IDB test caught it. The correction now has to improve
+the explanation. Laboratory archive, October 2009 (12 random spectra): the 1000 s food
+spectra show K-40 only, so they cannot be checked (≥ 2 lines needed). A 6130 s ceramic spectrum
+gives offset +0.93 keV, gain −0.09 %, as found when reading the archive.
+
 E1 result (all synthetic criteria unchanged; IDB, 160 real spectra):
 
 | | before | after |
