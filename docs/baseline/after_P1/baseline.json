@@ -1,0 +1,1728 @@
+{
+ "detectors": {
+  "HPGe": {
+   "isolated_strong": {
+    "n_true": 240,
+    "n_found": 240,
+    "recall": 1.0,
+    "area_bias": -4.432732495936826e-05,
+    "area_rel_sd": 0.0030967153366819665,
+    "centroid_bias_fwhm": 0.0003141921026651107,
+    "fwhm_ratio_mean": 1.0270576264591234,
+    "z_mean": -0.022658053569830135,
+    "z_sd": 0.900143237455776,
+    "z_cov1": 0.7291666666666666,
+    "z_cov2": 0.9625,
+    "false_per_spectrum": 1.625,
+    "spectra": 40,
+    "split_fraction": 0.0
+   },
+   "tailed": {
+    "n_true": 240,
+    "n_found": 240,
+    "recall": 1.0,
+    "area_bias": -0.010311137293879703,
+    "area_rel_sd": 0.0033759092780651537,
+    "centroid_bias_fwhm": -0.006709022515096902,
+    "fwhm_ratio_mean": 1.0438315589740295,
+    "z_mean": -1.5576584077338693,
+    "z_sd": 0.6055369420245662,
+    "z_cov1": 0.2,
+    "z_cov2": 0.775,
+    "false_per_spectrum": 1.2,
+    "spectra": 40,
+    "split_fraction": 0.0
+   },
+   "isolated_weak": {
+    "n_true": 400,
+    "n_found": 336,
+    "recall": 0.84,
+    "area_bias": 0.010856091426033398,
+    "area_rel_sd": 0.18809191862970018,
+    "centroid_bias_fwhm": 0.00160196018501456,
+    "fwhm_ratio_mean": 0.9760309833313188,
+    "z_mean": -0.0657595139098841,
+    "z_sd": 0.958147609480286,
+    "z_cov1": 0.7023809523809523,
+    "z_cov2": 0.9672619047619048,
+    "false_per_spectrum": 1.275,
+    "spectra": 80,
+    "split_fraction": 0.0,
+    "pdet_s3": 0.43,
+    "area_bias_s3": 0.2873306378785043,
+    "pdet_s5": 0.93,
+    "area_bias_s5": -0.03194512915684429,
+    "pdet_s7": 1.0,
+    "area_bias_s7": -0.04534052866814191,
+    "pdet_s10": 1.0,
+    "area_bias_s10": -0.012026208312277535
+   },
+   "background_only": {
+    "spectra": 40,
+    "false_per_spectrum": 0.875,
+    "resolution_elements_per_spectrum": 1295.794985764112,
+    "false_per_1000_res": 0.6752611405453347
+   },
+   "doublets": {
+    "by_case": {
+     "sep=0.5FWHM ratio=1": {
+      "resolved": 0.0,
+      "total_area_bias": 0.0008774141528057953,
+      "lo_area_bias": null,
+      "hi_area_bias": null,
+      "mean_reported": 1.0
+     },
+     "sep=0.5FWHM ratio=3": {
+      "resolved": 0.0,
+      "total_area_bias": -0.0007466987115938262,
+      "lo_area_bias": null,
+      "hi_area_bias": null,
+      "mean_reported": 1.0
+     },
+     "sep=0.5FWHM ratio=10": {
+      "resolved": 0.0,
+      "total_area_bias": -0.0013594300651213085,
+      "lo_area_bias": null,
+      "hi_area_bias": null,
+      "mean_reported": 1.0
+     },
+     "sep=0.75FWHM ratio=1": {
+      "resolved": 1.0,
+      "total_area_bias": 0.00011244867861394595,
+      "lo_area_bias": 0.002850041202637695,
+      "hi_area_bias": -0.002625143845409821,
+      "mean_reported": 2.0
+     },
+     "sep=0.75FWHM ratio=3": {
+      "resolved": 0.0,
+      "total_area_bias": -0.01156725393393101,
+      "lo_area_bias": null,
+      "hi_area_bias": null,
+      "mean_reported": 1.0
+     },
+     "sep=0.75FWHM ratio=10": {
+      "resolved": 0.0,
+      "total_area_bias": -0.009776331964423199,
+      "lo_area_bias": null,
+      "hi_area_bias": null,
+      "mean_reported": 1.0
+     },
+     "sep=1FWHM ratio=1": {
+      "resolved": 1.0,
+      "total_area_bias": -0.00017475741345740974,
+      "lo_area_bias": 0.0012186566210612363,
+      "hi_area_bias": -0.001568171447976074,
+      "mean_reported": 2.0
+     },
+     "sep=1FWHM ratio=3": {
+      "resolved": 1.0,
+      "total_area_bias": -9.751531616809187e-05,
+      "lo_area_bias": -0.0007765942679474028,
+      "hi_area_bias": 0.0019397215391697862,
+      "mean_reported": 2.0
+     },
+     "sep=1FWHM ratio=10": {
+      "resolved": 0.0,
+      "total_area_bias": -0.02820638629282659,
+      "lo_area_bias": null,
+      "hi_area_bias": null,
+      "mean_reported": 1.0
+     },
+     "sep=1.5FWHM ratio=1": {
+      "resolved": 1.0,
+      "total_area_bias": -0.00027674326256090344,
+      "lo_area_bias": 0.00019928482332676135,
+      "hi_area_bias": -0.0007527713484485686,
+      "mean_reported": 2.0
+     },
+     "sep=1.5FWHM ratio=3": {
+      "resolved": 1.0,
+      "total_area_bias": 0.0021619232832836496,
+      "lo_area_bias": 0.0010525576475479102,
+      "hi_area_bias": 0.005490020190490922,
+      "mean_reported": 2.0
+     },
+     "sep=1.5FWHM ratio=10": {
+      "resolved": 1.0,
+      "total_area_bias": 0.0008241690786461317,
+      "lo_area_bias": 0.0002791490085407167,
+      "hi_area_bias": 0.006274369779700056,
+      "mean_reported": 2.0
+     },
+     "sep=2FWHM ratio=1": {
+      "resolved": 1.0,
+      "total_area_bias": 0.0017952038225651087,
+      "lo_area_bias": 0.0027201440936112523,
+      "hi_area_bias": 0.0008702635515189285,
+      "mean_reported": 2.0
+     },
+     "sep=2FWHM ratio=3": {
+      "resolved": 1.0,
+      "total_area_bias": 0.0003086940456528191,
+      "lo_area_bias": 0.00033367479829621516,
+      "hi_area_bias": 0.00023375178772241283,
+      "mean_reported": 2.0
+     },
+     "sep=2FWHM ratio=10": {
+      "resolved": 1.0,
+      "total_area_bias": -8.418744175809972e-05,
+      "lo_area_bias": -0.0018810343698796351,
+      "hi_area_bias": 0.017884281839457297,
+      "mean_reported": 2.0
+     }
+    },
+    "resolved_ge1.5fwhm_ratio_le3": 1.0,
+    "component_area_bias_ge1.5fwhm": 0.002725307650157023,
+    "resolved_1.0fwhm_ratio1": 1.0,
+    "total_area_bias_le0.75fwhm": -0.0037433086406082673,
+    "resolved_le0.75fwhm": 0.16666666666666666
+   },
+   "compton_edge": {
+    "n_true": 40,
+    "n_found": 31,
+    "recall": 0.775,
+    "area_bias": 0.13810871162061555,
+    "area_rel_sd": 0.3831499669746028,
+    "centroid_bias_fwhm": 0.007435708874443991,
+    "fwhm_ratio_mean": 1.0393565640929394,
+    "z_mean": 1.9383073113473208,
+    "z_sd": 3.7539703517618763,
+    "z_cov1": 0.0967741935483871,
+    "z_cov2": 0.16129032258064516,
+    "false_per_spectrum": 1.8333333333333333,
+    "spectra": 48,
+    "split_fraction": 0.0,
+    "spurious_near_edge_per_spectrum": 0.7291666666666666,
+    "by_offset": {
+     "-2FWHM": {
+      "recall": 1.0,
+      "area_bias": 0.24066002324138838
+     },
+     "-1FWHM": {
+      "recall": 1.0,
+      "area_bias": 0.5316887246337012
+     },
+     "+0FWHM": {
+      "recall": 1.0,
+      "area_bias": 0.2119736600822822
+     },
+     "+1FWHM": {
+      "recall": 0.875,
+      "area_bias": -0.5133156004885561
+     },
+     "+2FWHM": {
+      "recall": 0.0,
+      "area_bias": null
+     }
+    }
+   },
+   "low_counts": {
+    "n_true": 320,
+    "n_found": 319,
+    "recall": 0.996875,
+    "area_bias": -0.016175821236732245,
+    "area_rel_sd": 0.11276103970197875,
+    "centroid_bias_fwhm": -0.00022232087576433478,
+    "fwhm_ratio_mean": 0.9776335772247128,
+    "z_mean": -0.2462605758268082,
+    "z_sd": 0.9648502833223239,
+    "z_cov1": 0.7208333333333333,
+    "z_cov2": 0.95,
+    "false_per_spectrum": 0.225,
+    "spectra": 80,
+    "split_fraction": 0.0,
+    "area_bias_A_ge100": -0.02790361317598798,
+    "by_area": {
+     "A=50": {
+      "recall": 0.9875,
+      "area_bias": 0.0194529137686016,
+      "z_mean": 0.06785431891185416
+     },
+     "A=100": {
+      "recall": 1.0,
+      "area_bias": -0.027837724237990868,
+      "z_mean": -0.27830885617764506
+     },
+     "A=200": {
+      "recall": 1.0,
+      "area_bias": -0.03964371098719034,
+      "z_mean": -0.49317288996586955
+     },
+     "A=400": {
+      "recall": 1.0,
+      "area_bias": -0.016229404302782705,
+      "z_mean": -0.277488439891339
+     }
+    }
+   },
+   "identification": {
+    "recall": 1.0,
+    "false_per_spectrum": 0.25,
+    "recall_by_drift": {
+     "0%": 1.0,
+     "0.1%": 0.9411764705882353,
+     "0.3%": 0.058823529411764705,
+     "1%": 0.058823529411764705
+    },
+    "false_by_drift": {
+     "0%": 0.25,
+     "0.1%": 0.20833333333333334,
+     "0.3%": 1.7083333333333333,
+     "1%": 4.666666666666667
+    },
+    "by_mixture": {
+     "background": {
+      "recall": 1.0,
+      "false_per_spectrum": 0.0,
+      "false_nuclides": {},
+      "missed": {}
+     },
+     "Cs-137": {
+      "recall": 1.0,
+      "false_per_spectrum": 0.3333333333333333,
+      "false_nuclides": {
+       "Ir-194": 1
+      },
+      "missed": {}
+     },
+     "Co-60": {
+      "recall": 1.0,
+      "false_per_spectrum": 0.6666666666666666,
+      "false_nuclides": {
+       "I-132": 1,
+       "Te-132": 1
+      },
+      "missed": {}
+     },
+     "Am-241+Cs-137": {
+      "recall": 1.0,
+      "false_per_spectrum": 0.0,
+      "false_nuclides": {},
+      "missed": {}
+     },
+     "Ba-133": {
+      "recall": 1.0,
+      "false_per_spectrum": 0.6666666666666666,
+      "false_nuclides": {
+       "Co-60": 1,
+       "Kr-85m": 1
+      },
+      "missed": {}
+     },
+     "Eu-152": {
+      "recall": 1.0,
+      "false_per_spectrum": 0.0,
+      "false_nuclides": {},
+      "missed": {}
+     },
+     "I-131": {
+      "recall": 1.0,
+      "false_per_spectrum": 0.0,
+      "false_nuclides": {},
+      "missed": {}
+     },
+     "Cs-134+Cs-137": {
+      "recall": 1.0,
+      "false_per_spectrum": 0.3333333333333333,
+      "false_nuclides": {
+       "Sr-92": 1
+      },
+      "missed": {}
+     }
+    },
+    "median_time_s": 0.14394274999904155
+   },
+   "runtime": {
+    "median_s": 0.038289000001896056,
+    "max_s": 0.11369089999789139,
+    "n": 448,
+    "channels": 4096
+   }
+  },
+  "NaI": {
+   "isolated_strong": {
+    "n_true": 240,
+    "n_found": 240,
+    "recall": 1.0,
+    "area_bias": -0.0016847054987993652,
+    "area_rel_sd": 0.0037596805694433337,
+    "centroid_bias_fwhm": 0.0006354353998302551,
+    "fwhm_ratio_mean": 1.0004191229830994,
+    "z_mean": -0.4542171545265655,
+    "z_sd": 1.0015921853185603,
+    "z_cov1": 0.6083333333333333,
+    "z_cov2": 0.9208333333333333,
+    "false_per_spectrum": 0.0,
+    "spectra": 40,
+    "split_fraction": 0.0
+   },
+   "tailed": {
+    "n_true": 240,
+    "n_found": 240,
+    "recall": 1.0,
+    "area_bias": -0.01454470338908729,
+    "area_rel_sd": 0.003513620283170734,
+    "centroid_bias_fwhm": -0.003951622857620141,
+    "fwhm_ratio_mean": 1.0121621840301893,
+    "z_mean": -3.8413400819123216,
+    "z_sd": 0.9711108266901388,
+    "z_cov1": 0.0,
+    "z_cov2": 0.0125,
+    "false_per_spectrum": 0.075,
+    "spectra": 40,
+    "split_fraction": 0.0
+   },
+   "isolated_weak": {
+    "n_true": 400,
+    "n_found": 320,
+    "recall": 0.8,
+    "area_bias": -0.03459319119341965,
+    "area_rel_sd": 0.16993245886604055,
+    "centroid_bias_fwhm": 0.016809257267539596,
+    "fwhm_ratio_mean": 1.0263589764936643,
+    "z_mean": -0.3265117891542536,
+    "z_sd": 0.9901456466749702,
+    "z_cov1": 0.65,
+    "z_cov2": 0.95625,
+    "false_per_spectrum": 0.0375,
+    "spectra": 80,
+    "split_fraction": 0.0,
+    "pdet_s3": 0.27,
+    "area_bias_s3": 0.2472576873234598,
+    "pdet_s5": 0.93,
+    "area_bias_s5": -0.05799415443378421,
+    "pdet_s7": 1.0,
+    "area_bias_s7": -0.07169049437065828,
+    "pdet_s10": 1.0,
+    "area_bias_s10": -0.051832729402199434
+   },
+   "background_only": {
+    "spectra": 40,
+    "false_per_spectrum": 0.0,
+    "resolution_elements_per_spectrum": 55.408182670878034,
+    "false_per_1000_res": 0.0
+   },
+   "doublets": {
+    "by_case": {
+     "sep=0.5FWHM ratio=1": {
+      "resolved": 0.0,
+      "total_area_bias": 0.001991733881816926,
+      "lo_area_bias": null,
+      "hi_area_bias": null,
+      "mean_reported": 1.0
+     },
+     "sep=0.5FWHM ratio=3": {
+      "resolved": 0.0,
+      "total_area_bias": -0.0014935964221267934,
+      "lo_area_bias": null,
+      "hi_area_bias": null,
+      "mean_reported": 1.0
+     },
+     "sep=0.5FWHM ratio=10": {
+      "resolved": 0.0,
+      "total_area_bias": -0.006011207668888875,
+      "lo_area_bias": null,
+      "hi_area_bias": null,
+      "mean_reported": 1.0
+     },
+     "sep=0.75FWHM ratio=1": {
+      "resolved": 1.0,
+      "total_area_bias": -0.0002834950611341083,
+      "lo_area_bias": -0.002185257342143741,
+      "hi_area_bias": 0.0016182672198754703,
+      "mean_reported": 2.0
+     },
+     "sep=0.75FWHM ratio=3": {
+      "resolved": 0.0,
+      "total_area_bias": -0.011339604464768116,
+      "lo_area_bias": null,
+      "hi_area_bias": null,
+      "mean_reported": 1.0
+     },
+     "sep=0.75FWHM ratio=10": {
+      "resolved": 0.0,
+      "total_area_bias": -0.016666904522343,
+      "lo_area_bias": null,
+      "hi_area_bias": null,
+      "mean_reported": 1.0
+     },
+     "sep=1FWHM ratio=1": {
+      "resolved": 1.0,
+      "total_area_bias": -0.0002631252566064904,
+      "lo_area_bias": 0.006609928122047695,
+      "hi_area_bias": -0.007136178635260676,
+      "mean_reported": 2.0
+     },
+     "sep=1FWHM ratio=3": {
+      "resolved": 0.0,
+      "total_area_bias": -0.05198321423748458,
+      "lo_area_bias": null,
+      "hi_area_bias": null,
+      "mean_reported": 1.0
+     },
+     "sep=1FWHM ratio=10": {
+      "resolved": 0.0,
+      "total_area_bias": -0.045692311241409184,
+      "lo_area_bias": null,
+      "hi_area_bias": null,
+      "mean_reported": 1.0
+     },
+     "sep=1.5FWHM ratio=1": {
+      "resolved": 1.0,
+      "total_area_bias": -0.0033243701891484305,
+      "lo_area_bias": -0.006268741802652931,
+      "hi_area_bias": -0.0003799985756438764,
+      "mean_reported": 2.0
+     },
+     "sep=1.5FWHM ratio=3": {
+      "resolved": 0.875,
+      "total_area_bias": -0.0413538235500695,
+      "lo_area_bias": -0.00048075554472157316,
+      "hi_area_bias": 0.002731163847340598,
+      "mean_reported": 1.875
+     },
+     "sep=1.5FWHM ratio=10": {
+      "resolved": 1.0,
+      "total_area_bias": -0.000859780312198034,
+      "lo_area_bias": -0.0003484143032120846,
+      "hi_area_bias": -0.005973440402057259,
+      "mean_reported": 2.0
+     },
+     "sep=2FWHM ratio=1": {
+      "resolved": 1.0,
+      "total_area_bias": -0.003865533981142762,
+      "lo_area_bias": -0.004770720997808658,
+      "hi_area_bias": -0.00296034696447683,
+      "mean_reported": 2.0
+     },
+     "sep=2FWHM ratio=3": {
+      "resolved": 1.0,
+      "total_area_bias": -0.004673489764743262,
+      "lo_area_bias": -0.0059946941824885296,
+      "hi_area_bias": -0.0007098765115074094,
+      "mean_reported": 2.0
+     },
+     "sep=2FWHM ratio=10": {
+      "resolved": 1.0,
+      "total_area_bias": -0.0002747411997845947,
+      "lo_area_bias": -0.002366926014185592,
+      "hi_area_bias": 0.020647106944225422,
+      "mean_reported": 2.0
+     }
+    },
+    "resolved_ge1.5fwhm_ratio_le3": 0.96875,
+    "component_area_bias_ge1.5fwhm": -0.0006091017485120088,
+    "resolved_1.0fwhm_ratio1": 1.0,
+    "total_area_bias_le0.75fwhm": -0.005633845709573995,
+    "resolved_le0.75fwhm": 0.16666666666666666
+   },
+   "compton_edge": {
+    "n_true": 40,
+    "n_found": 16,
+    "recall": 0.4,
+    "area_bias": 3.186077753386347,
+    "area_rel_sd": 1.133996690594628,
+    "centroid_bias_fwhm": -0.004414771019674895,
+    "fwhm_ratio_mean": 1.1449535964202182,
+    "z_mean": 11.479817934871253,
+    "z_sd": 3.7201240838831353,
+    "z_cov1": 0.0,
+    "z_cov2": 0.0,
+    "false_per_spectrum": 0.7083333333333334,
+    "spectra": 48,
+    "split_fraction": 0.2,
+    "spurious_near_edge_per_spectrum": 0.8541666666666666,
+    "by_offset": {
+     "-2FWHM": {
+      "recall": 1.0,
+      "area_bias": 2.0653592600709896
+     },
+     "-1FWHM": {
+      "recall": 1.0,
+      "area_bias": 4.306796246701705
+     },
+     "+0FWHM": {
+      "recall": 0.0,
+      "area_bias": null
+     },
+     "+1FWHM": {
+      "recall": 0.0,
+      "area_bias": null
+     },
+     "+2FWHM": {
+      "recall": 0.0,
+      "area_bias": null
+     }
+    }
+   },
+   "low_counts": {
+    "n_true": 320,
+    "n_found": 262,
+    "recall": 0.81875,
+    "area_bias": 0.1112442623415603,
+    "area_rel_sd": 0.2588432531464087,
+    "centroid_bias_fwhm": -0.002620582495792467,
+    "fwhm_ratio_mean": 1.0160307333416494,
+    "z_mean": 0.32817430014197224,
+    "z_sd": 1.117366778852442,
+    "z_cov1": 0.6382978723404256,
+    "z_cov2": 0.9234042553191489,
+    "false_per_spectrum": 0.15,
+    "spectra": 80,
+    "split_fraction": 0.003125,
+    "area_bias_A_ge100": 0.04711638944662731,
+    "by_area": {
+     "A=50": {
+      "recall": 0.3375,
+      "area_bias": 0.6693942671678289,
+      "z_mean": 1.438802147562508
+     },
+     "A=100": {
+      "recall": 0.9375,
+      "area_bias": 0.11018907582204776,
+      "z_mean": 0.43886097103699245
+     },
+     "A=200": {
+      "recall": 1.0,
+      "area_bias": 0.03641687458102533,
+      "z_mean": 0.2375609073054636
+     },
+     "A=400": {
+      "recall": 1.0,
+      "area_bias": -0.0013147391647273681,
+      "z_mean": -0.05981795949003167
+     }
+    }
+   },
+   "identification": {
+    "recall": 0.8627450980392157,
+    "false_per_spectrum": 1.5416666666666667,
+    "recall_by_drift": {
+     "0%": 0.8627450980392157,
+     "0.1%": 0.9019607843137255,
+     "0.3%": 0.9215686274509803,
+     "1%": 0.9019607843137255
+    },
+    "false_by_drift": {
+     "0%": 1.5416666666666667,
+     "0.1%": 1.4166666666666667,
+     "0.3%": 1.4166666666666667,
+     "1%": 2.2083333333333335
+    },
+    "by_mixture": {
+     "background": {
+      "recall": 1.0,
+      "false_per_spectrum": 0.6666666666666666,
+      "false_nuclides": {
+       "Co-55": 1,
+       "Sb-124": 1
+      },
+      "missed": {}
+     },
+     "Cs-137": {
+      "recall": 1.0,
+      "false_per_spectrum": 1.0,
+      "false_nuclides": {
+       "Mg-28": 2,
+       "Al-26": 1
+      },
+      "missed": {}
+     },
+     "Co-60": {
+      "recall": 1.0,
+      "false_per_spectrum": 1.0,
+      "false_nuclides": {
+       "I-131": 1,
+       "Sb-124": 1,
+       "Mg-28": 1
+      },
+      "missed": {}
+     },
+     "Am-241+Cs-137": {
+      "recall": 1.0,
+      "false_per_spectrum": 0.6666666666666666,
+      "false_nuclides": {
+       "Y-88": 1,
+       "Mg-28": 1
+      },
+      "missed": {}
+     },
+     "Ba-133": {
+      "recall": 0.5,
+      "false_per_spectrum": 4.0,
+      "false_nuclides": {
+       "Al-26": 1,
+       "Y-88": 2,
+       "Xe-133": 3,
+       "I-131": 3,
+       "Sb-124": 3
+      },
+      "missed": {
+       "Ba-133": 3
+      }
+     },
+     "Eu-152": {
+      "recall": 0.6666666666666666,
+      "false_per_spectrum": 2.3333333333333335,
+      "false_nuclides": {
+       "Co-57": 2,
+       "Sb-125": 1,
+       "Sb-124": 1,
+       "Cs-134": 1,
+       "Bi-211": 1,
+       "Zn-65": 1
+      },
+      "missed": {
+       "Eu-152": 2
+      }
+     },
+     "I-131": {
+      "recall": 1.0,
+      "false_per_spectrum": 1.3333333333333333,
+      "false_nuclides": {
+       "Y-88": 1,
+       "Sb-124": 2,
+       "Ag-110m": 1
+      },
+      "missed": {}
+     },
+     "Cs-134+Cs-137": {
+      "recall": 0.7777777777777778,
+      "false_per_spectrum": 1.3333333333333333,
+      "false_nuclides": {
+       "Co-55": 1,
+       "Ag-110m": 1,
+       "Y-88": 1,
+       "Mg-28": 1
+      },
+      "missed": {
+       "K-40": 1,
+       "Cs-137": 1
+      }
+     }
+    },
+    "median_time_s": 0.1703562000002421
+   },
+   "runtime": {
+    "median_s": 0.017922099999850616,
+    "max_s": 0.04592860000047949,
+    "n": 448,
+    "channels": 1024
+   }
+  }
+ },
+ "meta": {
+  "spectramaster_version": "1.0.0",
+  "python": "3.14.7",
+  "numpy": "2.3.5",
+  "platform": "Windows-10-10.0.19045-SP0",
+  "utc": "2026-10-14T09:53:11+00:00",
+  "quick": false,
+  "match_tolerance_fwhm": 0.5,
+  "wall_time_s": 75.7
+ },
+ "informational": {
+  "NaI_4096ch_unlabelled_isolated_strong": {
+   "n_true": 60,
+   "n_found": 1,
+   "recall": 0.016666666666666666,
+   "area_bias": -0.9972896212571863,
+   "area_rel_sd": 0.0,
+   "centroid_bias_fwhm": -0.06743253997446419,
+   "fwhm_ratio_mean": 0.02658337232703048,
+   "z_mean": -1129.0972199704497,
+   "z_sd": 0.0,
+   "z_cov1": 0.0,
+   "z_cov2": 0.0,
+   "false_per_spectrum": 0.4,
+   "spectra": 10,
+   "split_fraction": 0.0
+  },
+  "HPGe_compton_edge_broad_8keV": {
+   "n_true": 40,
+   "n_found": 40,
+   "recall": 1.0,
+   "area_bias": -0.011838252504364773,
+   "area_rel_sd": 0.06199230198856164,
+   "centroid_bias_fwhm": 0.01409498199732867,
+   "fwhm_ratio_mean": 1.0052768187793784,
+   "z_mean": -0.19023187972229297,
+   "z_sd": 1.0032431623918796,
+   "z_cov1": 0.675,
+   "z_cov2": 0.975,
+   "false_per_spectrum": 1.0208333333333333,
+   "spectra": 48,
+   "split_fraction": 0.0,
+   "spurious_near_edge_per_spectrum": 0.0
+  },
+  "NaI_compton_edge_broad_15keV": {
+   "n_true": 40,
+   "n_found": 16,
+   "recall": 0.4,
+   "area_bias": 3.2406555887981643,
+   "area_rel_sd": 1.252978409094912,
+   "centroid_bias_fwhm": -0.008280828263513415,
+   "fwhm_ratio_mean": 1.1891143853482533,
+   "z_mean": 13.403323068145422,
+   "z_sd": 5.734042810849964,
+   "z_cov1": 0.0,
+   "z_cov2": 0.0,
+   "false_per_spectrum": 0.7291666666666666,
+   "spectra": 48,
+   "split_fraction": 0.15,
+   "spurious_near_edge_per_spectrum": 0.8333333333333334
+  }
+ },
+ "reference_data_dir": "D:\\الاسس و المفاهيم العامة فى استخدام برامج الطيف الجامى\\اطياف مرجعية",
+ "G1": {
+  "G1100_found": 20,
+  "G1100_false": 0,
+  "G1200_found": 17,
+  "G1200_false": 0,
+  "G1200_area_dev_median_abs": 0.22435271415871005,
+  "G1300_recall_mean": 1.0,
+  "G1300_false_total": 0,
+  "G1300_area_ratio_bias": 0.0012305556884309732,
+  "G1300_area_dev_median_abs": 0.022743387744269816,
+  "G1300_z_cov1": 0.696969696969697,
+  "G1300_z_cov2": 0.946969696969697,
+  "G1300_n": 132,
+  "G1400_resolved_sep_ge6": 3,
+  "G1400_resolved_sep3": 1,
+  "G1400_resolved_sep1": 0,
+  "G1400_detail": [
+   {
+    "left": 986,
+    "right": 987,
+    "sep": 1,
+    "ratio_LR": 0.1,
+    "n_reported": 1,
+    "resolved": false
+   },
+   {
+    "left": 1032,
+    "right": 1033,
+    "sep": 1,
+    "ratio_LR": 0.333,
+    "n_reported": 1,
+    "resolved": false
+   },
+   {
+    "left": 1077,
+    "right": 1078,
+    "sep": 1,
+    "ratio_LR": 1.0,
+    "n_reported": 1,
+    "resolved": false
+   },
+   {
+    "left": 1118,
+    "right": 1121,
+    "sep": 3,
+    "ratio_LR": 0.1,
+    "n_reported": 1,
+    "resolved": false
+   },
+   {
+    "left": 1404,
+    "right": 1407,
+    "sep": 3,
+    "ratio_LR": 0.333,
+    "n_reported": 1,
+    "resolved": false
+   },
+   {
+    "left": 1452,
+    "right": 1455,
+    "sep": 3,
+    "ratio_LR": 1.0,
+    "n_reported": 2,
+    "resolved": true,
+    "area_dev_left": -0.006772077653959041,
+    "area_dev_right": 0.02669765526967005
+   },
+   {
+    "left": 1789,
+    "right": 1795,
+    "sep": 6,
+    "ratio_LR": 0.1,
+    "n_reported": 2,
+    "resolved": true,
+    "area_dev_left": 0.07288240376278421,
+    "area_dev_right": -0.017743499555920694
+   },
+   {
+    "left": 1846,
+    "right": 1852,
+    "sep": 6,
+    "ratio_LR": 0.333,
+    "n_reported": 2,
+    "resolved": true,
+    "area_dev_left": -0.025010788278001295,
+    "area_dev_right": -0.02998004253872122
+   },
+   {
+    "left": 1928,
+    "right": 1934,
+    "sep": 6,
+    "ratio_LR": 1.0,
+    "n_reported": 2,
+    "resolved": true,
+    "area_dev_left": 0.023114384059558235,
+    "area_dev_right": 0.00213350445565319
+   }
+  ]
+ },
+ "EML": {
+  "calibration_keV": [
+   1.2611158237144415,
+   0.5000773303039412
+  ],
+  "TEST09_false_at_lines": 0,
+  "lines_in_BKG": [],
+  "linearity": {
+   "122.0": [
+    {
+     "test": 2,
+     "ratio_to_TEST01": 1.0023575548491492,
+     "dev_sigma": 0.10822133386444151
+    },
+    {
+     "test": 3,
+     "ratio_to_TEST01": 0.983440141731751,
+     "dev_sigma": -0.30832778890816603
+    },
+    {
+     "test": 4,
+     "ratio_to_TEST01": 1.0591381536346018,
+     "dev_sigma": 0.668894878266716
+    }
+   ],
+   "662.0": [
+    {
+     "test": 2,
+     "ratio_to_TEST01": 0.9993964849336088,
+     "dev_sigma": -0.038685322784333405
+    },
+    {
+     "test": 3,
+     "ratio_to_TEST01": 0.9966250292154917,
+     "dev_sigma": -0.10652910044748552
+    },
+    {
+     "test": 4,
+     "ratio_to_TEST01": 0.9460654871911226,
+     "dev_sigma": -1.0705250214360973
+    },
+    {
+     "test": 5,
+     "ratio_to_TEST01": 1.0832322475863092,
+     "dev_sigma": 0.4865630433533591
+    },
+    {
+     "test": 6,
+     "ratio_to_TEST01": 1.1036898854759365,
+     "dev_sigma": 0.37100241244478566
+    }
+   ],
+   "1332.0": [
+    {
+     "test": 2,
+     "ratio_to_TEST01": 1.0037935395577817,
+     "dev_sigma": 0.16587123149897012
+    },
+    {
+     "test": 3,
+     "ratio_to_TEST01": 1.0347756428021433,
+     "dev_sigma": 0.6447527419296096
+    },
+    {
+     "test": 4,
+     "ratio_to_TEST01": 0.4575905888644617,
+     "dev_sigma": -3.5916229980940098
+    },
+    {
+     "test": 5,
+     "ratio_to_TEST01": 1.338842878975749,
+     "dev_sigma": 1.287731789273038
+    },
+    {
+     "test": 6,
+     "ratio_to_TEST01": 1.6443018960196194,
+     "dev_sigma": 1.35828439243483
+    }
+   ]
+  },
+  "linearity_dev_max_sig": 3.5916229980940098,
+  "lowest_multiplier_detected": {
+   "122.0": 0.005,
+   "662.0": 0.0005,
+   "1332.0": 0.0005
+  },
+  "doublet_resolved_by_shift": {
+   "TEST10 shift=1": {
+    "122.0": 1,
+    "662.0": 1,
+    "1332.0": 1
+   },
+   "TEST11 shift=2": {
+    "122.0": 1,
+    "662.0": 1,
+    "1332.0": 1
+   },
+   "TEST12 shift=3": {
+    "122.0": 1,
+    "662.0": 1,
+    "1332.0": 1
+   },
+   "TEST13 shift=4": {
+    "122.0": 1,
+    "662.0": 1,
+    "1332.0": 1
+   },
+   "TEST14 shift=5": {
+    "122.0": 1,
+    "662.0": 1,
+    "1332.0": 1
+   },
+   "TEST15 shift=6": {
+    "122.0": 2,
+    "662.0": 2,
+    "1332.0": 2
+   },
+   "TEST16 shift=7": {
+    "122.0": 2,
+    "662.0": 2,
+    "1332.0": 2
+   },
+   "TEST17 shift=8": {
+    "122.0": 2,
+    "662.0": 2,
+    "1332.0": 2
+   },
+   "TEST18 shift=9": {
+    "122.0": 2,
+    "662.0": 2,
+    "1332.0": 2
+   },
+   "TEST19 shift=10": {
+    "122.0": 2,
+    "662.0": 2,
+    "1332.0": 2
+   }
+  },
+  "doublet_ratio_shift4": {
+   "TEST20 0.1:0.1": {
+    "122.0": 1,
+    "662.0": 1,
+    "1332.0": 2
+   },
+   "TEST21 0.1:0.08": {
+    "122.0": 1,
+    "662.0": 1,
+    "1332.0": 2
+   },
+   "TEST22 0.1:0.06": {
+    "122.0": 2,
+    "662.0": 1,
+    "1332.0": 2
+   },
+   "TEST23 0.1:0.04": {
+    "122.0": 2,
+    "662.0": 1,
+    "1332.0": 2
+   },
+   "TEST24 0.1:0.02": {
+    "122.0": 1,
+    "662.0": 2,
+    "1332.0": 1
+   },
+   "TEST25 0.1:0.01": {
+    "122.0": 1,
+    "662.0": 2,
+    "1332.0": 1
+   },
+   "TEST26 0.1:0.005": {
+    "122.0": 2,
+    "662.0": 1,
+    "1332.0": 1
+   },
+   "TEST27 0.08:0.1": {
+    "122.0": 1,
+    "662.0": 2,
+    "1332.0": 2
+   },
+   "TEST28 0.06:0.1": {
+    "122.0": 1,
+    "662.0": 1,
+    "1332.0": 2
+   },
+   "TEST29 0.04:0.1": {
+    "122.0": 1,
+    "662.0": 1,
+    "1332.0": 2
+   },
+   "TEST30 0.02:0.1": {
+    "122.0": 1,
+    "662.0": 2,
+    "1332.0": 1
+   },
+   "TEST31 0.01:0.1": {
+    "122.0": 1,
+    "662.0": 2,
+    "1332.0": 1
+   },
+   "TEST32 0.005:0.1": {
+    "122.0": 2,
+    "662.0": 2,
+    "1332.0": 1
+   }
+  }
+ },
+ "criteria": [
+  {
+   "id": "HPGe.strong.recall",
+   "value": 1.0,
+   "op": ">=",
+   "limit": 0.99,
+   "status": "PASS",
+   "rationale": "Peaks with s >= 100 must essentially always be found; 1 % allows a pathological realisation near the analysis-range boundary."
+  },
+  {
+   "id": "HPGe.strong.area_bias",
+   "value": -4.432732495936826e-05,
+   "op": "abs<=",
+   "limit": 0.01,
+   "status": "PASS",
+   "rationale": "Gaussian peaks on a smooth continuum match the fitted model; with ~1e5 counts the statistical error of the mean over 30+ realisations is < 0.1 %, so a bias > 1 % is a systematic defect of the area estimator."
+  },
+  {
+   "id": "HPGe.strong.centroid_bias_fwhm",
+   "value": 0.0003141921026651107,
+   "op": "abs<=",
+   "limit": 0.02,
+   "status": "PASS",
+   "rationale": "Centroid precision for 1e5-count peaks is ~FWHM/(2.355*sqrt(N)) ~ 0.001 FWHM; 0.02 FWHM allows for channel-integration effects only."
+  },
+  {
+   "id": "HPGe.strong.fwhm_ratio",
+   "value": 1.0270576264591234,
+   "op": "in",
+   "limit": [
+    0.95,
+    1.05
+   ],
+   "status": "PASS",
+   "rationale": "The engine's FWHM model is rescaled to strong isolated peaks; it must reproduce the true width to 5 % (a 5 % width error already biases constrained-width areas by ~1-2 %)."
+  },
+  {
+   "id": "HPGe.strong.cov1",
+   "value": 0.7291666666666666,
+   "op": "in",
+   "limit": [
+    0.6,
+    0.76
+   ],
+   "status": "PASS",
+   "rationale": "Reported 1-sigma area uncertainties must have nominal coverage (binomial band, n >= 200)."
+  },
+  {
+   "id": "HPGe.strong.cov2",
+   "value": 0.9625,
+   "op": "in",
+   "limit": [
+    0.9,
+    0.98
+   ],
+   "status": "PASS",
+   "rationale": "Same as above for 2 sigma."
+  },
+  {
+   "id": "HPGe.strong.split",
+   "value": 0.0,
+   "op": "<=",
+   "limit": 0.05,
+   "status": "PASS",
+   "rationale": "No invented separation: a true singlet reported as two or more peaks within 1 FWHM in more than 5 % of cases means the doublet retry fires on noise."
+  },
+  {
+   "id": "HPGe.weak.pdet_s7",
+   "value": 1.0,
+   "op": ">=",
+   "limit": 0.9,
+   "status": "PASS",
+   "rationale": "At s = 7 the expected detection probability is ~0.99 for an efficient search."
+  },
+  {
+   "id": "HPGe.weak.pdet_s5",
+   "value": 0.93,
+   "op": ">=",
+   "limit": 0.5,
+   "status": "PASS",
+   "rationale": "At s = 5 the expected detection probability is ~0.8; below 0.5 the search wastes sensitivity relative to its own threshold."
+  },
+  {
+   "id": "HPGe.weak.pdet_s3",
+   "value": 0.43,
+   "op": "report",
+   "limit": null,
+   "status": "REPORT",
+   "rationale": "Near the threshold; recorded to compare future search improvements (no limit: the trade-off against false peaks is set by the false-peak criterion)."
+  },
+  {
+   "id": "HPGe.weak.area_bias_s7",
+   "value": -0.04534052866814191,
+   "op": "abs<=",
+   "limit": 0.05,
+   "status": "PASS",
+   "rationale": "For s >= 7 detection selection bias is small; a mean area bias > 5 % is systematic."
+  },
+  {
+   "id": "HPGe.bkg.false_per_1000_res",
+   "value": 0.6752611405453347,
+   "op": "<=",
+   "limit": 3.0,
+   "status": "PASS",
+   "rationale": "Pure Poisson continuum: a 3-sigma one-sided threshold gives ~1.35 false peaks per 1000 independent resolution elements; 3 allows for Poisson tails and correlated trials."
+  },
+  {
+   "id": "HPGe.doublet.resolved_wide",
+   "value": 1.0,
+   "op": ">=",
+   "limit": 0.9,
+   "status": "PASS",
+   "rationale": "Separation >= 1.5 FWHM with intensity ratio <= 3 is visibly two peaks; both must be found."
+  },
+  {
+   "id": "HPGe.doublet.area_bias_wide",
+   "value": 0.002725307650157023,
+   "op": "abs<=",
+   "limit": 0.05,
+   "status": "PASS",
+   "rationale": "Component areas of resolved doublets (s >= 30 each) must be unbiased within 5 %."
+  },
+  {
+   "id": "HPGe.doublet.resolved_1fwhm_equal",
+   "value": 1.0,
+   "op": ">=",
+   "limit": 0.7,
+   "status": "PASS",
+   "rationale": "Two equal peaks 1 FWHM apart still show a flat top / inflection that a joint fit should resolve in most realisations (counts >= 2e4 per component)."
+  },
+  {
+   "id": "HPGe.doublet.total_area_close",
+   "value": -0.0037433086406082673,
+   "op": "abs<=",
+   "limit": 0.03,
+   "status": "PASS",
+   "rationale": "Unresolvable doublets need not be split, but the multiplet's total area must be conserved (sum of reported peaks within the multiplet window)."
+  },
+  {
+   "id": "HPGe.doublet.resolved_close",
+   "value": 0.16666666666666666,
+   "op": "report",
+   "limit": null,
+   "status": "REPORT",
+   "rationale": "Splitting peaks < 0.75 FWHM apart is reported only: claiming it automatically is not required and can be a sign of over-fitting."
+  },
+  {
+   "id": "HPGe.edge.recall",
+   "value": 0.775,
+   "op": ">=",
+   "limit": 0.9,
+   "status": "FAIL",
+   "rationale": "Peaks with s >= 20 on a Compton edge must still be found."
+  },
+  {
+   "id": "HPGe.edge.area_bias",
+   "value": 0.13810871162061555,
+   "op": "abs<=",
+   "limit": 0.05,
+   "status": "FAIL",
+   "rationale": "Linear background + step under a peak on an edge: 5 % allows for continuum-shape mismatch."
+  },
+  {
+   "id": "HPGe.edge.spurious",
+   "value": 0.7291666666666666,
+   "op": "<=",
+   "limit": 0.2,
+   "status": "FAIL",
+   "rationale": "The edge itself must not be reported as a peak in more than 1 of 5 spectra."
+  },
+  {
+   "id": "HPGe.tail.area_bias",
+   "value": -0.010311137293879703,
+   "op": "abs<=",
+   "limit": 0.03,
+   "status": "PASS",
+   "rationale": "Peaks carry a low-energy exponential tail with 4 % of the area; an estimator that recovers at least a quarter of the tail stays within 3 %.  Larger bias means tailed peaks lose area."
+  },
+  {
+   "id": "HPGe.tail.split",
+   "value": 0.0,
+   "op": "<=",
+   "limit": 0.05,
+   "status": "PASS",
+   "rationale": "A tail must not be reported as a separate peak."
+  },
+  {
+   "id": "HPGe.low.area_bias",
+   "value": -0.02790361317598798,
+   "op": "abs<=",
+   "limit": 0.05,
+   "status": "PASS",
+   "rationale": "Peaks of 100-400 counts on ~1-3 counts/channel: Poisson regime.  Neyman-weighted least squares is known to bias low here; > 5 % average bias is a defect worth fixing."
+  },
+  {
+   "id": "HPGe.low.cov1",
+   "value": 0.7208333333333333,
+   "op": "in",
+   "limit": [
+    0.55,
+    0.8
+   ],
+   "status": "PASS",
+   "rationale": "Uncertainty coverage in the low-count regime (wider band: fewer matched peaks)."
+  },
+  {
+   "id": "HPGe.runtime",
+   "value": 0.038289000001896056,
+   "op": "<=",
+   "limit": 0.5,
+   "status": "PASS",
+   "rationale": "Engine contract (analysis/__init__.py): < 0.5 s per spectrum for interactive use."
+  },
+  {
+   "id": "HPGe.id.recall",
+   "value": 1.0,
+   "op": ">=",
+   "limit": 0.9,
+   "status": "PASS",
+   "rationale": "Fraction of present nuclides (strongest line s >= 15) reported.  NaI lower: merged lines make some nuclides legitimately ambiguous."
+  },
+  {
+   "id": "HPGe.id.false_per_spectrum",
+   "value": 0.25,
+   "op": "<=",
+   "limit": 0.5,
+   "status": "PASS",
+   "rationale": "Reported nuclides that are absent (aliases of the same decay chain count as present)."
+  },
+  {
+   "id": "HPGe.id.drift",
+   "value": {
+    "0%": 1.0,
+    "0.1%": 0.9411764705882353,
+    "0.3%": 0.058823529411764705,
+    "1%": 0.058823529411764705
+   },
+   "op": "report",
+   "limit": null,
+   "status": "REPORT",
+   "rationale": "Recall vs. deliberate gain error (0, 0.1, 0.3, 1 %): informational, no a-priori limit."
+  },
+  {
+   "id": "NaI.strong.recall",
+   "value": 1.0,
+   "op": ">=",
+   "limit": 0.99,
+   "status": "PASS",
+   "rationale": "Peaks with s >= 100 must essentially always be found; 1 % allows a pathological realisation near the analysis-range boundary."
+  },
+  {
+   "id": "NaI.strong.area_bias",
+   "value": -0.0016847054987993652,
+   "op": "abs<=",
+   "limit": 0.01,
+   "status": "PASS",
+   "rationale": "Gaussian peaks on a smooth continuum match the fitted model; with ~1e5 counts the statistical error of the mean over 30+ realisations is < 0.1 %, so a bias > 1 % is a systematic defect of the area estimator."
+  },
+  {
+   "id": "NaI.strong.centroid_bias_fwhm",
+   "value": 0.0006354353998302551,
+   "op": "abs<=",
+   "limit": 0.02,
+   "status": "PASS",
+   "rationale": "Centroid precision for 1e5-count peaks is ~FWHM/(2.355*sqrt(N)) ~ 0.001 FWHM; 0.02 FWHM allows for channel-integration effects only."
+  },
+  {
+   "id": "NaI.strong.fwhm_ratio",
+   "value": 1.0004191229830994,
+   "op": "in",
+   "limit": [
+    0.95,
+    1.05
+   ],
+   "status": "PASS",
+   "rationale": "The engine's FWHM model is rescaled to strong isolated peaks; it must reproduce the true width to 5 % (a 5 % width error already biases constrained-width areas by ~1-2 %)."
+  },
+  {
+   "id": "NaI.strong.cov1",
+   "value": 0.6083333333333333,
+   "op": "in",
+   "limit": [
+    0.6,
+    0.76
+   ],
+   "status": "PASS",
+   "rationale": "Reported 1-sigma area uncertainties must have nominal coverage (binomial band, n >= 200)."
+  },
+  {
+   "id": "NaI.strong.cov2",
+   "value": 0.9208333333333333,
+   "op": "in",
+   "limit": [
+    0.9,
+    0.98
+   ],
+   "status": "PASS",
+   "rationale": "Same as above for 2 sigma."
+  },
+  {
+   "id": "NaI.strong.split",
+   "value": 0.0,
+   "op": "<=",
+   "limit": 0.05,
+   "status": "PASS",
+   "rationale": "No invented separation: a true singlet reported as two or more peaks within 1 FWHM in more than 5 % of cases means the doublet retry fires on noise."
+  },
+  {
+   "id": "NaI.weak.pdet_s7",
+   "value": 1.0,
+   "op": ">=",
+   "limit": 0.9,
+   "status": "PASS",
+   "rationale": "At s = 7 the expected detection probability is ~0.99 for an efficient search."
+  },
+  {
+   "id": "NaI.weak.pdet_s5",
+   "value": 0.93,
+   "op": ">=",
+   "limit": 0.5,
+   "status": "PASS",
+   "rationale": "At s = 5 the expected detection probability is ~0.8; below 0.5 the search wastes sensitivity relative to its own threshold."
+  },
+  {
+   "id": "NaI.weak.pdet_s3",
+   "value": 0.27,
+   "op": "report",
+   "limit": null,
+   "status": "REPORT",
+   "rationale": "Near the threshold; recorded to compare future search improvements (no limit: the trade-off against false peaks is set by the false-peak criterion)."
+  },
+  {
+   "id": "NaI.weak.area_bias_s7",
+   "value": -0.07169049437065828,
+   "op": "abs<=",
+   "limit": 0.05,
+   "status": "FAIL",
+   "rationale": "For s >= 7 detection selection bias is small; a mean area bias > 5 % is systematic."
+  },
+  {
+   "id": "NaI.bkg.false_per_1000_res",
+   "value": 0.0,
+   "op": "<=",
+   "limit": 3.0,
+   "status": "PASS",
+   "rationale": "Pure Poisson continuum: a 3-sigma one-sided threshold gives ~1.35 false peaks per 1000 independent resolution elements; 3 allows for Poisson tails and correlated trials."
+  },
+  {
+   "id": "NaI.doublet.resolved_wide",
+   "value": 0.96875,
+   "op": ">=",
+   "limit": 0.9,
+   "status": "PASS",
+   "rationale": "Separation >= 1.5 FWHM with intensity ratio <= 3 is visibly two peaks; both must be found."
+  },
+  {
+   "id": "NaI.doublet.area_bias_wide",
+   "value": -0.0006091017485120088,
+   "op": "abs<=",
+   "limit": 0.05,
+   "status": "PASS",
+   "rationale": "Component areas of resolved doublets (s >= 30 each) must be unbiased within 5 %."
+  },
+  {
+   "id": "NaI.doublet.resolved_1fwhm_equal",
+   "value": 1.0,
+   "op": ">=",
+   "limit": 0.7,
+   "status": "PASS",
+   "rationale": "Two equal peaks 1 FWHM apart still show a flat top / inflection that a joint fit should resolve in most realisations (counts >= 2e4 per component)."
+  },
+  {
+   "id": "NaI.doublet.total_area_close",
+   "value": -0.005633845709573995,
+   "op": "abs<=",
+   "limit": 0.03,
+   "status": "PASS",
+   "rationale": "Unresolvable doublets need not be split, but the multiplet's total area must be conserved (sum of reported peaks within the multiplet window)."
+  },
+  {
+   "id": "NaI.doublet.resolved_close",
+   "value": 0.16666666666666666,
+   "op": "report",
+   "limit": null,
+   "status": "REPORT",
+   "rationale": "Splitting peaks < 0.75 FWHM apart is reported only: claiming it automatically is not required and can be a sign of over-fitting."
+  },
+  {
+   "id": "NaI.edge.recall",
+   "value": 0.4,
+   "op": ">=",
+   "limit": 0.9,
+   "status": "FAIL",
+   "rationale": "Peaks with s >= 20 on a Compton edge must still be found."
+  },
+  {
+   "id": "NaI.edge.area_bias",
+   "value": 3.186077753386347,
+   "op": "abs<=",
+   "limit": 0.05,
+   "status": "FAIL",
+   "rationale": "Linear background + step under a peak on an edge: 5 % allows for continuum-shape mismatch."
+  },
+  {
+   "id": "NaI.edge.spurious",
+   "value": 0.8541666666666666,
+   "op": "<=",
+   "limit": 0.2,
+   "status": "FAIL",
+   "rationale": "The edge itself must not be reported as a peak in more than 1 of 5 spectra."
+  },
+  {
+   "id": "NaI.tail.area_bias",
+   "value": -0.01454470338908729,
+   "op": "abs<=",
+   "limit": 0.03,
+   "status": "PASS",
+   "rationale": "Peaks carry a low-energy exponential tail with 4 % of the area; an estimator that recovers at least a quarter of the tail stays within 3 %.  Larger bias means tailed peaks lose area."
+  },
+  {
+   "id": "NaI.tail.split",
+   "value": 0.0,
+   "op": "<=",
+   "limit": 0.05,
+   "status": "PASS",
+   "rationale": "A tail must not be reported as a separate peak."
+  },
+  {
+   "id": "NaI.low.area_bias",
+   "value": 0.04711638944662731,
+   "op": "abs<=",
+   "limit": 0.05,
+   "status": "PASS",
+   "rationale": "Peaks of 100-400 counts on ~1-3 counts/channel: Poisson regime.  Neyman-weighted least squares is known to bias low here; > 5 % average bias is a defect worth fixing."
+  },
+  {
+   "id": "NaI.low.cov1",
+   "value": 0.6382978723404256,
+   "op": "in",
+   "limit": [
+    0.55,
+    0.8
+   ],
+   "status": "PASS",
+   "rationale": "Uncertainty coverage in the low-count regime (wider band: fewer matched peaks)."
+  },
+  {
+   "id": "NaI.runtime",
+   "value": 0.017922099999850616,
+   "op": "<=",
+   "limit": 0.5,
+   "status": "PASS",
+   "rationale": "Engine contract (analysis/__init__.py): < 0.5 s per spectrum for interactive use."
+  },
+  {
+   "id": "NaI.id.recall",
+   "value": 0.8627450980392157,
+   "op": ">=",
+   "limit": 0.75,
+   "status": "PASS",
+   "rationale": "Fraction of present nuclides (strongest line s >= 15) reported.  NaI lower: merged lines make some nuclides legitimately ambiguous."
+  },
+  {
+   "id": "NaI.id.false_per_spectrum",
+   "value": 1.5416666666666667,
+   "op": "<=",
+   "limit": 1.0,
+   "status": "FAIL",
+   "rationale": "Reported nuclides that are absent (aliases of the same decay chain count as present)."
+  },
+  {
+   "id": "NaI.id.drift",
+   "value": {
+    "0%": 0.8627450980392157,
+    "0.1%": 0.9019607843137255,
+    "0.3%": 0.9215686274509803,
+    "1%": 0.9019607843137255
+   },
+   "op": "report",
+   "limit": null,
+   "status": "REPORT",
+   "rationale": "Recall vs. deliberate gain error (0, 0.1, 0.3, 1 %): informational, no a-priori limit."
+  },
+  {
+   "id": "G1.G1100.found",
+   "value": 20,
+   "op": ">=",
+   "limit": 20,
+   "status": "PASS",
+   "rationale": "Reference spectrum: 20 strong peaks (~65 000 counts each) must all be found."
+  },
+  {
+   "id": "G1.G1100.false",
+   "value": 0,
+   "op": "<=",
+   "limit": 1,
+   "status": "PASS",
+   "rationale": "At most one unexplained peak (the pseudo-Compton edge artefact at ~1024 ch is excluded)."
+  },
+  {
+   "id": "G1.G1200.found",
+   "value": 17,
+   "op": ">=",
+   "limit": 17,
+   "status": "PASS",
+   "rationale": "G1 notes: 'many programs detect 17 peaks without spurious peaks'; best in the intercomparison was 19 of 22."
+  },
+  {
+   "id": "G1.G1200.false",
+   "value": 0,
+   "op": "<=",
+   "limit": 1,
+   "status": "PASS",
+   "rationale": "Same assessment rule as the G-1 notes (1020-1030 keV region ignored)."
+  },
+  {
+   "id": "G1.G1300.recall",
+   "value": 1.0,
+   "op": ">=",
+   "limit": 0.95,
+   "status": "PASS",
+   "rationale": "Consistency spectra: 22 peaks, all with workable statistics."
+  },
+  {
+   "id": "G1.G1300.ratio_bias",
+   "value": 0.0012305556884309732,
+   "op": "abs<=",
+   "limit": 0.02,
+   "status": "PASS",
+   "rationale": "Mean (measured/expected - 1) of area ratios vs. G1100 over 6 replicates; peaks were constructed by integral shifts and exact attenuation, so the ratio has no model bias."
+  },
+  {
+   "id": "G1.G1300.cov2",
+   "value": 0.946969696969697,
+   "op": "in",
+   "limit": [
+    0.85,
+    0.99
+   ],
+   "status": "PASS",
+   "rationale": "z of the ratio deviation using the reported uncertainties (G1100 term included); ~130 values, so a wider band than for synthetic data."
+  },
+  {
+   "id": "G1.G1400.wide",
+   "value": 3,
+   "op": ">=",
+   "limit": 3,
+   "status": "PASS",
+   "rationale": "The three doublets with 6-channel separation (~2 FWHM) must be resolved."
+  },
+  {
+   "id": "G1.G1400.mid",
+   "value": 1,
+   "op": "report",
+   "limit": null,
+   "status": "REPORT",
+   "rationale": "3-channel separation (~1 FWHM): recorded; the G-1 notes say automatic analysis often fails."
+  },
+  {
+   "id": "EML.linearity",
+   "value": 3.5916229980940098,
+   "op": "<=",
+   "limit": 3.0,
+   "status": "FAIL",
+   "rationale": "TEST01-TEST05 contain the standard scaled by 0.1 ... 0.001: area/multiplier must agree with TEST01 within 3 combined sigma for each of the 122, 662 and 1332 keV peaks."
+  },
+  {
+   "id": "EML.detect",
+   "value": {
+    "122.0": 0.005,
+    "662.0": 0.0005,
+    "1332.0": 0.0005
+   },
+   "op": "report",
+   "limit": null,
+   "status": "REPORT",
+   "rationale": "Lowest multiplier at which each peak is still detected (TEST01-TEST08); TEST09 has no standard added and any peak found there at those energies is a false detection."
+  },
+  {
+   "id": "EML.blank",
+   "value": 0,
+   "op": "<=",
+   "limit": 0,
+   "status": "PASS",
+   "rationale": "TEST09 (multiplier 0) must not report peaks at 122, 662 or 1332 keV unless they are present in the background spectrum itself (checked against BKG.DAT)."
+  },
+  {
+   "id": "EML.doublets",
+   "value": {
+    "TEST10 shift=1": {
+     "122.0": 1,
+     "662.0": 1,
+     "1332.0": 1
+    },
+    "TEST11 shift=2": {
+     "122.0": 1,
+     "662.0": 1,
+     "1332.0": 1
+    },
+    "TEST12 shift=3": {
+     "122.0": 1,
+     "662.0": 1,
+     "1332.0": 1
+    },
+    "TEST13 shift=4": {
+     "122.0": 1,
+     "662.0": 1,
+     "1332.0": 1
+    },
+    "TEST14 shift=5": {
+     "122.0": 1,
+     "662.0": 1,
+     "1332.0": 1
+    },
+    "TEST15 shift=6": {
+     "122.0": 2,
+     "662.0": 2,
+     "1332.0": 2
+    },
+    "TEST16 shift=7": {
+     "122.0": 2,
+     "662.0": 2,
+     "1332.0": 2
+    },
+    "TEST17 shift=8": {
+     "122.0": 2,
+     "662.0": 2,
+     "1332.0": 2
+    },
+    "TEST18 shift=9": {
+     "122.0": 2,
+     "662.0": 2,
+     "1332.0": 2
+    },
+    "TEST19 shift=10": {
+     "122.0": 2,
+     "662.0": 2,
+     "1332.0": 2
+    }
+   },
+   "op": "report",
+   "limit": null,
+   "status": "REPORT",
+   "rationale": "TEST10-TEST32 doublets (shift 1-10 channels, varied ratios): recorded only, since the exact peak shape of the standard is not documented."
+  }
+ ]
+}

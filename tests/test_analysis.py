@@ -291,3 +291,20 @@ def test_peak_dataclass_additions_have_defaults():
     assert p.centroid_unc is None and p.multiplet == 1 and p.nuclide == ""
     m = NuclideMatch("Cs-137", 0.9)
     assert m.background is False and m.series == ""
+
+
+# ------------------------------------------------- unresolved strong doublets (baseline P1)
+@pytest.mark.parametrize("seed", range(4))
+def test_strong_doublet_one_fwhm_not_discarded(seed):
+    """A 3:1 doublet 1 FWHM apart used to be fitted as one over-wide singlet whose
+    chi2-inflated uncertainty made it look like a 'Compton hump', so 1.3e5 counts vanished
+    without a warning (docs/SpectraMaster_Baseline_Report.md, P1)."""
+    from spectramaster.validation.synthetic import HPGE, Continuum, TruePeak, make_spectrum
+    fw = float(HPGE.fwhm_kev(662.0))
+    truth = [TruePeak(662.0, 1.0e5), TruePeak(662.0 + fw, 1.0e5 / 3)]
+    syn = make_spectrum(HPGE, truth, Continuum(exp_amp=300, exp_scale_kev=400, flat=10), seed=1000 + seed)
+    near = sorted((p for p in find_peaks(syn.spectrum) if abs(p.energy - 662.5) < 3 * fw), key=lambda p: p.energy)
+    assert len(near) == 2
+    for p, t in zip(near, truth):
+        assert abs(p.energy - t.energy) < 0.25 * fw
+        assert abs(p.net_area - t.area) < 4 * p.net_area_unc + 0.02 * t.area

@@ -534,9 +534,26 @@ def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=()) -> list[Peak
         res = y[lo:hi + 1] - r.bkg(x) - g
         j = int(np.argmax(res))
         c2 = float(x[j])
-        if abs(c2 - r.centroids[0]) > 0.4 * r.fwhms[0]:
-            r2 = _fit_group(y, model, sorted([float(r.centroids[0]), c2]), lo, hi, free_width=free, step=True)
-            if r2 is not None and r2.chi2r < 0.6 * r.chi2r and np.all(r2.areas > 3 * r2.area_unc) and (
+        c0 = float(r.centroids[0])
+        starts = []
+        if abs(c2 - c0) > 0.4 * r.fwhms[0]:
+            starts.append(sorted([c0, c2]))
+        # An unresolved doublet ~1 FWHM apart is fitted as one over-wide peak whose residual
+        # maximum lies close to its centroid; the residual start then collapses back onto one
+        # centroid, and the singlet would be discarded below as a "Compton hump".  Only in that
+        # case (width scale at its upper bound) also try symmetric starts at +-0.3 model FWHM;
+        # merely asymmetric (tailed) peaks stay below the bound and keep the old behaviour.
+        if getattr(r, "at_bound", False) and r.scale > 1.3:
+            h = 0.3 * model.at(c0)
+            starts.append([c0 - h, c0 + h])
+        best = None
+        for st in starts:
+            cand = _fit_group(y, model, st, lo, hi, free_width=free, step=True)
+            if cand is not None and (best is None or cand.chi2r < best.chi2r):
+                best = cand
+        if best is not None:
+            r2 = best
+            if r2.chi2r < 0.6 * r.chi2r and np.all(r2.areas > 3 * r2.area_unc) and (
                     min(r2.areas) >= 0.1 * max(r2.areas)
                     or abs(r2.centroids[1] - r2.centroids[0]) >= 1.0 * r2.fwhms[0]):
                 # (a weak component very close to a big peak is usually peak tailing, not a doublet)

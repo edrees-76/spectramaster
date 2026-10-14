@@ -233,7 +233,9 @@ def run_eml(root: Path) -> Optional[dict]:
         peaks = find_peaks(read_spectra(p)[0][0])
         res = {}
         for e, c in chan.items():
-            inside = [q for q in peaks if c - 2.0 <= q.centroid <= c + sep + 2.0]
+            # symmetric window: the shift direction is not documented, and the line position
+            # comes from our own CALIBR01 calibration (+-1 channel)
+            inside = [q for q in peaks if c - sep - 2.5 <= q.centroid <= c + sep + 2.5]
             res[str(e)] = len(inside)
         return res
 

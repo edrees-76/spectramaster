@@ -117,8 +117,10 @@ detector resolution. This is sharper than a measured edge.
     (`peaks.py:554`) then discards it;
   - the doublet retry fails because both start centroids converge to the same value.
 - The search without fitting (`fit=False`) does find the region (about 108 000 counts).
-- Likely the same mechanism: EML 662 keV doublets (TEST12–14, 20–22, 27–29), where zero peaks are
-  reported within the window. This is a hypothesis; it has not been traced.
+- **Correction (after the baseline):** the report first suggested that missing EML 662 keV
+  doublet peaks had the same cause. That was a benchmark-harness error: the search window assumed
+  the doublet shift was towards higher channels. The engine did report the peaks. The window was
+  made symmetric (`reference.py`). The affected metric is report-only.
 - **Effect:** a large real peak, and every nuclide and activity that depends on it, disappears with no warning.
 
 **P2. Calibrated NaI spectra on 4096-channel MCAs fail completely** unless metadata says "NaI".
@@ -197,11 +199,21 @@ with a script during the review. Those scripts were scratch files and are not in
 - **Not handled:** wet/dry mass basis, Bq/m³ in the GUI (it is CLI-only), true-coincidence summing,
   and protection against subtracting the background twice.
 
-## 5. Recommended order of work (impact first)
+## 5. Changes since this baseline
 
-1. **P1 (silent loss of strong peaks).** Replace the discard rule with an explicit flag, and make the
-   doublet retry use separated start centroids. Re-run the benchmark: the doublet and EML criteria
-   must not regress.
+| Change | Evidence | Criteria |
+|---|---|---|
+| **P1 fixed**. When a singlet fit hits its upper width bound, `peaks.py` now also tries the doublet with symmetric starts (±0.3 model FWHM) before the "Compton hump" rule can discard it. Tailed or asymmetric peaks are below the bound and keep the old behaviour. | HPGe, 1 FWHM, 3:1: resolved 12.5 % → 100 %, total-area bias −88 % → −0.01 %. New regression test `test_strong_doublet_one_fwhm_not_discarded` fails on the old code (2 of 4 seeds) and passes on the new. | Re-run in `docs/baseline/after_P1/`. All 69 criteria have the same status as the baseline (51 pass, 9 fail, 9 report). |
+| A first version of the fix used a looser trigger (FWHM > 1.15 × model). It split the slightly asymmetric G1100 peaks at 1823, 1904 and 1947 into tail components, and the existing G-1 test caught it. That version was discarded. | `test_g1_reference_spectrum_all_peaks` | – |
+| EML doublet window corrected in the harness (see P1). | `docs/baseline/after_P1/` | report-only |
+
+For NaI, a 3:1 doublet 1 FWHM apart is still reported as one peak, as before. Splitting it is not
+required by the plan (no separation beyond NaI resolution). Its total area is within −5.2 %.
+
+## 6. Recommended order of work (impact first)
+
+1. ~~P1~~ done (section 5). Still open: features that the engine discards should be reported as
+   visible warnings rather than dropped. This belongs to the Release B fit-inspection window.
 2. **The Bq uncertainty defect and the zero emission-probability uncertainty.** These are small,
    well-defined fixes with independent tests. They are planned for Release E, but they are cheap.
 3. **P2 (detector-type guess).** Prefer the session's `DetectorProfile.type` when one is available,
