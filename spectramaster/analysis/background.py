@@ -5,7 +5,7 @@ Two ways of removing a measured background spectrum B (live time t_b) from a sam
 times are taken as exact):
 
 * **peak by peak** (:class:`BackgroundFitter`): the sample's own fit of each group of
-  peaks (region, centroids, widths, step height, Poisson weights 1/max(S, 1)) defines a
+  peaks (region, centroids, widths, step height, continuum shape and weights) defines a
   linear estimator L of the peak amplitudes and continuum.  At the fitted non-linear
   parameters the sample areas are exactly ``L S``; the same L applied to the background
   counts on the sample's channel grid gives ``N_b = L B`` with ``var(N_b) = L diag(B) L^T``.
@@ -107,9 +107,11 @@ class BackgroundFitter:
         self.s = np.asarray(sample.counts, dtype=float)
         self.b = np.maximum(np.asarray(background.counts, dtype=float), 0.0)
 
-    def _apply(self, lo: int, hi: int, cents, sigmas, step_h: float = 0.0):
+    def _apply(self, lo: int, hi: int, cents, sigmas, step_h: float = 0.0, cont=None, w2=None):
         """Linear estimator of the amplitudes for components at `cents` (index channels) with
-        Gaussian `sigmas` on lo..hi; returns [(k*N_b, k*u_b)] or None."""
+        Gaussian `sigmas` on lo..hi; returns [(k*N_b, k*u_b)] or None.  `cont` (continuum
+        columns) and `w2` (weights) default to a straight line and 1/max(S, 1); the sample's
+        FitReport supplies the fit's own ones (log-linear continuum, model weights)."""
         from .peaks import SQRT2PI, erfc
         n = len(self.s)
         lo, hi = max(int(lo), 0), min(int(hi), n - 1)
@@ -117,14 +119,17 @@ class BackgroundFitter:
             return None
         x = np.arange(lo, hi + 1, dtype=float)
         xm = 0.5 * (x[0] + x[-1])
-        cols = [np.ones_like(x), x - xm]
+        if cont is not None and cont.shape[1] != len(x):
+            cont = w2 = None
+        cols = list(cont) if cont is not None else [np.ones_like(x), x - xm]
+        nc = len(cols)
         for c, sg in zip(cents, sigmas):
             col = np.exp(-0.5 * ((x - c) / sg) ** 2)
             if step_h:
                 col = col + step_h * 0.5 * erfc((x - c) / (sg * math.sqrt(2.0)))
             cols.append(col)
         X = np.vstack(cols).T
-        w = 1.0 / np.maximum(self.s[lo:hi + 1], 1.0)          # the sample fit's weights
+        w = w2 if w2 is not None else 1.0 / np.maximum(self.s[lo:hi + 1], 1.0)
         try:
             L = np.linalg.solve(X.T @ (X * w[:, None]), (X * w[:, None]).T)   # (p, m)
         except np.linalg.LinAlgError:
@@ -135,7 +140,7 @@ class BackgroundFitter:
         out = []
         for j, sg in enumerate(sigmas):
             a = sg * SQRT2PI
-            out.append((self.k * a * float(amp[2 + j]), self.k * a * math.sqrt(max(float(var[2 + j]), 0.0))))
+            out.append((self.k * a * float(amp[nc + j]), self.k * a * math.sqrt(max(float(var[nc + j]), 0.0))))
         return out
 
     # ------------------------------------------------------------ public API
@@ -153,7 +158,7 @@ class BackgroundFitter:
                     continue
                 cents = [c.centroid - self.f0 for c in comps]
                 res = self._apply(g.lo - self.f0, g.hi - self.f0, cents, [c.fwhm * F2S for c in comps],
-                                  g.step_height)
+                                  g.step_height, g.continuum_columns, g.weights)
                 if res is None:
                     continue
                 for c, r in zip(comps, res):

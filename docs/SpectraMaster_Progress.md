@@ -60,6 +60,25 @@ calibration or library do not silently alter previous results.
 
 | C2. Compton edges (HPGe): a continuum step at the expected edge of each strong line (E·2a/(1+2a), a = E/511 keV), fitted over ±6 FWHM with neighbouring groups merged, kept only when it lowers χ² significantly; a residual search adds a masked peak; components the step explains are discarded with that reason and the step is shown as a fit warning | done (HPGe); NaI open | `analysis/peaks.py`; `docs/baseline/after_C2/`; `tests/test_compton_edge.py` (4 tests) |
 
+| C3. Fit model: Poisson maximum likelihood for raw counts (iteratively reweighted with the model); log-linear continuum under fitted groups for scintillators (NaI, LaBr3, CZT), straight line kept for HPGe; the measured-background estimator uses the fit's own continuum columns and weights | done | `analysis/peaks.py`, `analysis/background.py`, `analysis/manual.py`; `docs/baseline/after_C3/`; `tests/test_fit_model.py` (4 tests) |
+
+C3 result (after_C2 → after_C3, all limits unchanged; totals stay FAIL 12 / PASS 84):
+
+- now PASS: `NaI.weak.area_bias_s7` −7.2 % → −0.6 % (the cause was continuum curvature under a
+  straight line: on a flat continuum the bias disappears); `EML.linearity` 3.59 → 1.49.
+- improved: low counts (HPGe −2.8 % → −1.7 %, NaI +4.7 % → +3.5 %, coverage up); NaI weak
+  detection at s = 3 0.27 → 0.41 and s = 5 0.93 → 0.97; HPGe false identifications 0.25 → 0.08.
+- **now FAIL**: `HPGe.weak.area_bias_s7` −4.53 % → −5.01 % (the change is within the
+  statistical scatter of the 80-spectrum category, about ±2 %, but the pre-registered limit is
+  exceeded and is not changed); `NaI.bkg_peak.net_bias` 2.0 % → 3.2 %.
+- **worse, already failing**: NaI false identifications 1.54 → 1.88 per spectrum (NaI_4096
+  1.58 → 1.96): more weak peaks are found and the identification step (P4, Release E) accepts
+  them too easily. EML doublets separated by 6-7 channels are now reported as one peak
+  (report-only).
+- Tried and rejected: a free quadratic continuum (too flexible: HPGe detection at s = 5
+  0.93 → 0.69, false peaks ×3); the log-linear continuum for HPGe (Sr-85 in the laboratory
+  EFF-GOOD.S0 closure +9.3 % → +13.7 %, the 511/514 keV doublet).
+
 Stage 4 (Compton edges), synthetic evidence plus a real-spectrum regression check:
 
 | | before C2 | after C2 |

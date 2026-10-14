@@ -343,6 +343,8 @@ class FitGroup:
     step_height: float
     retry: str = ""           # doublet retry: "", "tried", "accepted"
     warnings: list = field(default_factory=list)
+    continuum_columns: Optional[np.ndarray] = None   # (k, channels): the fit's continuum terms
+    weights: Optional[np.ndarray] = None             # the fit's channel weights (1/variance)
 
     @property
     def channels(self) -> np.ndarray:
@@ -388,6 +390,8 @@ def _record_group(rec: FitReport, spectrum, y, r, retry: str, kept: dict, reason
                                   float(r.area_unc[j]), a, j in kept, reasons.get(j, "")))
     g = FitGroup(r.lo + f0, r.hi + f0, y[r.lo:r.hi + 1].copy(), tot, bk, comps, float(r.chi2r), r.dof,
                  float(r.scale) if r.free_width else 1.0, r.free_width, bool(r.at_bound), r.step_h, retry)
+    if hasattr(r, "cont_cols"):
+        g.continuum_columns, g.weights = r.cont_cols(x), r.weights2.copy()
     if getattr(r, "edge", None) is not None:
         g.warnings.append(f"continuum step fitted at channel {r.edge[1] + f0:.1f} (Compton edge of the "
                           f"{getattr(r, 'edge_source_kev', 0):.0f} keV line): areas near it depend on the "
@@ -405,11 +409,22 @@ def _record_group(rec: FitReport, spectrum, y, r, retry: str, kept: dict, reason
     rec.groups.append(g)
 
 
+BKG_LOGLINEAR = False            # default continuum shape when the model does not say
+LOGLINEAR_DETECTORS = ("NaI", "LaBr3", "CZT")   # wide fit regions: continuum curvature matters
+POISSON_IRLS_ITER = 3            # model-weighted refits (Poisson likelihood) for raw counts
+POISSON_MODEL_FLOOR = 0.25       # counts/channel floor of the model in the weights
+
+
 def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_width=True,
                step=True, width_bounds=(0.7, 1.4), fix_centroids=None, var=None,
-               edge: Optional[tuple] = None) -> Optional[_Fit]:
+               edge: Optional[tuple] = None, loglinear: Optional[bool] = None) -> Optional[_Fit]:
     """Gaussians (shared width scale) + linear background + erfc step, Poisson-weighted
-    (or weighted by the explicit channel variance `var`).
+    (or weighted by the explicit channel variance `var`).  For raw counts of scintillators
+    (``model.loglinear``, set by find_peaks) the continuum is log-linear, exp(b0 + b1 (x - xm)):
+    over their wide fit regions a straight line under a peak on a convex (falling) continuum
+    overestimates the background and biases weak areas low; the exponential has the same two
+    parameters.  HPGe fit regions are a few keV wide and keep the straight line.  Raw counts are fitted by Poisson
+    maximum likelihood (iteratively reweighted with the model, POISSON_IRLS_ITER).
 
     `edge` = (x0, xmin, xmax[, smax]) adds a continuum step E * erfc((x - xe) / (s_e sqrt 2)) / 2
     (Compton edge, falling with energy) with E >= 0, xe in [xmin, xmax] and s_e from 1 to smax
@@ -442,6 +457,11 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
         i = min(max(int(round(c)) - lo, 0), len(d) - 1)
         p += [max(float(d[i]) - (b0 + b1 * (c - xm)), 1.0), float(c)]
     p = np.array(p, dtype=float)
+    if loglinear is None:
+        loglinear = getattr(model, "loglinear", BKG_LOGLINEAR)
+    loglin = bool(loglinear) and var is None
+    if loglin:
+        p[0], p[1] = math.log(max(b0, 0.5)), b1 / max(b0, 0.5)
     # linear pre-solve: background + amplitudes at the search centroids / model widths
     try:
         sg = base_f * F2S
@@ -452,6 +472,9 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
         A0 = np.vstack(cols + list(G)).T * w[:, None]
         sol = np.linalg.lstsq(A0, d * w, rcond=None)[0]
         p[0], p[1] = sol[0], sol[1]
+        if loglin:
+            lev = max(sol[0], 0.5)
+            p[0], p[1] = math.log(lev), sol[1] / lev
         if edge is not None:
             p[4] = max(sol[2], 0.0)
         p[off::2] = np.maximum(sol[len(cols):], 1.0)
@@ -497,7 +520,11 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
         s = base_f * (sc * F2S)
         T = (x[None, :] - c[:, None]) / s[:, None]
         EX = np.exp(-0.5 * T * T)
-        m = p[0] + p[1] * xs + a @ EX
+        if loglin:
+            B = np.exp(np.clip(p[0] + p[1] * xs, -50.0, 50.0))
+            m = B + a @ EX
+        else:
+            m = p[0] + p[1] * xs + a @ EX
         if use_step:
             EC = 0.5 * erfc(T / R2)
             m = m + h * (a @ EC)
@@ -527,50 +554,65 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
         else:
             J[:, 3] = 0.0
         J[:, 2] = dsc
+        if loglin:
+            J[:, 0] = B
+            J[:, 1] = B * xs
         return m, J
 
-    lam = 1e-3
-    m, J = evaluate(p)
-    r = (m - d) * w
-    chi2 = float(r @ r)
-    for _it in range(30):
-        Jw = J * w[:, None]
-        g0 = Jw.T @ r
-        # active set: parameters sitting on a bound with the gradient pushing outwards
-        frz = fixed | ((p <= lb) & (g0 > 0)) | ((p >= ub) & (g0 < 0))
-        Jw[:, frz] = 0.0
-        A = Jw.T @ Jw
-        g = Jw.T @ r
-        dg = np.diag(A).copy()
-        dg[dg <= 0] = 1.0
-        improved = False
-        for _try in range(6):
-            M = A + lam * np.diag(dg)
-            M[frz, :] = 0.0
-            M[:, frz] = 0.0
-            M[frz, frz] = 1.0
-            try:
-                step_ = -np.linalg.solve(M, g)
-            except np.linalg.LinAlgError:
-                lam *= 10
-                continue
-            pn = np.minimum(np.maximum(p + step_, lb), ub)
-            mn, _ = evaluate(pn, want_jac=False)
-            rn = (mn - d) * w
-            c2 = float(rn @ rn)
-            if c2 < chi2:
-                rel = (chi2 - c2) / max(chi2, 1e-12)
-                p, chi2 = pn, c2
-                lam = max(lam / 4.0, 1e-7)
-                improved = True
-                break
-            lam *= 5.0
-        if not improved:
-            break
+    def lm(p, w):
+        lam = 1e-3
         m, J = evaluate(p)
         r = (m - d) * w
-        if rel < 1e-4:
-            break
+        chi2 = float(r @ r)
+        for _it in range(30):
+            Jw = J * w[:, None]
+            g0 = Jw.T @ r
+            # active set: parameters sitting on a bound with the gradient pushing outwards
+            frz = fixed | ((p <= lb) & (g0 > 0)) | ((p >= ub) & (g0 < 0))
+            Jw[:, frz] = 0.0
+            A = Jw.T @ Jw
+            g = Jw.T @ r
+            dg = np.diag(A).copy()
+            dg[dg <= 0] = 1.0
+            improved = False
+            for _try in range(6):
+                M = A + lam * np.diag(dg)
+                M[frz, :] = 0.0
+                M[:, frz] = 0.0
+                M[frz, frz] = 1.0
+                try:
+                    step_ = -np.linalg.solve(M, g)
+                except np.linalg.LinAlgError:
+                    lam *= 10
+                    continue
+                pn = np.minimum(np.maximum(p + step_, lb), ub)
+                mn, _ = evaluate(pn, want_jac=False)
+                rn = (mn - d) * w
+                c2 = float(rn @ rn)
+                if c2 < chi2:
+                    rel = (chi2 - c2) / max(chi2, 1e-12)
+                    p, chi2 = pn, c2
+                    lam = max(lam / 4.0, 1e-7)
+                    improved = True
+                    break
+                lam *= 5.0
+            if not improved:
+                break
+            m, J = evaluate(p)
+            r = (m - d) * w
+            if rel < 1e-4:
+                break
+        return p, chi2, m, J
+
+    p, chi2, m, J = lm(p, w)
+    if var is None:
+        # Poisson maximum likelihood for raw counts: weights from the model, not the data
+        # (Neyman weights 1/d favour downward fluctuations and bias weak areas low).  At the
+        # fixed point sum (d - m)/m dm/dtheta = 0, the Poisson likelihood equations.
+        for _k in range(POISSON_IRLS_ITER):
+            m, _ = evaluate(p, want_jac=False)
+            w = 1.0 / np.sqrt(np.maximum(m, POISSON_MODEL_FLOOR))
+            p, chi2, m, J = lm(p, w)
     dof = max(len(x) - int(npar - fixed.sum()), 1)
     chi2r = chi2 / dof
     Jw = J * w[:, None]
@@ -595,12 +637,14 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
         area_unc[j] = math.sqrt(max(float(gv @ cov @ gv), 0.0))
         cent_unc[j] = math.sqrt(max(float(cov[ia + 1, ia + 1]), 0.0))
     b0f, b1f, hst = p[0], p[1], p[3]
+    loglin_f = loglin
     cents_f, amps_f, sig_f = cent.copy(), amp.copy(), sig.copy()
     edge_f = (float(p[4]), float(p[5]), float(p[6] * sig_e0)) if edge is not None else None
 
     def bkg(xx):
         xx = np.asarray(xx, dtype=float)
-        out = b0f + b1f * (xx - xm)
+        out = (np.exp(np.clip(b0f + b1f * (xx - xm), -50.0, 50.0)) if loglin_f
+               else b0f + b1f * (xx - xm))
         for c, a, s in zip(cents_f, amps_f, sig_f):
             out = out + hst * a * 0.5 * erfc((xx - c) / (s * R2))
         if edge_f is not None:
@@ -614,11 +658,32 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
     fit.amps, fit.sigmas, fit.step_h = amp, sig, float(hst)
     fit.free_width, fit.dof, fit.width_bounds = bool(free_width), int(dof), tuple(width_bounds)
     fit.edge = edge_f              # (height, position, sigma) of the continuum step, or None
+    fit.loglinear = bool(loglin)
+    fit.weights2 = w * w            # final fit weights 1/variance (model-based for raw counts)
+
+    def cont_cols(xx):
+        """Continuum columns of the fit (linear in their coefficients at the fitted shape)."""
+        xx = np.asarray(xx, dtype=float)
+        if loglin_f:
+            B = np.exp(np.clip(b0f + b1f * (xx - xm), -50.0, 50.0))
+            cols = [B, B * (xx - xm)]
+        else:
+            cols = [np.ones_like(xx), xx - xm]
+        if edge_f is not None:
+            cols.append(0.5 * erfc((xx - edge_f[1]) / (edge_f[2] * R2)))
+        return np.vstack(cols)
+
+    fit.cont_cols = cont_cols
     fit.chi2 = float(chi2)
     return fit
 
 
 # --------------------------------------------------------------- main entry
+def loglinear_continuum(spectrum) -> bool:
+    """Log-linear continuum under fitted peaks for scintillator spectra (see _fit_group)."""
+    return guess_detector(spectrum) in LOGLINEAR_DETECTORS
+
+
 def width_model(spectrum, y: np.ndarray, fwhm: Optional[float] = None, min_energy: Optional[float] = None,
                 var: Optional[np.ndarray] = None) -> tuple[np.ndarray, str, int]:
     """FWHM (channels) per index used by the search and fit, its source, and the first index
@@ -676,6 +741,7 @@ def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit
     if report is not None:
         report.fwhm_source = src
     model = _Model(f)
+    model.loglinear = loglinear_continuum(spectrum)
     cands = _candidates(y, f, min_sig * 0.8, start, var=var)
     if not cands:
         return []

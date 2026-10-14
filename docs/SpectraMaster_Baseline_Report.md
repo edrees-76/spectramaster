@@ -216,6 +216,8 @@ with a script during the review. Those scripts were scratch files and are not in
 
 | **C2: Compton-edge step for HPGe** (`analysis/peaks.py`). Near the expected Compton edge of each strong line (calibrated spectra, relative FWHM < 2 %), the group is also fitted with an erfc continuum step (free height, position ±2 FWHM, width from the resolution up to +10 keV in quadrature) over ±6 FWHM, merging the neighbouring groups. The step model is kept when Δχ²/(χ²/ν) > 15, and a residual search then adds up to two masked peaks (Δχ² > 9). | `docs/baseline/after_C1/` → `docs/baseline/after_C2/`: `HPGe.edge.area_bias` 0.138 → 0.015 (PASS), `HPGe.edge.spurious` 0.73 → 0 (PASS), `HPGe.edge.recall` 0.775 → 0.60 (still FAIL; see the progress document). `tests/test_compton_edge.py`. | All other criteria unchanged. FAIL 14 → 12. NaI excluded after a real-spectrum regression (false peaks on NaI calibration spectra). |
 
+| **C3: Poisson likelihood and continuum shape** (`analysis/peaks.py`). Raw counts are fitted by Poisson maximum likelihood (3 model-weighted refits after the Neyman start; at 0.5 counts/channel the Neyman area bias of −12 % disappears). Scintillator spectra use a log-linear continuum under fitted groups. | `docs/baseline/after_C2/` → `docs/baseline/after_C3/`: see the progress document (two criteria now pass, two now fail). `tests/test_fit_model.py`. | Totals unchanged (FAIL 12). New FAILs: `HPGe.weak.area_bias_s7` −5.01 % (limit 5 %), `NaI.bkg_peak.net_bias` 3.2 % (limit 3 %). |
+
 For NaI, a 3:1 doublet 1 FWHM apart is still reported as one peak, as before. Splitting it is not
 required by the plan (no separation beyond NaI resolution). Its total area is within −5.2 %.
 
