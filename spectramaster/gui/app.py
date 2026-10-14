@@ -302,6 +302,10 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         self.menu_analyze.addAction(self.act_labels)
         from .quant_panel import install_quant    # Analyze > Efficiency / Activity (sets self.quant_results)
         install_quant(self)
+        from .calibration_dialog import install_calibration_actions    # Analyze > Energy calibration / drift
+        install_calibration_actions(self)
+        from .fit_inspection import install_session_actions    # Analyze > Fit inspection & manual refit
+        install_session_actions(self)
         self.menu_help = mb.addMenu("")
         self.menu_help.addAction(self.act_shortcuts)
         self.menu_help.addAction(self.act_integration)
@@ -472,6 +476,10 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         retranslate_qc_menu(self)
         from .manual import retranslate_manual_menu
         retranslate_manual_menu(self)
+        from .calibration_dialog import retranslate_calibration_actions
+        retranslate_calibration_actions(self)
+        from .fit_inspection import retranslate_session_actions
+        retranslate_session_actions(self)
         for i, mode in enumerate(Y_MODES):
             self.yscale_combo.setItemText(i, tr(f"y_{mode}"))
         self.yscale_combo.setToolTip(tr("tip_yscale"))

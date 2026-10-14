@@ -1002,7 +1002,7 @@ def check_drift(spec: Spectrum, lines: Optional[Sequence[tuple[str, float]]] = N
     rel = (b - 1.0) * 100
     r.message = (f"{'DRIFT DETECTED' if r.detected else 'No significant drift'}: {len(pts)} reference line(s), "
                  f"gain {rel:+.3f} %, offset {a:+.2f} keV"
-                 + (" (fixed: not justified by the lines)" if a == 0.0 else "") + "; largest shift {r.max_shift_kev:.2f} keV = "
+                 + (" (fixed: not justified by the lines)" if a == 0.0 else "") + f"; largest shift {r.max_shift_kev:.2f} keV = "
                  f"{r.max_shift_fwhm:.2f} FWHM ({r.max_shift_sigma:.1f} sigma)")
     return r
 

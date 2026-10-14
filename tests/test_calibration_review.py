@@ -102,6 +102,7 @@ def test_drift_detected_and_correction_proposed_not_applied():
     assert syn.spectrum.energy_coeffs == before            # a proposal only
     assert _max_err_fwhm(HPGE, r.proposed_coeffs, 300, 2000) <= 0.1
     assert "DRIFT DETECTED" in r.report()
+    assert "{" not in r.message and f"{r.max_shift_kev:.2f} keV" in r.message
 
 
 @pytest.mark.parametrize("det", [HPGE, NAI], ids=["HPGe", "NaI"])
