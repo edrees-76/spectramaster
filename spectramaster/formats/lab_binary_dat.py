@@ -1,7 +1,8 @@
-"""Binary *.dat spectra with a 1670-byte text header (read only).
+"""EMCA2000 binary *.dat spectra (1670-byte text header; read only).
 
-Code 80 ``lab_dat1670``.  The writing MCA program is not identified; no public description
-of the layout was found.  The layout below was inferred from about 13,000 laboratory files
+Code 80 ``lab_dat1670``.  The laboratory identifies EMCA2000 as the program that wrote these
+files; no description of the layout was available.  The layout below was inferred from about
+13,000 laboratory files
 (HPGe, 2004-2009) and checked as stated; every inferred field is recorded in ``extra`` with
 its raw text so a later correction is possible:
 
@@ -107,8 +108,8 @@ def sniff_lab_dat(path: Path, head: bytes) -> bool:
         return False
 
 
-register(FormatSpec(80, "lab_dat1670", "Binary .dat, 1670-byte text header (read only)", [".dat"],
+register(FormatSpec(80, "lab_dat1670", "EMCA2000 binary .dat (read only)", [".dat"],
                     read_lab_dat, None, sniff_lab_dat,
-                    "Layout inferred from laboratory HPGe files (2004-2009); writer program not "
-                    "identified.  See the module docstring for what was verified.",
-                    aliases=["dat1670"]))
+                    "Written by EMCA2000 (laboratory information).  Layout inferred from the "
+                    "laboratory's HPGe files (2004-2009); see the module docstring for what was "
+                    "verified.", aliases=["dat1670", "emca2000"]))

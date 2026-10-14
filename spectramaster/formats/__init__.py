@@ -27,8 +27,8 @@ Code allocation (keep in sync with the module that registers each one):
            74 quantrad_scout, 75 spectran_f, 76 nucleus_pca (.spm), 77 pca_multiport (.spt),
            78 aptec_v30, 79 aptec_v43 (read only).  76/77 are probably DataMaster's
            Oxford PCA-2/PCA-3 (codes 3/4) but that is unconfirmed, so 3/4 stay reserved.
-    80 lab_dat1670       binary *.dat, 1670-byte text header (laboratory HPGe files 2004-2009;
-           layout inferred, writer not identified)  lab_binary_dat.py (read only)
+    80 lab_dat1670       EMCA2000 binary *.dat, 1670-byte text header (laboratory HPGe files
+           2004-2009; layout inferred)  lab_binary_dat.py (read only)
     60-69  aptec_import_ascii.py -- text formats of the Aptec MCA v6.31 import DLLs:
            60 aptec_ascii *.apt, 61 bti_ascii *.bti (read only), 62 chandata_csv *.csv,
            63 ci90_ascii *.o (read only), 64 davidson_ascii *.dav, 65 iaea_ascii_dat *.dat,
