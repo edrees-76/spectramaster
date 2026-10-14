@@ -172,6 +172,34 @@ _c("NaI_4096.id.recall", "NaI_4096", "identification", "recall", ">=", 0.75,
 _c("NaI_4096.id.false_per_spectrum", "NaI_4096", "identification", "false_per_spectrum", "<=", 1.0,
    "Same limit as NaI.id.false_per_spectrum.")
 
+# -------------------------------------------------------------------- energy calibration (Release B)
+# Added 2026-10-14 for increment B0, BEFORE the calibration changes of Release B were written and
+# before the benchmark computed these categories.  Source spectra are generated without an
+# energy calibration; the true calibration is known.  "Error" = max |E_fit(ch) - E_true(ch)|
+# over the energy range spanned by the matched lines, in units of the true FWHM there.
+for det in ("HPGe", "NaI"):
+    _c(f"{det}.cal.recover", det, "calibration", "recover_ok_fraction", ">=", 0.95,
+       "A source spectrum with strong lines (HPGe: Eu-152 with a mildly non-linear true "
+       "calibration; NaI: Am-241 + Cs-137 + Co-60) must give a calibration within 0.1 FWHM over "
+       "the calibrated range.  0.1 FWHM keeps identification windows (~0.5 FWHM) unaffected.")
+    _c(f"{det}.cal.wrong_source", det, "calibration", "wrong_source_flagged_fraction", ">=", 0.90,
+       "A spectrum of Co-60 + Cs-137 presented as 'Eu-152' must not produce an unflagged "
+       "calibration (an exception or a failed validation both count as flagged).")
+    _c(f"{det}.drift.detect", det, "drift", "detected_fraction_at_limit", ">=", 0.95,
+       "Natural-background spectrum whose stored gain is wrong by 0.3 % (HPGe) / 1 % (NaI), i.e. "
+       ">= 0.2 FWHM at 1460 keV: the drift check must report it.")
+    _c(f"{det}.drift.false_alarm", det, "drift", "false_alarm_fraction", "<=", 0.05,
+       "No drift: the check must stay quiet in at least 95 % of spectra.")
+    _c(f"{det}.drift.corrected", det, "drift", "corrected_ok_fraction_at_limit", ">=", 0.95,
+       "The proposed correction, once accepted, must bring the calibration within 0.1 FWHM over "
+       "the range of the background lines used.")
+    _c(f"{det}.drift.by_level", det, "drift", "detected_fraction_by_level", "report", None,
+       "Detection fraction per drift level (0, 0.1, 0.3, 1 %): informational.")
+_c("HPGe.cal.order_linear", "HPGe", "calibration", "linear_truth_order1_fraction", ">=", 0.90,
+   "Linear true calibration with 11 Eu-152 lines: the model selection must keep order 1 in at "
+   "least 90 % of realisations (a test at the 5 % level would keep it ~95 % of the time); "
+   "the plan forbids raising the degree without justification.")
+
 # -------------------------------------------------------------------- IAEA G-1 (HPGe-like Ge(Li))
 _c("G1.G1100.found", "HPGe", "G1", "G1100_found", ">=", 20,
    "Reference spectrum: 20 strong peaks (~65 000 counts each) must all be found.")
