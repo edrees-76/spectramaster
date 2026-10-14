@@ -535,7 +535,7 @@ def cat_idb(folder: Path) -> dict:
     out = {}
     implaus_names: dict[str, int] = defaultdict(int)
     for k, fs in by_kind.items():
-        agg = {"n": 0, "u": 0, "u_found": 0, "pu": 0, "pu_found": 0, "implausible": 0}
+        agg = {"n": 0, "u": 0, "u_found": 0, "pu": 0, "pu_found": 0, "implausible": 0, "implausible_sg": 0}
         for f in fs[::IDB_STEP]:
             from ..convert import read_spectra
             s = read_spectra(f)[0][0]
@@ -550,12 +550,17 @@ def cat_idb(folder: Path) -> dict:
                 agg["pu_found"] += "Pu-239" in ids
             bad = ids - IDB_U_CHAIN - IDB_PU - IDB_BACKGROUND
             agg["implausible"] += len(bad)
+            # informational: the same spectrum searched with the safeguards application library
+            ids_sg = {r.nuclide for r in identify(s, find_peaks(s), application="safeguards")}
+            agg["implausible_sg"] += len(ids_sg - IDB_U_CHAIN - IDB_PU - IDB_BACKGROUND)
             for b in bad:
                 implaus_names[f"{k} {b}"] += 1
         out[f"{k}_spectra"] = agg["n"]
         out[f"{k}_U235_recall"] = agg["u_found"] / agg["u"] if agg["u"] else None
         out[f"{k}_Pu239_recall"] = agg["pu_found"] / agg["pu"] if agg["pu"] else None
         out[f"{k}_implausible_per_spectrum"] = agg["implausible"] / agg["n"] if agg["n"] else None
+        out[f"{k}_implausible_per_spectrum_safeguards_library"] = (agg["implausible_sg"] / agg["n"]
+                                                                   if agg["n"] else None)
     out["most_frequent_implausible"] = dict(sorted(implaus_names.items(), key=lambda kv: -kv[1])[:15])
     return out
 

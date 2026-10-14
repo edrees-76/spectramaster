@@ -512,13 +512,17 @@ def _calibration_correction(ctx: _Context, accepted: list):
 
 def identify(spectrum, peaks: Optional[list[Peak]] = None, library=None, lib=None,
              min_confidence: float = 0.25, include_xrays: bool = True, max_results: int = 40,
-             correct_drift: bool = True, _debug: bool = False, **_ignored) -> list[NuclideMatch]:
+             correct_drift: bool = True, application: str = "all", _debug: bool = False,
+             **_ignored) -> list[NuclideMatch]:
     """Identify nuclides. `library`/`lib`: path or parsed library (default: bundled).
 
     `correct_drift`: first compare the stored energy calibration with the natural-background
     lines in the spectrum (tools.calibrate.check_drift); when a drift is detected, the peak
     energies are corrected for the identification only and every result says so.  The stored
-    calibration is never changed (review and apply it with the drift check)."""
+    calibration is never changed (review and apply it with the drift check).
+    `application`: the application library searched ("all", "environmental", "calibration",
+    "safeguards", "medical"; analysis.library.APPLICATIONS) - as with commercial programs,
+    restricting the candidates to the kind of work avoids coincidental matches."""
     if not spectrum.energy_coeffs:
         return []
     if peaks is None:
@@ -529,7 +533,8 @@ def identify(spectrum, peaks: Optional[list[Peak]] = None, library=None, lib=Non
         p.nuclide, p.line_energy = "", None
     if not cal_peaks:
         return []
-    libd = load_library(library if library is not None else lib)
+    from .library import application_library
+    libd = application_library(load_library(library if library is not None else lib), application)
     det = guess_detector(spectrum)
     ctx = _Context(spectrum, cal_peaks, det)
 

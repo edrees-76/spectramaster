@@ -109,6 +109,39 @@ def load_library(source: Union[None, str, Path, dict] = None) -> Library:
     return _load_path(str(Path(source).resolve()))
 
 
+# Application libraries, defined by the library's own categories (not by picking nuclides).
+# A category string such as "activation/calibration" belongs to every set that contains one
+# of its parts listed for that application.
+APPLICATIONS = {
+    "all": None,
+    # soil, water, food, air filters: natural, cosmogenic and fission products, plus the
+    # long-lived activation products that are also calibration sources (Co-60, Mn-54, Zn-65,
+    # Eu-152/154) and fallout Am-241 / Cs-137
+    "environmental": {"natural", "cosmogenic", "fission", "activation/calibration", "actinide/calibration",
+                      "fission/calibration", "calibration/cosmogenic", "fission/medical"},
+    "calibration": {"calibration", "natural", "cosmogenic"},
+    "safeguards": {"actinide", "natural"},
+    "medical": {"medical", "natural", "cosmogenic"},
+}
+
+
+def _in_application(category: str, wanted: set) -> bool:
+    if category in wanted:
+        return True
+    parts = set(category.split("/"))
+    return any(w in parts or w == category for w in wanted if "/" not in w)
+
+
+def application_library(lib: Library, application: str = "all") -> Library:
+    """The nuclides of `lib` used for one kind of work (see APPLICATIONS)."""
+    if application not in APPLICATIONS:
+        raise ValueError(f"unknown application library {application!r}; choose one of {sorted(APPLICATIONS)}")
+    wanted = APPLICATIONS[application]
+    if wanted is None:
+        return lib
+    return {n: nd for n, nd in lib.items() if _in_application(nd.category or "", wanted)}
+
+
 def lines_of(name: str, source=None) -> list[Line]:
     nd = load_library(source).get(name)
     return list(nd.lines) if nd else []

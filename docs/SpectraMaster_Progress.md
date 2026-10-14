@@ -172,6 +172,16 @@ pair; totals FAIL 20 → 13, no other criterion changed.
 
 | E2. Drift before identification (P3): the B1 drift check (natural-background lines) runs first; its correction is applied to the peak energies for the identification only, and kept only when it explains the significant peaks ≥ 5 % better; every result then says so; the stored calibration is never changed | done | `analysis/identify.py`, `tools/calibrate.py` (`check_drift(peaks=)`); `tests/test_identify_drift.py` |
 
+| E3. Application libraries built from the library's own categories (`environmental`: natural, cosmogenic, fission products, Co-60/Mn-54/Zn-65/Eu-152/154, Am-241, Cs-137 - 84 nuclides; `calibration` 50; `safeguards` 41; `medical` 56; `all` = engine default) and `identify(..., application=)` | done (engine); GUI selection open | `analysis/library.py` (`APPLICATIONS`, `application_library`); `tests/test_application_library.py` |
+
+E3 result (real spectra; the scored criteria keep the `all` library for comparability):
+IAEA IDB HPGe (98 spectra) implausible identifications 8.85 → **1.12** per spectrum with the
+`safeguards` library, Pu-239 found 32/40 → 35/40 (reported as
+`HPGe_implausible_per_spectrum_safeguards_library`). Five long laboratory spectra (ceramics,
+14-309 ks) with `environmental`: already plausible (U/Th chains, K-40); Eu-155 is reported in
+2 of 5 and stays a candidate (a genuine fallout nuclide; its 86.5/105.3 keV lines lie among the
+Th/U X-rays): open.
+
 E2 result (synthetic, 4 seeds per mixture): HPGe recall at 0.1 / 0.3 / 1 % drift
 0.98 / 0.06 / 0.06 → 1.0 / 1.0 / 1.0; false identifications at drift ≤ 0.09 per spectrum; NaI
 unchanged (0.88 at 0.3 %). A first version applied every detected drift. On IAEA IDB
