@@ -200,6 +200,32 @@ _c("HPGe.cal.order_linear", "HPGe", "calibration", "linear_truth_order1_fraction
    "least 90 % of realisations (a test at the 5 % level would keep it ~95 % of the time); "
    "the plan forbids raising the degree without justification.")
 
+# -------------------------------------------------------------------- measured background (Release C)
+# Added 2026-10-14 for increment C0, BEFORE any Release C change and before the benchmark computed
+# these categories.  Pairs of synthetic spectra: a laboratory background measured for 2x the
+# sample live time (natural lines + a small Cs-137 contamination) and a sample = the same
+# background rate + source lines (Cs-137, Co-60).  Net areas come from compute_activities with
+# that background, in both modes ("peak": peak-by-peak; "spectrum": full-spectrum subtraction).
+# Present lines: Cs-137 662, Co-60 1173 and 1332 keV (true sample-only area known); absent lines:
+# K-40 1461, Bi-214 609, Pb-214 352 keV (present in sample and background alike, true net 0).
+# About 120 present / 120 absent lines per category: binomial 3-sigma bands
+# 0.683 +- 0.127 and 0.954 +- 0.057.
+for det in ("HPGe", "NaI"):
+    for mode in ("peak", "spectrum"):
+        _c(f"{det}.bkg_{mode}.net_bias", det, f"background_{mode}", "net_area_bias", "abs<=", 0.03,
+           "Subtracting a measured background must conserve the sample's own net area; 3 % allows for "
+           "continuum-shape and alignment effects (statistical error of the mean < 1 %).")
+        _c(f"{det}.bkg_{mode}.cov1", det, f"background_{mode}", "z_cov1", "in", (0.55, 0.81),
+           "Net-area uncertainties must include the scaled background contribution (nominal 1-sigma "
+           "coverage, binomial band for ~120 lines).")
+        _c(f"{det}.bkg_{mode}.cov2", det, f"background_{mode}", "z_cov2", "in", (0.89, 1.0),
+           "Same for 2 sigma.")
+        _c(f"{det}.bkg_{mode}.false_detect", det, f"background_{mode}", "false_detection_fraction", "<=", 0.11,
+           "Lines present only through the background must not be declared detected after subtraction "
+           "more often than the decision threshold allows (k_alpha = 1.645: 5 %, + 3 sigma for ~120 trials).")
+        _c(f"{det}.bkg_{mode}.recall", det, f"background_{mode}", "present_detected_fraction", "report", None,
+           "Fraction of present lines declared detected (informational).")
+
 # -------------------------------------------------------------------- IAEA G-1 (HPGe-like Ge(Li))
 _c("G1.G1100.found", "HPGe", "G1", "G1100_found", ">=", 20,
    "Reference spectrum: 20 strong peaks (~65 000 counts each) must all be found.")
