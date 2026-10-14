@@ -170,7 +170,7 @@ redistributed with SpectraMaster. Tests that use them are skipped when the folde
 | Source | Contents | Licence | Used for |
 |---|---|---|---|
 | InterSpec `example_spectra` (Sandia National Laboratories, github.com/sandialabs/InterSpec) | ORTEC portal, 8 HPGe detectors ("HPGe 50%"), 16384 channels: Ba-133 source 640 s and a background measured the same day (N42-2006); a 1064-spectrum pass-through | LGPL-2.1 | `tests/test_public_spectra.py`: N42 detector type; measured-background subtraction on real pairs |
-| IAEA IDB, reference gamma spectra for U/Pu isotopics (nds.iaea.org/idb, v2024-01, 1591 SPE files) | real spectra with detector metadata and certificates | CC BY 4.0, cite Dipti et al., Sci Data 12, 1868 (2025) | pending: the site refuses automated download; to be downloaded by the user |
+| IAEA IDB, reference gamma spectra for U/Pu isotopics (nds.iaea.org/idb, v2024-01, 1591 SPE files, folder `iaea_idb/IDB-all-spectra`) | real U, Pu and MOX spectra; HPGe 961, CZT 336, LaBr3 225, CdTe 61, NaI 8; material type and certified isotopics in each file | CC BY 4.0, cite Dipti et al., Sci Data 12, 1868 (2025) | all 1591 read; detector type recognised for all (CdTe added as the CZT class); identification test set for Release E |
 
 Result on the InterSpec pairs (8 detectors): Ba-133 net areas from peak-by-peak and full-spectrum
 subtraction agree within 0.3 % (276-384 keV); natural lines that are in both spectra (K-40, Tl-208,
@@ -179,6 +179,22 @@ Bi-214) net to z = 0.0 ± 1.0 on average. A slight positive excess of Bi-214 at 
 measurements. Found while doing this: the N42 reader did not pass `<DetectorType>` on, so two
 weak background spectra were guessed as NaI; it is now read (`extra["detector_type"]`) and used
 first by `guess_detector`.
+
+IAEA IDB identification check (random 60 spectra per detector type, before any Release E change;
+evidence for E0, not yet a pre-registered criterion):
+
+| detector | U-235 identified in U / MOX (≥ 0.7 % U-235) | Pu-239 identified in Pu / MOX | implausible identifications per spectrum |
+|---|---|---|---|
+| HPGe | 33/34 | **0/27** | **10.6** |
+| CZT | 22/38 | 0/22 | 5.8 |
+| LaBr3 | 6/33 | 1/18 | 7.0 |
+| CdTe | 6/7 | 0/52 | 7.5 |
+| NaI | 1/7 | – | 3.1 |
+
+"Implausible" = not a U or Pu chain member, Am-241, Np-237, or a natural/fallout background
+nuclide (most frequent: Gd-153, Lu-177, Ce-141, Nb-95, Eu-155, Xe-133m). Pu-239 lines have
+emission probabilities of 10⁻⁵–10⁻⁴ per decay. The identification is not designed for such
+spectra; this is the real-data counterpart of the synthetic P4 defect.
 
 ## Skipped tests in the existing suite (2026-10-14, this machine)
 

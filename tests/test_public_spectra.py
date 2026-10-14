@@ -54,3 +54,23 @@ def test_measured_background_on_real_pairs():
         assert v["peak"] == pytest.approx(v["spectrum"], rel=0.02)
     z = np.array(nat)
     assert len(z) >= 15 and abs(z.mean()) < 0.8 and 0.5 < z.std() < 1.6
+
+
+IDB = ROOT / "iaea_idb" / "IDB-all-spectra"
+needs_idb = pytest.mark.skipif(not (IDB / "1.spe").is_file(), reason="IAEA IDB spectra not available")
+
+
+@needs_idb
+def test_idb_spectra_are_read_and_the_detector_type_is_recognised():
+    """IAEA IDB v2024-01 (CC BY 4.0, Dipti et al., Sci Data 12, 1868 (2025)): the SPE remark
+    names the detector; the guess must agree (CdTe is treated as the CZT resolution class)."""
+    import re
+    from spectramaster.convert import read_spectra
+    from spectramaster.analysis.peaks import guess_detector
+    want = {"hpge": "HPGe", "czt": "CZT", "cdznte": "CZT", "cdte": "CZT", "labr": "LaBr3", "nai": "NaI"}
+    files = sorted(IDB.glob("*.spe"))[::25]
+    assert len(files) >= 50
+    for f in files:
+        m = re.search(r"Detector:\s*([^\n(]*)", f.read_text(encoding="latin-1"))
+        key = next(k for k in want if k in m.group(1).lower())
+        assert guess_detector(read_spectra(f)[0][0]) == want[key], f.name

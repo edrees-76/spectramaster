@@ -83,7 +83,8 @@ def guess_detector(spectrum) -> str:
     text = " ".join(str(v) for v in ((getattr(spectrum, "extra", None) or {}).get("detector_type", ""),
                                      spectrum.detector, spectrum.sample_id, spectrum.description)).lower()
     for key, det in (("hpge", "HPGe"), ("ge(li)", "HPGe"), ("germanium", "HPGe"), ("nai", "NaI"),
-                     ("labr", "LaBr3"), ("czt", "CZT"), ("cdznte", "CZT")):
+                     ("labr", "LaBr3"), ("czt", "CZT"), ("cdznte", "CZT"),
+                     ("cdte", "CZT")):       # CdTe: same room-temperature semiconductor resolution class
         if key in text:
             return det
     n = len(spectrum.counts)
