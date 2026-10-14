@@ -174,7 +174,7 @@ E1 result (all synthetic criteria unchanged; IDB, 160 real spectra):
 
 | | before | after |
 |---|---|---|
-| HPGe: Pu-239 found in Pu/MOX | 0 % | 78 % |
+| HPGe: Pu-239 found in Pu/MOX | 0 % | 78 % (benchmark subset; 6 of the first 12 Pu files) |
 | HPGe: implausible identifications per spectrum (limit 1) | 9.6 | 8.8 (FAIL) |
 | CZT: U-235 / Pu-239 found | 59 % / 0 % | 82 % / 20 % |
 | LaBr3: U-235 / Pu-239 found | 23 % / 0 % | 69 % / 63 % |
