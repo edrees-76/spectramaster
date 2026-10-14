@@ -802,6 +802,43 @@ def auto_crossover(points: Sequence[EfficiencyPoint], order: int = 2, order_high
     return float(round(best, 1))
 
 
+VALIDATION_MAX_Z = 3.0           # independent check: no point further than this
+VALIDATION_MAX_MEAN_Z2 = 2.0     # and mean z^2 at most this (chi^2/n; ~ 95 % for a few points)
+
+
+def validate_curve(curve: EfficiencyCurve, points: Sequence[EfficiencyPoint]) -> dict:
+    """Independent check of a curve with points NOT used in its fit (another source, the same
+    detector and geometry).  z = (eps_point - eps_curve) / sqrt(u_point^2 + u_curve^2).
+
+    Returns {"rows": [...], "n": n, "max_abs_z", "mean_z2", "consistent": bool, "message"}.
+    ``consistent`` applies VALIDATION_MAX_Z and VALIDATION_MAX_MEAN_Z2; the decision to mark the
+    calibration as validated stays with the user (CalibrationRecord.set_validation)."""
+    rows = []
+    used = {(round(p.energy, 3), p.nuclide) for p in curve.points if p.use}
+    for p in points:
+        if not p.use or p.efficiency <= 0:
+            continue
+        f = float(curve.efficiency(p.energy))
+        u = math.hypot(p.unc, float(curve.uncertainty(p.energy)))
+        rows.append({"nuclide": p.nuclide, "energy": p.energy, "point": p.efficiency, "curve": f,
+                     "dev_pct": 100.0 * (p.efficiency / f - 1.0), "z": (p.efficiency - f) / u if u > 0 else 0.0,
+                     "in_range": curve.in_range(p.energy, margin=0.0),
+                     "also_in_fit": (round(p.energy, 3), p.nuclide) in used})
+    indep = [r for r in rows if not r["also_in_fit"]]
+    if not indep:
+        return {"rows": rows, "n": 0, "max_abs_z": None, "mean_z2": None, "consistent": False,
+                "message": "no independent points (every point was used in the fit)"}
+    zs = [r["z"] for r in indep]
+    mz = max(abs(z) for z in zs)
+    m2 = sum(z * z for z in zs) / len(zs)
+    ok = mz <= VALIDATION_MAX_Z and m2 <= VALIDATION_MAX_MEAN_Z2
+    msg = (f"{len(indep)} independent point(s): largest |z| = {mz:.1f}, mean z^2 = {m2:.2f} -> "
+           + ("consistent with the curve" if ok else "NOT consistent with the curve"))
+    if any(not r["in_range"] for r in indep):
+        msg += "; some points lie outside the calibrated range"
+    return {"rows": rows, "n": len(indep), "max_abs_z": mz, "mean_z2": m2, "consistent": ok, "message": msg}
+
+
 def manual_point(energy: float, efficiency: float, rel_unc_pct: float = 2.0, note: str = "") -> EfficiencyPoint:
     return EfficiencyPoint(float(energy), float(efficiency), float(efficiency) * rel_unc_pct / 100.0,
                            nuclide="manual", u_count_rel=rel_unc_pct / 100.0, manual=True, note=note)

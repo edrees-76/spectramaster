@@ -118,3 +118,19 @@ def test_points_far_from_the_curve_are_listed_for_review():
     bad.efficiency *= 1.2
     c = eff.fit_efficiency(pts + [bad], "loglog", order=3)
     assert any(w.startswith("Sr-85 514.0 keV") for w in c.warnings)
+
+
+def test_independent_validation_accepts_a_consistent_source_and_rejects_a_wrong_curve(cal):
+    _syn, _pts, c = cal
+    # a second, independent measurement of the same true efficiency
+    syn2, cert2 = list(scenarios.efficiency_calibration(HPGE, 2))[1]
+    other = eff.measure_efficiency(syn2.spectrum, cert2)
+    for p in other:
+        p.nuclide = p.nuclide + " (check source)"
+    v = eff.validate_curve(c, other)
+    assert v["n"] >= 8 and v["consistent"], v["message"]
+    wrong = eff.EfficiencyCurve.from_dict(c.to_dict())
+    wrong.params = list(wrong.params)
+    wrong.params[0] += math.log(1.10)                     # curve 10 % too high
+    assert not eff.validate_curve(wrong, other)["consistent"]
+    assert eff.validate_curve(c, c.points)["n"] == 0      # the fit's own points are not a check
