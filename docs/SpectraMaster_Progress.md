@@ -25,6 +25,26 @@ Status values:
 | A8. Fix P2 (unlabelled NaI on a 4096-channel MCA treated as HPGe) | done | `peaks.py` width-based type inference; criteria pre-registered in `acceptance.py` (separate commit); `docs/baseline/before_P2/`, `docs/baseline/after_P2/`; tests in `tests/test_analysis.py` |
 | A5. Session integration in the GUI (open/save session, display stored vs recalculated results) | open | Planned for Release B together with the peak-inspection window |
 
+## Release B: energy and FWHM calibration, peak inspection and manual editing
+
+| Increment | Status | Evidence |
+|---|---|---|
+| B0. Calibration criteria pre-registered; calibration and drift scenarios; current tool measured | done | `acceptance.py` (commit 573041b, before any change); `docs/baseline/before_B1/` |
+| B1. Calibration review: fitted centroids with uncertainties, weighted fit, F-test order selection, outlier exclusion with reasons, validation report (independent lines, monotonicity, extrapolated range, expected lines not found, width consistency), drift check with a proposed (not applied) correction | done (library level) | `tools/calibrate.py`; `analysis/peaks.py` (data-driven width model); `docs/baseline/after_B1/`; `tests/test_calibration_review.py` |
+| B2. Fit-inspection data (components, background, residuals, warnings) | open | |
+| B3. Manual peak editing with undo/redo and stale results | open | |
+| B4. GUI: calibration review dialog, fit-inspection window, sessions (A5) | open | |
+
+Stage 3 acceptance criterion ("known calibrations are recovered; incorrect matches, drift and
+unreliable extrapolation are detected"), synthetic evidence only:
+
+- recovered: HPGe Eu-152 with a non-linear true calibration (100 %), NaI Am+Cs+Co (100 %);
+- incorrect matches: Co-60 + Cs-137 presented as Eu-152 flagged in 100 % (HPGe and NaI);
+- drift: detected at 0.3 % (HPGe) and 1 % (NaI) in 100 %, no false alarm;
+- extrapolation: reported as a warning with the fraction of channels outside the range;
+- **not met**: the proposed NaI drift correction is within 0.1 FWHM in 85 % of cases (limit 95 %).
+  With natural background only, 2-3 unblended NaI lines remain (σ 5-9 keV each).
+
 Stage 2 acceptance criterion: reopening a session restores its state, and changes to a
 calibration or library do not silently alter previous results.
 

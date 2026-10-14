@@ -568,7 +568,7 @@ def _estimate_fwhm_from_data(y) -> np.ndarray:
     """Uncalibrated spectrum without FWHM info: fit strong peaks found at several widths."""
     n = len(y)
     pts = []
-    for w in (4.0, 2.5, 8.0, 16.0, 32.0):
+    for w in (4.0, 2.5, 8.0, 16.0, 32.0, 64.0):   # 64: NaI on 4096+ channels
         if sum(1 for _c, fw in pts if 0.7 * w <= fw <= 1.4 * w) >= 4:
             break    # the previous kernel width already matched the peaks
         f = np.full(n, w)
@@ -586,18 +586,33 @@ def _estimate_fwhm_from_data(y) -> np.ndarray:
     if not pts:
         return np.full(n, 4.0)
     pts = np.array(sorted(set((round(c, 1), round(fw, 2)) for c, fw in pts)))
-    # keep consistent widths: FWHM^2 = a + b*ch (b >= 0), robust
+    # consistent widths: FWHM^2 = a + b*ch (b >= 0), fitted robustly.  Points are rejected by
+    # their ratio to the current fit, not to the overall median, so the strong energy dependence
+    # of NaI widths (x4 over the spectrum on a 4096-channel MCA) survives.
     c, fw = pts[:, 0], pts[:, 1]
-    med = np.median(fw)
-    ok = (fw > 0.6 * med) & (fw < 1.6 * med)
-    c, fw = c[ok], fw[ok]
+    med = float(np.median(fw))
     if len(c) >= 3 and np.ptp(c) > n / 4:
-        A = np.vstack([np.ones_like(c), c]).T
-        sol, *_ = np.linalg.lstsq(A, fw ** 2, rcond=None)
-        a, b = sol
-        if b >= 0 and a + b * n > 0 and a > 0:
-            return np.sqrt(a + b * np.arange(n))
-    return np.full(n, float(np.median(fw)))
+        keep = np.ones(len(c), dtype=bool)
+        model = None
+        for _ in range(4):
+            if keep.sum() < 3 or np.ptp(c[keep]) <= n / 4:
+                break
+            A = np.vstack([np.ones(int(keep.sum())), c[keep]]).T
+            (a, b), *_ = np.linalg.lstsq(A, fw[keep] ** 2, rcond=None)
+            if b < 0:
+                break
+            m = np.sqrt(np.maximum(a + b * c, 1e-6))
+            new_keep = (fw > 0.7 * m) & (fw < 1.4 * m)
+            model = (a, b)
+            if np.array_equal(new_keep, keep):
+                break
+            keep = new_keep
+        if model is not None and keep.sum() >= 3:
+            a, b = model
+            floor = 0.5 * float(fw[keep].min())
+            return np.sqrt(np.maximum(a + b * np.arange(n), floor * floor))
+    ok = (fw > 0.6 * med) & (fw < 1.6 * med)
+    return np.full(n, float(np.median(fw[ok])) if ok.any() else med)
 
 
 def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=()) -> list[Peak]:
