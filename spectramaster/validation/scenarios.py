@@ -279,3 +279,60 @@ def background_pairs(det: DetectorSpec, n: int, live_time: float = 3600.0) -> It
         bkg.spectrum.sample_id = f"background-{i}"
         yield smp, bkg, truth
 
+
+# ---------------------------------------------------------------------------- efficiency calibration
+EFF_STANDARD = ("Am-241", "Cd-109", "Co-57", "Ce-139", "Hg-203", "Sn-113", "Sr-85", "Cs-137", "Y-88", "Co-60")
+EFF_SCALE = {"HPGe": 0.05, "NaI": 0.15}          # absolute efficiency at 120 keV
+EFF_CERT_REL_UNC = 0.02                           # certificate activity uncertainty, per nuclide
+EFF_DECAY_DAYS = 60.0                             # reference date before the measurement
+
+
+# Smooth true curve, deliberately outside the fitted model family: a low-energy rise
+# (absorption in the entrance window and dead layer) times a power-law fall,
+# eps = k (1 - exp(-(E / E1)^p)) (E / 120)^-q.  ``shape="kinked"`` is the first-run curve
+# (rel_efficiency: power laws meeting in a corner at 120 keV), kept as an informational case.
+EFF_SHAPE = {"HPGe": (55.0, 3.0, 0.90), "NaI": (45.0, 2.5, 1.00)}     # E1 keV, p, q
+
+
+def true_efficiency(det: DetectorSpec, e_kev, shape: str = "smooth"):
+    """The true full-energy-peak efficiency of the efficiency scenarios."""
+    k = EFF_SCALE.get(det.name, 0.05)
+    e = np.maximum(np.atleast_1d(np.asarray(e_kev, dtype=float)), 20.0)
+    if shape == "kinked":
+        v = np.array([k * rel_efficiency(float(x)) for x in e])
+    else:
+        e1, pw, q = EFF_SHAPE.get(det.name, EFF_SHAPE["HPGe"])
+        v = k * (1.0 - np.exp(-(e / e1) ** pw)) * (e / 120.0) ** -q
+    return float(v[0]) if np.ndim(e_kev) == 0 else v
+
+
+def efficiency_calibration(det: DetectorSpec, n: int, activity_bq: float = 500.0,
+                           live_time: float = 3600.0, shape: str = "smooth") -> Iterator[tuple]:
+    """(synthetic spectrum, certificate lines) of a mixed-nuclide standard measured with the
+    true efficiency of :func:`true_efficiency`.  Each nuclide's true activity differs from the
+    certificate value by N(0, EFF_CERT_REL_UNC), drawn per realisation (the certificate error
+    is shared by all lines of that nuclide); the reference date is EFF_DECAY_DAYS before the
+    start.  No true-coincidence summing is simulated."""
+    from datetime import datetime, timedelta
+    from ..analysis.efficiency import CertNuclide, certificate_lines, counting_decay_factor, decay_factor
+    start = datetime(2026, 3, 1, 9, 0, 0)
+    ref = start - timedelta(days=EFF_DECAY_DAYS)
+    cert = certificate_lines([CertNuclide(nm, activity_bq, activity_bq * EFF_CERT_REL_UNC, ref)
+                              for nm in EFF_STANDARD])
+    real_time = live_time * 1.01
+    e_lo, e_hi = float(det.energy(0)), float(det.energy(det.n_channels - 1))
+    for i in range(n):
+        rng = np.random.default_rng(seed_of(det, "efficiency/cert", i))
+        factor = {nm: 1.0 + EFF_CERT_REL_UNC * rng.standard_normal() for nm in EFF_STANDARD}
+        peaks = []
+        for ln in cert:
+            a0 = activity_bq * factor[ln.nuclide] * decay_factor(ln.half_life_s, EFF_DECAY_DAYS * 86400.0)
+            c = counting_decay_factor(ln.half_life_s, real_time)
+            area = a0 * c * ln.intensity * float(true_efficiency(det, ln.energy, shape)) * live_time
+            if area > 0 and e_lo < ln.energy < e_hi:
+                peaks.append(TruePeak(ln.energy, area, tag=ln.nuclide))
+        syn = make_spectrum(det, peaks, base_continuum(det), seed_of(det, "efficiency", i), live_time=live_time,
+                            meta={"category": "efficiency", "true_factor": factor, "shape": shape})
+        syn.spectrum.start_time = start
+        syn.spectrum.real_time = real_time
+        yield syn, cert

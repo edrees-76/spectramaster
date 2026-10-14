@@ -419,6 +419,78 @@ def cat_measured_background(det: DetectorSpec, n: int, mode: str) -> dict:
             "absent_z_mean_when_found": _mean(r["net"] / r["unc"] for r in absent if r["found"] and r["unc"])}
 
 
+# ------------------------------------------------------------- efficiency calibration (Release D)
+EFF_TCS = ("Co-60", "Y-88")
+EFF_OUTSIDE = (("Pb-210", 46.5), ("Tl-208", 2614.5))      # lines below / above a 59-1836 keV calibration
+
+
+def _activity_supports(name: str) -> bool:
+    import inspect
+    from ..analysis.activity import ActivityOptions, compute_activities
+    return name in inspect.signature(compute_activities).parameters or name in ActivityOptions.__dataclass_fields__
+
+
+def cat_efficiency(det: DetectorSpec, n: int, shape: str = "smooth") -> dict:
+    """Recovery and coverage of a fitted efficiency curve, plus the functional guards."""
+    from ..analysis import efficiency as eff
+    from ..analysis.activity import ActivityOptions, compute_activities
+    devs, zs, maxdev, tcs_pts, tcs_flag, outside, outside_flag = [], [], [], 0, 0, 0, 0
+    guard, shown = [], []
+    for k, (syn, cert) in enumerate(scenarios.efficiency_calibration(det, n, shape=shape)):
+        pts = eff.measure_efficiency(syn.spectrum, cert)
+        try:
+            curve = eff.fit_efficiency(pts, "two_branch", crossover="auto")
+        except (ValueError, np.linalg.LinAlgError):
+            continue
+        used = [p for p in pts if p.use]
+        lo, hi = min(p.energy for p in used), max(p.energy for p in used)
+        test_e = np.geomspace(lo * 1.15, hi / 1.15, 12)
+        f = np.asarray(curve.efficiency(test_e), dtype=float)
+        u = np.asarray(curve.uncertainty(test_e), dtype=float)
+        t = scenarios.true_efficiency(det, test_e, shape)
+        d = f / t - 1.0
+        devs.extend(d.tolist())
+        zs.extend(((f - t) / u).tolist())
+        maxdev.append(float(np.max(np.abs(d))))
+        for p in pts:
+            if p.nuclide in EFF_TCS:
+                tcs_pts += 1
+                tcs_flag += ("summing" in (p.note or "").lower())
+        if k < 3:
+            q = compute_activities(syn.spectrum, curve, ActivityOptions(nuclides=[nm for nm, _ in EFF_OUTSIDE]))
+            for r in q.nuclides:
+                for ln in r.lines:
+                    if any(abs(ln.energy - e) < 1.0 for _nm, e in EFF_OUTSIDE):
+                        outside += 1
+                        outside_flag += ("extrapolat" in (ln.note or "").lower())
+            # geometry guard: the curve belongs to a point source; the sample is a Marinelli beaker
+            ok = 0
+            if _activity_supports("geometry"):
+                from ..lab.detector import MeasurementGeometry
+                curve.geometry_record = MeasurementGeometry("point source 10 cm", kind="point",
+                                                            source_distance_mm=100.0).to_dict()
+                try:
+                    q = compute_activities(syn.spectrum, curve, ActivityOptions(
+                        nuclides=["Cs-137"], geometry=MeasurementGeometry("Marinelli 1 L", kind="marinelli")))
+                    ok = int(any("geometry" in nt.lower() for nt in q.notes))
+                except ValueError:
+                    ok = 1
+            guard.append(ok)
+            # validation status: an imported, unvalidated calibration must be reported
+            curve.validation_status = "unvalidated"
+            q = compute_activities(syn.spectrum, curve, ActivityOptions(nuclides=["Cs-137"]))
+            shown.append(int(any("unvalidated" in nt.lower() for nt in q.notes)))
+    z = np.asarray(zs)
+    return {"realisations": n, "mean_rel_dev": _mean(devs),
+            "median_max_rel_dev": float(np.median(maxdev)) if maxdev else None,
+            "z_cov1": _frac(abs(x) <= 1 for x in z) if len(z) else None,
+            "z_cov2": _frac(abs(x) <= 2 for x in z) if len(z) else None,
+            "z_mean": _mean(z), "z_sd": float(np.std(z)) if len(z) else None,
+            "tcs_flagged": tcs_flag / tcs_pts if tcs_pts else None,
+            "extrapolation_flagged": outside_flag / outside if outside else None,
+            "geometry_guard": _mean(guard), "validation_shown": _mean(shown)}
+
+
 # ------------------------------------------------------------------------------ driver
 def run(quick: bool = False, refdata: Optional[str] = None, log=print) -> dict:
     q = (lambda full, small: small if quick else full)
@@ -443,6 +515,8 @@ def run(quick: bool = False, refdata: Optional[str] = None, log=print) -> dict:
         log(f"[{det.name}] energy calibration and drift ...")
         r["calibration"] = cat_calibration(det, HPGE_NL if det.name == "HPGe" else det, q(20, 3))
         r["drift"] = cat_drift(det, q(20, 3))
+        log(f"[{det.name}] efficiency calibration ...")
+        r["efficiency"] = cat_efficiency(det, q(40, 3))
         log(f"[{det.name}] measured background ...")
         for mode in ("peak", "spectrum"):
             r[f"background_{mode}"] = cat_measured_background(det, q(40, 3), mode)
@@ -464,6 +538,8 @@ def run(quick: bool = False, refdata: Optional[str] = None, log=print) -> dict:
         info, _c = cat_edge(det, q(48, 6), extra_sigma_kev=xs)
         info.pop("by_offset", None)
         results["informational"][f"{det.name}_compton_edge_broad_{xs:g}keV"] = info
+        # first-run efficiency truth with a corner at 120 keV (not physical; kept for reference)
+        results["informational"][f"{det.name}_efficiency_kinked_truth"] = cat_efficiency(det, q(40, 3), "kinked")
     root = reference.find_refdata(refdata)
     results["reference_data_dir"] = str(root) if root else None
     if root:
