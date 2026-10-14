@@ -253,6 +253,30 @@ for det in ("HPGe", "NaI"):
     _c(f"{det}.eff.max_dev", det, "efficiency", "median_max_rel_dev", "report", None,
        "Median over realisations of the largest deviation within the calibrated range (informational).")
 
+# ------------------------------------------------------ identification (Release E, pre-registered E0)
+# Identification under gain drift (P3): the drift check of B1 exists; identification must still
+# work at 0.3 % drift (HPGe ~3 FWHM at 1.5 MeV, NaI well inside its resolution).
+_c("HPGe.id.recall_drift_0.3", "HPGe", "identification", "recall_at_drift_0.3", ">=", 0.85,
+   "At 0.3 % gain drift the present nuclides must still be identified (drift corrected or tolerated).")
+_c("NaI.id.recall_drift_0.3", "NaI", "identification", "recall_at_drift_0.3", ">=", 0.75,
+   "Same, with the NaI recall limit.")
+# Real spectra: IAEA IDB v2024-01 (CC BY 4.0), when available.  A first look at these spectra
+# was taken BEFORE this registration (Pu-239 found 0/27, 6-11 implausible identifications per
+# spectrum, see the progress document); the limits below are set from the laboratory's needs,
+# the same as the synthetic limits, not from those values.
+_c("IDB.HPGe.implausible_per_spectrum", "HPGe", "IDB", "HPGe_implausible_per_spectrum", "<=", 1.0,
+   "Identifications that are neither the material's chains, Am-241/Np-237, nor natural/fallout "
+   "background: at most 1 per spectrum, as for the synthetic false-identification limit.")
+_c("IDB.HPGe.U235_recall", "HPGe", "IDB", "HPGe_U235_recall", ">=", 0.90,
+   "U-235 (185.7 keV, strong) must be identified in uranium-bearing materials with >= 0.7 % U-235.")
+for _d in ("HPGe", "CZT", "LaBr3", "CdTe", "NaI"):
+    _c(f"IDB.{_d}.Pu239_recall", _d, "IDB", f"{_d}_Pu239_recall", "report", None,
+       "Pu-239 in Pu/MOX (lines of 1e-5 to 1e-4 per decay); outside the laboratory's usual scope.")
+    if _d != "HPGe":
+        _c(f"IDB.{_d}.implausible_per_spectrum", _d, "IDB", f"{_d}_implausible_per_spectrum", "report", None,
+           "Lower-resolution detectors: recorded for comparison.")
+        _c(f"IDB.{_d}.U235_recall", _d, "IDB", f"{_d}_U235_recall", "report", None, "Recorded for comparison.")
+
 # -------------------------------------------------------------------- IAEA G-1 (HPGe-like Ge(Li))
 _c("G1.G1100.found", "HPGe", "G1", "G1100_found", ">=", 20,
    "Reference spectrum: 20 strong peaks (~65 000 counts each) must all be found.")
