@@ -277,7 +277,9 @@ def cat_identification(det, n_seeds) -> dict:
                 if not found(n):
                     by_mix[syn.meta["mixture"]]["missed"][n] += 1
     d0 = by_drift[0.0]
+    d3 = by_drift.get(0.003)
     return {"recall": d0["tp"] / max(d0["n"], 1), "false_per_spectrum": d0["fp"] / max(d0["spectra"], 1),
+            "recall_at_drift_0.3": (d3["tp"] / max(d3["n"], 1)) if d3 else None,
             "recall_by_drift": {f"{d * 100:g}%": v["tp"] / max(v["n"], 1) for d, v in sorted(by_drift.items())},
             "false_by_drift": {f"{d * 100:g}%": v["fp"] / max(v["spectra"], 1) for d, v in sorted(by_drift.items())},
             "by_mixture": {k: {"recall": v["tp"] / max(v["n"], 1), "false_per_spectrum": v["fp"] / max(v["spectra"], 1),
@@ -491,6 +493,73 @@ def cat_efficiency(det: DetectorSpec, n: int, shape: str = "smooth") -> dict:
             "geometry_guard": _mean(guard), "validation_shown": _mean(shown)}
 
 
+# ------------------------------------------------------------ IAEA IDB real spectra (Release E)
+IDB_U_CHAIN = {"U-235", "U-238", "Th-234", "Pa-234m", "Th-231", "U-234", "U-232", "Th-228", "Pa-231", "Ac-227",
+               "Th-227", "Ra-223"}
+IDB_PU = {"Pu-238", "Pu-239", "Pu-240", "Pu-241", "Pu-242", "Am-241", "U-237", "Np-237", "Pa-233"}
+IDB_BACKGROUND = {"K-40", "Ra-226", "Pb-214", "Bi-214", "Pb-210", "Th-232", "Ac-228", "Pb-212", "Bi-212", "Tl-208",
+                  "Ra-228", "Rn-222", "Be-7", "Cs-137"}
+IDB_STEP = 10           # every 10th file of each detector type (deterministic subset)
+
+
+def idb_folder() -> Optional[Path]:
+    import os
+    root = Path(os.environ.get("SPECTRAMASTER_PUBLIC_DATA", "D:/SpectraMaster_public_data"))
+    f = root / "iaea_idb" / "IDB-all-spectra"
+    return f if (f / "1.spe").is_file() else None
+
+
+def _idb_kind(text: str) -> str:
+    t = text.lower()
+    for key, k in (("hpge", "HPGe"), ("cdznte", "CZT"), ("czt", "CZT"), ("cdte", "CdTe"), ("labr", "LaBr3"),
+                   ("nai", "NaI")):
+        if key in t:
+            return k
+    return "other"
+
+
+def cat_idb(folder: Path) -> dict:
+    """Identification on IAEA IDB spectra (material type and isotopics from the file remarks)."""
+    import re
+    files = sorted(folder.glob("*.spe"), key=lambda p: int(re.sub(r"\D", "", p.stem) or 0))
+    by_kind: dict[str, list] = defaultdict(list)
+    meta = {}
+    for f in files:
+        txt = f.read_text(encoding="latin-1")
+        m = re.search(r"Detector:\s*([^\n]*)", txt)
+        mt = re.search(r"Material type:\s*([^\n]*)", txt)
+        e5 = re.search(r"235U\s+([\d.]+)", txt)
+        k = _idb_kind(m.group(1) if m else "")
+        by_kind[k].append(f)
+        meta[f] = ((mt.group(1).strip() if mt else ""), float(e5.group(1)) if e5 else 0.0)
+    out = {}
+    implaus_names: dict[str, int] = defaultdict(int)
+    for k, fs in by_kind.items():
+        agg = {"n": 0, "u": 0, "u_found": 0, "pu": 0, "pu_found": 0, "implausible": 0}
+        for f in fs[::IDB_STEP]:
+            from ..convert import read_spectra
+            s = read_spectra(f)[0][0]
+            ids = {r.nuclide for r in identify(s, find_peaks(s))}
+            mat, e235 = meta[f]
+            agg["n"] += 1
+            if mat in ("U", "MOX") and e235 >= 0.7:
+                agg["u"] += 1
+                agg["u_found"] += "U-235" in ids
+            if mat in ("Pu", "MOX"):
+                agg["pu"] += 1
+                agg["pu_found"] += "Pu-239" in ids
+            bad = ids - IDB_U_CHAIN - IDB_PU - IDB_BACKGROUND
+            agg["implausible"] += len(bad)
+            for b in bad:
+                implaus_names[f"{k} {b}"] += 1
+        out[f"{k}_spectra"] = agg["n"]
+        out[f"{k}_U235_recall"] = agg["u_found"] / agg["u"] if agg["u"] else None
+        out[f"{k}_Pu239_recall"] = agg["pu_found"] / agg["pu"] if agg["pu"] else None
+        out[f"{k}_implausible_per_spectrum"] = agg["implausible"] / agg["n"] if agg["n"] else None
+    out["most_frequent_implausible"] = dict(sorted(implaus_names.items(), key=lambda kv: -kv[1])[:15])
+    return out
+
+
 # ------------------------------------------------------------------------------ driver
 def run(quick: bool = False, refdata: Optional[str] = None, log=print) -> dict:
     q = (lambda full, small: small if quick else full)
@@ -540,6 +609,10 @@ def run(quick: bool = False, refdata: Optional[str] = None, log=print) -> dict:
         results["informational"][f"{det.name}_compton_edge_broad_{xs:g}keV"] = info
         # first-run efficiency truth with a corner at 120 keV (not physical; kept for reference)
         results["informational"][f"{det.name}_efficiency_kinked_truth"] = cat_efficiency(det, q(40, 3), "kinked")
+    idb = idb_folder()
+    if idb is not None:
+        log("[IAEA IDB] identification ...")
+        results["IDB"] = cat_idb(idb)
     root = reference.find_refdata(refdata)
     results["reference_data_dir"] = str(root) if root else None
     if root:
@@ -552,7 +625,7 @@ def run(quick: bool = False, refdata: Optional[str] = None, log=print) -> dict:
 
 
 def _lookup(results, cr: acceptance.Criterion):
-    if cr.category in ("G1", "EML"):
+    if cr.category in ("G1", "EML", "IDB"):
         return (results.get(cr.category) or {}).get(cr.metric)
     d = results["detectors"].get(cr.detector, {})
     return d.get(cr.category, {}).get(cr.metric)
@@ -613,7 +686,7 @@ def markdown(res: dict) -> str:
     L += ["## Informational", ""]
     for k, d in res.get("informational", {}).items():
         L.append(f"- **{k}**: {_fmt(d)}")
-    for name in ("G1", "EML"):
+    for name in ("G1", "EML", "IDB"):
         if res.get(name):
             L += ["", f"## Reference set {name}", ""]
             for k, v in res[name].items():
