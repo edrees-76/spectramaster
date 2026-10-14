@@ -377,6 +377,48 @@ def cat_drift(det: DetectorSpec, n: int) -> dict:
             "limit": DRIFT_LIMIT[det.name]}
 
 
+# ------------------------------------------------------------------- measured background (Release C)
+def _flat_curve():
+    """Any smooth efficiency curve: net areas and decisions do not depend on it."""
+    from ..analysis.efficiency import fit_efficiency, manual_point
+    pts = [manual_point(e, 0.05 * scenarios.rel_efficiency(e), 2.0) for e in
+           (60, 90, 122, 200, 344, 500, 662, 900, 1173, 1408, 1836, 2600)]
+    return fit_efficiency(pts)
+
+
+def cat_measured_background(det: DetectorSpec, n: int, mode: str) -> dict:
+    from ..analysis.activity import ActivityOptions, compute_activities
+    curve = _flat_curve()
+    names = list(scenarios.BKG_PRESENT) + list(scenarios.BKG_ABSENT)
+    pres, absent = [], []
+    for smp, bkg, truth in scenarios.background_pairs(det, n):
+        q = compute_activities(smp.spectrum, curve, ActivityOptions(nuclides=names, bkg_mode=mode,
+                                                                   min_intensity_pct=1.0),
+                               background=bkg.spectrum)
+        for r in q.nuclides:
+            for ln in r.lines:
+                key = next((k for k in truth if k[0] in (r.nuclide, ln.nuclide) and abs(k[1] - ln.energy) < 1.0),
+                           None)
+                if key is None:
+                    continue
+                row = {"true": truth[key], "net": ln.net_area if ln.peak_found else None,
+                       "unc": ln.net_unc if ln.peak_found else None, "detected": bool(ln.detected),
+                       "found": bool(ln.peak_found), "key": f"{key[0]} {key[1]:.0f}"}
+                (pres if truth[key] > 0 else absent).append(row)
+    fp = [r for r in pres if r["found"] and r["unc"]]
+    z = [(r["net"] - r["true"]) / r["unc"] for r in fp]
+    return {"mode": mode, "n_present": len(pres), "n_absent": len(absent),
+            "net_area_bias": _mean((r["net"] - r["true"]) / r["true"] for r in fp),
+            "z_cov1": _frac(abs(x) <= 1 for x in z) if z else None,
+            "z_cov2": _frac(abs(x) <= 2 for x in z) if z else None,
+            "z_mean": _mean(z),
+            "present_detected_fraction": _frac(r["detected"] for r in pres),
+            "present_found_fraction": _frac(r["found"] for r in pres),
+            "false_detection_fraction": _frac(r["detected"] for r in absent),
+            "absent_found_fraction": _frac(r["found"] for r in absent),
+            "absent_z_mean_when_found": _mean(r["net"] / r["unc"] for r in absent if r["found"] and r["unc"])}
+
+
 # ------------------------------------------------------------------------------ driver
 def run(quick: bool = False, refdata: Optional[str] = None, log=print) -> dict:
     q = (lambda full, small: small if quick else full)
@@ -401,6 +443,9 @@ def run(quick: bool = False, refdata: Optional[str] = None, log=print) -> dict:
         log(f"[{det.name}] energy calibration and drift ...")
         r["calibration"] = cat_calibration(det, HPGE_NL if det.name == "HPGe" else det, q(20, 3))
         r["drift"] = cat_drift(det, q(20, 3))
+        log(f"[{det.name}] measured background ...")
+        for mode in ("peak", "spectrum"):
+            r[f"background_{mode}"] = cat_measured_background(det, q(40, 3), mode)
         r["runtime"] = {"median_s": statistics.median(times), "max_s": max(times), "n": len(times),
                         "channels": det.n_channels}
         results["detectors"][det.name] = r

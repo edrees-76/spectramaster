@@ -241,3 +241,41 @@ def calibration_drift(det: DetectorSpec, drift: float, n: int, s_strongest: floa
         yield make_spectrum(det, peaks, cont, seed_of(det, f"drift/{drift:g}", i), gain_error=drift,
                             meta={"category": "drift", "drift": drift})
 
+
+# ---------------------------------------------------------------------------- measured background
+BKG_PRESENT = {"Cs-137": [661.657], "Co-60": [1173.228, 1332.492]}          # sample-only (net > 0)
+BKG_ABSENT = {"K-40": [1460.82], "Bi-214": [609.312], "Pb-214": [351.932]}   # background only (net 0)
+BKG_TIME_RATIO = 2.0
+
+
+def background_pairs(det: DetectorSpec, n: int, live_time: float = 3600.0) -> Iterator[tuple]:
+    """(sample, background, truth) triples.  The background is measured for BKG_TIME_RATIO x the
+    sample live time and contains natural lines plus a weak Cs-137 contamination; the sample is
+    the same background rate plus Cs-137 and Co-60.  truth[(nuclide, keV)] = true net (sample-only)
+    counts in the sample spectrum (0 for the background-only lines)."""
+    lib = load_library()
+    cont = base_continuum(det)
+    cy = continuum_counts(det, cont)
+    bl = [(e, y * w) for nm, w in BKG_NUCLIDES.items() for e, y in _lines(nm, lib)]
+    bkg_peaks = _source_peaks(det, cy, bl, 40.0)
+    # Cs-137 contamination of the shield/detector: s ~ 8 in the sample time
+    bkg_peaks.append(TruePeak(661.657, area_for_snr(det, cy, 661.657, 8.0), tag="Cs-137 contamination"))
+    src = [TruePeak(661.657, area_for_snr(det, cy, 661.657, 40.0), tag="Cs-137"),
+           TruePeak(1173.228, area_for_snr(det, cy, 1173.228, 40.0), tag="Co-60"),
+           TruePeak(1332.492, area_for_snr(det, cy, 1332.492, 40.0) * 1.0, tag="Co-60")]
+    k = BKG_TIME_RATIO
+    bcont = Continuum(exp_amp=cont.exp_amp * k, exp_scale_kev=cont.exp_scale_kev, flat=cont.flat * k)
+    truth = {("Cs-137", 661.657): src[0].area, ("Co-60", 1173.228): src[1].area,
+             ("Co-60", 1332.492): src[2].area}
+    for nm, es in BKG_ABSENT.items():
+        for e in es:
+            truth[(nm, e)] = 0.0
+    for i in range(n):
+        smp = make_spectrum(det, bkg_peaks + src, cont, seed_of(det, "bkgpair/sample", i), live_time=live_time,
+                            meta={"category": "background_pair"})
+        bkg = make_spectrum(det, [TruePeak(p.energy, p.area * k, tag=p.tag) for p in bkg_peaks], bcont,
+                            seed_of(det, "bkgpair/background", i), live_time=live_time * k,
+                            meta={"category": "background_pair"})
+        bkg.spectrum.sample_id = f"background-{i}"
+        yield smp, bkg, truth
+
