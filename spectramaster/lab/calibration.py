@@ -49,6 +49,11 @@ class CalibrationRecord:
     created: str = field(default_factory=utc_now)
     name: str = ""
     note: str = ""
+    # version history (lab.calibration_store): not scientific content, excluded from the hash
+    lineage: str = ""                   # id shared by all versions of one calibration
+    version: int = 0                    # 0 = not saved in a store
+    supersedes: Optional[str] = None    # id of the previous version
+    change_reason: str = ""
     stored_hash: Optional[str] = field(default=None, compare=False)
 
     def __post_init__(self):
