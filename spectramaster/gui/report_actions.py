@@ -94,7 +94,8 @@ class ReportActionsMixin:
         spec = self.current_spectrum()
         QApplication.setOverrideCursor(Qt.BusyCursor)
         try:
-            peaks, matches, identified = rp.analyse_spectrum(spec)
+            self._ana_application = panel.application()
+            peaks, matches, identified = rp.analyse_spectrum(spec, application=self._ana_application)
         except Exception as exc:
             QApplication.restoreOverrideCursor()
             panel.show_message(tr("ana_failed", msg=f"{type(exc).__name__}: {exc}"))

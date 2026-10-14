@@ -86,10 +86,11 @@ class AnalysisWorker(QObject):
     done = Signal(int, object, object, bool)
     failed = Signal(int, str, str)
 
-    def __init__(self, spectrum, token: int = 0):
+    def __init__(self, spectrum, token: int = 0, application: str = "all"):
         super().__init__()
         self.spectrum = spectrum
         self.token = token
+        self.application = application          # identification library (analysis.library.APPLICATIONS)
 
     @Slot()
     def run(self) -> None:
@@ -105,7 +106,8 @@ class AnalysisWorker(QObject):
                 identify = identify.identify
             peaks = list(find_peaks(self.spectrum) or [])
             identified = bool(self.spectrum.energy_coeffs)
-            matches = list(identify(self.spectrum, peaks) or []) if identified else []
+            matches = (list(identify(self.spectrum, peaks, application=self.application) or [])
+                       if identified else [])
         except (ImportError, NotImplementedError) as exc:
             self.failed.emit(self.token, "missing", f"{type(exc).__name__}: {exc}")
             return

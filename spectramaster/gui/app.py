@@ -111,7 +111,7 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         self.roi_dock = QDockWidget()
         self.roi_dock.setObjectName("roiDock")
         self.roi_dock.setWidget(self.roi_panel)
-        self.analysis_panel = AnalysisPanel()
+        self.analysis_panel = AnalysisPanel(settings=self.settings)
         self.analysis_panel.peakActivated.connect(self.zoom_to_peak)
         self.analysis_panel.nuclideSelected.connect(self._on_nuclide_selected)
         self.analysis_panel.exportRequested.connect(lambda: self.export_analysis())
@@ -1003,7 +1003,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         self._ana_token += 1
         self._ana_silent = silent
         thread = QThread(self)
-        worker = AnalysisWorker(spec, self._ana_token)
+        self._ana_application = self.analysis_panel.application()
+        worker = AnalysisWorker(spec, self._ana_token, application=self._ana_application)
         worker.moveToThread(thread)
         thread.started.connect(worker.run)
         worker.done.connect(self._on_analysis_done)
@@ -1030,7 +1031,7 @@ class MainWindow(ReportActionsMixin, QMainWindow):
     def _on_analysis_done(self, token: int, peaks, matches, identified: bool) -> None:
         if token != self._ana_token:
             return
-        self.analysis_panel.set_results(peaks, matches, identified)
+        self.analysis_panel.set_results(peaks, matches, identified, getattr(self, "_ana_application", None))
         self.plot.set_peaks(peaks)
         self.plot.set_highlight(None)
         if self.analysis_dock.isHidden():

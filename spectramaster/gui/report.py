@@ -988,8 +988,9 @@ def pdf_writer(path, opts: ReportOptions, title: str = ""):
     return w
 
 
-def analyse_spectrum(spec: Spectrum) -> tuple[list, list, bool]:
-    """Peak search + identification with the engine functions looked up at call time."""
+def analyse_spectrum(spec: Spectrum, application: str = "all") -> tuple[list, list, bool]:
+    """Peak search + identification with the engine functions looked up at call time;
+    `application`: the identification library (analysis.library.APPLICATIONS)."""
     import types
     from .. import analysis as engine
     find_peaks, identify = engine.find_peaks, engine.identify
@@ -999,12 +1000,13 @@ def analyse_spectrum(spec: Spectrum) -> tuple[list, list, bool]:
         identify = identify.identify
     peaks = list(find_peaks(spec) or [])
     identified = bool(spec.energy_coeffs)
-    matches = list(identify(spec, peaks) or []) if identified else []
+    matches = list(identify(spec, peaks, application=application) or []) if identified else []
     return peaks, matches, identified
 
 
 def make_batch_data(path: Path, analyse: bool, in_fmt=None,
-                    cancelled: Callable[[], bool] = lambda: False) -> list[ReportData]:
+                    cancelled: Callable[[], bool] = lambda: False,
+                    application: str = "all") -> list[ReportData]:
     """Read a file and (optionally) analyse each spectrum in it, for batch reports."""
     from ..convert import read_spectra
     spectra, used = read_spectra(Path(path), in_fmt)
@@ -1018,7 +1020,7 @@ def make_batch_data(path: Path, analyse: bool, in_fmt=None,
                        index=k, count=len(spectra))
         if analyse:
             try:
-                d.peaks, d.matches, d.identified = analyse_spectrum(s)
+                d.peaks, d.matches, d.identified = analyse_spectrum(s, application)
                 d.analysed = True
             except Exception as exc:  # report the failure in the PDF, never abort the batch
                 d.analysis_error = f"{type(exc).__name__}: {exc}"

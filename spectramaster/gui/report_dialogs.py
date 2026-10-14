@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (QApplication, QButtonGroup, QCheckBox, QComboBox,
 from . import i18n
 from . import report as rp
 from .i18n import tr
+from .identification_library import stored_library
 from .plot import Y_MODES
 
 MODES = ("print", "preview", "pdf", "batch")
@@ -416,8 +417,10 @@ class ReportBatchWorker(QObject):
     finished = Signal(int, int, int, bool)
 
     def __init__(self, files: Sequence[Path], options: rp.ReportOptions, out_dir: Optional[Path] = None,
-                 combined: Optional[Path] = None, analyse: bool = True, in_fmt=None):
+                 combined: Optional[Path] = None, analyse: bool = True, in_fmt=None,
+                 application: str = "all"):
         super().__init__()
+        self.application = application            # identification library
         self.files = [Path(f) for f in files]
         self.options = options
         self.out_dir = Path(out_dir) if out_dir else None
@@ -457,7 +460,8 @@ class ReportBatchWorker(QObject):
                 if self._cancel:
                     break
                 try:
-                    datas = rp.make_batch_data(src, self.analyse, self.in_fmt, lambda: self._cancel)
+                    datas = rp.make_batch_data(src, self.analyse, self.in_fmt, lambda: self._cancel,
+                                               self.application)
                     n_pages = 0
                     if writer is not None:
                         for d in datas:
@@ -697,7 +701,8 @@ class ReportBatchDialog(QDialog):
         self.summary.setText(tr("rep_batch_running", i=0, n=n))
         self._set_running(True)
         self._worker = ReportBatchWorker(self.files, self.options, out_dir, combined,
-                                         self.cb_analyse.isChecked(), self.settings.input_format())
+                                         self.cb_analyse.isChecked(), self.settings.input_format(),
+                                         application=stored_library(self.settings))
         self._thread = QThread(self)
         self._worker.moveToThread(self._thread)
         self._thread.started.connect(self._worker.run)

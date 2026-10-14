@@ -30,6 +30,7 @@ from . import i18n
 from .efficiency_dialog import is_record_file, load_curve_file, status_text
 from .geometry_editor import GeometryEditor
 from .quant_strings import qtr
+from .sample_panel import ConcentrationView, SampleSection
 
 RES_COLS = ["res_col_nuclide", "res_col_lines", "res_col_net", "res_col_act", "res_col_spec", "res_col_mda",
             "res_col_mda_spec", "res_col_decision", "res_col_note"]
@@ -80,8 +81,10 @@ class ActivityDialog(QDialog):
         self.spectrum = spectrum
         self.background = None
         self.results: Optional[act.QuantResults] = None
+        self.concentration: Optional[dict] = None      # activity.concentrations() of the results
+        self.sample_info = None                        # lab.sample.SampleInfo used for it
         self.setWindowTitle(qtr("act_title"))
-        self.resize(1150, 700)
+        self.resize(1150, 860)
         lay = QVBoxLayout(self)
         form = QFormLayout()
 
@@ -187,6 +190,9 @@ class ActivityDialog(QDialog):
         form.addRow(qtr("act_method"), row)
         lay.addLayout(form)
 
+        self.sample_box = SampleSection(self, settings)
+        lay.addWidget(self.sample_box)
+
         self.geo_check = QCheckBox(qtr("act_geo_check"))
         self.geo_check.setToolTip(qtr("tip_act_geo_check"))
         lay.addWidget(self.geo_check)
@@ -225,6 +231,8 @@ class ActivityDialog(QDialog):
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)
         self.table.setSelectionBehavior(QAbstractItemView.SelectRows)
         split.addWidget(self.table)
+        self.conc_view = ConcentrationView()
+        split.addWidget(self.conc_view)
         w = QWidget()
         wl = QVBoxLayout(w)
         wl.setContentsMargins(0, 0, 0, 0)
@@ -234,7 +242,7 @@ class ActivityDialog(QDialog):
         self.details.setLayoutDirection(Qt.LeftToRight)
         wl.addWidget(self.details)
         split.addWidget(w)
-        split.setSizes([420, 160])
+        split.setSizes([300, 200, 140])
         lay.addWidget(split, 1)
         lay.addLayout(row)
         self._curve_changed()
@@ -385,11 +393,32 @@ class ActivityDialog(QDialog):
             self.settings.set("quant/curve", str(path))
             self.settings.set("quant/nuclides", ", ".join(opt.nuclides))
         self._show(self.results)
+        self.compute_concentrations()
         self.btn_export.setEnabled(True)
         par = self.parent()
         if par is not None and hasattr(par, "quant_results"):
             par.quant_results = self.results
+            par.quant_concentration = self.concentration
         return self.results
+
+    def compute_concentrations(self) -> Optional[dict]:
+        """Concentrations of the current results from the sample information (never blocks the
+        activity results: invalid input is shown in the concentration view)."""
+        self.concentration = self.sample_info = None
+        if self.results is None:
+            self.conc_view.clear()
+            return None
+        try:
+            info = self.sample_box.sample_info(self.spectrum.sample_id if self.spectrum is not None else "",
+                                               self.results.ref_date)
+            out = act.concentrations(self.results, info, self.sample_box.unit(),
+                                     self.sample_box.quantity_rel_unc())
+        except Exception as exc:
+            self.conc_view.show_error(str(exc))
+            return None
+        self.concentration, self.sample_info = out, info
+        self.conc_view.show_result(out, info)
+        return out
 
     def _show(self, res: act.QuantResults) -> None:
         header, rows = quant_table(res)
@@ -442,13 +471,52 @@ class ActivityDialog(QDialog):
                                                   "Excel (*.xlsx);;CSV (*.csv)")
             if not path:
                 return None
-        return act.export_results(path, self.results)
+        out = act.export_results(path, self.results)
+        if self.concentration is not None:
+            _append_concentration(out, self.concentration)
+        return out
+
+
+def _append_concentration(path: Path, conc: dict) -> None:
+    """Add the concentrations (unit, missing inputs, notes, rows) to an exported file."""
+    head = ["nuclide", "unit", "value", "u_k1", "U_k2", "mda", "decision", "decay_factor", "text"]
+    meta = [["Concentration unit", conc.get("unit", "")],
+            ["Missing inputs", "; ".join(conc.get("missing", []))],
+            ["Notes", "; ".join(conc.get("notes", []))]]
+    rows = [[r.get("nuclide"), r.get("unit"), r.get("value"), r.get("u"), r.get("U"), r.get("mda"),
+             r.get("decision"), r.get("factor"), r.get("text")] for r in conc.get("rows", [])]
+    path = Path(path)
+    if path.suffix.lower() == ".xlsx":
+        from openpyxl import load_workbook
+        from openpyxl.styles import Font
+        wb = load_workbook(path)
+        ws = wb.create_sheet("Concentration")
+        for m in meta:
+            ws.append(m)
+        ws.append([])
+        ws.append(head)
+        for c in ws[ws.max_row]:
+            c.font = Font(bold=True)
+        for r in rows:
+            ws.append(r)
+        wb.save(path)
+        return
+    import csv
+    with path.open("a", newline="", encoding="utf-8") as fh:
+        w = csv.writer(fh)
+        w.writerow([])
+        for m in meta:
+            w.writerow(m)
+        w.writerow(head)
+        for r in rows:
+            w.writerow(["" if v is None else v for v in r])
 
 
 # ---------------------------------------------------------------------- main-window hook
 def install_quant(win) -> None:
     """Add 'Efficiency calibration...' and 'Activity calculation...' to the Analyze menu."""
     win.quant_results = None
+    win.quant_concentration = None
     win.act_effcal = QAction(win)
     win.act_activity = QAction(win)
     win.act_effcal.triggered.connect(lambda: open_efficiency_dialog(win))

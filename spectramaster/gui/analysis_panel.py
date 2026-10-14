@@ -12,10 +12,11 @@ from typing import Optional, Sequence
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtGui import QBrush, QColor
-from PySide6.QtWidgets import (QAbstractItemView, QHBoxLayout, QHeaderView, QLabel, QPushButton,
-                               QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget)
+from PySide6.QtWidgets import (QAbstractItemView, QComboBox, QHBoxLayout, QHeaderView, QLabel,
+                               QPushButton, QTableWidget, QTableWidgetItem, QTabWidget, QVBoxLayout, QWidget)
 
 from . import i18n
+from . import identification_library as idl
 from .i18n import tr
 
 PEAK_COLS = ["pk_col_n", "pk_col_energy", "pk_col_channel", "pk_col_fwhm", "pk_col_net",
@@ -91,9 +92,10 @@ def nuclide_row(m) -> list[tuple[str, Optional[float]]]:
 
 
 def _nuclide_note(m) -> str:
-    parts = [m.note] if m.note else []
+    note = idl.strip_drift(m.note or "")      # the drift note is shown once, above the table
+    parts = [note] if note else []
     series = getattr(m, "series", "") or ""
-    if series and series not in m.note:
+    if series and series not in note:
         parts.append(series)
     if getattr(m, "background", False):
         parts.append(tr("nuc_background"))
@@ -188,9 +190,12 @@ class AnalysisPanel(QWidget):
     peakActivated = Signal(object)          # Peak
     nuclideSelected = Signal(object)        # NuclideMatch or None
     exportRequested = Signal()
+    libraryChanged = Signal(str)            # application library key
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, settings=None):
         super().__init__(parent)
+        self.settings = settings
+        self.results_application: Optional[str] = None   # library of the displayed results
         self.peaks: list = []
         self.matches: list = []
         self.identified = True
@@ -205,6 +210,14 @@ class AnalysisPanel(QWidget):
         self.banner.hide()
         lay.addWidget(self.banner)
         top = QHBoxLayout()
+        self.library_label = QLabel()
+        top.addWidget(self.library_label)
+        self.library_combo = QComboBox()
+        for key in idl.CHOICES:
+            self.library_combo.addItem(key, key)
+        self.library_combo.setCurrentIndex(max(0, self.library_combo.findData(idl.stored_library(settings))))
+        self.library_combo.currentIndexChanged.connect(self._library_changed)
+        top.addWidget(self.library_combo)
         self.summary = QLabel()
         self.summary.setObjectName("infoLabel")
         top.addWidget(self.summary, 1)
@@ -212,6 +225,13 @@ class AnalysisPanel(QWidget):
         self.export_btn.clicked.connect(self.exportRequested.emit)
         top.addWidget(self.export_btn)
         lay.addLayout(top)
+        self.drift_label = QLabel()
+        self.drift_label.setObjectName("driftLabel")
+        self.drift_label.setWordWrap(True)
+        self.drift_label.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        self.drift_label.setStyleSheet("QLabel { color: #b23c00; font-weight: bold; }")
+        self.drift_label.hide()
+        lay.addWidget(self.drift_label)
         self.tabs = QTabWidget()
         self.peak_table = self._table(len(PEAK_COLS))
         self.peak_table.itemDoubleClicked.connect(self._peak_double)
@@ -240,22 +260,36 @@ class AnalysisPanel(QWidget):
         self.nuc_table.setHorizontalHeaderLabels([tr(k) for k in NUC_COLS])
         self.export_btn.setText(tr("ana_export"))
         self.export_btn.setToolTip(tr("tip_ana_export"))
+        self.library_label.setText(tr("idl_label"))
+        self.library_combo.setToolTip(tr("idl_tip"))
+        self.library_label.setToolTip(tr("idl_tip"))
+        for i in range(self.library_combo.count()):
+            self.library_combo.setItemText(i, idl.library_label(self.library_combo.itemData(i)))
         self._update_texts()
         if self.peaks or self.matches:
-            self.set_results(self.peaks, self.matches, self.identified)
+            self.set_results(self.peaks, self.matches, self.identified, self.results_application)
 
     def _update_texts(self) -> None:
         self.tabs.setTabText(0, tr("ana_tab_peaks", n=len(self.peaks)))
         self.tabs.setTabText(1, tr("ana_tab_nuclides", n=len(self.matches)))
-        if self.peaks or self.matches:
-            self.summary.setText(tr("ana_summary", p=len(self.peaks), n=len(self.matches)))
+        if self.peaks or self.matches or self.analysed:
+            text = tr("ana_summary", p=len(self.peaks), n=len(self.matches))
+            if self.results_application and self.identified:
+                text += "   ·   " + tr("idl_header", name=idl.library_label(self.results_application, short=True))
+                if self.results_application != self.application():
+                    text += " " + tr("idl_rerun")
+            self.summary.setText(text)
         else:
             self.summary.setText(tr("ana_none"))
+        detail = idl.drift_detail(self.matches)
+        self.drift_label.setText(idl.drift_text(detail) if detail is not None else "")
+        self.drift_label.setVisible(detail is not None)
         self.export_btn.setEnabled(bool(self.peaks or self.matches))
 
     def clear(self) -> None:
         self.peaks, self.matches, self.identified = [], [], True
         self.analysed = False
+        self.results_application = None
         self.peak_table.setRowCount(0)
         self.nuc_table.setRowCount(0)
         self.banner.hide()
@@ -265,7 +299,26 @@ class AnalysisPanel(QWidget):
         self.banner.setText(text)
         self.banner.setVisible(bool(text))
 
-    def set_results(self, peaks: Sequence, matches: Sequence, identified: bool = True) -> None:
+    # ------------------------------------------------------------ identification library
+    def application(self) -> str:
+        """The chosen identification library (analysis.library.APPLICATIONS key)."""
+        return str(self.library_combo.currentData() or idl.GUI_DEFAULT)
+
+    def set_application(self, application: str) -> None:
+        i = self.library_combo.findData(application)
+        if i >= 0:
+            self.library_combo.setCurrentIndex(i)
+
+    def _library_changed(self, *_):
+        app = self.application()
+        idl.store_library(self.settings, app)
+        self._update_texts()
+        self.libraryChanged.emit(app)
+
+    def set_results(self, peaks: Sequence, matches: Sequence, identified: bool = True,
+                    application: Optional[str] = None) -> None:
+        """`application`: the library the matches were searched in (default: the current choice)."""
+        self.results_application = application or self.application()
         self.peaks, self.matches, self.identified = list(peaks), list(matches), identified
         self.analysed = True
         self.banner.hide()
