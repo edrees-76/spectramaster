@@ -209,6 +209,14 @@ E1 result (all synthetic criteria unchanged; IDB, 160 real spectra):
   (90–115 keV: Eu-155, Sm-153) and lines of the U/Pu chains that are missing from the library.
   Next: application libraries (environmental, calibration, safeguards) as Aptec and Genie use.
 
+## Release F: workflow, reporting and batch analysis
+
+| Increment | Status | Evidence |
+|---|---|---|
+| F1. Workflow statuses (calibration required, incompatible calibration, outside the validated scope, results stale, not reviewed / reviewed), review approval (named reviewer, refused while stale), traceable report record (application and engine version, session id, spectrum fingerprint, sample, detector, geometry, calibrations with content hash and validation status, library, background, peaks, nuclides, activities, concentrations, statuses, edits, conventions) as JSON | done (engine); GUI open | `lab/workflow.py`; `tests/test_workflow.py` |
+| F2. Batch analysis grouped by compatible detector, geometry and calibration (no calibration applied to all files automatically) | open | |
+| F3. GUI: status bar / workflow panel, review action, report from the record | open | |
+
 ## Public measured spectra (kept outside the repository)
 
 Folder `SPECTRAMASTER_PUBLIC_DATA` (default `D:/SpectraMaster_public_data`); the files are not
