@@ -184,6 +184,22 @@ IAEA IDB HPGe (98 spectra) implausible identifications 8.85 → **1.12** per spe
 2 of 5 and stays a candidate (a genuine fallout nuclide; its 86.5/105.3 keV lines lie among the
 Th/U X-rays): open.
 
+Rejected attempt (X-ray interference, not committed): a candidate whose matched gamma lines
+all lay on peaks already explained by the K X-rays of an element present in the spectrum (scale
+from the element's strongest X-ray line) lost 70 % of its confidence (HPGe-like resolution only).
+Measured before/after on the 20 longest laboratory spectra and the IAEA IDB subset: Eu-155 12 → 11
+of 20 lab spectra and 53 → 52 IDB reports, Sm-153 39 → 22, HPGe implausible 8.82 → 8.46 per
+spectrum (still FAIL), but CZT U-235 recall 0.77 → 0.68. Reverted. Cause found: in the IDB
+spectra Eu-155 is matched at 105.5 keV **and** 146.1 keV (not an X-ray), and the library stores
+each K-beta group as one weighted line (Th 106.9 keV instead of K-beta1 105.6 keV), so the
+105.5 keV peak is not recognised as an X-ray. Needs: resolved K-beta lines in the library
+(nuclear-data update, D5) before the interference test can work.
+
+Full benchmark after E2-E4/F1-F2 (`docs/baseline/after_E4_F2`): FAIL 15 → 14, PASS 99 → 100,
+no criterion newly failing. HPGe recall at 0.3 % drift 0.06 → 1.0. Informational, not criteria:
+IDB CZT U-235 0.82 → 0.77 and LaBr3 0.69 → 0.62 (drift correction applied to scintillator
+spectra; to be reviewed), HPGe Pu-239 0.78 → 0.80.
+
 E2 result (synthetic, 4 seeds per mixture): HPGe recall at 0.1 / 0.3 / 1 % drift
 0.98 / 0.06 / 0.06 → 1.0 / 1.0 / 1.0; false identifications at drift ≤ 0.09 per spectrum; NaI
 unchanged (0.88 at 0.3 %). A first version applied every detected drift. On IAEA IDB
