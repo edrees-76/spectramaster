@@ -174,6 +174,8 @@ pair; totals FAIL 20 → 13, no other criterion changed.
 
 | E3. Application libraries built from the library's own categories (`environmental`: natural, cosmogenic, fission products, Co-60/Mn-54/Zn-65/Eu-152/154, Am-241, Cs-137 - 84 nuclides; `calibration` 50; `safeguards` 41; `medical` 56; `all` = engine default) and `identify(..., application=)` | done (engine); GUI selection open | `analysis/library.py` (`APPLICATIONS`, `application_library`); `tests/test_application_library.py` |
 
+| E4. Concentrations from `lab.sample.SampleInfo`: Bq/kg labelled with its basis (dry/wet), Bq/L, Bq/m3 with measured filter fraction, stated collection efficiency (reported as an assumption) and decay during sampling (K = λt/(1−e^(−λt)), activities taken to the end of sampling); nothing computed when an input is missing (listed instead); not detected → "< MDA" in the same unit; quantity uncertainty added to the value, not to the MDA | done (engine); GUI open | `analysis/activity.py` (`concentrations`, `sampling_decay_factor`); `tests/test_concentrations.py` |
+
 E3 result (real spectra; the scored criteria keep the `all` library for comparability):
 IAEA IDB HPGe (98 spectra) implausible identifications 8.85 → **1.12** per spectrum with the
 `safeguards` library, Pu-239 found 32/40 → 35/40 (reported as

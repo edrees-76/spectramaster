@@ -573,6 +573,76 @@ ROW_KEYS = ["nuclide", "lines", "net_area", "net_unc", "activity_bq", "u_bq", "s
             "unit", "mda_bq", "mda_specific", "decision", "budget", "note"]
 
 
+def sampling_decay_factor(half_life_s: Optional[float], sampling_s: Optional[float]) -> float:
+    """K = lambda t_s / (1 - exp(-lambda t_s)): mean air concentration over a sampling time t_s
+    from the activity on the filter at the END of sampling (constant concentration assumed)."""
+    if not half_life_s or not sampling_s or sampling_s <= 0:
+        return 1.0
+    x = math.log(2.0) / half_life_s * sampling_s
+    return x / (-math.expm1(-x)) if x > 1e-9 else 1.0
+
+
+def concentrations(res: "QuantResults", sample, unit: str, quantity_rel_unc: float = 0.0) -> dict:
+    """Express the activities of `res` in `unit` ("Bq", "Bq/kg", "Bq/L", "Bq/m3") with the
+    sample information `sample` (lab.sample.SampleInfo).
+
+    Nothing is computed when an input is missing: ``{"missing": [...], "rows": []}`` - a
+    missing mass is never 1 kg.  Bq/kg is labelled with its basis ("Bq/kg (dry)").  Bq/m3:
+    C = A_end K / (V f eta) with A_end the activity at the END of sampling (the results are
+    decay-corrected from their reference date), K = sampling_decay_factor, f the measured filter
+    fraction and eta the stated collection efficiency (an assumption, reported as such).
+    ``quantity_rel_unc`` is the relative uncertainty of the mass / volume / air volume; it is
+    added to the activity's relative uncertainty in quadrature (not to the MDA).  A nuclide not
+    detected is reported as "< MDA" in the same unit, never as zero.
+    """
+    missing = sample.concentration_unit_inputs(unit)
+    out = {"unit": unit, "missing": missing, "rows": [], "notes": []}
+    if missing:
+        out["notes"].append("concentration not computed: missing " + "; ".join(missing))
+        return out
+    label = unit
+    notes = out["notes"]
+    if unit == "Bq":
+        q = 1.0
+    elif unit == "Bq/kg":
+        q = sample.mass_kg
+        label = f"Bq/kg ({sample.mass_basis})"
+    elif unit == "Bq/L":
+        q = sample.volume_l
+    else:
+        q = sample.air_volume() * sample.filter_fraction * sample.collection_efficiency
+        notes.append(f"air volume {sample.air_volume():.4g} m3, measured filter fraction {sample.filter_fraction:g}, "
+                     f"collection efficiency {sample.collection_efficiency:g} (assumption"
+                     + (f": {sample.collection_efficiency_note}" if sample.collection_efficiency_note else "") + ")")
+    out["unit"] = label
+    t_end = datetime.fromisoformat(sample.sampling_end) if (unit == "Bq/m3" and sample.sampling_end) else None
+    hours = sample.sampling_hours() if unit == "Bq/m3" else None
+    if unit == "Bq/m3":
+        if t_end is None:
+            notes.append("sampling end not given: activities used at their reference date, no decay during sampling")
+        elif hours is None:
+            notes.append("sampling duration not given: no correction for decay during sampling")
+    for r in res.nuclides:
+        hl = r.half_life_s
+        f = 1.0
+        if t_end is not None and res.ref_date is not None and hl:
+            f *= decay_factor(hl, (t_end - res.ref_date).total_seconds())       # reference -> end of sampling
+        if unit == "Bq/m3" and hours:
+            f *= sampling_decay_factor(hl, hours * 3600.0)
+        row = {"nuclide": r.nuclide, "unit": label, "decision": r.decision, "factor": f}
+        if r.activity is not None and r.detected:
+            v = r.activity * f / q
+            urel = math.hypot((r.u or 0.0) / r.activity if r.activity else 0.0, quantity_rel_unc)
+            row.update(value=v, u=abs(v) * urel, U=2.0 * abs(v) * urel)
+        else:
+            row.update(value=None, u=None, U=None)
+        row["mda"] = r.mda * f / q if r.mda else None
+        row["text"] = (f"{row['value']:.4g} +- {row['U']:.2g} (k=2) {label}" if row["value"] is not None
+                       else (f"< {row['mda']:.3g} {label} (MDA)" if row["mda"] else "not determined"))
+        out["rows"].append(row)
+    return out
+
+
 def result_row(r: NuclideResult) -> dict:
     k = r.key_line
     bud = ", ".join(f"{name} {v:.1f}%" for name, v in r.budget.items() if v > 0.005)
