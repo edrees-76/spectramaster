@@ -27,7 +27,7 @@ from ..analysis import find_peaks, identify
 from ..analysis.peaks import guess_detector
 from ..analysis.library import load_library
 from . import acceptance, reference, scenarios
-from .synthetic import HPGE, NAI, NAI_4K, DetectorSpec, SyntheticSpectrum
+from .synthetic import HPGE, HPGE_NL, NAI, NAI_4K, DetectorSpec, SyntheticSpectrum
 
 MATCH_TOL_FWHM = 0.5
 
@@ -298,6 +298,85 @@ def cat_detector_guess(det, n) -> dict:
             "guesses_strong": gs, "guesses_low": gl}
 
 
+# ------------------------------------------------------------------- energy calibration (Release B)
+CAL_SOURCE = {"HPGe": "Eu-152", "NaI": "Am-241,Cs-137,Co-60"}
+DRIFT_LIMIT = {"HPGe": 0.003, "NaI": 0.01}
+DRIFT_LEVELS = (0.0, 0.001, 0.003, 0.01)
+
+
+def _cal_error_fwhm(det: DetectorSpec, coeffs, e_lo: float, e_hi: float) -> float:
+    """max |E_fit - E_true| / FWHM_true over [e_lo, e_hi] keV (true energy scale)."""
+    ch = np.linspace(det.channel(e_lo), det.channel(e_hi), 200)
+    et = det.energy(ch)
+    ef = np.polynomial.polynomial.polyval(ch, list(coeffs))
+    return float(np.max(np.abs(ef - et) / det.fwhm_kev(et)))
+
+
+def _flagged(sc) -> bool:
+    v = getattr(sc, "validation", None)
+    return bool(v is not None and not v.ok)
+
+
+def cat_calibration(det: DetectorSpec, true_det: DetectorSpec, n: int) -> dict:
+    from ..tools.calibrate import calibrate_from_source
+    src = CAL_SOURCE[det.name]
+    errs, ok, orders, fails = [], [], [], 0
+    for syn in scenarios.calibration_source(true_det, src, n):
+        try:
+            sc = calibrate_from_source(syn.spectrum, src)
+        except ValueError:
+            fails += 1
+            ok.append(False)
+            continue
+        es = [m.energy for m in sc.matches]
+        e = _cal_error_fwhm(true_det, sc.coeffs, min(es), max(es))
+        errs.append(e)
+        ok.append(e <= 0.1 and not _flagged(sc))
+        orders.append(sc.fit.order)
+    out = {"source": src, "true_quadratic_kev_per_ch2": true_det.quad_kev,
+           "recover_ok_fraction": _frac(ok), "max_error_fwhm_median": statistics.median(errs) if errs else None,
+           "max_error_fwhm_worst": max(errs) if errs else None, "failures": fails,
+           "orders": {str(k): orders.count(k) for k in sorted(set(orders))}}
+    flagged = []
+    for syn in scenarios.calibration_source(det, "Co-60,Cs-137", n, category="cal_wrong_source"):
+        try:
+            flagged.append(_flagged(calibrate_from_source(syn.spectrum, "Eu-152")))
+        except ValueError:
+            flagged.append(True)
+    out["wrong_source_flagged_fraction"] = _frac(flagged)
+    if det.name == "HPGe":
+        lin = []
+        for syn in scenarios.calibration_source(det, src, n, category="cal_linear"):
+            try:
+                lin.append(calibrate_from_source(syn.spectrum, src).fit.order == 1)
+            except ValueError:
+                lin.append(False)
+        out["linear_truth_order1_fraction"] = _frac(lin)
+    return out
+
+
+def cat_drift(det: DetectorSpec, n: int) -> dict:
+    try:
+        from ..tools.calibrate import check_drift
+    except ImportError:
+        return {"note": "no drift check available in this version"}
+    emax = float(det.energy(det.n_channels - 20))
+    det_by, corr_ok = {}, []
+    for lvl in DRIFT_LEVELS:
+        hits = []
+        for syn in scenarios.calibration_drift(det, lvl, n):
+            r = check_drift(syn.spectrum)
+            hits.append(bool(r.detected))
+            if lvl == DRIFT_LIMIT[det.name]:
+                corr_ok.append(bool(r.detected) and r.proposed_coeffs is not None
+                               and _cal_error_fwhm(det, r.proposed_coeffs, 300.0, min(2600.0, emax)) <= 0.1)
+        det_by[f"{lvl * 100:g}%"] = _frac(hits)
+    return {"detected_fraction_by_level": det_by,
+            "detected_fraction_at_limit": det_by[f"{DRIFT_LIMIT[det.name] * 100:g}%"],
+            "false_alarm_fraction": det_by["0%"], "corrected_ok_fraction_at_limit": _frac(corr_ok),
+            "limit": DRIFT_LIMIT[det.name]}
+
+
 # ------------------------------------------------------------------------------ driver
 def run(quick: bool = False, refdata: Optional[str] = None, log=print) -> dict:
     q = (lambda full, small: small if quick else full)
@@ -319,6 +398,9 @@ def run(quick: bool = False, refdata: Optional[str] = None, log=print) -> dict:
         log(f"[{det.name}] identification ...")
         r["identification"] = cat_identification(det, q(3, 1))
         r["detector_guess"] = cat_detector_guess(det, q(20, 4))
+        log(f"[{det.name}] energy calibration and drift ...")
+        r["calibration"] = cat_calibration(det, HPGE_NL if det.name == "HPGe" else det, q(20, 3))
+        r["drift"] = cat_drift(det, q(20, 3))
         r["runtime"] = {"median_s": statistics.median(times), "max_s": max(times), "n": len(times),
                         "channels": det.n_channels}
         results["detectors"][det.name] = r

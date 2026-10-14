@@ -37,19 +37,30 @@ class DetectorSpec:
     fwhm_b: float
     fwhm_c: float = 0.0
     label: str = ""          # Spectrum.detector text ("" = let the engine guess)
+    quad_kev: float = 0.0    # true calibration E = offset + gain*ch + quad*ch^2 (integral non-linearity)
 
     def energy(self, ch):
-        return self.offset_kev + self.gain_kev * np.asarray(ch, dtype=float)
+        c = np.asarray(ch, dtype=float)
+        return self.offset_kev + self.gain_kev * c + self.quad_kev * c * c
 
     def channel(self, e_kev: float) -> float:
-        return (e_kev - self.offset_kev) / self.gain_kev
+        if self.quad_kev == 0.0:
+            return (e_kev - self.offset_kev) / self.gain_kev
+        q, g = self.quad_kev, self.gain_kev
+        return (-g + math.sqrt(g * g - 4.0 * q * (self.offset_kev - e_kev))) / (2.0 * q)
+
+    @property
+    def energy_coeffs(self) -> list[float]:
+        return [self.offset_kev, self.gain_kev] + ([self.quad_kev] if self.quad_kev else [])
 
     def fwhm_kev(self, e_kev):
         e = np.asarray(e_kev, dtype=float)
         return np.sqrt(self.fwhm_a + self.fwhm_b * e + self.fwhm_c * e * e)
 
     def fwhm_ch(self, e_kev):
-        return self.fwhm_kev(e_kev) / self.gain_kev
+        if self.quad_kev == 0.0:
+            return self.fwhm_kev(e_kev) / self.gain_kev
+        return self.fwhm_kev(e_kev) / (self.gain_kev + 2.0 * self.quad_kev * self.channel(float(e_kev)))
 
 
 # HPGe: ~1.1 keV @ 122, ~1.8 keV @ 1332 (typical coaxial p-type; differs from the engine default).
@@ -58,6 +69,9 @@ HPGE = DetectorSpec("HPGe", 4096, 0.0, 0.5, 1.0, 0.0016)
 NAI = DetectorSpec("NaI", 1024, 0.0, 3.0, 4.0, 3.1, 2.0e-5)
 # NaI on a 4096-channel MCA (0.75 keV/ch), no detector label - real lab configuration.
 NAI_4K = DetectorSpec("NaI", 4096, 0.0, 0.75, 4.0, 3.1, 2.0e-5)
+# HPGe with an offset and integral non-linearity (+0.84 keV at channel 4096, ~0.4 FWHM):
+# a linear calibration through a wide set of lines is visibly biased, a quadratic one is not.
+HPGE_NL = DetectorSpec("HPGe", 4096, 1.2, 0.4995, 1.0, 0.0016, quad_kev=5.0e-8)
 
 DETECTORS = {"HPGe": HPGE, "NaI": NAI}
 
@@ -165,7 +179,8 @@ def make_spectrum(det: DetectorSpec, peaks: list[TruePeak], cont: Continuum, see
     rng = np.random.default_rng(seed)
     counts = rng.poisson(lam).astype(float)
     spec = Spectrum(counts=counts.tolist(),
-                    energy_coeffs=[det.offset_kev, det.gain_kev * (1.0 + gain_error)],
+                    energy_coeffs=[det.offset_kev, det.gain_kev * (1.0 + gain_error)]
+                    + ([det.quad_kev * (1.0 + gain_error)] if det.quad_kev else []),
                     live_time=live_time, real_time=live_time * 1.01, sample_id=f"synthetic-{seed}",
                     description="SpectraMaster validation synthetic spectrum", detector=det.label,
                     source_format="synthetic")

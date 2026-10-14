@@ -192,3 +192,52 @@ def identification(det: DetectorSpec, n_seeds: int = 4) -> Iterator[SyntheticSpe
 def _bkg(det, cy, e):
     from .synthetic import window_background
     return window_background(det, cy, e)
+
+
+# ---------------------------------------------------------------------------- energy calibration
+def _source_peaks(det: DetectorSpec, cy, lines: list[tuple[float, float]], s_strongest: float):
+    """TruePeaks for (keV, relative emission) lines, scaled so the strongest response has s."""
+    emax = float(det.energy(det.n_channels - 20))
+    resp = [(e, y * rel_efficiency(e)) for e, y in lines if 30.0 <= e < emax]
+    e_ref, r_ref = max(resp, key=lambda t: t[1])
+    scale = area_for_snr(det, cy, e_ref, s_strongest) / r_ref
+    return [TruePeak(e, scale * r) for e, r in resp if scale * r >= 5]
+
+
+def calibration_source(det: DetectorSpec, nuclides: str, n: int, category: str = "cal_source",
+                       s_strongest: float = 150.0, with_background: bool = True
+                       ) -> Iterator[SyntheticSpectrum]:
+    """Calibration-source spectra stored WITHOUT an energy calibration (truth in ``detector``).
+
+    Line energies and emission probabilities come from ``tools.calibrate.NUCLIDE_LINES`` (the
+    calibration tool's own line list), optionally on top of a weak natural background.
+    """
+    from ..tools.calibrate import NUCLIDE_LINES
+    lib = load_library()
+    cont = base_continuum(det)
+    cy = continuum_counts(det, cont)
+    names = [x.strip() for x in nuclides.split(",") if x.strip()]
+    lines = [(e, i / 100.0) for nm in names for e, i in NUCLIDE_LINES[nm] if not (nm == "Na-22" and e == 511.0)]
+    for i in range(n):
+        peaks = _source_peaks(det, cy, lines, s_strongest)
+        if with_background:
+            bl = [(e, y * w) for nm, w in BKG_NUCLIDES.items() for e, y in _lines(nm, lib)]
+            peaks += _source_peaks(det, cy, bl, 15.0)
+        syn = make_spectrum(det, peaks, cont, seed_of(det, f"{category}/{nuclides}", i),
+                            meta={"category": category, "source": nuclides})
+        syn.spectrum.energy_coeffs = []
+        yield syn
+
+
+def calibration_drift(det: DetectorSpec, drift: float, n: int, s_strongest: float = 60.0
+                      ) -> Iterator[SyntheticSpectrum]:
+    """Natural-background spectra whose stored gain is wrong by ``drift`` (relative)."""
+    lib = load_library()
+    cont = base_continuum(det)
+    cy = continuum_counts(det, cont)
+    bl = [(e, y * w) for nm, w in BKG_NUCLIDES.items() for e, y in _lines(nm, lib)]
+    for i in range(n):
+        peaks = _source_peaks(det, cy, bl, s_strongest)
+        yield make_spectrum(det, peaks, cont, seed_of(det, f"drift/{drift:g}", i), gain_error=drift,
+                            meta={"category": "drift", "drift": drift})
+
