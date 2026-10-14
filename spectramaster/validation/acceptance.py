@@ -147,6 +147,31 @@ for det in ("HPGe", "NaI"):
     _c(f"{det}.id.drift", det, "identification", "recall_by_drift", "report", None,
        "Recall vs. deliberate gain error (0, 0.1, 0.3, 1 %): informational, no a-priori limit.")
 
+# -------------------------------------------------------------------- detector-type guess (P2)
+# Added 2026-10-14 for increment A8, BEFORE the P2 fix was written or the benchmark was re-run
+# with these categories.  Spectra carry no detector label, so the engine must infer the type.
+for det in ("HPGe", "NaI", "NaI_4096"):
+    _c(f"{det}.dettype.strong", det, "detector_guess", "correct_fraction_strong", ">=", 0.99,
+       "Unlabelled spectra with strong isolated peaks: the detector type that sets the default "
+       "resolution model must be inferred correctly (resolution differs ~30x between HPGe and NaI).")
+    _c(f"{det}.dettype.low", det, "detector_guess", "correct_fraction_low", "report", None,
+       "Low-count spectra (100-400 counts per peak): recorded only; little width information.")
+
+# NaI(Tl) on a 4096-channel MCA (0.75 keV/ch): same physics as the 1024-channel NaI case, so the
+# same limits apply (no relaxation for the finer binning).
+_c("NaI_4096.strong.recall", "NaI_4096", "isolated_strong", "recall", ">=", 0.99,
+   "Same limit as NaI.strong.recall.")
+_c("NaI_4096.strong.area_bias", "NaI_4096", "isolated_strong", "area_bias", "abs<=", 0.01,
+   "Same limit as NaI.strong.area_bias.")
+_c("NaI_4096.strong.fwhm_ratio", "NaI_4096", "isolated_strong", "fwhm_ratio_mean", "in", (0.95, 1.05),
+   "Same limit as NaI.strong.fwhm_ratio.")
+_c("NaI_4096.strong.split", "NaI_4096", "isolated_strong", "split_fraction", "<=", 0.05,
+   "Same limit as NaI.strong.split.")
+_c("NaI_4096.id.recall", "NaI_4096", "identification", "recall", ">=", 0.75,
+   "Same limit as NaI.id.recall.")
+_c("NaI_4096.id.false_per_spectrum", "NaI_4096", "identification", "false_per_spectrum", "<=", 1.0,
+   "Same limit as NaI.id.false_per_spectrum.")
+
 # -------------------------------------------------------------------- IAEA G-1 (HPGe-like Ge(Li))
 _c("G1.G1100.found", "HPGe", "G1", "G1100_found", ">=", 20,
    "Reference spectrum: 20 strong peaks (~65 000 counts each) must all be found.")
