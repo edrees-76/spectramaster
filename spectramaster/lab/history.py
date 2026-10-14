@@ -11,6 +11,8 @@ Kinds
 ``set_*``                       replace the value at ``target`` (``before_exists`` False
                                 means the key did not exist, ``revert`` removes it).
 ``relocate_spectrum``           new path of the spectrum file (same SHA-256).
+``replace_peaks``               the whole peak list after a manual refit (``details`` holds
+                                the fit region, positions and options, so it can be repeated).
 
 Every op also stores the session ``status`` it found (``status_before``) and restores it
 on revert, so undo gives back exactly the previous state, including the staleness flags.
@@ -31,10 +33,10 @@ from typing import Any, Optional
 from .common import from_known, new_id, utc_now
 
 EDIT_KINDS = ("add_peak", "remove_peak", "set_peak_field", "set_sample_field", "set_setting",
-              "set_context", "relocate_spectrum")
+              "set_context", "relocate_spectrum", "replace_peaks")
 REASON_REQUIRED = ("remove_peak", "set_peak_field")
 STALE_KINDS = ("add_peak", "remove_peak", "set_peak_field", "set_sample_field", "set_setting",
-               "set_context")
+               "set_context", "replace_peaks")
 
 
 def current_user() -> str:
@@ -81,6 +83,7 @@ class EditOperation:
     timestamp: str = field(default_factory=utc_now)
     undone: bool = False
     status_before: Optional[dict] = None
+    details: Optional[dict] = None      # e.g. manual-fit region and options (replace_peaks)
 
     def __post_init__(self):
         if self.kind not in EDIT_KINDS:

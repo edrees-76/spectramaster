@@ -395,7 +395,7 @@ def _record_group(rec: FitReport, spectrum, y, r, retry: str, kept: dict, reason
 
 
 def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_width=True,
-               step=True, width_bounds=(0.7, 1.4)) -> Optional[_Fit]:
+               step=True, width_bounds=(0.7, 1.4), fix_centroids=None) -> Optional[_Fit]:
     """Gaussians (shared width scale) + linear background + erfc step, Poisson-weighted.
 
     Small dense Levenberg-Marquardt with analytic Jacobian and box constraints
@@ -440,7 +440,10 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
     lb[3], ub[3] = 0.0, (0.3 if step else 0.0)
     for j, (c, f) in enumerate(zip(cents, base_f)):
         lb[4 + 2 * j] = 0.0
-        lb[5 + 2 * j], ub[5 + 2 * j] = c - 0.6 * f, c + 0.6 * f
+        if fix_centroids is not None and fix_centroids[j]:
+            lb[5 + 2 * j] = ub[5 + 2 * j] = c          # manual edit: centroid held at the given channel
+        else:
+            lb[5 + 2 * j], ub[5 + 2 * j] = c - 0.6 * f, c + 0.6 * f
     fixed = lb == ub
     xs = x - xm
     R2 = math.sqrt(2.0)
@@ -565,6 +568,30 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
 
 
 # --------------------------------------------------------------- main entry
+def width_model(spectrum, y: np.ndarray, fwhm: Optional[float] = None, min_energy: Optional[float] = None
+                ) -> tuple[np.ndarray, str, int]:
+    """FWHM (channels) per index used by the search and fit, its source, and the first index
+    analysed.  Shared by :func:`find_peaks` and manual refits (analysis.manual)."""
+    n = len(y)
+    if fwhm is not None and fwhm > 0:
+        f = np.full(n, float(fwhm))
+        src = "user"
+    else:
+        f, src = fwhm_model(spectrum, y)
+        if src == "none":
+            f = _estimate_fwhm_from_data(y)
+            src = "data"
+    start = _start_index(y, f)
+    if min_energy is not None and spectrum.energy_coeffs:
+        e = _poly(spectrum.energy_coeffs, spectrum.first_channel + np.arange(n))
+        above = np.nonzero(e >= min_energy)[0]
+        start = max(start, int(above[0]) if len(above) else n)
+    # refine the model with the strongest isolated peaks of this spectrum
+    if src not in ("user",):
+        f = _rescale_model(y, f, start)
+    return f, src, start
+
+
 def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit: bool = True,
                min_energy: Optional[float] = None, max_peaks: int = 400,
                report: Optional[FitReport] = None, **_ignored) -> list[Peak]:
@@ -584,26 +611,9 @@ def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit
         return []
     y = np.maximum(y, 0.0)
     f0 = spectrum.first_channel
-    calibrated = bool(spectrum.energy_coeffs)
-
-    if fwhm is not None and fwhm > 0:
-        f = np.full(n, float(fwhm))
-        src = "user"
-    else:
-        f, src = fwhm_model(spectrum, y)
-        if src == "none":
-            f = _estimate_fwhm_from_data(y)
-            src = "data"
+    f, src, start = width_model(spectrum, y, fwhm, min_energy)
     if report is not None:
         report.fwhm_source = src
-    start = _start_index(y, f)
-    if min_energy is not None and calibrated:
-        e = _poly(spectrum.energy_coeffs, f0 + np.arange(n))
-        above = np.nonzero(e >= min_energy)[0]
-        start = max(start, int(above[0]) if len(above) else n)
-    # refine the model with the strongest isolated peaks of this spectrum
-    if src not in ("user",):
-        f = _rescale_model(y, f, start)
     model = _Model(f)
     cands = _candidates(y, f, min_sig * 0.8, start)
     if not cands:

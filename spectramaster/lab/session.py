@@ -165,7 +165,8 @@ class AnalysisSession:
         r = self.results
         return bool(r.get("peaks") or r.get("nuclide_matches") or r.get("quant"))
 
-    def set_results(self, peaks=(), matches=(), quant=None, engine_version: str = ENGINE_VERSION) -> None:
+    def set_results(self, peaks=(), matches=(), quant=None, engine_version: str = ENGINE_VERSION,
+                    spectrum=None) -> None:
         """Store freshly computed results (dataclass objects or already-plain dicts).
 
         Recomputation replaces the list positions recorded by earlier edits, so the undo
@@ -180,6 +181,10 @@ class AnalysisSession:
             "quant": quant if quant is None or isinstance(quant, dict) else quant_to_dict(quant)}
         self.status = {"results_stale": False, "stale_reasons": [], "reviewed": False,
                        "engine_version_at_results": engine_version}
+        if spectrum is not None:      # lets later manual refits check they use the same counts
+            from ..analysis.manual import counts_sha256
+            self.processing_settings = {**(self.processing_settings or {}),
+                                        "counts_sha256": counts_sha256(spectrum)}
         self.history.seal()
         self.touch()
 
@@ -210,12 +215,63 @@ class AnalysisSession:
         return out
 
     # ------------------------------------------------------------ edits (undoable)
-    def edit(self, kind: str, target: list, after=None, reason: str = "", user: Optional[str] = None
-             ) -> EditOperation:
+    def edit(self, kind: str, target: list, after=None, reason: str = "", user: Optional[str] = None,
+             details: Optional[dict] = None) -> EditOperation:
         kw = {"user": user} if user is not None else {}
-        op = self.history.do(EditOperation(kind, list(target), after=to_plain(after), reason=reason, **kw), self)
+        op = self.history.do(EditOperation(kind, list(target), after=to_plain(after), reason=reason,
+                                           details=to_plain(details) if details else None, **kw), self)
         self.touch()
         return op
+
+    # ------------------------------------------------------------ manual refits (B3)
+    def _check_counts(self, spectrum) -> None:
+        from ..analysis.manual import counts_sha256
+        want = (self.processing_settings or {}).get("counts_sha256")
+        if want and want != counts_sha256(spectrum):
+            raise ValueError("the spectrum passed is not the one these results were computed from")
+
+    def refit_region(self, spectrum, lo: int, hi: int, centroids, reason: str = "", **options):
+        """Refit channels lo..hi with peaks at `centroids` and replace the stored peaks of that
+        region (undoable).  Identification and activity are marked as requiring an update.
+        Returns (EditOperation, RegionFit)."""
+        from ..analysis.manual import refit_region
+        self._check_counts(spectrum)
+        rf = refit_region(spectrum, lo, hi, centroids, **options)
+        if not rf.ok:
+            raise ValueError("the fit did not converge; nothing was changed")
+        lo_, hi_ = rf.options["lo"], rf.options["hi"]
+        keep = [p for p in self.results["peaks"] if not lo_ <= p["centroid"] <= hi_]
+        new = sorted(keep + peaks_to_dicts(rf.peaks), key=lambda p: p["centroid"])
+        op = self.edit("replace_peaks", ["results", "peaks"], new,
+                       reason or f"manual refit of channels {lo_}-{hi_}", details=rf.options)
+        return op, rf
+
+    def add_peak_and_refit(self, spectrum, channel: float, reason: str = "", **options):
+        """Add a peak at `channel` and refit it together with its neighbours."""
+        from ..analysis.manual import region_around
+        from ..analysis.peaks import width_model
+        import numpy as np
+        y = np.maximum(np.asarray(spectrum.counts, dtype=float), 0.0)
+        f, _src, _ = width_model(spectrum, y)
+        i = int(min(max(round(channel - spectrum.first_channel), 0), len(y) - 1))
+        lo, hi, others = region_around(self.results["peaks"], float(channel), float(f[i]))
+        return self.refit_region(spectrum, lo, hi, others + [float(channel)],
+                                 reason or f"peak added at channel {channel:.1f}", **options)
+
+    def remove_peak_and_refit(self, spectrum, index: int, reason: str, **options):
+        """Remove stored peak `index` and refit its remaining neighbours (reason required)."""
+        from ..analysis.manual import region_around
+        if not reason.strip():
+            raise ValueError("a reason is required to remove a peak")
+        peaks = self.results["peaks"]
+        gone = peaks[int(index)]
+        c = float(gone["centroid"])
+        lo, hi, others = region_around(peaks, c, float(gone.get("fwhm") or 1.0))
+        if not others:            # isolated peak: nothing to refit
+            return self.edit("replace_peaks", ["results", "peaks"],
+                             [p for k, p in enumerate(peaks) if k != int(index)], reason,
+                             details={"removed_centroid": c}), None
+        return self.refit_region(spectrum, lo, hi, others, reason, **options)
 
     def add_peak(self, peak, index: Optional[int] = None, reason: str = "") -> EditOperation:
         d = peak if isinstance(peak, dict) else to_plain(asdict(peak))
