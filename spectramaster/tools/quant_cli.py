@@ -94,7 +94,65 @@ def cmd_activity(args) -> int:
     return 0
 
 
+def cmd_batch(args) -> int:
+    """Group the spectra; analyse only the chosen group with the given calibration."""
+    import glob
+    import json
+    from ..lab.batch import BatchSetup, group_items, run_batch, scan, write_csv
+    from ..lab.detector import MeasurementGeometry
+    paths = []
+    for pat in args.paths:
+        hits = sorted(glob.glob(pat, recursive=True)) or [pat]
+        for h in hits:
+            hp = Path(h)
+            paths.extend(sorted(q for q in hp.rglob("*") if q.is_file()) if hp.is_dir() else [hp])
+    items = scan(paths)
+    groups = group_items(items, energy_tol_kev=args.energy_tol)
+    for g in groups:
+        print(g.describe())
+    bad = [it for it in items if it.error]
+    if bad:
+        print(f"{len(bad)} file(s) not read (first: {bad[0].path}: {bad[0].error})")
+    if args.group is None:
+        print("choose a group with --group N and its efficiency calibration with --eff (nothing analysed)")
+        return 0
+    if not any(g.id == args.group for g in groups):
+        _err(f"no group {args.group}")
+        return 1
+    try:
+        curve = eff.load_curve(args.eff) if args.eff else None
+        geom = (MeasurementGeometry.from_dict(json.loads(Path(args.geometry).read_text(encoding="utf-8")))
+                if args.geometry else None)
+    except (OSError, ValueError, KeyError) as exc:
+        _err(str(exc))
+        return 1
+    setup = BatchSetup(curve=curve, geometry=geom, allow_geometry_mismatch=args.allow_geometry_mismatch,
+                       application=args.application,
+                       nuclides=[n.strip() for n in (args.nuclides or "").split(",") if n.strip()])
+    sel = [g for g in groups if g.id == args.group]
+    rows = run_batch(sel, {args.group: setup},
+                     progress=lambda i, n: print(chr(13) + "%d/%d" % (i, n), end="", file=sys.stderr))
+    print(file=sys.stderr)
+    write_csv(args.out, rows)
+    print(f"{len(rows)} row(s) written to {args.out}")
+    return 0
+
+
 def add_quant_commands(sub) -> None:
+    b = sub.add_parser("batch", help="group spectra by detector/channels/calibration; analyse one group")
+    b.add_argument("paths", nargs="+", help="files, folders or glob patterns")
+    b.add_argument("--group", type=int, help="group to analyse (see the list printed first)")
+    b.add_argument("--eff", help="efficiency curve JSON for this group (omit: identification only)")
+    b.add_argument("--geometry", help="sample geometry JSON (lab.detector.MeasurementGeometry)")
+    b.add_argument("--allow-geometry-mismatch", action="store_true",
+                   help="use a calibration of another geometry anyway (reported in every row)")
+    b.add_argument("--application", default="environmental",
+                   help="identification library: all, environmental, calibration, safeguards, medical")
+    b.add_argument("--nuclides", help="comma-separated nuclides for activities (default: those identified)")
+    b.add_argument("--energy-tol", type=float, default=1.0, help="calibration agreement for grouping, keV")
+    b.add_argument("-o", "--out", default="batch_results.csv")
+    b.set_defaults(func=cmd_batch)
+
     p = sub.add_parser("effcal", help="efficiency calibration from a certified standard spectrum")
     p.add_argument("file", help="calibration (standard) spectrum")
     p.add_argument("--cert", help="certificate CSV: nuclide,activity_bq,unc_percent,ref_date[,half_life_s,"

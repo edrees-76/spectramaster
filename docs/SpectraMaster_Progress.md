@@ -214,7 +214,7 @@ E1 result (all synthetic criteria unchanged; IDB, 160 real spectra):
 | Increment | Status | Evidence |
 |---|---|---|
 | F1. Workflow statuses (calibration required, incompatible calibration, outside the validated scope, results stale, not reviewed / reviewed), review approval (named reviewer, refused while stale), traceable report record (application and engine version, session id, spectrum fingerprint, sample, detector, geometry, calibrations with content hash and validation status, library, background, peaks, nuclides, activities, concentrations, statuses, edits, conventions) as JSON | done (engine); GUI open | `lab/workflow.py`; `tests/test_workflow.py` |
-| F2. Batch analysis grouped by compatible detector, geometry and calibration (no calibration applied to all files automatically) | open | |
+| F2. Batch analysis: spectra grouped by the detector stated in the file (unlabelled files together; a type guessed from weak peaks is shown, not used), number of channels and energy calibration (±1 keV over the range); each group needs its own explicit setup (efficiency calibration, sample geometry, application library, nuclides, background), unassigned groups are not analysed and say so, an incompatible geometry is refused per file; CSV with one row per file and nuclide; CLI `spectramaster batch PATHS [--group N --eff curve.json --geometry geom.json ...]` | done (engine, CLI); GUI open | `lab/batch.py`, `tools/quant_cli.py`; `tests/test_batch.py`. Laboratory archive, May 2009 (445 files): 8 groups, one per recalibration of the unlabelled HPGe |
 | F3. GUI: status bar / workflow panel, review action, report from the record | open | |
 
 ## Public measured spectra (kept outside the repository)
