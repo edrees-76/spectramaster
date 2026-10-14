@@ -8,8 +8,9 @@ Per gamma line (energy E, emission probability I as a fraction)::
     D      = exp(-lambda * (t_start - t_ref))      decay from the reference (sampling) date to the start
     C      = (1 - exp(-lambda * t_real)) / (lambda * t_real)   decay during counting
     N      = net peak area, minus the live-time-normalised background-spectrum peak
-             (peak-by-peak mode, N = N_s - (t_s/t_b) N_b) or measured on the net spectrum
-             (full-spectrum mode)
+             (peak-by-peak mode, N = N_s - (t_s/t_b) N_b, the background fitted at the sample
+             peaks' energies and widths, analysis.background) or measured on the net spectrum
+             S - kB with its variance S + k^2 B (full-spectrum mode).  Negative N is kept.
     F_att  = 1 / (self-attenuation correction factor)  (user value, default 1)
 
     u_rel^2 = u_count^2 + u_eff^2 + u_I^2 + u_mass^2 + u_att^2
@@ -25,7 +26,9 @@ Specific activity a = A / m (Bq/kg, Bq/L ...); expanded uncertainty U = 2 u.
 Detection limits (counts), continuum B under the expected peak region of n channels
 (+-1.25 FWHM from the FWHM model), estimated from m channels on each side::
 
-    sigma0^2 = B (1 + n / (2 m)) + k_b^2 N_bkgpeak-variance      (blank variance)
+    sigma0^2 = B (1 + n / (2 m)) + k N_b + k^2 u(N_b)^2        (blank variance, peak mode)
+    sigma0^2 = B (1 + n / (2 m)) + k^2 B_b (1 + n / (2 m))     (full-spectrum mode, B_b = background
+                                                                counts in the window)
     Currie:  L_C = k * sigma0,   L_D = k^2 + 2 L_C   (k = 1.645, alpha = beta = 5 %)
     MDA      = L_D / (f_w * eps * I * t_live * C * D * F_att)   f_w = window fraction of the peak
 
@@ -324,25 +327,37 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     notes: list[str] = []
     k_b = 0.0
     work = spectrum
-    extra_var = None
+    net_var = None          # full-spectrum mode: variance S + k^2 B of the net channels
+    bcounts = None          # full-spectrum mode: background counts on the sample grid
+    bfit = None             # peak mode: background fitted at the sample peaks
+    bkg_under: dict = {}
+    from .background import SUBTRACTED, BackgroundFitter, check_not_subtracted, compatibility, net_spectrum
     if background is not None:
+        check_not_subtracted(spectrum)
         if not background.live_time:
             raise ValueError("the background spectrum has no live time")
+        notes.extend(compatibility(spectrum, background))
         k_b = t_live / float(background.live_time)
         if opt.bkg_mode == "spectrum":
-            from ..tools.arithmetic import align_to, same_calibration, subtract_background
-            net, _sig = subtract_background(spectrum, background)
+            from ..tools.arithmetic import align_to, same_calibration
+            work, net_var, _k = net_spectrum(spectrum, background)
             bal = background if same_calibration(spectrum, background) else align_to(background, spectrum)
             bcounts = np.clip(np.asarray(bal.counts, dtype=float), 0, None)
-            extra_var = k_b * (1.0 + k_b) * bcounts      # var(S - kB) - var_fit(net)
-            from dataclasses import replace
-            work = replace(net, counts=[max(c, 0.0) for c in net.counts])
-            peaks = None
-        else:
-            if bkg_peaks is None:
-                bkg_peaks = find_peaks(background, min_sig=opt.min_sig) if background.energy_coeffs else []
+            peaks = find_peaks(work, min_sig=opt.min_sig, variance=net_var)
+        elif bkg_peaks is None:
+            bfit = BackgroundFitter(spectrum, background)
+            if bfit.note:
+                notes.append(bfit.note)
+    elif (spectrum.extra or {}).get("operation") == SUBTRACTED:
+        notes.append("the spectrum is background subtracted: its counts are treated as Poisson, which "
+                     "underestimates the uncertainties; analyse the sample with the background instead")
+    fit_report = None
     if peaks is None:
-        peaks = find_peaks(work, min_sig=opt.min_sig)
+        from .peaks import FitReport
+        fit_report = FitReport() if bfit is not None else None
+        peaks = find_peaks(work, min_sig=opt.min_sig, report=fit_report)
+    if bfit is not None:
+        bkg_under = bfit.under_peaks(peaks, fit_report)
     y = np.asarray(spectrum.counts, dtype=float)
     fw_ch, _src = fwhm_model(spectrum, y)
     if spectrum.start_time is None and opt.ref_date is not None:
@@ -387,15 +402,28 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             lr.continuum = B
             var0 = B * (1.0 + n / (2.0 * m))
             p = match_peak(peaks, e)
-            bp = match_peak(bkg_peaks, e) if (bkg_peaks and opt.bkg_mode == "peak") else None
-            if bp is not None:
-                lr.bkg_peak = k_b * bp.net_area
-                var0 += lr.bkg_peak + (k_b * bp.net_area_unc) ** 2
-            if extra_var is not None:
-                idx = _channel_of_energy(spectrum, e)
-                if idx is not None:
+            bnet = None           # (k N_b, k u_b) under this line
+            if bfit is not None:
+                if p is not None:
+                    bnet = bkg_under.get(id(p))
+                else:
+                    idx = _channel_of_energy(spectrum, e)
+                    if idx is not None:
+                        bnet = bfit.at_energy(idx, float(fw_ch[int(min(max(round(idx), 0), len(fw_ch) - 1))]))
+            elif bkg_peaks and opt.bkg_mode == "peak":      # legacy: caller-supplied background peaks
+                bp = match_peak(bkg_peaks, e)
+                if bp is not None:
+                    bnet = (k_b * bp.net_area, k_b * bp.net_area_unc)
+            if bnet is not None:
+                lr.bkg_peak = bnet[0]
+                var0 += max(bnet[0], 0.0) + bnet[1] ** 2
+            if bcounts is not None:
+                cb = continuum_under(spectrum, e, fw_ch, counts=bcounts)
+                if cb is not None:
+                    idx = _channel_of_energy(spectrum, e)
                     h = max(1, int(round(1.25 * fw_ch[int(round(idx))])))
-                    var0 += float(extra_var[max(0, int(idx) - h):int(idx) + h + 1].sum())
+                    bwin = float(bcounts[max(0, int(round(idx)) - h):int(round(idx)) + h + 1].sum())
+                    var0 += k_b ** 2 * bwin * (1.0 + cb[1] / (2.0 * cb[2]))
             sigma0 = math.sqrt(max(var0, 0.0))
             w_rel = math.sqrt(lr.eff_rel_unc ** 2 + opt.intensity_rel_unc ** 2 + opt.attenuation_rel_unc ** 2)
             if opt.mda_method == "iso11929":
@@ -409,12 +437,9 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             if p is not None:
                 lr.peak_found = True
                 nnet, unet = float(p.net_area), float(p.net_area_unc)
-                if extra_var is not None:
-                    lo, hi = max(0, p.left), min(len(extra_var) - 1, p.right)
-                    unet = math.sqrt(unet ** 2 + float(extra_var[lo:hi + 1].sum()))
-                if bp is not None:
-                    nnet -= lr.bkg_peak
-                    unet = math.hypot(unet, k_b * bp.net_area_unc)
+                if bnet is not None:          # not clipped: a negative net area is kept
+                    nnet -= bnet[0]
+                    unet = math.hypot(unet, bnet[1])
                 lr.net_area, lr.net_unc = nnet, unet
                 used_peaks.setdefault(id(p), []).append(name)
                 lr.activity = nnet * w

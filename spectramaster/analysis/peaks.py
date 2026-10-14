@@ -17,6 +17,9 @@ Algorithm
    with one free scale factor per group (scipy.optimize.least_squares, Poisson weights).
    A single-peak fit with a significant residual bump is retried as a doublet.
    Net area, centroid and their 1-sigma uncertainties come from the covariance matrix.
+   ``find_peaks(..., variance=v)`` replaces the Poisson variance by an explicit per-channel
+   variance (e.g. S + k^2 B of a background-subtracted spectrum, which may be negative and is
+   not Poisson); the counts are then neither clipped nor floored.
 4. **Flags** (``Peak.note``): annihilation (511 keV), single/double escape of a stronger
    high-energy peak, sum peaks of two strong peaks (e.g. Co-60 2505 keV), Pb/X-ray region.
 """
@@ -227,12 +230,12 @@ def _kernel(fwhm: float) -> np.ndarray:
     return g - g.mean()
 
 
-def _filter(y: np.ndarray, f: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def _filter(y: np.ndarray, f: np.ndarray, var: Optional[np.ndarray] = None) -> tuple[np.ndarray, np.ndarray]:
     """Zero-area-Gaussian response S and its standard deviation, width following f."""
     n = len(y)
     S = np.zeros(n)
     V = np.ones(n)
-    var = np.maximum(y, 1.0)
+    var = np.maximum(y if var is None else var, 1.0)
     fq = np.clip(f, 1.0, None)
     # bands of ~15 % width variation
     logf = np.log(fq)
@@ -262,8 +265,8 @@ def _start_index(y: np.ndarray, f: np.ndarray) -> int:
     return min(len(y) - 1, first + max(3, int(math.ceil(1.0 * f[first]))))
 
 
-def _candidates(y, f, min_sig, start, stop=None):
-    S, sd = _filter(y, f)
+def _candidates(y, f, min_sig, start, stop=None, var=None):
+    S, sd = _filter(y, f, var)
     z = S / sd
     n = len(y)
     stop = n if stop is None else stop
@@ -395,8 +398,9 @@ def _record_group(rec: FitReport, spectrum, y, r, retry: str, kept: dict, reason
 
 
 def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_width=True,
-               step=True, width_bounds=(0.7, 1.4), fix_centroids=None) -> Optional[_Fit]:
-    """Gaussians (shared width scale) + linear background + erfc step, Poisson-weighted.
+               step=True, width_bounds=(0.7, 1.4), fix_centroids=None, var=None) -> Optional[_Fit]:
+    """Gaussians (shared width scale) + linear background + erfc step, Poisson-weighted
+    (or weighted by the explicit channel variance `var`).
 
     Small dense Levenberg-Marquardt with analytic Jacobian and box constraints
     (projected steps) - ~20x faster than scipy.optimize.least_squares for these sizes.
@@ -405,7 +409,7 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
     d = y[lo:hi + 1]
     if len(x) < 5:
         return None
-    w = 1.0 / np.sqrt(np.maximum(d, 1.0))
+    w = 1.0 / np.sqrt(np.maximum(d if var is None else var[lo:hi + 1], 1.0))
     k = len(cents)
     base_f = np.array([model.at(c) for c in cents])
     xm = 0.5 * (x[0] + x[-1])
@@ -568,8 +572,8 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
 
 
 # --------------------------------------------------------------- main entry
-def width_model(spectrum, y: np.ndarray, fwhm: Optional[float] = None, min_energy: Optional[float] = None
-                ) -> tuple[np.ndarray, str, int]:
+def width_model(spectrum, y: np.ndarray, fwhm: Optional[float] = None, min_energy: Optional[float] = None,
+                var: Optional[np.ndarray] = None) -> tuple[np.ndarray, str, int]:
     """FWHM (channels) per index used by the search and fit, its source, and the first index
     analysed.  Shared by :func:`find_peaks` and manual refits (analysis.manual)."""
     n = len(y)
@@ -588,13 +592,13 @@ def width_model(spectrum, y: np.ndarray, fwhm: Optional[float] = None, min_energ
         start = max(start, int(above[0]) if len(above) else n)
     # refine the model with the strongest isolated peaks of this spectrum
     if src not in ("user",):
-        f = _rescale_model(y, f, start)
+        f = _rescale_model(y, f, start, var)
     return f, src, start
 
 
 def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit: bool = True,
                min_energy: Optional[float] = None, max_peaks: int = 400,
-               report: Optional[FitReport] = None, **_ignored) -> list[Peak]:
+               report: Optional[FitReport] = None, variance=None, **_ignored) -> list[Peak]:
     """Search, fit and flag peaks.
 
     min_sig     : significance threshold (net area / its 1-sigma uncertainty); default 3.
@@ -604,18 +608,28 @@ def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit
     report      : a FitReport to fill with every fitted group (data, components, background,
                   residuals, warnings, discarded components with reasons).  The results are the
                   same with or without it.
+    variance    : per-channel variance of the counts when they are not raw Poisson counts
+                  (a background-subtracted spectrum: S + k^2 B).  The counts are then used as
+                  they are (negative channels kept) and every weight and uncertainty uses it.
     """
     y = np.asarray(spectrum.counts, dtype=float)
     n = len(y)
-    if n < 16 or not np.isfinite(y).all() or y.sum() <= 0:
+    var = None
+    if variance is not None:
+        var = np.asarray(variance, dtype=float)
+        if var.shape != y.shape or not np.isfinite(var).all():
+            raise ValueError("variance must have one finite value per channel")
+        var = np.maximum(var, 0.0)
+    if n < 16 or not np.isfinite(y).all() or (var is None and y.sum() <= 0):
         return []
-    y = np.maximum(y, 0.0)
+    if var is None:
+        y = np.maximum(y, 0.0)
     f0 = spectrum.first_channel
-    f, src, start = width_model(spectrum, y, fwhm, min_energy)
+    f, src, start = width_model(spectrum, y, fwhm, min_energy, var)
     if report is not None:
         report.fwhm_source = src
     model = _Model(f)
-    cands = _candidates(y, f, min_sig * 0.8, start)
+    cands = _candidates(y, f, min_sig * 0.8, start, var=var)
     if not cands:
         return []
     if len(cands) > max_peaks:
@@ -634,7 +648,8 @@ def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit
         else:
             groups.append([(c, z)])
     for g in groups:
-        peaks.extend(_fit_and_make(spectrum, y, model, [c for c, _ in g], start, min_sig, g, rec=report))
+        peaks.extend(_fit_and_make(spectrum, y, model, [c for c, _ in g], start, min_sig, g, rec=report,
+                                   var=var))
     peaks.sort(key=lambda p: p.centroid)
     peaks = _dedupe(peaks, model, f0)
     if report is not None:
@@ -647,9 +662,9 @@ def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit
     return peaks
 
 
-def _width_ratios(y, f, start) -> list[float]:
+def _width_ratios(y, f, start, var=None) -> list[float]:
     """Fitted/model FWHM of up to 8 strong isolated peaks (free width x0.5..x2, not at bound)."""
-    cands = _candidates(y, f, 12.0, start)
+    cands = _candidates(y, f, 12.0, start, var=var)
     if len(cands) < 1:
         return []
     cands = sorted(cands, key=lambda c: -c[1])[:8]
@@ -661,16 +676,16 @@ def _width_ratios(y, f, start) -> list[float]:
         if any(0 < abs(o - c) < 4 * fw for o in allc):
             continue
         lo, hi = int(max(c - 2.5 * fw, 0)), int(min(c + 2.5 * fw, len(y) - 1))
-        r = _fit_group(y, m, [c], lo, hi, free_width=True, step=True, width_bounds=(0.5, 2.0))
+        r = _fit_group(y, m, [c], lo, hi, free_width=True, step=True, width_bounds=(0.5, 2.0), var=var)
         if r is None or r.at_bound or r.chi2r > 20 or r.area_unc[0] <= 0 or r.areas[0] / r.area_unc[0] < 10:
             continue
         ratios.append(r.fwhms[0] / fw)
     return ratios if (len(ratios) >= 2 or (len(ratios) == 1 and len(cands) <= 3)) else []
 
 
-def _rescale_model(y, f, start):
+def _rescale_model(y, f, start, var=None):
     """Scale FWHM model to the widths of strong isolated peaks (median ratio)."""
-    ratios = _width_ratios(y, f, start)
+    ratios = _width_ratios(y, f, start, var)
     if ratios:
         k = float(np.clip(np.median(ratios), 0.5, 2.0))
         if abs(k - 1.0) > 0.08:
@@ -729,15 +744,15 @@ def _estimate_fwhm_from_data(y) -> np.ndarray:
     return np.full(n, float(np.median(fw[ok])) if ok.any() else med)
 
 
-def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optional[FitReport] = None
-                  ) -> list[Peak]:
+def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optional[FitReport] = None,
+                  var=None) -> list[Peak]:
     n = len(y)
     fl, fr = model.at(cents[0]), model.at(cents[-1])
     lo = int(max(math.floor(cents[0] - 2.2 * fl), start - 1, 0))
     hi = int(min(math.ceil(cents[-1] + 2.2 * fr), n - 1))
     # free width only where the data constrain it (strong peaks); weak peaks use the model width
     free = sum(y[int(c)] for c in cents) > 200 and max(z for _c, z in zs) > 25 if zs else False
-    r = _fit_group(y, model, cents, lo, hi, free_width=free, step=True)
+    r = _fit_group(y, model, cents, lo, hi, free_width=free, step=True, var=var)
     if r is None:
         return []
     retry = ""
@@ -764,7 +779,7 @@ def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optiona
             starts.append([c0 - h, c0 + h])
         best = None
         for st in starts:
-            cand = _fit_group(y, model, st, lo, hi, free_width=free, step=True)
+            cand = _fit_group(y, model, st, lo, hi, free_width=free, step=True, var=var)
             if cand is not None and (best is None or cand.chi2r < best.chi2r):
                 best = cand
         if best is not None:
@@ -798,8 +813,14 @@ def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optiona
         xr = np.arange(roi_l, roi_r + 1)
         gross = float(y[roi_l:roi_r + 1].sum())
         bkg = float(np.maximum(r.bkg(xr), 0).sum())
-        # Poisson floor for the uncertainty (fit covariance can be optimistic for tiny peaks)
-        unc = max(unc, math.sqrt(max(area, 0) + 2.0 * bkg) * 0.7, 1.0)
+        # Poisson floor for the uncertainty (fit covariance can be optimistic for tiny peaks):
+        # var(gross) + var(background) = (A + B) + B; with an explicit variance V of the
+        # region, var(gross) = V and var(background) ~ V - A
+        if var is None:
+            unc = max(unc, math.sqrt(max(area, 0) + 2.0 * bkg) * 0.7, 1.0)
+        else:
+            v_roi = float(var[roi_l:roi_r + 1].sum())
+            unc = max(unc, math.sqrt(max(2.0 * v_roi - max(area, 0.0), v_roi)) * 0.7, 1.0)
         sig = area / unc
         if sig < min_sig:
             reasons[j] = f"significance {sig:.1f} below the threshold {min_sig:g}"

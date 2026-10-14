@@ -31,8 +31,8 @@ Status values:
 |---|---|---|
 | B0. Calibration criteria pre-registered; calibration and drift scenarios; current tool measured | done | `acceptance.py` (commit 573041b, before any change); `docs/baseline/before_B1/` |
 | B1. Calibration review: fitted centroids with uncertainties, weighted fit, F-test order selection, outlier exclusion with reasons, validation report (independent lines, monotonicity, extrapolated range, expected lines not found, width consistency), drift check with a proposed (not applied) correction | done (library level) | `tools/calibrate.py`; `analysis/peaks.py` (data-driven width model); `docs/baseline/after_B1/`; `tests/test_calibration_review.py` |
-| B2. Fit-inspection data (components, background, residuals, warnings) | open | |
-| B3. Manual peak editing with undo/redo and stale results | open | |
+| B2. Fit-inspection data (components, background, residuals, warnings, discarded components with reasons) | done (library level) | `analysis/peaks.py` (`FitReport`), `inspect_fit`; `tests/test_fit_inspection.py` |
+| B3. Manual peak editing with undo/redo and stale results | done (library level) | `analysis/manual.py`, `lab/session.py`; `tests/test_manual_refit.py` |
 | B4. GUI: calibration review dialog, fit-inspection window, sessions (A5) | open | |
 
 Stage 3 acceptance criterion ("known calibrations are recovered; incorrect matches, drift and
@@ -50,6 +50,34 @@ calibration or library do not silently alter previous results.
 
 - At library level this is covered by the round-trip, staleness and undo/redo tests.
 - At GUI level it is not covered yet (A5).
+
+## Release C: fitting, background handling and uncertainty propagation
+
+| Increment | Status | Evidence |
+|---|---|---|
+| C0. Measured-background criteria pre-registered; sample/background pairs (background counted 2x longer, natural lines + weak Cs-137 contamination) scored in peak and spectrum modes | done | `acceptance.py` (commit 09775b3, before any change); `docs/baseline/before_C1/` |
+| C1. Measured background: explicit variance S + k²B for net spectra (no clipping, no Poisson assumption), peak-by-peak subtraction with the sample fit's own linear estimator, negative net areas kept, double subtraction refused, sample/background compatibility warnings | done | `analysis/background.py`, `analysis/peaks.py` (`variance=`), `analysis/activity.py`, `analysis/efficiency.py`, `tools/arithmetic.py`; `docs/baseline/after_C1/`; `tests/test_measured_background.py` (12 tests) |
+
+Stage 5 acceptance criterion ("known test cases recover net areas and uncertainties without
+false detections due to subtraction"), synthetic evidence only:
+
+| | before C1 | after C1 |
+|---|---|---|
+| HPGe, peak mode: bias / cov1 / cov2 / false detections | −1.1 % / 0.64 / 0.94 / 0 | −0.8 % / 0.65 / 0.95 / 0.025 |
+| HPGe, spectrum mode | **−3.3 %** / 0.75 / 1.0 / 0 | −1.5 % / 0.63 / 0.93 / 0 |
+| NaI, peak mode | **+4.1 % / 0.27 / 0.44 / 0.17** | +2.0 % / **0.43 / 0.70 / 0.24** |
+| NaI, spectrum mode | **−9.9 % / 0.18 / 0.59** / 0 | +1.0 % / 0.63 / 0.94 / 0 |
+
+- **Not met: NaI peak mode.** The remaining error is not in the subtraction: the sample fit
+  models unresolved NaI blends (Bi-214 609 + Tl-208 583 keV next to Cs-137 662 keV; Co-60 1332
+  next to K-40 1461 keV) with one shared width scale. The shape mismatch leaks part of the net
+  Cs-137/Co-60 signal into the neighbouring background-only components, biased by up to about
+  ±2.5 σ (Bi-214 −585 counts, K-40 +426). Their fit uncertainty does not contain that
+  model error. Spectrum mode does not fit those blends and meets every limit. For NaI with a
+  measured background, spectrum mode is therefore the better choice at present.
+- Re-binning a background with a different calibration correlates neighbouring channels; this
+  correlation is ignored (documented in `analysis/background.py`).
+- The live times are taken as exact (no uncertainty on k).
 
 ## Skipped tests in the existing suite (2026-10-14, this machine)
 

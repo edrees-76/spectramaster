@@ -369,8 +369,9 @@ def measure_efficiency(spectrum, cert: Sequence[CertLine], peaks=None,
                        background=None, min_sig: float = 3.0) -> list[EfficiencyPoint]:
     """Measured FEP efficiency points of the certified lines found in `spectrum`.
 
-    `background`: optional background spectrum; its peaks at the same energies (live-time
-    normalised) are subtracted peak by peak.  Lines without a matching peak are skipped.
+    `background`: optional background spectrum, subtracted peak by peak (live-time
+    normalised) with the sample fit's own estimator (analysis.background.BackgroundFitter),
+    so blends are split identically in both spectra.  Lines without a matching peak are skipped.
     Lines of different nuclides falling on the same peak are flagged and not used.
     """
     from .peaks import find_peaks
@@ -378,12 +379,15 @@ def measure_efficiency(spectrum, cert: Sequence[CertLine], peaks=None,
         raise ValueError("the calibration spectrum has no energy calibration")
     if not spectrum.live_time:
         raise ValueError("the calibration spectrum has no live time")
+    from .background import BackgroundFitter
+    from .peaks import FitReport
+    rep = None
     if peaks is None:
-        peaks = find_peaks(spectrum, min_sig=min_sig)
-    bkg_peaks, k = [], 0.0
-    if background is not None and background.live_time:
-        bkg_peaks = find_peaks(background, min_sig=min_sig) if background.energy_coeffs else []
-        k = spectrum.live_time / background.live_time
+        rep = FitReport() if background is not None else None
+        peaks = find_peaks(spectrum, min_sig=min_sig, report=rep)
+    bkg_under: dict = {}
+    if background is not None:
+        bkg_under = BackgroundFitter(spectrum, background).under_peaks(peaks, rep)
     t0 = spectrum.start_time
     owners: dict[int, list[CertLine]] = {}
     found = []
@@ -400,12 +404,11 @@ def measure_efficiency(spectrum, cert: Sequence[CertLine], peaks=None,
         others = {o.nuclide for o in owners[id(p)]} - {ln.nuclide}
         n, un = float(p.net_area), float(p.net_area_unc)
         note = ""
-        if bkg_peaks:
-            bp = match_peak(bkg_peaks, ln.energy)
-            if bp is not None:
-                n -= k * bp.net_area
-                un = math.hypot(un, k * bp.net_area_unc)
-                note = "background peak subtracted"
+        if id(p) in bkg_under:
+            nb, ub = bkg_under[id(p)]
+            n -= nb
+            un = math.hypot(un, ub)
+            note = "background peak subtracted"
         # sum of intensities of lines of the same nuclide on that peak (unresolved doublets)
         same = [o for o in owners[id(p)] if o.nuclide == ln.nuclide]
         if same and same[0] is not ln:

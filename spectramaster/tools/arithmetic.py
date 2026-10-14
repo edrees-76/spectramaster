@@ -163,7 +163,7 @@ def sum_spectra(spectra: Sequence[Spectrum], align: str = "auto",
 
 
 def subtract_background(sample: Spectrum, background: Spectrum, scale: Optional[float] = None,
-                        align: str = "auto", clip_negative: bool = False
+                        align: str = "auto", clip_negative: bool = False, allow_repeat: bool = False
                         ) -> tuple[Spectrum, list[float]]:
     """Net = sample - k * background, with k = LT_sample / LT_background unless
     `scale` is given.  Returns (net_spectrum, sigma) where sigma[i] is the
@@ -171,8 +171,12 @@ def subtract_background(sample: Spectrum, background: Spectrum, scale: Optional[
 
     The net spectrum keeps the sample's times and metadata; k and the background
     source are recorded in ``extra``.  Negative net channels are kept unless
-    `clip_negative` (uncertainties are unaffected by clipping).
+    `clip_negative` (uncertainties are unaffected by clipping).  A sample that is itself
+    a background-subtracted spectrum is refused unless `allow_repeat` (double subtraction).
     """
+    if sample.extra.get("operation") == "background subtracted" and not allow_repeat:
+        raise SpectrumMathError("the sample is already background subtracted "
+                                f"(background: {sample.extra.get('background_source', '?')})")
     if scale is None:
         if not sample.live_time or not background.live_time:
             raise SpectrumMathError("live time missing: give an explicit scale factor")
