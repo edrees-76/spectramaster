@@ -16,6 +16,10 @@ Algorithm
    Gaussians + linear background + a small erfc step, all widths tied to the FWHM model
    with one free scale factor per group (scipy.optimize.least_squares, Poisson weights).
    A single-peak fit with a significant residual bump is retried as a doublet.
+   Near the Compton edge expected for a strong peak (calibrated spectra), the group is also
+   fitted with a continuum step (erfc, free height, position and width >= the resolution) and
+   that model is kept when it improves the fit significantly; a component that the step
+   alone explains is then discarded with that reason, not reported as a peak.
    Net area, centroid and their 1-sigma uncertainties come from the covariance matrix.
    ``find_peaks(..., variance=v)`` replaces the Poisson variance by an explicit per-channel
    variance (e.g. S + k^2 B of a background-subtracted spectrum, which may be negative and is
@@ -384,6 +388,10 @@ def _record_group(rec: FitReport, spectrum, y, r, retry: str, kept: dict, reason
                                   float(r.area_unc[j]), a, j in kept, reasons.get(j, "")))
     g = FitGroup(r.lo + f0, r.hi + f0, y[r.lo:r.hi + 1].copy(), tot, bk, comps, float(r.chi2r), r.dof,
                  float(r.scale) if r.free_width else 1.0, r.free_width, bool(r.at_bound), r.step_h, retry)
+    if getattr(r, "edge", None) is not None:
+        g.warnings.append(f"continuum step fitted at channel {r.edge[1] + f0:.1f} (Compton edge of the "
+                          f"{getattr(r, 'edge_source_kev', 0):.0f} keV line): areas near it depend on the "
+                          "edge shape")
     if r.chi2r > 3.0:
         g.warnings.append(f"poor fit: chi2/dof = {r.chi2r:.1f} (shape, background or a missing component)")
     if r.at_bound:
@@ -398,9 +406,14 @@ def _record_group(rec: FitReport, spectrum, y, r, retry: str, kept: dict, reason
 
 
 def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_width=True,
-               step=True, width_bounds=(0.7, 1.4), fix_centroids=None, var=None) -> Optional[_Fit]:
+               step=True, width_bounds=(0.7, 1.4), fix_centroids=None, var=None,
+               edge: Optional[tuple] = None) -> Optional[_Fit]:
     """Gaussians (shared width scale) + linear background + erfc step, Poisson-weighted
     (or weighted by the explicit channel variance `var`).
+
+    `edge` = (x0, xmin, xmax[, smax]) adds a continuum step E * erfc((x - xe) / (s_e sqrt 2)) / 2
+    (Compton edge, falling with energy) with E >= 0, xe in [xmin, xmax] and s_e from 1 to smax
+    (default 6) times the resolution sigma at x0; it belongs to the background.
 
     Small dense Levenberg-Marquardt with analytic Jacobian and box constraints
     (projected steps) - ~20x faster than scipy.optimize.least_squares for these sizes.
@@ -418,6 +431,13 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
     b0 = 0.5 * (yl + yr)
     b1 = (yr - yl) / max(x[-1] - x[0], 1.0)
     p = [b0, b1, 1.0, 0.0]
+    off = 4                       # index of the first peak amplitude
+    sig_e0 = 0.0
+    if edge is not None:
+        x0e = float(min(max(edge[0], x[0]), x[-1]))
+        sig_e0 = model.at(x0e) * F2S
+        p += [max(yl - yr, 0.0), x0e, 1.5]
+        off = 7
     for c in cents:
         i = min(max(int(round(c)) - lo, 0), len(d) - 1)
         p += [max(float(d[i]) - (b0 + b1 * (c - xm)), 1.0), float(c)]
@@ -426,13 +446,18 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
     try:
         sg = base_f * F2S
         G = np.exp(-0.5 * ((x[None, :] - np.array(cents)[:, None]) / sg[:, None]) ** 2)
-        A0 = np.vstack([np.ones_like(x), x - xm, G]).T * w[:, None]
+        cols = [np.ones_like(x), x - xm]
+        if edge is not None:
+            cols.append(0.5 * erfc((x - p[5]) / (1.5 * sig_e0 * math.sqrt(2.0))))
+        A0 = np.vstack(cols + list(G)).T * w[:, None]
         sol = np.linalg.lstsq(A0, d * w, rcond=None)[0]
         p[0], p[1] = sol[0], sol[1]
-        p[4::2] = np.maximum(sol[2:], 1.0)
+        if edge is not None:
+            p[4] = max(sol[2], 0.0)
+        p[off::2] = np.maximum(sol[len(cols):], 1.0)
     except np.linalg.LinAlgError:
         pass
-    if step and float(np.max(p[4::2])) * float(np.max(base_f)) < 300.0:
+    if step and float(np.max(p[off::2])) * float(np.max(base_f)) < 300.0:
         step = False          # step background only matters for large peaks
     npar = len(p)
     lb = np.full(npar, -np.inf)
@@ -442,18 +467,25 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
     else:
         lb[2] = ub[2] = 1.0
     lb[3], ub[3] = 0.0, (0.3 if step else 0.0)
+    if edge is not None:
+        lb[4], ub[4] = 0.0, np.inf
+        lb[5], ub[5] = max(float(edge[1]), x[0]), min(float(edge[2]), x[-1])
+        if lb[5] > ub[5]:
+            lb[5] = ub[5] = p[5]
+        p[5] = min(max(p[5], lb[5]), ub[5])
+        lb[6], ub[6] = 1.0, max(float(edge[3]) if len(edge) > 3 else 6.0, 1.0)
     for j, (c, f) in enumerate(zip(cents, base_f)):
-        lb[4 + 2 * j] = 0.0
+        lb[off + 2 * j] = 0.0
         if fix_centroids is not None and fix_centroids[j]:
-            lb[5 + 2 * j] = ub[5 + 2 * j] = c          # manual edit: centroid held at the given channel
+            lb[off + 1 + 2 * j] = ub[off + 1 + 2 * j] = c   # manual edit: centroid held at the given channel
         else:
-            lb[5 + 2 * j], ub[5 + 2 * j] = c - 0.6 * f, c + 0.6 * f
+            lb[off + 1 + 2 * j], ub[off + 1 + 2 * j] = c - 0.6 * f, c + 0.6 * f
     fixed = lb == ub
     xs = x - xm
     R2 = math.sqrt(2.0)
 
     use_step = ub[3] > 0
-    ia = np.arange(4, npar, 2)
+    ia = np.arange(off, npar, 2)
     ic = ia + 1
     J = np.empty((len(x), npar))
     J[:, 0] = 1.0
@@ -469,8 +501,18 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
         if use_step:
             EC = 0.5 * erfc(T / R2)
             m = m + h * (a @ EC)
+        if edge is not None:
+            sE = p[6] * sig_e0
+            U = (x - p[5]) / (sE * R2)
+            EE = 0.5 * erfc(U)
+            m = m + p[4] * EE
         if not want_jac:
             return m, None
+        if edge is not None:
+            gE = np.exp(-U * U) / (sE * SQRT2PI)
+            J[:, 4] = EE
+            J[:, 5] = p[4] * gE
+            J[:, 6] = p[4] * gE * (x - p[5]) / p[6]
         aEX = a[:, None] * EX
         dc = aEX * T / s[:, None]
         dsc = (aEX * T * T).sum(axis=0) / sc
@@ -538,14 +580,14 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
     except np.linalg.LinAlgError:
         return None
     sc = p[2]
-    cent = np.array([p[5 + 2 * j] for j in range(k)])
-    amp = np.array([p[4 + 2 * j] for j in range(k)])
+    cent = np.array([p[off + 1 + 2 * j] for j in range(k)])
+    amp = np.array([p[off + 2 * j] for j in range(k)])
     sig = base_f * sc * F2S
     area = amp * sig * SQRT2PI
     area_unc = np.zeros(k)
     cent_unc = np.zeros(k)
     for j in range(k):
-        ia = 4 + 2 * j
+        ia = off + 2 * j
         gv = np.zeros(npar)
         gv[ia] = sig[j] * SQRT2PI
         if not fixed[2]:
@@ -554,12 +596,15 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
         cent_unc[j] = math.sqrt(max(float(cov[ia + 1, ia + 1]), 0.0))
     b0f, b1f, hst = p[0], p[1], p[3]
     cents_f, amps_f, sig_f = cent.copy(), amp.copy(), sig.copy()
+    edge_f = (float(p[4]), float(p[5]), float(p[6] * sig_e0)) if edge is not None else None
 
     def bkg(xx):
         xx = np.asarray(xx, dtype=float)
         out = b0f + b1f * (xx - xm)
         for c, a, s in zip(cents_f, amps_f, sig_f):
             out = out + hst * a * 0.5 * erfc((xx - c) / (s * R2))
+        if edge_f is not None:
+            out = out + edge_f[0] * 0.5 * erfc((xx - edge_f[1]) / (edge_f[2] * R2))
         return out
 
     fit = _Fit(cent, cent_unc, area, area_unc, base_f * sc, bkg, chi2r, lo, hi)
@@ -568,6 +613,8 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
     # parameters kept for fit inspection (FitReport); not used by the search itself
     fit.amps, fit.sigmas, fit.step_h = amp, sig, float(hst)
     fit.free_width, fit.dof, fit.width_bounds = bool(free_width), int(dof), tuple(width_bounds)
+    fit.edge = edge_f              # (height, position, sigma) of the continuum step, or None
+    fit.chi2 = float(chi2)
     return fit
 
 
@@ -640,6 +687,7 @@ def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit
             peaks.append(_roi_peak(spectrum, y, model, c, z))
         return [p for p in peaks if p.significance >= min_sig]
 
+    edges = _expected_edges(spectrum, cands, n, f)
     # group candidates
     groups: list[list[tuple[float, float]]] = []
     for c, z in cands:
@@ -647,9 +695,18 @@ def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit
             groups[-1].append((c, z))
         else:
             groups.append([(c, z)])
+    # an expected Compton edge is fitted with everything within EDGE_REGION_FWHM of it, so the
+    # continuum on both sides of the step is part of the fit (no region cut at a strong peak)
+    for xe, _src, _k in edges:
+        span = EDGE_REGION_FWHM * model.at(xe)
+        hit = [i for i, g in enumerate(groups)
+               if g[0][0] - 2.2 * model.at(g[0][0]) <= xe + span and g[-1][0] + 2.2 * model.at(g[-1][0]) >= xe - span]
+        if len(hit) > 1 and sum(len(groups[i]) for i in hit) <= EDGE_MAX_COMPONENTS:
+            merged = [cz for i in hit for cz in groups[i]]
+            groups = groups[:hit[0]] + [merged] + groups[hit[-1] + 1:]
     for g in groups:
         peaks.extend(_fit_and_make(spectrum, y, model, [c for c, _ in g], start, min_sig, g, rec=report,
-                                   var=var))
+                                   var=var, edges=edges, others=[c for c, _ in cands]))
     peaks.sort(key=lambda p: p.centroid)
     peaks = _dedupe(peaks, model, f0)
     if report is not None:
@@ -660,6 +717,55 @@ def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit
                     c.kept, c.reason = False, "duplicate of a peak fitted in a neighbouring region"
     _flag(peaks, spectrum)
     return peaks
+
+
+EDGE_SOURCE_MIN_Z = 30.0        # candidates strong enough to give a visible Compton edge
+EDGE_SOURCE_MIN_KEV = 200.0
+EDGE_ACCEPT_DCHI2 = 15.0        # chi2 decrease (scaled by chi2/dof) needed to keep the edge term
+EDGE_REGION_FWHM = 6.0          # fit region extends this far on each side of an expected edge
+RESIDUAL_MIN_Z = 4.0             # residual excess (matched Gaussian) worth trying as a component
+RESIDUAL_ACCEPT_DCHI2 = 9.0      # chi2 decrease (scaled) needed to keep it
+RESIDUAL_MAX_ADDED = 2
+EDGE_MAX_REL_FWHM = 0.02         # edge model only for high-resolution spectra (HPGe ~0.2 %, NaI ~7 %)
+EDGE_MAX_COMPONENTS = 10         # largest group formed by merging the groups around an edge
+EDGE_MAX_EXTRA_SIGMA_KEV = 10.0 # edge smearing beyond the resolution (electron momentum, geometry)
+
+
+def compton_edge_kev(e: float) -> float:
+    """Compton edge of a line of energy e (keV): e * 2a / (1 + 2a), a = e / 511."""
+    a = e / 510.999
+    return e * 2.0 * a / (1.0 + 2.0 * a)
+
+
+def _expected_edges(spectrum, cands, n, f=None) -> list[tuple[float, float, float]]:
+    """(index channel of the Compton edge, source energy, keV per channel there) for the
+    strongest candidates of a calibrated spectrum (none for uncalibrated spectra).
+
+    Only for high-resolution spectra (FWHM / E at the edge below EDGE_MAX_REL_FWHM): with NaI
+    the edge extends over several FWHM of curved continuum (backscatter peak, X-rays, the
+    source line itself), where a linear continuum plus one step is not an adequate model and
+    created false peaks on real NaI calibration spectra."""
+    if not spectrum.energy_coeffs:
+        return []
+    e = _poly(spectrum.energy_coeffs, spectrum.first_channel + np.arange(n))
+    if not np.all(np.diff(e) > 0):
+        return []
+    out = []
+    for c, z in sorted(cands, key=lambda c: -c[1])[:10]:
+        if z < EDGE_SOURCE_MIN_Z:
+            break
+        ek = float(np.interp(c, np.arange(n), e))
+        if ek < EDGE_SOURCE_MIN_KEV:
+            continue
+        ee = compton_edge_kev(ek)
+        if e[0] <= ee <= e[-1]:
+            xe = float(np.interp(ee, e, np.arange(n)))
+            i = int(min(max(round(xe), 1), n - 2))
+            kev_ch = float(e[i + 1] - e[i - 1]) / 2.0
+            if f is not None and f[i] * kev_ch / ee > EDGE_MAX_REL_FWHM:
+                continue
+            out.append((xe, ek, kev_ch))
+    return out
 
 
 def _width_ratios(y, f, start, var=None) -> list[float]:
@@ -745,7 +851,7 @@ def _estimate_fwhm_from_data(y) -> np.ndarray:
 
 
 def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optional[FitReport] = None,
-                  var=None) -> list[Peak]:
+                  var=None, edges=(), others=()) -> list[Peak]:
     n = len(y)
     fl, fr = model.at(cents[0]), model.at(cents[-1])
     lo = int(max(math.floor(cents[0] - 2.2 * fl), start - 1, 0))
@@ -755,6 +861,45 @@ def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optiona
     r = _fit_group(y, model, cents, lo, hi, free_width=free, step=True, var=var)
     if r is None:
         return []
+    # continuum step at an expected Compton edge inside the region.  The region is widened
+    # (up to EDGE_REGION_FWHM beyond the edge, stopping short of other candidates) so that the
+    # levels on both sides of the step are measured; both models are compared on that region.
+    edge = None
+    for xe, src_kev, kev_ch in edges:
+        fe = model.at(xe)
+        if lo - fe <= xe <= hi + fe:
+            lo2 = int(max(min(lo, math.floor(xe - EDGE_REGION_FWHM * fe)), start - 1, 0))
+            hi2 = int(min(max(hi, math.ceil(xe + EDGE_REGION_FWHM * fe)), n - 1))
+            for o in others:
+                if o < cents[0] - 0.5 and o + 2.5 * model.at(o) > lo2:
+                    lo2 = min(lo, int(math.ceil(o + 2.5 * model.at(o))))
+                if o > cents[-1] + 0.5 and o - 2.5 * model.at(o) < hi2:
+                    hi2 = max(hi, int(math.floor(o - 2.5 * model.at(o))))
+            s_res = fe * F2S * kev_ch                         # resolution sigma at the edge, keV
+            smax = math.sqrt(1.0 + (EDGE_MAX_EXTRA_SIGMA_KEV / max(s_res, 1e-9)) ** 2)
+            ed = (xe, xe - 2.0 * fe, xe + 2.0 * fe, smax)
+            r0 = r if (lo2, hi2) == (lo, hi) else _fit_group(y, model, cents, lo2, hi2, free_width=free,
+                                                             step=True, var=var)
+            re = _fit_group(y, model, cents, lo2, hi2, free_width=free, step=True, var=var, edge=ed)
+            if (r0 is not None and re is not None
+                    and (r0.chi2 - re.chi2) / max(re.chi2r, 1.0) > EDGE_ACCEPT_DCHI2):
+                r, edge, lo, hi = re, ed, lo2, hi2
+                r.edge_source_kev = src_kev
+            break
+    # residual search in an edge region: the edge curvature masks the search filter there, so a
+    # peak on or next to the edge may have no candidate.  A Gaussian matched to the residuals
+    # adds one component at a time, kept only when the fit improves significantly.
+    if edge is not None:
+        for _ in range(RESIDUAL_MAX_ADDED):
+            add = _residual_candidate(y, r, model, var)
+            if add is None:
+                break
+            new = sorted([float(c) for c in r.centroids] + [add])
+            rn = _fit_group(y, model, new, lo, hi, free_width=free, step=True, var=var, edge=edge)
+            if rn is None or (r.chi2 - rn.chi2) / max(rn.chi2r, 1.0) < RESIDUAL_ACCEPT_DCHI2:
+                break
+            rn.edge_source_kev = r.edge_source_kev
+            r, cents = rn, new
     retry = ""
     # doublet retry on single peaks with bad fit
     if len(cents) == 1 and r.chi2r > 4.0 and hi - lo > 8:
@@ -779,7 +924,7 @@ def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optiona
             starts.append([c0 - h, c0 + h])
         best = None
         for st in starts:
-            cand = _fit_group(y, model, st, lo, hi, free_width=free, step=True, var=var)
+            cand = _fit_group(y, model, st, lo, hi, free_width=free, step=True, var=var, edge=edge)
             if cand is not None and (best is None or cand.chi2r < best.chi2r):
                 best = cand
         if best is not None:
@@ -824,6 +969,9 @@ def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optiona
         sig = area / unc
         if sig < min_sig:
             reasons[j] = f"significance {sig:.1f} below the threshold {min_sig:g}"
+            if r.edge is not None and abs(c - r.edge[1]) < 2.0 * max(r.edge[2] / F2S, fw):
+                reasons[j] += (f"; the continuum step of the Compton edge of the "
+                               f"{getattr(r, 'edge_source_kev', 0):.0f} keV line explains it")
             continue
         kept[j] = True
         out.append(_make_peak(spectrum, c, float(r.cent_unc[j]), fw, area, unc, gross, bkg,
@@ -831,6 +979,29 @@ def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optiona
     if rec is not None and hasattr(r, "amps"):
         _record_group(rec, spectrum, y, r, retry, kept, reasons)
     return out
+
+
+def _residual_candidate(y, r, model, var=None) -> Optional[float]:
+    """Channel of the most significant Gaussian-shaped excess in the residuals of fit `r`
+    (z > RESIDUAL_MIN_Z, at least 1 FWHM from the fitted components and the region ends)."""
+    x = np.arange(r.lo, r.hi + 1, dtype=float)
+    tot = r.bkg(x)
+    for a_, c_, s_ in zip(r.amps, r.centroids, r.sigmas):
+        tot = tot + a_ * np.exp(-0.5 * ((x - c_) / s_) ** 2)
+    d = y[r.lo:r.hi + 1]
+    v = np.maximum(d if var is None else var[r.lo:r.hi + 1], 1.0)
+    res = d - tot
+    best, bz = None, RESIDUAL_MIN_Z
+    for x0 in x:
+        fw = model.at(x0)
+        if x0 - r.lo < fw or r.hi - x0 < fw or any(abs(x0 - c) < fw for c in r.centroids):
+            continue
+        g = np.exp(-0.5 * ((x - x0) / (fw * F2S)) ** 2)
+        den = float(np.sum(g * g / v))
+        z = float(np.sum(g * res / v)) / math.sqrt(den) if den > 0 else 0.0
+        if z > bz:
+            best, bz = float(x0), z
+    return best
 
 
 def _make_peak(spectrum, c_idx, c_unc, fw, area, unc, gross, bkg, l, r, sig, mult) -> Peak:

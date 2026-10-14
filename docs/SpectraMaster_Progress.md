@@ -58,6 +58,32 @@ calibration or library do not silently alter previous results.
 | C0. Measured-background criteria pre-registered; sample/background pairs (background counted 2x longer, natural lines + weak Cs-137 contamination) scored in peak and spectrum modes | done | `acceptance.py` (commit 09775b3, before any change); `docs/baseline/before_C1/` |
 | C1. Measured background: explicit variance S + k²B for net spectra (no clipping, no Poisson assumption), peak-by-peak subtraction with the sample fit's own linear estimator, negative net areas kept, double subtraction refused, sample/background compatibility warnings | done | `analysis/background.py`, `analysis/peaks.py` (`variance=`), `analysis/activity.py`, `analysis/efficiency.py`, `tools/arithmetic.py`; `docs/baseline/after_C1/`; `tests/test_measured_background.py` (12 tests) |
 
+| C2. Compton edges (HPGe): a continuum step at the expected edge of each strong line (E·2a/(1+2a), a = E/511 keV), fitted over ±6 FWHM with neighbouring groups merged, kept only when it lowers χ² significantly; a residual search adds a masked peak; components the step explains are discarded with that reason and the step is shown as a fit warning | done (HPGe); NaI open | `analysis/peaks.py`; `docs/baseline/after_C2/`; `tests/test_compton_edge.py` (4 tests) |
+
+Stage 4 (Compton edges), synthetic evidence plus a real-spectrum regression check:
+
+| | before C2 | after C2 |
+|---|---|---|
+| HPGe, sharp edge (resolution only): recall / area bias / false peaks per spectrum | 0.78 / **+13.8 %** / **0.73** | **0.60** / +1.5 % / 0 |
+| HPGe, realistic edge (+8 keV smearing, informational) | 1.0 / −1.2 % / 1.02 | 1.0 / −1.2 % / 0 |
+| NaI | unchanged (model not applied) | |
+
+- **Recall on a resolution-only edge falls** (0.78 → 0.60): a peak within about one FWHM of a
+  step whose width equals the resolution is mathematically almost the derivative of a shifted
+  step; with the edge position free, its area is undetermined (uncertainty > 10× the area) and it is
+  discarded with the reason "the continuum step of the Compton edge explains it". Before, these
+  peaks were "found" with areas off by +21 % to +53 %. Fixing the edge position at the kinematic
+  value would separate them on synthetic data but real edges are not centred there; that was not done.
+- **NaI is excluded** (relative FWHM above 2 % at the edge). Tried and rejected: on real NaI
+  calibration spectra (Cs-137, Na-22, Ba-133, Co-60) the step model over ±6 FWHM (≈ 70–610 keV)
+  produced new false peaks of significance 10–22 in the backscatter region and moved the Co-60
+  1332 keV centroid by 4 keV. Diagnosed but not fixed: in the synthetic NaI edge case the width
+  model is rescaled ×1.5 from the edge hump itself (it passes the isolation test), which is why
+  NaI edge areas are biased. A NaI-specific continuum model is needed.
+- Real-spectrum check (21 laboratory Aptec spectra + 80 laboratory archive spectra): 79 peak lists
+  identical, the others differ by one weak peak (significance 3–4) or by area changes; all
+  real-spectrum tests pass.
+
 Stage 5 acceptance criterion ("known test cases recover net areas and uncertainties without
 false detections due to subtraction"), synthetic evidence only:
 
