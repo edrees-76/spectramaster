@@ -163,6 +163,29 @@ pair; totals FAIL 20 → 13, no other criterion changed.
 - Two existing tests asserted the double-counted behaviour (a 2 % floor of the efficiency
   component). They were corrected, with a comment.
 
+## Release E: identification, activity, concentration and MDA
+
+| Increment | Status | Evidence |
+|---|---|---|
+| E0. Criteria pre-registered: recall at 0.3 % drift; IAEA IDB real spectra (HPGe implausible identifications ≤ 1 per spectrum, U-235 recall ≥ 0.90; others report only). A first look at IDB preceded the registration (disclosed); the synthetic HPGe false-identification limit is 0.5, the IDB limit 1.0 was chosen for the much richer U/Pu spectra | done | `acceptance.py` (8c8fb27); `docs/baseline/before_E1/` (0e90aa1) |
+| E1. Identification scoring: unmatched lines below 30 keV (L X-rays, absorbed unpredictably) no longer count as missing; the weak-emitter penalty applies only with ≤ 2 matched gamma lines; at good resolution (FWHM/E ≤ 4 % at 662 keV) the greedy explanation ranks a nuclide matching several distinct peaks first (parsimony) | done | `analysis/identify.py`; `docs/baseline/after_E1/`; `tests/test_public_spectra.py` |
+
+E1 result (all synthetic criteria unchanged; IDB, 160 real spectra):
+
+| | before | after |
+|---|---|---|
+| HPGe: Pu-239 found in Pu/MOX | 0 % | 78 % |
+| HPGe: implausible identifications per spectrum (limit 1) | 9.6 | 8.8 (FAIL) |
+| CZT: U-235 / Pu-239 found | 59 % / 0 % | 82 % / 20 % |
+| LaBr3: U-235 / Pu-239 found | 23 % / 0 % | 69 % / 63 % |
+
+- Rejected during E1: parsimony for NaI. Ag-110m (657.8 keV and many other lines) then took
+  the Cs-137 662 keV peak in all four synthetic Cs-137 spectra (recall 0.88 → 0.74). At NaI
+  resolution, a nuclide with many lines matches unrelated broad peaks by chance.
+- Remaining IDB false identifications are mostly nuclides claiming U/Th/Pu K X-rays
+  (90–115 keV: Eu-155, Sm-153) and lines of the U/Pu chains that are missing from the library.
+  Next: application libraries (environmental, calibration, safeguards) as Aptec and Genie use.
+
 ## Public measured spectra (kept outside the repository)
 
 Folder `SPECTRAMASTER_PUBLIC_DATA` (default `D:/SpectraMaster_public_data`); the files are not

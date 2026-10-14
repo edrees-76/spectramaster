@@ -74,3 +74,23 @@ def test_idb_spectra_are_read_and_the_detector_type_is_recognised():
         m = re.search(r"Detector:\s*([^\n(]*)", f.read_text(encoding="latin-1"))
         key = next(k for k in want if k in m.group(1).lower())
         assert guess_detector(read_spectra(f)[0][0]) == want[key], f.name
+
+
+@needs_idb
+def test_idb_plutonium_is_identified_in_hpge_spectra():
+    """Pu-239 (lines of 1e-5 to 1e-4 per decay, very high activity) must win its peaks against
+    single-line nuclides (Os-191 at 129 keV) in HPGe plutonium spectra."""
+    import re
+    from spectramaster.convert import read_spectra
+    from spectramaster.analysis import find_peaks, identify
+    found = n = 0
+    for f in sorted(IDB.glob("*.spe"), key=lambda p: int(re.sub(r"\D", "", p.stem) or 0)):
+        txt = f.read_text(encoding="latin-1")
+        if "Material type: Pu" not in txt or "HPGe" not in txt:
+            continue
+        s = read_spectra(f)[0][0]
+        found += "Pu-239" in {m.nuclide for m in identify(s, find_peaks(s))}
+        n += 1
+        if n == 12:
+            break
+    assert n == 12 and found >= 8
