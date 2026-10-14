@@ -24,6 +24,7 @@ import numpy as np
 
 from .. import __version__
 from ..analysis import find_peaks, identify
+from ..analysis.peaks import guess_detector
 from ..analysis.library import load_library
 from . import acceptance, reference, scenarios
 from .synthetic import HPGE, NAI, NAI_4K, DetectorSpec, SyntheticSpectrum
@@ -285,6 +286,18 @@ def cat_identification(det, n_seeds) -> dict:
             "median_time_s": statistics.median(times) if times else None}
 
 
+def cat_detector_guess(det, n) -> dict:
+    """Fraction of unlabelled spectra whose detector type the engine infers correctly."""
+    def frac(gen):
+        got = [guess_detector(syn.spectrum) for syn in gen]
+        return (sum(g == det.name for g in got) / max(len(got), 1),
+                {k: got.count(k) for k in sorted(set(got))})
+    fs, gs = frac(scenarios.isolated_strong(det, n))
+    fl, gl = frac(scenarios.low_counts(det, n))
+    return {"correct_fraction_strong": fs, "correct_fraction_low": fl,
+            "guesses_strong": gs, "guesses_low": gl}
+
+
 # ------------------------------------------------------------------------------ driver
 def run(quick: bool = False, refdata: Optional[str] = None, log=print) -> dict:
     q = (lambda full, small: small if quick else full)
@@ -305,12 +318,19 @@ def run(quick: bool = False, refdata: Optional[str] = None, log=print) -> dict:
         r["low_counts"], c = cat_low(det, q(80, 8)); times += c.times
         log(f"[{det.name}] identification ...")
         r["identification"] = cat_identification(det, q(3, 1))
+        r["detector_guess"] = cat_detector_guess(det, q(20, 4))
         r["runtime"] = {"median_s": statistics.median(times), "max_s": max(times), "n": len(times),
                         "channels": det.n_channels}
         results["detectors"][det.name] = r
-    log("[NaI 4096 ch, unlabelled] informational ...")
-    info, _c = cat_isolated(NAI_4K, q(10, 2))
-    results["informational"] = {"NaI_4096ch_unlabelled_isolated_strong": info}
+    # NaI(Tl) on a 4096-channel MCA, unlabelled (informational until A8, criteria pre-registered
+    # in acceptance.py before the P2 fix)
+    log("[NaI 4096 ch, unlabelled] ...")
+    r = {}
+    r["isolated_strong"], _c = cat_isolated(NAI_4K, q(20, 4))
+    r["identification"] = cat_identification(NAI_4K, q(3, 1))
+    r["detector_guess"] = cat_detector_guess(NAI_4K, q(20, 4))
+    results["detectors"]["NaI_4096"] = r
+    results["informational"] = {}
     # added after the first run (no acceptance limit): edge smeared by an extra 8 keV (HPGe) /
     # 15 keV (NaI) sigma, closer to measured Compton edges than the resolution-only worst case
     for det, xs in ((HPGE, 8.0), (NAI, 15.0)):

@@ -22,6 +22,7 @@ Status values:
 | A4. Data models: detector profile, geometry, calibration record, sample, analysis session, edit history with undo/redo, schema versioning and migration | done (library level) | `spectramaster/lab/`, `tests/test_lab_models.py`, `tests/test_lab_session.py` |
 | A6. Fix P1 (strong unresolved doublet silently discarded) | done | `peaks.py` doublet retry; regression test; `docs/baseline/after_P1/` shows no criterion changed status |
 | A7. Mass/volume uncertainty removed from u(Bq), kept in the specific activity | done | `analysis/activity.py`; `tests/test_activity.py` |
+| A8. Fix P2 (unlabelled NaI on a 4096-channel MCA treated as HPGe) | done | `peaks.py` width-based type inference; criteria pre-registered in `acceptance.py` (separate commit); `docs/baseline/before_P2/`, `docs/baseline/after_P2/`; tests in `tests/test_analysis.py` |
 | A5. Session integration in the GUI (open/save session, display stored vs recalculated results) | open | Planned for Release B together with the peak-inspection window |
 
 Stage 2 acceptance criterion: reopening a session restores its state, and changes to a
@@ -51,6 +52,8 @@ On another machine they are skipped.
    - a broad Compton edge (8 keV / 15 keV extra smearing);
    - NaI on a 4096-channel MCA with no detector label.
 
-   They do not replace or relax any pre-registered criterion. They show how much of the
+   They do not replace or relax any pre-registered criterion. In A8 the 4096-channel NaI
+   variant received its own pre-registered criteria (the NaI limits, unchanged) before the
+   fix was written, and it moved from "informational" into the scored results. They show how much of the
    Compton-edge failure comes from the worst-case sharpness of the synthetic edge, and they
    reproduce defect P1 below.

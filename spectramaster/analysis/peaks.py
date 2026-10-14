@@ -3,8 +3,9 @@
 Algorithm
 ---------
 1. **Resolution model** FWHM(channel): from ``Spectrum.fwhm_coeffs`` (keV) when present,
-   otherwise from the energy calibration plus a detector-type guess (HPGe / NaI / LaBr3 /
-   CZT from channel count and keV/channel), otherwise estimated from the data (strong peaks
+   otherwise from the energy calibration plus a detector-type guess (metadata text, else the
+   type whose typical resolution matches the strongest isolated peaks, else channel count and
+   keV/channel), otherwise estimated from the data (strong peaks
    fitted with a free width).  In every case the model is then rescaled to the widths of
    the strongest isolated peaks actually present (robust median, clamped to x0.5..x2).
 2. **Search**: matched filter = zero-area Gaussian ("smoothed second difference",
@@ -79,6 +80,11 @@ def guess_detector(spectrum) -> str:
     n = len(spectrum.counts)
     if not spectrum.energy_coeffs:
         return "HPGe" if n >= 4096 else ("NaI" if n <= 1024 else "")
+    # Channel count and gain do not separate HPGe from NaI (a NaI on a 4096-channel MCA at
+    # 0.75 keV/ch looks like HPGe), so measured peak widths decide when strong peaks exist.
+    det = _cached_width_guess(spectrum)
+    if det:
+        return det
     ch = spectrum.first_channel + n / 2.0
     gain = abs(float(_dpoly(spectrum.energy_coeffs, ch)))
     if n >= 4096 or gain < 0.75:
@@ -86,6 +92,78 @@ def guess_detector(spectrum) -> str:
     if n <= 1024 or gain > 2.0:
         return "NaI"
     return "LaBr3" if gain > 1.0 else "HPGe"
+
+
+_WIDTH_GUESS_CACHE: dict = {}
+
+
+def _cached_width_guess(spectrum) -> str:
+    """_guess_from_widths memoised on the counts and calibration (peak search and
+    identification both ask for the type of the same spectrum)."""
+    import hashlib
+    y = np.ascontiguousarray(np.asarray(spectrum.counts, dtype=float))
+    key = (hashlib.sha1(y.tobytes()).hexdigest(), tuple(float(c) for c in spectrum.energy_coeffs),
+           int(spectrum.first_channel))
+    if key not in _WIDTH_GUESS_CACHE:
+        if len(_WIDTH_GUESS_CACHE) >= 64:
+            _WIDTH_GUESS_CACHE.clear()
+        _WIDTH_GUESS_CACHE[key] = _guess_from_widths(spectrum)
+    return _WIDTH_GUESS_CACHE[key]
+
+
+def _guess_from_widths(spectrum) -> str:
+    """Detector type whose typical resolution matches the strong peaks, or ''.
+
+    Each candidate type's default FWHM model is tried: strong peaks found with that model are
+    fitted in groups (neighbours within 3.5 FWHM fitted jointly, one free width scale per group,
+    bounds x0.5..x2).  A group "matches" when the scale lies within x1/1.5..x1.5, i.e. closer
+    to that type than to a neighbouring one (typical resolutions step by ~2.3x:
+    HPGe << LaBr3 < NaI).  The type with the most matching groups wins, ties broken by the
+    median scale closest to 1.
+    """
+    y = np.maximum(np.asarray(spectrum.counts, dtype=float), 0.0)
+    n = len(y)
+    if n < 16 or not np.isfinite(y).all() or y.sum() <= 0:
+        return ""
+    ch = spectrum.first_channel + np.arange(n, dtype=float)
+    gain = np.abs(_dpoly(spectrum.energy_coeffs, ch))
+    if not np.all(np.isfinite(gain)) or np.any(gain < 1e-9):
+        return ""
+    e = _poly(spectrum.energy_coeffs, ch)
+    best, best_key = "", None
+    for det in ("HPGe", "LaBr3", "NaI"):
+        f = np.clip(default_fwhm_kev(e, det) / gain, 1.0, n / 4)
+        scales = [k for k in _group_width_scales(y, f, _start_index(y, f)) if 1 / 1.5 <= k <= 1.5]
+        if not scales:
+            continue
+        key = (len(scales), -abs(math.log(float(np.median(scales)))))
+        if best_key is None or key > best_key:
+            best, best_key = det, key
+    return best
+
+
+def _group_width_scales(y, f, start, max_peaks=8) -> list[float]:
+    """Free width scale of each group of strong peaks (fits at a width bound are dropped)."""
+    cands = sorted(sorted(_candidates(y, f, 12.0, start), key=lambda c: -c[1])[:max_peaks])
+    m = _Model(f)
+    groups: list[list[float]] = []
+    for c, _z in cands:
+        if groups and c - groups[-1][-1] < 3.5 * m.at(c) and len(groups[-1]) < 4:
+            groups[-1].append(c)
+        else:
+            groups.append([c])
+    out = []
+    for g in groups:
+        lo = int(max(g[0] - 2.5 * m.at(g[0]), 0))
+        hi = int(min(g[-1] + 2.5 * m.at(g[-1]), len(y) - 1))
+        r = _fit_group(y, m, g, lo, hi, free_width=True, step=True, width_bounds=(0.5, 2.0))
+        if r is None or r.at_bound or r.chi2r > 20:
+            continue
+        sig = r.areas / np.maximum(r.area_unc, 1e-12)
+        if not np.any((r.area_unc > 0) & (sig >= 10)):
+            continue
+        out.append(float(r.scale))
+    return out
 
 
 def default_fwhm_kev(energy, detector: str):
@@ -455,11 +533,11 @@ def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit
     return peaks
 
 
-def _rescale_model(y, f, start):
-    """Scale FWHM model to the widths of strong isolated peaks (median ratio)."""
+def _width_ratios(y, f, start) -> list[float]:
+    """Fitted/model FWHM of up to 8 strong isolated peaks (free width x0.5..x2, not at bound)."""
     cands = _candidates(y, f, 12.0, start)
     if len(cands) < 1:
-        return f
+        return []
     cands = sorted(cands, key=lambda c: -c[1])[:8]
     allc = sorted(c for c, _ in cands)
     m = _Model(f)
@@ -473,7 +551,13 @@ def _rescale_model(y, f, start):
         if r is None or r.at_bound or r.chi2r > 20 or r.area_unc[0] <= 0 or r.areas[0] / r.area_unc[0] < 10:
             continue
         ratios.append(r.fwhms[0] / fw)
-    if len(ratios) >= 2 or (len(ratios) == 1 and len(cands) <= 3):
+    return ratios if (len(ratios) >= 2 or (len(ratios) == 1 and len(cands) <= 3)) else []
+
+
+def _rescale_model(y, f, start):
+    """Scale FWHM model to the widths of strong isolated peaks (median ratio)."""
+    ratios = _width_ratios(y, f, start)
+    if ratios:
         k = float(np.clip(np.median(ratios), 0.5, 2.0))
         if abs(k - 1.0) > 0.08:
             return f * k

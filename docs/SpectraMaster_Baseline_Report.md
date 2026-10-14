@@ -207,6 +207,7 @@ with a script during the review. Those scripts were scratch files and are not in
 | A first version of the fix used a looser trigger (FWHM > 1.15 × model). It split the slightly asymmetric G1100 peaks at 1823, 1904 and 1947 into tail components, and the existing G-1 test caught it. That version was discarded. | `test_g1_reference_spectrum_all_peaks` | – |
 | EML doublet window corrected in the harness (see P1). | `docs/baseline/after_P1/` | report-only |
 | **The mass/volume uncertainty no longer enters u(Bq)**. It is added in quadrature only to the specific activity: u_rel(A/q)² = u_rel(A)² + u_rel(q)². The Bq budget no longer lists "quantity". | `test_quantity_uncertainty_only_affects_specific_activity`. The existing test, which asserted the old behaviour, was corrected. | not covered by the peak benchmark |
+| **P2 fixed**. When the spectrum carries no detector label, `guess_detector` now tries the default resolution model of HPGe, LaBr3 and NaI, fits the strong peaks in groups with a free width scale, and picks the type whose model the peaks match (scale within ×1/1.5…×1.5). Channel count and gain are used only when there are no strong peaks. A detector label still takes precedence. | Before/after runs in `docs/baseline/before_P2/` and `docs/baseline/after_P2/`. NaI on 4096 channels: type correct 0 % → 100 %, strong-peak recall 2.5 % → 100 %, area bias −99.8 % → −0.18 %, FWHM ratio 0.027 → 0.999, nuclide recall 0 % → 86 %. 21 lab Aptec spectra (HPGe 8192 ch, NaI 512 ch): same type as before, and the type found from the widths (18 of them) agrees with the file's label where there is one. New tests `test_unlabelled_nai_on_4096_channels_is_not_hpge` (fails on the old code, 3 of 3) and `test_detector_label_overrides_measured_widths`. | Criteria pre-registered in a separate commit before the fix. All earlier criteria: same status and value (runtime: HPGe median 0.044 → 0.067 s, NaI 0.025 → 0.037 s, limit 0.5 s). New: `NaI_4096.id.false_per_spectrum` fails (1.58 per spectrum), the same NaI false-identification defect as P4 (1.54 on 1024 channels), visible now that the peaks are found. |
 
 For NaI, a 3:1 doublet 1 FWHM apart is still reported as one peak, as before. Splitting it is not
 required by the plan (no separation beyond NaI resolution). Its total area is within −5.2 %.
@@ -218,8 +219,10 @@ required by the plan (no separation beyond NaI resolution). Its total area is wi
 2. ~~Bq uncertainty defect~~ done (section 5). Still open: the emission-probability uncertainty of
    efficiency points is 0. This is a **data gap**, not just code: `gamma_library.json` stores no
    intensity uncertainties, so they must first be added from ENSDF/DDEP, with provenance (Release D).
-3. **P2 (detector-type guess).** Prefer the session's `DetectorProfile.type` when one is available,
-   and stop guessing HPGe from channel count alone.
+3. ~~P2~~ done (section 5). Still open: low-count and continuum-only spectra have no width
+   information, so on a 4096-channel NaI they still fall back to "HPGe" (`NaI_4096.dettype.low`
+   = 0.25, report only). The remedy is the detector label: the session's `DetectorProfile.type`
+   must be written into the analysed spectrum's `detector` field (A5, GUI integration).
 4. **The calibration-tool search and drift handling (P3)**, in Release B.
 5. **Compton-edge robustness and NaI identification false positives (P4)**, in Releases C and E.
 
