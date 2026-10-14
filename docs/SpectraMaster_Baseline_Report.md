@@ -218,6 +218,8 @@ with a script during the review. Those scripts were scratch files and are not in
 
 | **C3: Poisson likelihood and continuum shape** (`analysis/peaks.py`). Raw counts are fitted by Poisson maximum likelihood (3 model-weighted refits after the Neyman start; at 0.5 counts/channel the Neyman area bias of −12 % disappears). Scintillator spectra use a log-linear continuum under fitted groups. | `docs/baseline/after_C2/` → `docs/baseline/after_C3/`: see the progress document (two criteria now pass, two now fail). `tests/test_fit_model.py`. | Totals unchanged (FAIL 12). New FAILs: `HPGe.weak.area_bias_s7` −5.01 % (limit 5 %), `NaI.bkg_peak.net_bias` 3.2 % (limit 3 %). |
 
+| **D1–D3: efficiency calibration** (`analysis/efficiency.py`, `analysis/activity.py`, `lab/calibration.py`): GLS with correlated certificate components (no double counting), summing warnings, geometry guard, validation status, cross-validated model orders and model error. | `docs/baseline/before_D1/` → `docs/baseline/after_D1/`; `tests/test_efficiency_release_d.py`. | Criteria pre-registered in 68e0db6. FAIL 20 → 13. Still failing: `NaI.eff.cov2` 0.8875 (limit 0.89). |
+
 For NaI, a 3:1 doublet 1 FWHM apart is still reported as one peak, as before. Splitting it is not
 required by the plan (no separation beyond NaI resolution). Its total area is within −5.2 %.
 

@@ -52,7 +52,7 @@ from typing import Optional, Sequence, Union
 
 import numpy as np
 
-from .efficiency import (EfficiencyCurve, counting_decay_factor, decay_factor, match_peak)
+from .efficiency import (TCS_NUCLIDES, EfficiencyCurve, counting_decay_factor, decay_factor, match_peak)
 
 K_DEFAULT = 1.645
 
@@ -84,8 +84,6 @@ KEY_LINES: dict[str, dict] = {
 DEFAULT_NUCLIDES = ["Cs-137", "K-40", "Ra-226", "Th-232", "Cs-134", "Co-60", "I-131", "Be-7", "Am-241"]
 
 # cascade emitters (true-coincidence summing relevant in close geometries)
-TCS_NUCLIDES = {"Co-60", "Cs-134", "Bi-214", "Tl-208", "Ac-228", "Eu-152", "Y-88", "Ba-133",
-                "Ra-226", "Th-232", "Th-228", "Ra-228", "Na-22", "Sb-125", "Eu-154", "Co-58"}
 
 UNIT_FACTORS = {"kg": 1.0, "g": 1e-3, "l": 1.0, "ml": 1e-3, "m3": 1.0}   # quantity -> base unit (kg or L)
 
@@ -188,6 +186,8 @@ class ActivityOptions:
     k_beta: float = K_DEFAULT
     min_sig: float = 3.0
     min_intensity_pct: float = 1.0       # generic nuclides: lines used
+    geometry: Optional[object] = None    # lab.detector.MeasurementGeometry of the sample
+    allow_geometry_mismatch: bool = False    # use an incompatible calibration anyway (reported)
 
 
 @dataclass
@@ -312,6 +312,32 @@ def _as_float(v) -> float:
 # ------------------------------------------------------------------ main entry
 
 
+def calibration_checks(curve: EfficiencyCurve, opt: "ActivityOptions") -> list[str]:
+    """Notes on the efficiency calibration used; raises ValueError for a calibration of an
+    incompatible geometry unless ``opt.allow_geometry_mismatch``."""
+    out = []
+    status = getattr(curve, "validation_status", "") or "unvalidated"
+    if status != "validated":
+        out.append(f"efficiency calibration {status}: not independently validated")
+    rec = getattr(curve, "geometry_record", None) or {}
+    if opt.geometry is not None and rec:
+        from ..lab.detector import MeasurementGeometry
+        reasons = MeasurementGeometry.from_dict(rec).compatibility(opt.geometry)
+        if reasons:
+            text = "; ".join(reasons)
+            if not opt.allow_geometry_mismatch:
+                raise ValueError("the efficiency calibration belongs to another measurement geometry "
+                                 f"({rec.get('name', '?')} vs {opt.geometry.name}): {text}")
+            out.append(f"geometry mismatch accepted by the user ({rec.get('name', '?')} vs "
+                       f"{opt.geometry.name}): {text}")
+    elif opt.geometry is not None:
+        out.append("calibration geometry not recorded: compatibility with the sample geometry not checked")
+    elif rec:
+        out.append(f"sample geometry not given: compatibility with the calibration geometry "
+                   f"({rec.get('name', '?')}) not checked")
+    return out
+
+
 def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[ActivityOptions] = None,
                        background=None, peaks=None, bkg_peaks=None) -> QuantResults:
     """Activities / MDAs for ``options.nuclides`` in ``spectrum`` (see module docstring)."""
@@ -325,6 +351,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     t_real = float(spectrum.real_time or spectrum.live_time)
     ref = opt.ref_date or spectrum.start_time
     notes: list[str] = []
+    notes.extend(calibration_checks(curve, opt))
     k_b = 0.0
     work = spectrum
     net_var = None          # full-spectrum mode: variance S + k^2 B of the net channels

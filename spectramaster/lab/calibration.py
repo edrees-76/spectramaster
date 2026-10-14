@@ -29,7 +29,7 @@ CALIBRATION_KINDS = ("energy", "fwhm", "efficiency")
 SOURCES = ("measured", "imported", "manual")
 VALIDATION = ("unvalidated", "validated", "rejected")
 # payload keys that are labels, not science (top level only)
-_PAYLOAD_LABELS = ("format", "name", "note", "date", "source")
+_PAYLOAD_LABELS = ("format", "name", "note", "date", "source", "validation_status")
 
 
 @dataclass
@@ -112,7 +112,9 @@ class CalibrationRecord:
         from ..analysis.efficiency import EfficiencyCurve
         if self.kind != "efficiency":
             raise ValueError(f"{self.kind} calibration is not an efficiency curve")
-        return EfficiencyCurve.from_dict(self.payload)
+        curve = EfficiencyCurve.from_dict(self.payload)
+        curve.validation_status = self.validation_status     # the record's status is authoritative
+        return curve
 
     @classmethod
     def from_spectrum(cls, spectrum, kind: str = "energy", detector_id: Optional[str] = None,

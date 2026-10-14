@@ -124,6 +124,44 @@ false detections due to subtraction"), synthetic evidence only:
   correlation is ignored (documented in `analysis/background.py`).
 - The live times are taken as exact (no uncertainty on k).
 
+## Release D: experimental efficiency calibration
+
+| Increment | Status | Evidence |
+|---|---|---|
+| D0. Criteria pre-registered (bias and coverage of the curve; summing warnings; geometry guard; validation status shown); mixed-standard scenarios with a smooth known efficiency and per-nuclide certificate errors | done | `acceptance.py` (68e0db6, before any measurement); `docs/baseline/before_D1/` (7699119) |
+| D1. Generalised least squares with the full covariance of the points: counting and emission probability independent, certificate activity shared by the lines of a nuclide, an optional component common to the standard; nothing added to the curve afterwards | done | `analysis/efficiency.py` (`point_covariance`); `tests/test_efficiency_release_d.py` |
+| D2. Cascade-emitter calibration points carry a summing warning; the curve stores its geometry and validation status; `compute_activities` refuses a calibration of an incompatible geometry unless the user overrides it (reported), and reports unvalidated calibrations; a record's validation does not change its content hash | done | `analysis/efficiency.py`, `analysis/activity.py` (`calibration_checks`), `lab/calibration.py` |
+| D3. Model orders and crossover chosen by leave-one-out cross-validation when not given; a model (interpolation) error from the leave-one-out residuals enters the curve uncertainty; points more than 3 σ from the curve are listed for review | done | `analysis/efficiency.py` (`select_orders`, `model_error`); `docs/baseline/after_D1/` |
+| D4. GUI wizard (certificate → spectrum → points with exclusion reasons → model → validation → saved version), Marinelli dimensions and fill level, independent validation against a second source, emission-probability uncertainties (library data gap) | open | |
+
+Result (before_D1 → after_D1, limits unchanged): efficiency criteria 2/8 → 7/8 pass per detector
+pair; totals FAIL 20 → 13, no other criterion changed.
+
+| | HPGe before → after | NaI before → after |
+|---|---|---|
+| mean bias (≤ 1 %) | −0.2 % → −0.4 % | **+1.2 %** → +0.2 % |
+| 1σ coverage (0.55–0.81) | **0.84** → 0.68 | 0.69 → 0.65 |
+| 2σ coverage (0.89–1.0) | 0.98 → 0.93 | 0.97 → **0.8875** |
+| summing warning / geometry guard / validation shown | 0 / 0 / 0 → 1 / 1 / 1 | same |
+
+- HPGe over-covered before because the certificate uncertainty was counted twice. Once it is
+  counted correctly, NaI shows the model error that the double counting had hidden. The order
+  selection removes most of it (largest deviation 7.2 % → 5.8 %), and the cross-validated
+  model error covers the rest on average.
+- **Not met:** NaI 2σ coverage is 0.8875 (limit 0.89). The model error is one average value,
+  but it is concentrated between Am-241 (59.5 keV) and Co-57 (122 keV), where NaI has no
+  other line. An energy-dependent model error is a possible next step. The limit is not changed.
+- Scenario change, made openly: the first run used a true curve with a corner at 120 keV,
+  which is not physical. It is kept as an informational case (`*_efficiency_kinked_truth`).
+  There the curve uncertainty is now conservative.
+- Real data (laboratory `EFF-GOOD.S0`): the cross-validated curve is stiffer and leaves
+  Sr-85 +18 % (3.4 σ) above it, because the 514 keV peak is blended with the 511 keV
+  annihilation peak. Both Y-88 points are 5 % below it, as expected from coincidence summing.
+  Both are now listed or flagged. The closure test keeps its pre-D orders (3/2) to retain
+  its meaning.
+- Two existing tests asserted the double-counted behaviour (a 2 % floor of the efficiency
+  component). They were corrected, with a comment.
+
 ## Public measured spectra (kept outside the repository)
 
 Folder `SPECTRAMASTER_PUBLIC_DATA` (default `D:/SpectraMaster_public_data`); the files are not

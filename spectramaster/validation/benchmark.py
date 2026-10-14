@@ -383,7 +383,7 @@ def _flat_curve():
     from ..analysis.efficiency import fit_efficiency, manual_point
     pts = [manual_point(e, 0.05 * scenarios.rel_efficiency(e), 2.0) for e in
            (60, 90, 122, 200, 344, 500, 662, 900, 1173, 1408, 1836, 2600)]
-    return fit_efficiency(pts)
+    return fit_efficiency(pts, order=3)
 
 
 def cat_measured_background(det: DetectorSpec, n: int, mode: str) -> dict:
