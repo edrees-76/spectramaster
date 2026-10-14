@@ -6,6 +6,7 @@ Public contract shared by the analysis engine, the CLI and the GUI:
 
     peaks = find_peaks(spectrum)                 # list[Peak], sorted by centroid
     matches = identify(spectrum, peaks)          # list[NuclideMatch], best first
+    peaks, report = inspect_fit(spectrum)        # same peaks + FitReport for inspection
 
 Both functions are pure (no I/O apart from loading the bundled nuclide library
 once) and must be fast enough to run on every spectrum the GUI displays
@@ -68,4 +69,17 @@ def identify(spectrum, peaks: Optional[list[Peak]] = None, **kwargs) -> list[Nuc
     return _identify_module.identify(spectrum, peaks, **kwargs)
 
 
-__all__ = ["Peak", "NuclideMatch", "find_peaks", "identify"]
+FitReport = _peaks_module.FitReport
+FitGroup = _peaks_module.FitGroup
+FitComponent = _peaks_module.FitComponent
+
+
+def inspect_fit(spectrum, **kwargs) -> tuple[list[Peak], "FitReport"]:
+    """Peaks plus the fit report (data, total fit, components, background, residuals,
+    warnings and discarded components with reasons) for the fit-inspection view."""
+    rep = FitReport()
+    return _peaks_module.find_peaks(spectrum, report=rep, **kwargs), rep
+
+
+__all__ = ["Peak", "NuclideMatch", "find_peaks", "identify", "inspect_fit", "FitReport", "FitGroup",
+           "FitComponent"]

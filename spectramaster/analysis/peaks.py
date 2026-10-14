@@ -23,7 +23,7 @@ Algorithm
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable, Optional
 
 import numpy as np
@@ -305,6 +305,95 @@ class _Fit:
     hi: int
 
 
+# ------------------------------------------------------------ fit inspection (Release B, B2)
+@dataclass
+class FitComponent:
+    """One Gaussian of a fit group (channels, first_channel convention of the spectrum)."""
+    centroid: float
+    centroid_unc: float
+    fwhm: float
+    area: float
+    area_unc: float
+    amplitude: float          # counts/channel at the centroid
+    kept: bool                # reported as a peak
+    reason: str = ""          # why it was not reported
+
+
+@dataclass
+class FitGroup:
+    """Everything needed to display and judge one fitted region."""
+    lo: int                   # first channel of the fit region (absolute channel number)
+    hi: int
+    data: np.ndarray
+    total: np.ndarray         # fitted model (peaks + background + step)
+    background: np.ndarray    # linear background + step
+    components: list
+    chi2_reduced: float
+    dof: int
+    width_scale: float        # fitted / model FWHM (1 when the width was fixed)
+    width_free: bool
+    width_at_bound: bool
+    step_height: float
+    retry: str = ""           # doublet retry: "", "tried", "accepted"
+    warnings: list = field(default_factory=list)
+
+    @property
+    def channels(self) -> np.ndarray:
+        return np.arange(self.lo, self.hi + 1)
+
+    def component_curve(self, j: int) -> np.ndarray:
+        c = self.components[j]
+        s = c.fwhm * F2S
+        return c.amplitude * np.exp(-0.5 * ((self.channels - c.centroid) / s) ** 2)
+
+    @property
+    def residuals(self) -> np.ndarray:
+        """(data - fit) / sqrt(max(data, 1)), the quantity the fit minimised."""
+        return (self.data - self.total) / np.sqrt(np.maximum(self.data, 1.0))
+
+
+@dataclass
+class FitReport:
+    fwhm_source: str = ""
+    groups: list = field(default_factory=list)
+
+    def group_at(self, channel: float) -> Optional[FitGroup]:
+        for g in self.groups:
+            if g.lo <= channel <= g.hi:
+                return g
+        return None
+
+    def discarded(self) -> list:
+        """(group, component) pairs that were fitted but not reported, with the reason."""
+        return [(g, c) for g in self.groups for c in g.components if not c.kept]
+
+
+def _record_group(rec: FitReport, spectrum, y, r, retry: str, kept: dict, reasons: dict) -> None:
+    f0 = spectrum.first_channel
+    x = np.arange(r.lo, r.hi + 1, dtype=float)
+    bk = r.bkg(x)
+    tot = bk.copy()
+    comps = []
+    for j in range(len(r.centroids)):
+        a, sg, c = float(r.amps[j]), float(r.sigmas[j]), float(r.centroids[j])
+        tot = tot + a * np.exp(-0.5 * ((x - c) / sg) ** 2)
+        comps.append(FitComponent(c + f0, float(r.cent_unc[j]), float(r.fwhms[j]), float(r.areas[j]),
+                                  float(r.area_unc[j]), a, j in kept, reasons.get(j, "")))
+    g = FitGroup(r.lo + f0, r.hi + f0, y[r.lo:r.hi + 1].copy(), tot, bk, comps, float(r.chi2r), r.dof,
+                 float(r.scale) if r.free_width else 1.0, r.free_width, bool(r.at_bound), r.step_h, retry)
+    if r.chi2r > 3.0:
+        g.warnings.append(f"poor fit: chi2/dof = {r.chi2r:.1f} (shape, background or a missing component)")
+    if r.at_bound:
+        g.warnings.append(f"width scale at its bound ({r.scale:.2f} x model): the peak shape is not the "
+                          "expected resolution")
+    for j in range(len(comps) - 1):
+        d = abs(comps[j + 1].centroid - comps[j].centroid)
+        if d < 1.0 * max(comps[j].fwhm, comps[j + 1].fwhm):
+            g.warnings.append(f"components at {comps[j].centroid:.1f} and {comps[j + 1].centroid:.1f} are "
+                              f"{d / comps[j].fwhm:.2f} FWHM apart: separation is poorly determined")
+    rec.groups.append(g)
+
+
 def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_width=True,
                step=True, width_bounds=(0.7, 1.4)) -> Optional[_Fit]:
     """Gaussians (shared width scale) + linear background + erfc step, Poisson-weighted.
@@ -469,18 +558,25 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
     fit = _Fit(cent, cent_unc, area, area_unc, base_f * sc, bkg, chi2r, lo, hi)
     fit.scale = float(sc)
     fit.at_bound = bool(free_width and (sc >= width_bounds[1] - 1e-6 or sc <= width_bounds[0] + 1e-6))
+    # parameters kept for fit inspection (FitReport); not used by the search itself
+    fit.amps, fit.sigmas, fit.step_h = amp, sig, float(hst)
+    fit.free_width, fit.dof, fit.width_bounds = bool(free_width), int(dof), tuple(width_bounds)
     return fit
 
 
 # --------------------------------------------------------------- main entry
 def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit: bool = True,
-               min_energy: Optional[float] = None, max_peaks: int = 400, **_ignored) -> list[Peak]:
+               min_energy: Optional[float] = None, max_peaks: int = 400,
+               report: Optional[FitReport] = None, **_ignored) -> list[Peak]:
     """Search, fit and flag peaks.
 
     min_sig     : significance threshold (net area / its 1-sigma uncertainty); default 3.
     fwhm        : force a constant FWHM (channels) for the search.
     fit         : False returns search results with simple ROI-sum areas (faster).
     min_energy  : ignore peaks below this energy (keV), calibrated spectra only.
+    report      : a FitReport to fill with every fitted group (data, components, background,
+                  residuals, warnings, discarded components with reasons).  The results are the
+                  same with or without it.
     """
     y = np.asarray(spectrum.counts, dtype=float)
     n = len(y)
@@ -498,6 +594,8 @@ def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit
         if src == "none":
             f = _estimate_fwhm_from_data(y)
             src = "data"
+    if report is not None:
+        report.fwhm_source = src
     start = _start_index(y, f)
     if min_energy is not None and calibrated:
         e = _poly(spectrum.energy_coeffs, f0 + np.arange(n))
@@ -526,9 +624,15 @@ def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit
         else:
             groups.append([(c, z)])
     for g in groups:
-        peaks.extend(_fit_and_make(spectrum, y, model, [c for c, _ in g], start, min_sig, g))
+        peaks.extend(_fit_and_make(spectrum, y, model, [c for c, _ in g], start, min_sig, g, rec=report))
     peaks.sort(key=lambda p: p.centroid)
     peaks = _dedupe(peaks, model, f0)
+    if report is not None:
+        final = {round(p.centroid, 6) for p in peaks}
+        for grp in report.groups:
+            for c in grp.components:
+                if c.kept and round(c.centroid, 6) not in final:
+                    c.kept, c.reason = False, "duplicate of a peak fitted in a neighbouring region"
     _flag(peaks, spectrum)
     return peaks
 
@@ -615,7 +719,8 @@ def _estimate_fwhm_from_data(y) -> np.ndarray:
     return np.full(n, float(np.median(fw[ok])) if ok.any() else med)
 
 
-def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=()) -> list[Peak]:
+def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optional[FitReport] = None
+                  ) -> list[Peak]:
     n = len(y)
     fl, fr = model.at(cents[0]), model.at(cents[-1])
     lo = int(max(math.floor(cents[0] - 2.2 * fl), start - 1, 0))
@@ -625,8 +730,10 @@ def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=()) -> list[Peak
     r = _fit_group(y, model, cents, lo, hi, free_width=free, step=True)
     if r is None:
         return []
+    retry = ""
     # doublet retry on single peaks with bad fit
     if len(cents) == 1 and r.chi2r > 4.0 and hi - lo > 8:
+        retry = "tried"
         x = np.arange(lo, hi + 1)
         g = r.areas[0] / (r.fwhms[0] * F2S * SQRT2PI) * np.exp(
             -0.5 * ((x - r.centroids[0]) / (r.fwhms[0] * F2S)) ** 2)
@@ -657,17 +764,24 @@ def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=()) -> list[Peak
                     or abs(r2.centroids[1] - r2.centroids[0]) >= 1.0 * r2.fwhms[0]):
                 # (a weak component very close to a big peak is usually peak tailing, not a doublet)
                 r = r2
+                retry = "accepted"
     out = []
+    kept: dict = {}
+    reasons: dict = {}
     k = len(r.centroids)
     for j in range(k):
         c = float(r.centroids[j])
         if not (r.lo <= c <= r.hi):
+            reasons[j] = "centroid moved outside the fit region"
             continue
         area, unc = float(r.areas[j]), float(r.area_unc[j])
         fw = float(r.fwhms[j])
         if area <= 0:
+            reasons[j] = "fitted area <= 0"
             continue
         if k == 1 and getattr(r, "at_bound", False) and r.scale > 1.3 and area / max(unc, 1e-9) < 30:
+            reasons[j] = (f"discarded as a Compton edge / backscatter hump: {r.scale:.2f} x the resolution "
+                          f"width, significance {area / max(unc, 1e-9):.0f} < 30")
             continue   # much broader than the resolution: Compton edge / backscatter hump, not a peak
         roi_l = int(max(math.floor(c - 1.25 * fw), 0))
         roi_r = int(min(math.ceil(c + 1.25 * fw), n - 1))
@@ -678,9 +792,13 @@ def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=()) -> list[Peak
         unc = max(unc, math.sqrt(max(area, 0) + 2.0 * bkg) * 0.7, 1.0)
         sig = area / unc
         if sig < min_sig:
+            reasons[j] = f"significance {sig:.1f} below the threshold {min_sig:g}"
             continue
+        kept[j] = True
         out.append(_make_peak(spectrum, c, float(r.cent_unc[j]), fw, area, unc, gross, bkg,
                               roi_l, roi_r, sig, k))
+    if rec is not None and hasattr(r, "amps"):
+        _record_group(rec, spectrum, y, r, retry, kept, reasons)
     return out
 
 
