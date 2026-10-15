@@ -1423,6 +1423,9 @@ class SpectrumPlot(QWidget):
             p.drawLine(QPointF(pl, yb), QPointF(pl, yb - 7))
             p.drawLine(QPointF(pr, yb), QPointF(pr, yb - 7))
             tag = str(k + 1)
+            ident = getattr(roi, "aptec_id", None)
+            if ident is not None:                       # Aptec Identify: isotope name
+                tag += " " + ident.line.isotope
             tw = max(18, fm.horizontalAdvance(tag) + 10)
             box = QRectF((pl + pr) / 2 - tw / 2, yb - fm.height() - 4, tw, fm.height() + 1)
             p.setBrush(QColor(255, 255, 255, 220))

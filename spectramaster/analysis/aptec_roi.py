@@ -226,10 +226,10 @@ def analyze_rois(counts: Sequence[float], rois: Sequence[tuple[int, int]],
         else:
             bl = max(0, lo - end_point_width(props, lo, n))
             bh = min(n - 1, hi + end_point_width(props, hi, n))
-        inside = np.zeros(n, dtype=bool)
+        inside = np.zeros(hi - lo + 1, dtype=bool)
         for i in grp:
-            inside[norm[i][0]:norm[i][1] + 1] = True
-        inner = [c for c in range(lo, hi + 1) if not inside[c]]
+            inside[norm[i][0] - lo:norm[i][1] - lo + 1] = True
+        inner = (np.flatnonzero(~inside) + lo).tolist()
         coeffs = background_coeffs(y, bl, lo, hi, bh, int(props.bkg_degree), inner)
         for i in grp:
             out[i] = _one(y, norm[i][0], norm[i][1], bl, bh, lo, hi, coeffs, props, live_time, len(grp) > 1)
@@ -243,7 +243,8 @@ def _one(y, rl, rh, bl, bh, lo, hi, coeffs, props, live_time, grouped) -> AptecR
     background = float(bkg_ch.sum())
     net_total = gross - background
     err = math.sqrt(max(gross + background, 0.0)) / abs(net_total) * 100.0 if net_total else None
-    net = y - np.polynomial.polynomial.polyval(np.arange(len(y)), coeffs)
+    net = np.zeros_like(y)                  # net counts; only the ROI channels are used
+    net[rl:rh + 1] = y[rl:rh + 1] - bkg_ch
     flags = ""
     if rh - rl < 2:
         cen = float(rl + rh) / 2.0

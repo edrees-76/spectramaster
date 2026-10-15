@@ -323,6 +323,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         install_setup_menu(self)
         from .aptec_roi_ui import install_roi_menu    # ROI menu and Paint bar (Aptec)
         install_roi_menu(self)
+        from .aptec_analyze_ui import install_analyze_menu    # Analyze > Setup, P, I, B, Q (Aptec)
+        install_analyze_menu(self)
         from .aptec_ops_ui import install_ops_menu    # Analyze > Add Constant ... Position (Aptec)
         install_ops_menu(self)
         self.menu_help = mb.addMenu("")
@@ -504,6 +506,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         retranslate_roi_menu(self)
         from .aptec_ops_ui import retranslate_ops_menu
         retranslate_ops_menu(self)
+        from .aptec_analyze_ui import retranslate_analyze_menu
+        retranslate_analyze_menu(self)
         from .aptec_view_ui import retranslate_view_menu
         retranslate_view_menu(self)
         from .aptec_edit_ui import retranslate_edit_display_menus
@@ -573,6 +577,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         self._update_history_actions()
         from .aptec_ops_ui import sync_actions
         sync_actions(self)
+        from .aptec_analyze_ui import sync_enabled
+        sync_enabled(self)
 
     def _update_history_actions(self) -> None:
         self.act_back.setEnabled(self.plot.can_go_back())

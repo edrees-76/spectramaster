@@ -9,13 +9,29 @@ from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (QAbstractItemView, QHBoxLayout, QHeaderView, QLabel, QPushButton,
                                QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
 
-from . import aptec_roi_strings  # noqa: F401  (aroi_ strings)
+from . import aptec_analyze_strings, aptec_roi_strings  # noqa: F401  (aana_ / aroi_ strings)
 from .i18n import tr
 from .plot import SpectrumPlot, format_count
 
 COLS = ["roi_col_n", "roi_col_start", "roi_col_end", "roi_col_centroid", "roi_col_energy",
         "roi_col_fwhm", "roi_col_fwhm_kev", "roi_col_gross", "aroi_col_bkg", "roi_col_net",
-        "roi_col_unc", "aroi_col_err", "roi_col_cps", "aroi_col_flags"]
+        "roi_col_unc", "aroi_col_err", "roi_col_cps", "aroi_col_flags", "aana_col_iso", "aana_col_line",
+        "aana_col_act", "aana_col_act_err", "aana_col_mda"]
+
+
+def aptec_cells(roi) -> list[str]:
+    """Isotope, line energy, activity, its 1-sigma error % and MDA of an ROI (Aptec Identify /
+    Quantify results kept on the ROI; empty when not identified / quantified)."""
+    x = getattr(roi, "aptec_id", None)
+    q = getattr(roi, "aptec_q", None)
+    if x is None:
+        return ["", "", "", "", ""]
+    act = err = mda = ""
+    if q is not None and q.activity is not None:
+        act = "\u2066" + f"{q.activity:.4g}" + "\u2069"
+        err = "" if q.activity_err_pct is None else f"{q.activity_err_pct:.2f}"
+        mda = "" if q.mda is None else "\u2066" + f"{q.mda:.3g}" + "\u2069"
+    return [x.line.isotope, f"{x.line.energy:.2f}", act, err, mda]
 
 
 def _f(v, fmt="{:.2f}") -> str:
@@ -32,6 +48,11 @@ def _end_ch(st, name: str) -> str:
     return "" if v is None else str(st.first_channel + v)
 
 
+def _qflags(roi) -> str:
+    q = getattr(roi, "aptec_q", None)
+    return "".join(c for c in (q.flags if q is not None else "") if c not in "?")
+
+
 def roi_rows(plot: SpectrumPlot) -> list[list[str]]:
     rows = []
     k = float(plot.roi_props.error_sigma)
@@ -43,7 +64,7 @@ def roi_rows(plot: SpectrumPlot) -> list[list[str]]:
         rows.append([str(i + 1), str(st.start_channel), str(st.end_channel), _f(st.centroid),
                      _f(st.centroid_energy), _f(st.fwhm), _f(st.fwhm_kev), f"{st.gross:.0f}",
                      f"{st.background:.1f}", f"{st.net:.1f}", f"{st.net_unc:.1f}", _err(st, k), cps,
-                     getattr(st, "flags", "")])
+                     getattr(st, "flags", "") + _qflags(roi)] + aptec_cells(roi))
     return rows
 
 
@@ -59,7 +80,8 @@ def export_rois_csv(plot: SpectrumPlot, path) -> Path:
             w.writerow(["# real_time_s", spec.real_time if spec.real_time is not None else ""])
         w.writerow(["roi", "start_ch", "end_ch", "centroid_ch", "centroid_keV", "fwhm_ch", "fwhm_keV",
                     "gross", "background", "net", "net_unc_1s", "net_cps", "net_cps_unc", "err_pct_1s",
-                    "bkg_first_ch", "bkg_last_ch", "fwtm_ch", "mda_cps", "flags"])
+                    "bkg_first_ch", "bkg_last_ch", "fwtm_ch", "mda_cps", "flags", "isotope", "line_keV",
+                    "activity", "activity_err_pct_1s", "mda_activity"])
         for i, roi in enumerate(plot.rois):
             st = roi.stats
             if st is None:
@@ -70,7 +92,7 @@ def export_rois_csv(plot: SpectrumPlot, path) -> Path:
                         _f(st.count_rate, "{:.6g}"), _f(st.count_rate_unc, "{:.6g}"),
                         _f(getattr(st, "err_pct", None), "{:.4f}"), _end_ch(st, "bl"), _end_ch(st, "bh"),
                         _f(getattr(st, "fwtm", None), "{:.4f}"), _f(getattr(st, "mda_cps", None), "{:.6g}"),
-                        getattr(st, "flags", "")])
+                        getattr(st, "flags", "") + _qflags(roi)] + [c.strip("\u2066\u2069") for c in aptec_cells(roi)])
     return path
 
 
