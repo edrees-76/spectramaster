@@ -84,3 +84,14 @@ def test_report_record_traces_everything(setup, tmp_path):
     assert d["conventions"]["weight_basis"] == "dry" and "never as zero" in d["conventions"]["non_detects"]
     assert d["reportable"] is True and any(st["code"] == "not_reviewed" for st in d["statuses"])
     assert d["edits"] and all(e["time"] for e in d["edits"])
+
+
+def test_missing_fwhm_calibration_is_a_warning(setup):
+    import copy
+    syn, _curve, _mar, _rec, s = setup
+    spec = copy.deepcopy(syn.spectrum)
+    spec.fwhm_coeffs = []
+    msgs = [x.message for x in workflow_status(s, spec) if x.code == "outside_validated_scope"]
+    assert any("no FWHM calibration" in m for m in msgs)
+    spec.fwhm_coeffs = [1.0, 0.0005]
+    assert not any("FWHM" in x.message for x in workflow_status(s, spec))

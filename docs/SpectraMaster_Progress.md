@@ -124,6 +124,18 @@ false detections due to subtraction"), synthetic evidence only:
   correlation is ignored (documented in `analysis/background.py`).
 - The live times are taken as exact (no uncertainty on k).
 
+Weak-peak area bias (`HPGe.weak.area_bias_s7` −5.0 %, FAIL), diagnosed 2026-10-15 with 10× the
+benchmark sample (diagnostic only, the criterion and its sample size unchanged): s = 5 / 7 / 10 give
+−0.8 ± 0.6 % / −3.6 ± 0.5 % / −3.1 ± 0.4 %, so the −5.0 % of the scored run is partly a fluctuation
+(≈ 20 peaks, standard error ≈ 3 %) on top of a real bias of about −3 %. Cause: the synthetic spectra
+carry no FWHM calibration, weak peaks are fitted with the model width, and the default HPGe
+resolution is 2.4 % narrower than the synthetic detector on average (−7.9 % to +1.5 %); strong
+peaks (free width) are unbiased. Rescaling the model needs strong isolated peaks, absent here. A
+narrower rescaling dead band (3 % instead of 8 % with ≥ 3 strong peaks) was measured and rejected:
+no effect on the weak category, slightly more false peaks. Remedy in practice: an FWHM
+calibration (B1 tool); the EMCA2000 `.dat` files carry none. The workflow now warns when a
+spectrum has no FWHM calibration (`lab/workflow.py`, status outside_validated_scope).
+
 ## Release D: experimental efficiency calibration
 
 | Increment | Status | Evidence |

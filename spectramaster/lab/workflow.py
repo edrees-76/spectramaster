@@ -53,6 +53,11 @@ def workflow_status(session, spectrum=None, needs_activity: bool = True) -> list
     add = lambda c, lv, m: out.append(WorkflowStatus(c, lv, m))
     if spectrum is not None and not spectrum.energy_coeffs:
         add("calibration_required", "error", "the spectrum has no energy calibration")
+    elif spectrum is not None and not spectrum.fwhm_coeffs and             not any(c.get("kind") == "fwhm" for c in session.calibrations or []):
+        # weak peaks are fitted with the model width: with the generic resolution of the detector
+        # type, a few % width error biases their areas (synthetic HPGe: width -2.4 %, area -3 %)
+        add("outside_validated_scope", "warning",
+            "no FWHM calibration: the default detector resolution is used, weak-peak areas may be biased by a few %")
     effs = _efficiency_records(session)
     if needs_activity and not effs:
         add("calibration_required", "error", "no efficiency calibration recorded: activities cannot be reported")
