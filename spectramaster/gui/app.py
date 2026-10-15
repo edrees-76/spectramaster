@@ -154,6 +154,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         self.goto_width.setCurrentIndex(w if 0 <= w < len(GOTO_WIDTHS) else GOTO_DEFAULT_WIDTH)
         self._default_state = (self.saveState(), self.splitter.saveState())    # View > Default Position
         self._restore_geometry()
+        if hasattr(self, "roi_paint_bar"):                   # restoreState may show it: only while painting
+            self.roi_paint_bar.setVisible(self.plot.paint is not None)
         self.apply_language(self.settings.language, save=False)
         self.refresh_analysis_available()
         self._update_actions()

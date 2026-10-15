@@ -313,3 +313,46 @@ def test_arabic_view_menu(window):
     assert window.act_v_hsplit.text().replace("&", "") == "تقسيم أفقي"
     assert "خيارات" in window.menu_v_more.title()
     window.apply_language("en", save=False)
+
+
+def test_old_display_settings_start_again_from_aptec_points(qapp, tmp_path):
+    from spectramaster.gui.settings import Settings
+    s = Settings(QSettings(str(tmp_path / "s.ini"), QSettings.IniFormat))
+    for key in ("fill_spc", "connect", "all_points", "grid"):
+        s.set("aptec_view/" + key, True)            # saved by the first View menu (no version)
+    s.set("aptec_view/grid", False)
+    s.sync()
+    w = _make(tmp_path)
+    try:
+        p = w.plot
+        assert not p.fill_spectrum and not p.connect_points and not p.plot_all_points
+        assert not p.show_grid                         # other choices are kept
+        w.act_v_fill_spc.trigger()
+    finally:
+        w.close()
+        w.deleteLater()
+    w2 = _make(tmp_path)
+    try:
+        assert w2.plot.fill_spectrum                   # a new choice is remembered
+    finally:
+        w2.close()
+        w2.deleteLater()
+
+
+def test_paint_bar_hidden_after_restoring_the_window(qapp, tmp_path):
+    w = _make(tmp_path)
+    w.display([_spectrum()], None, None)
+    w.show()
+    w.plot.set_marker(300)
+    w.plot.start_paint()
+    QApplication.processEvents()
+    assert w.roi_paint_bar.isVisible()
+    w.close()                                          # the window state is saved with the bar shown
+    w.deleteLater()
+    QApplication.processEvents()
+    w2 = _make(tmp_path)
+    try:
+        assert w2.roi_paint_bar.isHidden()
+    finally:
+        w2.close()
+        w2.deleteLater()
