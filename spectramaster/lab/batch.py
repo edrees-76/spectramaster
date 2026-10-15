@@ -137,6 +137,9 @@ def run_batch(groups: Sequence[BatchGroup], setups: dict, progress=None) -> list
                     rows.append(base | {"status": "no nuclide identified", "nuclide": "", "notes": ""})
                 continue
             names = list(setup.nuclides) or sorted(found)
+            if not names:          # nothing identified and no nuclide asked for: still one row
+                rows.append(base | {"status": "no nuclide identified", "nuclide": "", "notes": ""})
+                continue
             try:
                 q = compute_activities(it.spectrum, setup.curve,
                                        ActivityOptions(nuclides=names, geometry=setup.geometry,
@@ -145,6 +148,9 @@ def run_batch(groups: Sequence[BatchGroup], setups: dict, progress=None) -> list
                                        background=setup.background, peaks=pk if setup.background is None else None)
             except ValueError as exc:
                 rows.append(base | {"status": f"refused: {exc}", "nuclide": "", "notes": ""})
+                continue
+            except Exception as exc:       # one bad file must not stop the batch
+                rows.append(base | {"status": f"failed: {type(exc).__name__}: {exc}", "nuclide": "", "notes": ""})
                 continue
             common = "; ".join(q.notes)
             for r in q.nuclides:

@@ -68,6 +68,8 @@ def translated_notes(out: dict, sample: Optional[SampleInfo]) -> list[str]:
                            fraction=i18n.ltr(f"{sample.filter_fraction:g}"),
                            eff=i18n.ltr(f"{sample.collection_efficiency:g}"),
                            note=(": " + note) if note else ""))
+        elif n.startswith("acquisition start unknown"):
+            res.append(qtr("conc_note_no_start"))
         elif n.startswith("sampling end not given"):
             res.append(qtr("conc_note_no_end"))
         elif n.startswith("sampling duration not given"):

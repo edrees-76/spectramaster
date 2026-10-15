@@ -51,3 +51,13 @@ def test_unassigned_groups_are_not_analysed_and_geometry_is_guarded(tmp_path):
     assert all(r["status"].startswith("refused") for r in rows)
     p = write_csv(tmp_path / "out.csv", rows)
     assert p.read_text(encoding="utf-8-sig").splitlines()[0].startswith("file,index,group")
+
+
+def test_every_file_gets_a_row_even_without_identification():
+    from spectramaster.lab.batch import BatchGroup, BatchItem, BatchSetup, run_batch
+    from spectramaster.validation.benchmark import _flat_curve
+    from spectramaster.validation.synthetic import HPGE, Continuum, make_spectrum
+    s = make_spectrum(HPGE, [], Continuum(300, 400, 10), 5).spectrum
+    g = BatchGroup(1, "det", len(s.counts), list(s.energy_coeffs), [BatchItem("empty.spe", 0, s, "det", len(s.counts))])
+    rows = run_batch([g], {1: BatchSetup(curve=_flat_curve())})
+    assert len(rows) == 1 and rows[0]["status"] == "no nuclide identified"

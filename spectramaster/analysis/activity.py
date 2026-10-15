@@ -669,6 +669,9 @@ def concentrations(res: "QuantResults", sample, unit: str, quantity_rel_unc: flo
     t_end = datetime.fromisoformat(sample.sampling_end) if (unit == "Bq/m3" and sample.sampling_end) else None
     hours = sample.sampling_hours() if unit == "Bq/m3" else None
     if unit == "Bq/m3":
+        if t_end is not None and res.ref_date is None:
+            notes.append("acquisition start unknown: activities NOT decay-corrected to the end of sampling "
+                         "(underestimated for short-lived nuclides measured after sampling)")
         if t_end is None:
             notes.append("sampling end not given: activities used at their reference date, no decay during sampling")
         elif hours is None:

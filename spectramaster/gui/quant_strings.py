@@ -495,6 +495,7 @@ EN.update({
     "conc_note_air": "Air volume {volume} m³, measured filter fraction {fraction}, collection efficiency {eff} "
                      "(assumption{note}).",
     "conc_note_no_end": "Sampling end not given: activities used at their reference date, no decay during sampling.",
+    "conc_note_no_start": "Acquisition start unknown: activities NOT decay-corrected to the end of sampling (underestimated for short-lived nuclides measured after sampling).",
     "conc_note_no_duration": "Sampling duration not given: no correction for decay during sampling.",
     "conc_note_decay": "Decay during sampling corrected (constant air concentration assumed).",
     "conc_not_determined": "not determined",
@@ -553,6 +554,7 @@ AR.update({
     "conc_note_air": "حجم الهواء {volume} م³، الجزء المقاس من المرشح {fraction}، كفاءة التجميع {eff} "
                      "(افتراض{note}).",
     "conc_note_no_end": "نهاية الجمع غير معطاة: استُخدمت الأنشطة عند تاريخها المرجعي، دون تصحيح الاضمحلال أثناء الجمع.",
+    "conc_note_no_start": "بداية القياس غير معروفة: الأنشطة غير مصحَّحة للاضمحلال حتى نهاية الجمع (أقل من الحقيقة للنويدات قصيرة العمر المقاسة بعد الجمع).",
     "conc_note_no_duration": "مدة الجمع غير معطاة: لا تصحيح للاضمحلال أثناء الجمع.",
     "conc_note_decay": "صُحّح الاضمحلال أثناء الجمع (بافتراض تركيز ثابت في الهواء).",
     "conc_not_determined": "غير محدد",

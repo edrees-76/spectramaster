@@ -63,3 +63,13 @@ def test_stored_results_rebuild_exactly(res):
     assert [r.decision for r in back.nuclides] == [r.decision for r in res.nuclides]
     unit = SampleInfo(matrix_type="soil", mass_kg=0.5, mass_basis="dry")
     assert concentrations(back, unit, "Bq/kg") == concentrations(res, unit, "Bq/kg")
+
+
+def test_unknown_acquisition_start_is_reported_for_air_filters():
+    syn = make_spectrum(HPGE, [TruePeak(364.49, 8e3)], Continuum(300, 400, 10), 7)
+    syn.spectrum.start_time = None
+    q = compute_activities(syn.spectrum, _flat_curve(), ActivityOptions(nuclides=["I-131"]))
+    s = SampleInfo(matrix_type="air_filter", air_volume_m3=100.0, filter_fraction=1.0, collection_efficiency=1.0,
+                   sampling_start="2026-05-01T08:00:00", sampling_end="2026-05-08T08:00:00")
+    out = concentrations(q, s, "Bq/m3")
+    assert any("NOT decay-corrected to the end of sampling" in n for n in out["notes"])
