@@ -318,3 +318,37 @@ On another machine they are skipped.
    fix was written, and it moved from "informational" into the scored results. They show how much of the
    Compton-edge failure comes from the worst-case sharpness of the synthetic edge, and they
    reproduce defect P1 below.
+
+## Aptec-style workflow, phase 1: Setup menu calibrations (2026-10-15)
+
+The user works with Aptec PCMCA/WIN 6.31 and asked for its menus, workflow and, where possible,
+its algorithms. Phase 1 of 6 (calibration) is on branch `claude/ux-aptec-calibration`.
+
+**Method.** Aptec's code was not decompiled (licence, and 16-bit code that tools read poorly).
+The methods were taken from Aptec's own help file (`aptec.hlp`, including the published `.S0`
+file layout) and verified black-box: Aptec stores each calibration's points next to the
+equation it computed, so a refit of the stored points must reproduce the stored equation.
+
+| Aptec method | Rule | Verified on |
+|---|---|---|
+| Energy, resolution | unweighted polynomial, degree = min(max degree, points - 1) | 10 Aptec sample files, equal to 6 significant digits |
+| Efficiency point | rate / (A[Bq] · yield · quantity · decay); `gamma/s` without yield; err = √(rate² + activity²) | 12 + 3 points of the sample files (`test_point_formula_reproduces_aptec_efficiencies`) |
+| Efficiency A, B, D | ln eff polynomial in ln E (A 5th, B 3rd) or E (D 3rd), weights 1/(err%)², no error = 100 %, covariance (AᵀWA)⁻¹ unscaled | A and D on sample files (coefficients and full covariance), B on 3 laboratory files (numbers only) |
+| Efficiency C, S | C as D with degree 5; S natural cubic spline of ln eff vs ln E | **not verified**: no Aptec example; reports say so |
+
+**Interface.** New *Setup* menu before *Analyze*: Quick Energy Calibration (F2, up to 16 points,
+the channel comes from the new channel marker or the centroid of the ROI containing it), Full
+Energy / Resolution / Efficiency Calibration (Shift+F2 = efficiency) in an S_CALIB-style window
+(File, Calibration F5/F6/F7/F8/F9, EditPoints, Method, Help; report and graph). The previous
+calibration tools moved to *Setup > Advanced Calibration Tools*. Saving puts the calibration on
+the displayed spectrum (no file is overwritten); the efficiency calibration is also written to
+the efficiency library as a curve that Quantify can use (`EfficiencyCurve` gained the `lnpoly`
+and `spline_lnln` forms).
+
+**Scientific notes.** Aptec's covariance is not rescaled by χ²/dof; when χ²/dof > 1 the saved
+curve carries a warning that its uncertainty may be underestimated. Aptec does not flag
+true-coincidence summing or interferences in calibration points; the advanced efficiency wizard
+still does. No pre-registered benchmark criterion is affected: the analysis engine is unchanged.
+
+Remaining phases: ROI menu, View menu, spectrum operations, Peak Search / Identify / Background
+Subtract / Quantify, MultiFit.

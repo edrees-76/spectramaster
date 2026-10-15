@@ -177,7 +177,7 @@ def test_actions_and_language_switch(window, lang):
     from spectramaster.gui.calibration_dialog import CalibrationDialog, DriftDialog
     from spectramaster.gui.calibration_strings import ctr
     window.apply_language(lang, save=False)
-    acts = window.menu_analyze.actions()
+    acts = window.menu_setup_advanced.actions()      # Setup > Advanced Calibration Tools
     assert window.act_calibrate in acts and window.act_drift in acts
     assert window.act_calibrate.text() == i18n.STRINGS[lang]["calib_act_cal"]
     spec = next(scenarios.calibration_drift(HPGE, 0.003, 1)).spectrum

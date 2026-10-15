@@ -421,8 +421,8 @@ def test_gui_menu_hook(qapp, gui_settings):
     w = MainWindow(gui_settings)
     try:
         assert w.quant_results is None
-        acts = w.menu_analyze.actions()
-        assert w.act_effcal in acts and w.act_activity in acts
+        assert w.act_activity in w.menu_analyze.actions()
+        assert w.act_effcal in w.menu_setup_advanced.actions()      # Setup > Advanced Calibration Tools
         assert w.act_effcal.text()
         from spectramaster.gui.quant_panel import open_activity_dialog, open_efficiency_dialog
         d1 = open_efficiency_dialog(w, modal=False)

@@ -1,0 +1,301 @@
+"""English/Arabic strings of the Aptec-style calibration windows (Setup menu: Quick Energy
+Calibration, Full Energy / Resolution / Efficiency Calibration), merged into ``i18n.STRINGS``
+on import with the prefix ``acal_``.  Menu names follow Aptec PCMCA/WIN so that users who know
+Aptec find every command where they expect it."""
+from __future__ import annotations
+
+from . import i18n
+
+EN = {
+    # Setup menu
+    "menu_setup": "&Setup",
+    "act_quick": "&Quick Energy Calibration...",
+    "act_full_energy": "Full &Energy Calibration...",
+    "act_full_res": "Full &Resolution Calibration...",
+    "act_full_eff": "Full E&fficiency Calibration...",
+    "menu_advanced": "Advanced Calibration Tools",
+    "tip_quick": "Energy calibration from up to 16 channel-energy points (F2), as in Aptec",
+    "tip_full_energy": "Energy calibration from up to 256 points with a calibration report",
+    "tip_full_res": "Resolution (FWHM vs channel) calibration",
+    "tip_full_eff": "Efficiency vs energy calibration from a calibration source (Shift+F2)",
+    "need_spectrum": "Open a spectrum first.",
+    # quick energy calibration
+    "quick_title": "Energy Calibration",
+    "points_group": "Calibration Points",
+    "col_channel": "Channel",
+    "col_energy": "Energy",
+    "col_calc": "Calculated",
+    "col_dev": "Deviation",
+    "units": "Encal Units:",
+    "max_degree": "Max Degree:",
+    "encal_time": "Encal Time:",
+    "equation": "Equation:",
+    "btn_calib": "&Calib",
+    "btn_clear": "C&lear",
+    "btn_ok": "OK",
+    "btn_cancel": "Cancel",
+    "btn_marker": "Channel from &Marker",
+    "tip_marker": "Put the channel of the marker (or the centroid of the ROI that contains it) "
+                  "into the selected row. Click the spectrum to move the marker.",
+    "quick_hint": "Click the spectrum to move the marker (or into an ROI), then click a Channel "
+                  "cell: it takes the marker channel or the ROI centroid. Type the energy and "
+                  "press Calib.",
+    "no_points": "Enter at least one channel-energy point.",
+    "bad_number": "Row {row}: {text!r} is not a number.",
+    "fit_failed": "The calibration could not be calculated:\n{msg}",
+    "applied": "Energy calibration applied to the displayed spectrum ({n} points, degree {deg}). "
+               "Use File > Save As to write it to a file.",
+    "cleared": "Energy calibration removed from the displayed spectrum.",
+    "none": "none",
+    # full calibration window (S_Calib)
+    "full_title": "Full Detector Calibration - {name}",
+    "menu_file": "&File",
+    "menu_calibration": "&Calibration",
+    "menu_editpoints": "&EditPoints",
+    "menu_method": "&Method",
+    "menu_view": "&View",
+    "menu_help": "&Help",
+    "act_save_spc": "Save Spectrum",
+    "act_save_spc_as": "Save Spectrum As...",
+    "act_print": "Print Report",
+    "act_save_report": "Save Report As...",
+    "act_exit": "Exit",
+    "act_energy": "Energy",
+    "act_resolution": "Resolution",
+    "act_efficiency": "Efficiency",
+    "act_calc_eff": "Calculate Efficiency...",
+    "act_delete": "Delete",
+    "act_load_file": "Load Calibration from Aptec File...",
+    "act_help": "Calibration Help",
+    "method_energy": "Energy",
+    "method_resolution": "Resolution",
+    "method_efficiency": "Efficiency",
+    "degree_n": "Polynomial degree {n}",
+    "degree_default": "Polynomial degree {n} (default)",
+    "type_A": "A = 5th Order ln-ln",
+    "type_B": "B = 3rd Order ln-ln",
+    "type_C": "C = 5th Order Poly",
+    "type_D": "D = 3rd Order Poly",
+    "type_S": "S = Cubic Spline",
+    "current_type": "Calibration: {what}",
+    "no_calibration": "No {what} calibration yet. Use EditPoints > {what} (Load ROIs) to enter points.",
+    "stored_only": "The spectrum has an {what} equation but no calibration points:\n{eq}",
+    "delete_confirm": "Delete the {what} calibration points and equation?",
+    "saved_spc": "Calibration saved to the displayed spectrum. Use File > Save As in the main window to "
+                 "write it to a file.",
+    "saved_curve": "Efficiency calibration saved to the efficiency library: {path}",
+    "report_saved": "Report saved: {path}",
+    "unsaved": "The calibration has changed. Save it to the spectrum before closing?",
+    "help_text": "Calibration as in Aptec S_CALIB:\n\n"
+                 "1. Do a quick (2 point) energy calibration (Setup > Quick Energy Calibration, F2).\n"
+                 "2. Analyze the spectrum (F5) so that the peaks are identified.\n"
+                 "3. Calibration > Energy (F5), EditPoints > Energy: Load ROIs, check the points, OK-Fit.\n"
+                 "4. Calibration > Resolution (F6): Load ROIs, OK-Fit (optional).\n"
+                 "5. Calibration > Efficiency (F7), EditPoints > Efficiency: Edit ID (detector, "
+                 "geometry), Load ROIs (activity units and date), type the activity of each point, "
+                 "Calculate, OK-Fit.\n"
+                 "6. Method chooses the equation; look at the graph as well as the average deviation.\n"
+                 "7. File > Save Spectrum keeps the calibration with the spectrum; the efficiency "
+                 "calibration is also saved to the efficiency library for Quantify.",
+    # edit points (energy / resolution)
+    "ep_energy_title": "Edit Channel-Energy",
+    "ep_res_title": "Edit Channel-FWHM",
+    "col_fwhm": "FWHM (channels)",
+    "col_fwhm_kev": "[keV]",
+    "btn_edit_id": "Edit &ID...",
+    "btn_load_rois": "&Load ROIs",
+    "btn_add": "&Add",
+    "btn_delete": "&Delete",
+    "btn_okfit": "OK-&Fit",
+    "need_analysis": "No identified peaks. Analyze the spectrum first (F5): Load ROIs takes the "
+                     "identified peaks.",
+    "need_peaks": "No peaks. Analyze the spectrum first (F5) or paint ROIs (Ctrl+drag).",
+    "loaded_n": "{n} points loaded.",
+    "units_title": "Energy Units",
+    "units_prompt": "Energy units (must match the isotope library):",
+    "too_many": "At most {n} points.",
+    # efficiency points (Aptec record)
+    "ef_title": "Edit Energy-Efficiency",
+    "ef_point": "Point #",
+    "ef_of": "of {n}",
+    "ef_energy": "Energy",
+    "ef_eff": "Efficiency",
+    "ef_isotope": "Isotope Name",
+    "ef_activity": "Activity",
+    "ef_err": "± % (1σ)",
+    "ef_act_units": "Activity Units",
+    "ef_act_time": "Activity Time",
+    "ef_rate": "Net Count Rate (cps)",
+    "ef_rate_time": "Count Rate Time",
+    "ef_quantity": "Quantity",
+    "ef_yield": "Yield",
+    "ef_halflife": "Half Life",
+    "ef_use": "Use this point",
+    "ef_manual": "Efficiency entered manually",
+    "btn_calculate": "&Calculate",
+    "ef_no_points": "No points. Press Load ROIs.",
+    "ef_calc_result": "Efficiency Point Calculation\n\nEfficiency: {eff}\nTotal error: {err} %",
+    "ef_calc_failed": "Point {n}: {msg}",
+    "ef_missing_activity": "Point {n} ({iso} {e} keV) has no activity. Type the certificate activity.",
+    "id_title": "Edit Efficiency Identification",
+    "id_units": "Energy Units",
+    "id_detector": "Detector ID",
+    "id_geometry": "Geometry ID",
+    "id_required": "Detector ID and Geometry ID are required: samples are quantified only with an "
+                   "efficiency calibration of the same detector and geometry.",
+    "def_title": "Edit Load ROI Defaults",
+    "def_hint": "Check that the activity units match the certificate and that the activity time is "
+                "the certificate (reference) date.",
+    "calc_title": "Calculate Efficiency",
+    "calc_energy": "Energy (keV):",
+    "calc_result": "Efficiency: {eff}   ± {err} %",
+    "calc_outside": "Outside the calibrated range {lo} - {hi} keV: do not quantify with this value.",
+    "calc_none": "No efficiency calibration.",
+}
+
+AR = {
+    "menu_setup": "إ&عداد",
+    "act_quick": "معايرة &طاقة سريعة...",
+    "act_full_energy": "معايرة طاقة &كاملة...",
+    "act_full_res": "معايرة &دقة كاملة...",
+    "act_full_eff": "معايرة ك&فاءة كاملة...",
+    "menu_advanced": "أدوات معايرة متقدمة",
+    "tip_quick": "معايرة الطاقة من 16 نقطة (قناة ← طاقة) كحد أقصى (F2)، كما في Aptec",
+    "tip_full_energy": "معايرة الطاقة من 256 نقطة كحد أقصى مع تقرير المعايرة",
+    "tip_full_res": "معايرة الدقة (FWHM مقابل القناة)",
+    "tip_full_eff": "معايرة الكفاءة مقابل الطاقة من مصدر معايرة (Shift+F2)",
+    "need_spectrum": "افتح طيفاً أولاً.",
+    "quick_title": "معايرة الطاقة",
+    "points_group": "نقاط المعايرة",
+    "col_channel": "القناة",
+    "col_energy": "الطاقة",
+    "col_calc": "المحسوبة",
+    "col_dev": "الفرق",
+    "units": "وحدة الطاقة:",
+    "max_degree": "أعلى درجة:",
+    "encal_time": "وقت المعايرة:",
+    "equation": "المعادلة:",
+    "btn_calib": "&احسب",
+    "btn_clear": "ا&مسح",
+    "btn_ok": "موافق",
+    "btn_cancel": "إلغاء",
+    "btn_marker": "القناة من ال&مؤشر",
+    "tip_marker": "ضع قناة المؤشر (أو مركز منطقة الاهتمام التي تحتويه) في الصف المحدد. "
+                  "انقر على الطيف لتحريك المؤشر.",
+    "quick_hint": "انقر على الطيف لتحريك المؤشر (أو داخل منطقة اهتمام)، ثم انقر خانة القناة: "
+                  "تأخذ قناة المؤشر أو مركز المنطقة. اكتب الطاقة واضغط احسب.",
+    "no_points": "أدخل نقطة واحدة على الأقل (قناة ← طاقة).",
+    "bad_number": "الصف {row}: {text!r} ليس رقماً.",
+    "fit_failed": "تعذّر حساب المعايرة:\n{msg}",
+    "applied": "طُبّقت معايرة الطاقة على الطيف المعروض ({n} نقاط، الدرجة {deg}). "
+               "استخدم ملف ← حفظ باسم لكتابتها في ملف.",
+    "cleared": "أُزيلت معايرة الطاقة من الطيف المعروض.",
+    "none": "لا يوجد",
+    "full_title": "المعايرة الكاملة للكاشف - {name}",
+    "menu_file": "&ملف",
+    "menu_calibration": "م&عايرة",
+    "menu_editpoints": "&تحرير النقاط",
+    "menu_method": "ال&طريقة",
+    "menu_view": "&عرض",
+    "menu_help": "م&ساعدة",
+    "act_save_spc": "حفظ في الطيف",
+    "act_save_spc_as": "حفظ الطيف باسم...",
+    "act_print": "طباعة التقرير",
+    "act_save_report": "حفظ التقرير باسم...",
+    "act_exit": "خروج",
+    "act_energy": "الطاقة",
+    "act_resolution": "الدقة",
+    "act_efficiency": "الكفاءة",
+    "act_calc_eff": "حساب الكفاءة...",
+    "act_delete": "حذف",
+    "act_load_file": "تحميل المعايرة من ملف Aptec...",
+    "act_help": "مساعدة المعايرة",
+    "method_energy": "الطاقة",
+    "method_resolution": "الدقة",
+    "method_efficiency": "الكفاءة",
+    "degree_n": "كثيرة حدود من الدرجة {n}",
+    "degree_default": "كثيرة حدود من الدرجة {n} (افتراضي)",
+    "type_A": "A = ln-ln من الدرجة 5",
+    "type_B": "B = ln-ln من الدرجة 3",
+    "type_C": "C = كثيرة حدود من الدرجة 5",
+    "type_D": "D = كثيرة حدود من الدرجة 3",
+    "type_S": "S = Cubic Spline",
+    "current_type": "المعايرة: {what}",
+    "no_calibration": "لا توجد معايرة {what} بعد. استخدم تحرير النقاط ← {what} (تحميل المناطق) لإدخال النقاط.",
+    "stored_only": "للطيف معادلة {what} دون نقاط معايرة:\n{eq}",
+    "delete_confirm": "حذف نقاط ومعادلة معايرة {what}؟",
+    "saved_spc": "حُفظت المعايرة في الطيف المعروض. استخدم ملف ← حفظ باسم في النافذة الرئيسية "
+                 "لكتابتها في ملف.",
+    "saved_curve": "حُفظت معايرة الكفاءة في مكتبة الكفاءة: {path}",
+    "report_saved": "حُفظ التقرير: {path}",
+    "unsaved": "تغيّرت المعايرة. هل تحفظها في الطيف قبل الإغلاق؟",
+    "help_text": "المعايرة كما في Aptec S_CALIB:\n\n"
+                 "1. اعمل معايرة طاقة سريعة بنقطتين (إعداد ← معايرة طاقة سريعة، F2).\n"
+                 "2. حلّل الطيف (F5) حتى تُعرَّف القمم.\n"
+                 "3. معايرة ← الطاقة (F5)، تحرير النقاط ← الطاقة: تحميل المناطق، راجع النقاط، موافق-ملاءمة.\n"
+                 "4. معايرة ← الدقة (F6): تحميل المناطق، موافق-ملاءمة (اختياري).\n"
+                 "5. معايرة ← الكفاءة (F7)، تحرير النقاط ← الكفاءة: تحرير المعرّف (الكاشف والهندسة)، "
+                 "تحميل المناطق (وحدة النشاط وتاريخه)، اكتب نشاط كل نقطة، احسب، موافق-ملاءمة.\n"
+                 "6. الطريقة تحدد المعادلة؛ انظر إلى الرسم وإلى متوسط الانحراف معاً.\n"
+                 "7. ملف ← حفظ في الطيف يحفظ المعايرة مع الطيف، وتُحفظ معايرة الكفاءة أيضاً في مكتبة "
+                 "الكفاءة لاستخدامها في الحساب الكمي.",
+    "ep_energy_title": "تحرير القناة ← الطاقة",
+    "ep_res_title": "تحرير القناة ← FWHM",
+    "col_fwhm": "FWHM (قنوات)",
+    "col_fwhm_kev": "[keV]",
+    "btn_edit_id": "تحرير ال&معرّف...",
+    "btn_load_rois": "&تحميل المناطق",
+    "btn_add": "إ&ضافة",
+    "btn_delete": "&حذف",
+    "btn_okfit": "موافق-&ملاءمة",
+    "need_analysis": "لا توجد قمم معرَّفة. حلّل الطيف أولاً (F5): تحميل المناطق يأخذ القمم المعرَّفة.",
+    "need_peaks": "لا توجد قمم. حلّل الطيف أولاً (F5) أو ارسم مناطق اهتمام (Ctrl+سحب).",
+    "loaded_n": "حُمّلت {n} نقطة.",
+    "units_title": "وحدة الطاقة",
+    "units_prompt": "وحدة الطاقة (يجب أن تطابق مكتبة النظائر):",
+    "too_many": "{n} نقطة كحد أقصى.",
+    "ef_title": "تحرير الطاقة ← الكفاءة",
+    "ef_point": "النقطة رقم",
+    "ef_of": "من {n}",
+    "ef_energy": "الطاقة",
+    "ef_eff": "الكفاءة",
+    "ef_isotope": "اسم النظير",
+    "ef_activity": "النشاط",
+    "ef_err": "± % (1σ)",
+    "ef_act_units": "وحدة النشاط",
+    "ef_act_time": "تاريخ النشاط",
+    "ef_rate": "معدل العدّ الصافي (cps)",
+    "ef_rate_time": "وقت العدّ",
+    "ef_quantity": "الكمية",
+    "ef_yield": "الشدّة",
+    "ef_halflife": "نصف العمر",
+    "ef_use": "استخدم هذه النقطة",
+    "ef_manual": "الكفاءة مُدخلة يدوياً",
+    "btn_calculate": "ا&حسب",
+    "ef_no_points": "لا توجد نقاط. اضغط تحميل المناطق.",
+    "ef_calc_result": "حساب نقطة الكفاءة\n\nالكفاءة: {eff}\nالخطأ الكلي: {err} %",
+    "ef_calc_failed": "النقطة {n}: {msg}",
+    "ef_missing_activity": "النقطة {n} ({iso} {e} keV) بلا نشاط. اكتب نشاط الشهادة.",
+    "id_title": "تحرير معرّف الكفاءة",
+    "id_units": "وحدة الطاقة",
+    "id_detector": "معرّف الكاشف",
+    "id_geometry": "معرّف الهندسة",
+    "id_required": "معرّف الكاشف ومعرّف الهندسة مطلوبان: العينات لا تُحسب إلا بمعايرة كفاءة لنفس "
+                   "الكاشف والهندسة.",
+    "def_title": "القيم الافتراضية لتحميل المناطق",
+    "def_hint": "تأكد أن وحدة النشاط تطابق الشهادة وأن تاريخ النشاط هو تاريخ الشهادة (المرجع).",
+    "calc_title": "حساب الكفاءة",
+    "calc_energy": "الطاقة (keV):",
+    "calc_result": "الكفاءة: {eff}   ± {err} %",
+    "calc_outside": "خارج المدى المعايَر {lo} - {hi} keV: لا تستخدم هذه القيمة في الحساب الكمي.",
+    "calc_none": "لا توجد معايرة كفاءة.",
+}
+
+PREFIX = "acal_"
+i18n.STRINGS.setdefault("en", {}).update({PREFIX + k: v for k, v in EN.items()})
+i18n.STRINGS.setdefault("ar", {}).update({PREFIX + k: v for k, v in AR.items()})
+
+
+def atr(key: str, **kwargs) -> str:
+    """``tr`` for the keys above (namespaced with ``acal_``)."""
+    return i18n.tr(PREFIX + key, **kwargs)
