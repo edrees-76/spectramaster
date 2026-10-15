@@ -175,6 +175,15 @@ pair; totals FAIL 20 → 13, no other criterion changed.
 - Two existing tests asserted the double-counted behaviour (a 2 % floor of the efficiency
   component). They were corrected, with a comment.
 
+`NaI.eff.cov2` (0.8875, limit 0.89), diagnosed 2026-10-15 with 10× the sample (diagnostic only):
+coverage 0.63 / 0.88 at 1 / 2 sigma is a real shortfall, not a fluctuation. It is not in the curve
+fit: the measured NaI efficiency points themselves are biased relative to their counting
+uncertainty (60 realisations, z = (measured / true − 1) / u_count): Co-57 122 keV +2.2 (sd 0.13),
+Hg-203 279 keV +2.8, Am-241 60 keV −0.9, Sr-85 514 keV sd 4.7; all NaI points sd 2.0 against
+0.91 for HPGe. These are NaI peak-area systematics (continuum shape, Compton structures, blends)
+- the same open problem as `NaI.edge.*` and `NaI.bkg_peak.*`. Not fixed; the Birge factor and the
+LOO model error cannot see energy-specific biases that a smooth curve absorbs.
+
 ## Release E: identification, activity, concentration and MDA
 
 | Increment | Status | Evidence |
