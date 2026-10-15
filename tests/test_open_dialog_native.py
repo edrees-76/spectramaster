@@ -40,7 +40,7 @@ def test_view_menu_option_is_remembered(qapp, tmp_path):
     st = Settings(QSettings(str(tmp_path / "s.ini"), QSettings.IniFormat))
     w = MainWindow(st)
     try:
-        assert not w.act_open_preview.isChecked() and w.act_open_preview in w.menu_view.actions()
+        assert not w.act_open_preview.isChecked() and w.act_open_preview in w.menu_v_more.actions()
         w.act_open_preview.setChecked(True)
         assert st.get_bool("ui/open_dialog_preview", False)
     finally:

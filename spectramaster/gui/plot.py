@@ -8,13 +8,18 @@ Interaction (see ``SHORTCUTS`` in i18n for the user-facing list)
   * Ctrl + click            : Aptec quick paint -- left side, then right side of a new ROI
                               (in Paint mode: Set)
   * left click              : move the channel marker (``markerMoved``)
+  * double-click            : index the next ROI to the right (Shift: to the left); full
+                              spectrum when there are no ROIs
+  * Left / Right, Home / End : move the channel marker / to the window edge (Aptec)
+  * PgDn / PgUp             : shift the spectrum window (Shift: all the way)
+  * NumPad 5, +, -          : zoom 64 / 16 / all channels, expand, contract around the marker
   * Shift + left drag, right/middle drag : pan (Y too when Y is zoomed)
   * wheel                   : zoom X around the cursor
   * Ctrl + wheel / Up, Down : zoom Y
-  * Shift + wheel / Left, Right : pan
+  * Shift + wheel           : pan
   * + / -                   : zoom in / out
   * Backspace, Alt+Left / Alt+Right : zoom history back / forward
-  * Home, double-click      : full spectrum
+  * Esc, Ctrl+0             : full spectrum
   * right click             : context menu (``contextRequested``)
 
 Large spectra are decimated to one min/max column per pixel (numpy), so
@@ -34,6 +39,7 @@ from PySide6.QtGui import (QColor, QFont, QFontMetrics, QImage, QLinearGradient,
 from PySide6.QtWidgets import QApplication, QSizePolicy, QWidget
 
 from ..model import Spectrum
+from . import aptec_view_strings  # noqa: F401  (aview_ strings of the ROI information box)
 from .i18n import tr
 from ..analysis.aptec_roi import RoiProperties
 from .roi import RoiStats, compute_rois_aptec
@@ -53,6 +59,46 @@ C_ROI = QColor(214, 69, 65)
 C_LABEL = QColor("#7a2e8e")
 C_HILITE = QColor("#c2185b")
 C_PAINT = QColor(46, 125, 50)          # ROI being painted / edited (Aptec Paint)
+C_FIT = QColor("#2e7d32")              # fitted peaks of the analysis (Aptec Show Fitted ROIs)
+C_WINDOW = QColor(47, 109, 179, 45)    # expanded region shown on the split full-spectrum view
+
+# View > Color: the colors a user can change, with the defaults (Aptec View Color...)
+COLOR_ROLES = ("line", "fill", "bg", "grid", "text", "roi", "marker", "fit")
+DEFAULT_COLORS = {"line": "#1f5f99", "fill": "#3680c4", "bg": "#ffffff", "grid": "#eef1f4",
+                  "text": "#3c4650", "roi": "#d64541", "marker": "#c62828", "fit": "#2e7d32"}
+BW_COLORS = {"line": "#000000", "fill": "#9a9a9a", "bg": "#ffffff", "grid": "#e0e0e0",
+             "text": "#000000", "roi": "#4d4d4d", "marker": "#000000", "fit": "#000000"}
+
+
+def current_colors() -> dict:
+    return {"line": C_LINE.name(), "fill": QColor(C_FILL_TOP.red(), C_FILL_TOP.green(), C_FILL_TOP.blue()).name(),
+            "bg": C_BG.name(), "grid": C_GRID.name(), "text": C_AXIS_TEXT.name(), "roi": C_ROI.name(),
+            "marker": C_MARKER.name(), "fit": C_FIT.name()}
+
+
+def _set(color: QColor, value: str) -> None:
+    q = QColor(value)
+    color.setRgb(q.red(), q.green(), q.blue(), q.alpha())
+
+
+def apply_colors(colors: dict) -> None:
+    """Change the display colors in place (every plot, overview and printed graph)."""
+    c = dict(DEFAULT_COLORS)
+    c.update({k: v for k, v in (colors or {}).items() if k in DEFAULT_COLORS and QColor(v).isValid()})
+    _set(C_LINE, c["line"])
+    f = QColor(c["fill"])
+    C_FILL_TOP.setRgb(f.red(), f.green(), f.blue(), 150)
+    C_FILL_BOTTOM.setRgb(f.red(), f.green(), f.blue(), 40)
+    _set(C_BG, c["bg"])
+    _set(C_GRID, c["grid"])
+    _set(C_AXIS_TEXT, c["text"])
+    _set(C_ROI, c["roi"])
+    _set(C_MARKER, c["marker"])
+    _set(C_FIT, c["fit"])
+
+
+FITTED_MODES = ("show", "fill", "hide")       # Aptec K cycles Show -> Fill -> Hide
+ROI_DATA_MODES = ("stats", "background", "off")   # Aptec D: type of ROI information shown
 OVERLAY_COLORS = ["#d9822b", "#2e9d4f", "#c2185b", "#6a4fb3", "#00838f", "#8d6e63", "#5d6d7e"]
 
 Y_LINEAR, Y_LOG, Y_SQRT = "linear", "log", "sqrt"
@@ -187,6 +233,18 @@ class SpectrumPlot(QWidget):
         self.paint: Optional[list[int]] = None   # [left, right] of the ROI being painted / edited
         self.paint_edit: Optional[Roi] = None    # the ROI being edited (None: painting a new one)
         self._paint_drag = False
+        # Aptec View options
+        self.auto_min = False                # Auto Zero Vert: autorange the minimum too
+        self.fill_spectrum = True            # Fill Spc (F)
+        self.plot_all_points = True          # Plot All Points (L)
+        self.show_grid = True                # Grid (G)
+        self.connect_points = False          # Connect Points (N)
+        self.fill_rois = True                # Fill Normal ROIs (Shift+F)
+        self.show_rois = True                # ROI Display (Shift+D)
+        self.fitted_mode = "show"            # Show Fitted ROIs (K): show / fill / hide
+        self.roi_data = "stats"              # ROI Data (D): stats / background / off
+        self.fwhm_percent = False            # FWHM Percent (%)
+        self.window_band: Optional[tuple[float, float]] = None   # split view: the expanded region
         self.peaks: list = []                # analysis Peak objects (labels)
         self.marker: Optional[int] = None    # channel marker (stored-array index), Aptec style
         self.show_marker = True
@@ -473,6 +531,86 @@ class SpectrumPlot(QWidget):
         hw = half_channels if half_channels is not None else \
             (fwhm_mult or 5.0) * self.default_fwhm_channels(pos)
         self.zoom_to_pos(pos, hw)
+
+    # ------------------------------------------- Aptec View > Horizontal / Vertical Scale
+    def _marker_or_center(self) -> int:
+        if self.marker is not None:
+            return self.marker
+        return int((self.x0 + self.x1) / 2)
+
+    def _view_on(self, center: float, width: float) -> None:
+        n = float(len(self._y))
+        width = min(max(width, MIN_SPAN), n)
+        x0 = min(max(center - width / 2, 0.0), n - width)
+        self.set_view(x0, x0 + width, None)
+
+    def marker_step(self, d: int) -> None:
+        """Marker Left / Right: one channel; the window scrolls at its edge."""
+        if not len(self._y):
+            return
+        m = min(max(self._marker_or_center() + d, 0), len(self._y) - 1)
+        if m < self.x0 or m + 1 > self.x1:
+            w = self.x1 - self.x0
+            x0 = m - w / 2
+            self.set_view(x0, x0 + w, self._ylim, record=False)
+        self.set_marker(m)
+
+    def marker_to_edge(self, right: bool) -> None:
+        """Marker to Left / Right Edge (Home / End)."""
+        if len(self._y):
+            self.set_marker(int(math.ceil(self.x1) - 1) if right else int(math.floor(self.x0)))
+
+    def marker_far(self, right: bool) -> None:
+        """Marker to Far Left / Right (Shift+Home / End): window at the spectrum end."""
+        n = len(self._y)
+        if not n:
+            return
+        w = self.x1 - self.x0
+        self.set_view(n - w if right else 0.0, n if right else w, self._ylim)
+        self.set_marker(n - 1 if right else 0)
+
+    def shift_window(self, d: int, full: bool = False) -> None:
+        """Spectrum Left / Right (PgDn / PgUp): half a window; ``full``: to the spectrum end."""
+        n = float(len(self._y))
+        if not n:
+            return
+        w = self.x1 - self.x0
+        if full:
+            x0 = n - w if d > 0 else 0.0
+        else:
+            x0 = min(max(self.x0 + d * w / 2, 0.0), n - w)
+        self.set_view(x0, x0 + w, self._ylim)
+
+    def expand(self, factor: float) -> None:
+        """Expand (factor 0.5) / Contract (2) the window around the channel marker."""
+        if len(self._y):
+            self._view_on(self._marker_or_center() + 0.5, (self.x1 - self.x0) * factor)
+
+    def max_expand(self) -> None:
+        if len(self._y):
+            self._view_on(self._marker_or_center() + 0.5, 16)
+
+    def zoom_cycle(self) -> None:
+        """Zoom (NumPad 5): 64 channels, 16 channels, the whole spectrum, around the marker."""
+        n = len(self._y)
+        if not n:
+            return
+        w = self.x1 - self.x0
+        if w > 64.5 or w >= n:
+            self._view_on(self._marker_or_center() + 0.5, 64)
+        elif w > 16.5:
+            self._view_on(self._marker_or_center() + 0.5, 16)
+        else:
+            self.reset_view()
+
+    def shift_base(self, d: int) -> None:
+        """Raise Base (d = 1, Shift+Up) / Lower Base (d = -1): move the minimum of the vertical
+        scale by a tenth of the range (manual scale, as Aptec)."""
+        ybot, ytop = self.y_range()
+        step = (ytop - ybot) * 0.1
+        nb = ybot - d * step
+        if nb < ytop - step / 10:
+            self.set_view(self.x0, self.x1, (nb, ytop), record=False)
 
     # ================================================================= ROIs
     def add_roi(self, left: int, right: int) -> Optional[Roi]:
@@ -946,6 +1084,16 @@ class SpectrumPlot(QWidget):
             if len(pos):
                 vpos = min(vpos, float(pos.min()))
         head = 1.35 if (self.show_labels and self.peaks) else 1.08
+        vmin = self._view_min(rect) if getattr(self, "auto_min", False) else None
+        if vmin is not None and vmin > 0 and vmax > vmin:
+            if self.y_mode == Y_LOG:
+                ybot = math.log10(vmin) - 0.05 * (math.log10(vmax) - math.log10(vmin))
+                top = math.log10(vmax)
+                return ybot, top + (top - ybot) * (head - 1.0) + 0.02
+            if self.y_mode == Y_SQRT:
+                a, b = math.sqrt(vmin), math.sqrt(vmax)
+                return max(0.0, a - 0.05 * (b - a)), b + (b - a) * (head - 1.0)
+            return max(0.0, vmin - 0.05 * (vmax - vmin)), vmax + (vmax - vmin) * (head - 1.0)
         if self.y_mode == Y_LOG:
             ybot = 0.0 if vpos >= 1 or vpos == math.inf else max(-3.0, math.floor(math.log10(vpos)))
             top = math.log10(vmax) if vmax > 0 else 0.0
@@ -955,6 +1103,13 @@ class SpectrumPlot(QWidget):
         if self.y_mode == Y_SQRT:
             return 0.0, (math.sqrt(vmax) * (1.04 if head < 1.2 else 1.18)) if vmax > 0 else 1.0
         return 0.0, (vmax * head if vmax > 0 else 1.0)
+
+    def _view_min(self, rect: QRectF) -> Optional[float]:
+        """Lowest count of the primary spectrum in the view (Aptec Auto Zero Vert)."""
+        cols = self._columns("primary", self._y, self._edges, rect)
+        if cols is None or not len(cols.vmin):
+            return None
+        return float(cols.vmin.min())
 
     def y_range(self) -> tuple[float, float]:
         return self._y_range_for(self.plot_rect())
@@ -1030,18 +1185,29 @@ class SpectrumPlot(QWidget):
         cols = self._columns(key, y, edges, rect)
         if cols is not None and len(cols.vmax):
             prim = cols
+            band = getattr(self, "window_band", None)
+            if band is not None:
+                bl, br = float(self._x_to_px(band[0], rect)), float(self._x_to_px(band[1], rect))
+                p.fillRect(QRectF(bl, rect.top(), max(br - bl, 2.0), rect.height()), C_WINDOW)
             poly = self._step_polygon(cols, ypx, base)
-            grad = QLinearGradient(0, rect.top(), 0, rect.bottom())
-            grad.setColorAt(0, C_FILL_TOP)
-            grad.setColorAt(1, C_FILL_BOTTOM)
-            p.setPen(Qt.NoPen)
-            p.setBrush(grad)
-            p.drawPolygon(poly)
+            if getattr(self, "fill_spectrum", True):
+                grad = QLinearGradient(0, rect.top(), 0, rect.bottom())
+                grad.setColorAt(0, C_FILL_TOP)
+                grad.setColorAt(1, C_FILL_BOTTOM)
+                p.setPen(Qt.NoPen)
+                p.setBrush(grad)
+                p.drawPolygon(poly)
             self._paint_rois(p, rect, cols, ypx, fm)
+            self._paint_fits(p, rect, ypx)
             p.setBrush(Qt.NoBrush)
             p.setPen(QPen(C_LINE, 1))
-            p.drawPolyline(poly)
-            if cols.per_pixel:
+            if getattr(self, "connect_points", False) and not cols.per_pixel:
+                ys = ypx(cols.vmax).tolist()
+                xs = ((cols.xl + cols.xr) / 2).tolist()
+                p.drawPolyline(QPolygonF([QPointF(x, y) for x, y in zip(xs, ys)]))
+            else:
+                p.drawPolyline(poly)
+            if cols.per_pixel and getattr(self, "plot_all_points", True):
                 self._paint_minmax(p, cols, ypx)
         # overlays (lines only)
         for key, y, edges, color, ov in series[1:]:
@@ -1088,6 +1254,8 @@ class SpectrumPlot(QWidget):
             mx = float(self._x_to_px(self.marker + 0.5, rect))
             p.setPen(QPen(C_MARKER, 1))
             p.drawLine(QPointF(mx, rect.top()), QPointF(mx, rect.bottom()))
+        if interactive and getattr(self, "roi_data", "off") != "off":
+            self._paint_roi_box(p, rect, fm)
         if interactive and self._hover_idx is not None and self.x0 - 1 <= self._hover_idx < self.x1:
             cx = float(self._x_to_px(self._hover_idx + 0.5, rect))
             p.setPen(QPen(C_CURSOR, 1, Qt.DashLine))
@@ -1117,7 +1285,7 @@ class SpectrumPlot(QWidget):
         p.drawLines([QLineF(x, a, x, b) for x, a, b in zip(xs, ya, yb)])
 
     def _paint_rois(self, p, rect, cols: _Cols, ypx, fm) -> None:
-        if not self.rois:
+        if not self.rois or not getattr(self, "show_rois", True):
             return
         for k, roi in enumerate(self.rois):
             st = roi.stats
@@ -1145,11 +1313,12 @@ class SpectrumPlot(QWidget):
             for a, b, bb in zip(reversed(xl.tolist()), reversed(xr.tolist()), reversed(bot.tolist())):
                 pts.append(QPointF(b, bb))
                 pts.append(QPointF(a, bb))
-            fill = QColor(C_ROI)
-            fill.setAlpha(110)
-            p.setPen(Qt.NoPen)
-            p.setBrush(fill)
-            p.drawPolygon(QPolygonF(pts))
+            if getattr(self, "fill_rois", True):
+                fill = QColor(C_ROI)
+                fill.setAlpha(110)
+                p.setPen(Qt.NoPen)
+                p.setBrush(fill)
+                p.drawPolygon(QPolygonF(pts))
             p.setBrush(Qt.NoBrush)
             p.setPen(QPen(C_ROI.darker(120), 1, Qt.DashLine))
             bl = [QPointF(float(x), float(y)) for x, y in zip(((xl + xr) / 2).tolist(), bot.tolist())]
@@ -1169,6 +1338,114 @@ class SpectrumPlot(QWidget):
             p.drawRoundedRect(box, 3, 3)
             p.setBrush(Qt.NoBrush)
             p.drawText(box, Qt.AlignCenter, tag)
+
+    def _paint_fits(self, p, rect, ypx) -> None:
+        """Aptec Show Fitted ROIs: the analysis' fitted peaks (centroid, FWHM, net area) drawn
+        as Gaussians over the average background of each peak region."""
+        mode = getattr(self, "fitted_mode", "hide")
+        if mode == "hide" or not self.peaks or not len(self._y):
+            return
+        first = self._spec.first_channel if self._spec else 0
+        fill = QColor(C_FIT)
+        fill.setAlpha(70)
+        for pk in self.peaks:
+            fwhm = getattr(pk, "fwhm", None)
+            if not fwhm or fwhm <= 0 or not getattr(pk, "net_area", None):
+                continue
+            lo, hi = int(getattr(pk, "left", 0)), int(getattr(pk, "right", 0))
+            if hi < lo or hi < self.x0 - 1 or lo > self.x1:
+                continue
+            sigma = fwhm / 2.3548
+            cen = pk.centroid - first + 0.5
+            width = hi - lo + 1
+            base = float(pk.background) / width if getattr(pk, "background", None) else 0.0
+            x = np.linspace(lo, hi + 1, max(24, int(width * 4)))
+            yv = base + pk.net_area / (sigma * math.sqrt(2 * math.pi)) * np.exp(-0.5 * ((x - cen) / sigma) ** 2)
+            xs = self._x_to_px(x, rect)
+            ys = ypx(yv)
+            pts = [QPointF(float(a), float(b)) for a, b in zip(xs.tolist(), ys.tolist())]
+            if mode == "fill":
+                yb = ypx(np.array([base]))[0]
+                poly = [QPointF(float(xs[0]), float(yb))] + pts + [QPointF(float(xs[-1]), float(yb))]
+                p.setPen(Qt.NoPen)
+                p.setBrush(fill)
+                p.drawPolygon(QPolygonF(poly))
+                p.setBrush(Qt.NoBrush)
+            p.setPen(QPen(C_FIT, 1.3))
+            p.drawPolyline(QPolygonF(pts))
+
+    def roi_box_lines(self) -> list[str]:
+        """Text of the Aptec ROI information box (indexed ROI, else the ROI at the marker)."""
+        i = self.roi_index if hasattr(self, "indexed_roi") else -1
+        if i < 0 and self.marker is not None:
+            i = self.roi_at(self.marker + 0.5)
+        if i < 0 or i >= len(self.rois) or self.rois[i].stats is None:
+            return []
+        st = self.rois[i].stats
+        t = self._tr
+        if self.roi_data == "background":
+            out = [t("aview_box_bkg_title", n=i + 1)]
+            f = st.first_channel
+            bl, bh = getattr(st, "bl", None), getattr(st, "bh", None)
+            out.append(f"BL {f + bl if bl is not None else '-'}   RL {st.start_channel}   "
+                       f"RH {st.end_channel}   BH {f + bh if bh is not None else '-'}")
+            coeffs = list(getattr(st, "coeffs", ()) or ())
+            # Aptec's B0..B5 are in channel numbers; ours are in stored-array indices
+            if coeffs and f:
+                c = np.polynomial.polynomial.Polynomial(coeffs)
+                coeffs = list(c(np.polynomial.polynomial.Polynomial([-f, 1.0])).coef)
+            coeffs = (coeffs + [0.0] * 6)[:6]
+            out += [f"B{k} = {v:.6g}" for k, v in enumerate(coeffs)]
+            return out
+        e = st.centroid_energy
+
+        def width(ch, kev):
+            if ch is None:
+                return "-"
+            if self.fwhm_percent and kev is not None and e:
+                return f"{kev / e * 100:.2f} %"
+            if self.energy_axis and kev is not None:
+                return f"{kev:.2f} keV"
+            return f"{ch:.2f}"
+        err = getattr(st, "err_pct", None)
+        k = float(self.roi_props.error_sigma) if hasattr(self, "roi_props") else 1.0
+        cen = "-" if st.centroid is None else (
+            f"{e:.2f} keV" if self.energy_axis and e is not None else f"{st.centroid:.2f}")
+        def row(label, value):        # the value reads left to right in Arabic too
+            return f"{label} = \u2066{value}\u2069"
+        out = [t("aview_box_roi", n=i + 1),
+               row(t("aview_box_gross"), f"{st.gross:.0f}"),
+               row(t("aview_box_bkgnd"), f"{st.background:.0f}"),
+               row(t("aview_box_net"), f"{st.net:.0f}"),
+               row(t("aview_box_err"), "-" if err is None else f"{err * k:.2f} %"),
+               row(t("aview_box_cntr"), cen),
+               row("FWHM", width(st.fwhm, st.fwhm_kev)),
+               row("FWTM", width(getattr(st, "fwtm", None), getattr(st, "fwtm_kev", None)))]
+        if st.count_rate is not None and abs(st.count_rate) >= 0.001:   # Aptec blanks < 0.001
+            out.append(row(t("aview_box_netcps"), f"{st.count_rate:.2f}"))
+        if getattr(st, "flags", ""):
+            out.append(st.flags)
+        return out
+
+    def _paint_roi_box(self, p, rect, fm) -> None:
+        lines = self.roi_box_lines()
+        if not lines:
+            return
+        w = max(fm.horizontalAdvance(s) for s in lines) + 16
+        h = fm.height() * len(lines) + 10
+        box = QRectF(rect.right() - w - 8, rect.top() + 8, w, h)
+        p.setPen(QPen(C_FRAME, 1))
+        p.setBrush(QColor(255, 255, 255, 230))
+        p.drawRoundedRect(box, 4, 4)
+        p.setPen(C_AXIS_TEXT)
+        from . import i18n
+        rtl = i18n.is_rtl(getattr(self, "lang", None) or i18n.language())
+        p.save()
+        p.setLayoutDirection(Qt.RightToLeft if rtl else Qt.LeftToRight)
+        for k, s in enumerate(lines):
+            p.drawText(QRectF(box.left() + 8, box.top() + 5 + k * fm.height(), w - 16, fm.height()),
+                       Qt.AlignAbsolute | (Qt.AlignRight if rtl else Qt.AlignLeft) | Qt.AlignVCenter, s)
+        p.restore()
 
     def _px_to_x_arr(self, px, rect):
         return self.x0 + (np.asarray(px) - rect.left()) / rect.width() * (self.x1 - self.x0)
@@ -1330,7 +1607,7 @@ class SpectrumPlot(QWidget):
             py = rect.bottom() - (y - ybot) / (ytop - ybot) * rect.height()
             if py < rect.top() - 0.5 or py > rect.bottom() + 0.5:
                 continue
-            if major:
+            if major and getattr(self, "show_grid", True):
                 p.setPen(QPen(C_GRID, 1))
                 p.drawLine(QPointF(rect.left() + 1, py), QPointF(rect.right() - 1, py))
             p.setPen(QPen(C_FRAME, 1))
@@ -1381,8 +1658,9 @@ class SpectrumPlot(QWidget):
             px = float(self._x_to_px(pos, rect))
             if px < rect.left() - 0.5 or px > rect.right() + 0.5:
                 continue
-            p.setPen(QPen(C_GRID, 1))
-            p.drawLine(QPointF(px, rect.top() + 1), QPointF(px, rect.bottom() - 1))
+            if getattr(self, "show_grid", True):
+                p.setPen(QPen(C_GRID, 1))
+                p.drawLine(QPointF(px, rect.top() + 1), QPointF(px, rect.bottom() - 1))
             p.setPen(QPen(C_FRAME, 1))
             p.drawLine(QPointF(px, rect.bottom()), QPointF(px, rect.bottom() + 5))
             p.setPen(C_AXIS_TEXT)
@@ -1544,8 +1822,19 @@ class SpectrumPlot(QWidget):
         self.update()
 
     def mouseDoubleClickEvent(self, ev):
-        if ev.button() == Qt.LeftButton:
+        if ev.button() != Qt.LeftButton:
+            return
+        if not self.rois:
             self.reset_view()
+            return
+        # Aptec: double-click to the left of an ROI indexes it (Shift: the ROI to the left)
+        pos = self._px_to_x(ev.position().x(), self.plot_rect())
+        if ev.modifiers() & Qt.ShiftModifier:
+            left = [k for k, r in enumerate(self.rois) if r.right + 1 <= pos]
+            self.index_roi(left[-1] if left else len(self.rois) - 1)
+        else:
+            k = next((k for k, r in enumerate(self.rois) if r.left >= pos or r.left <= pos < r.right + 1), 0)
+            self.index_roi(k)
 
     def wheelEvent(self, ev):
         if not len(self._y):
@@ -1581,17 +1870,31 @@ class SpectrumPlot(QWidget):
             self.paint_cancel()
         elif self.paint is not None and k in (Qt.Key_Return, Qt.Key_Enter):
             self.paint_set()
-        elif k in (Qt.Key_Home, Qt.Key_Escape):
+        elif k == Qt.Key_Escape:
             self.reset_view()
         elif k == Qt.Key_Backspace or (k == Qt.Key_Left and mods & Qt.AltModifier):
             self.back()
         elif k == Qt.Key_Right and mods & Qt.AltModifier:
             self.forward()
-        elif k in (Qt.Key_Left, Qt.Key_Right):
-            frac = 0.5 if mods & Qt.ShiftModifier else 0.125
-            self.pan_x(-frac if k == Qt.Key_Left else frac)
-        elif k in (Qt.Key_Up, Qt.Key_Down):
+        elif k in (Qt.Key_Left, Qt.Key_Right):          # Aptec: Marker Left / Right
+            self.marker_step(-1 if k == Qt.Key_Left else 1)
+        elif k in (Qt.Key_Home, Qt.Key_End):            # Marker to edge; Shift: far left / right
+            if mods & Qt.ShiftModifier:
+                self.marker_far(k == Qt.Key_End)
+            else:
+                self.marker_to_edge(k == Qt.Key_End)
+        elif k in (Qt.Key_PageUp, Qt.Key_PageDown):     # Spectrum Right / Left
+            self.shift_window(1 if k == Qt.Key_PageUp else -1, bool(mods & Qt.ShiftModifier))
+        elif k in (Qt.Key_Up, Qt.Key_Down) and mods & Qt.ShiftModifier:
+            self.shift_base(1 if k == Qt.Key_Up else -1)
+        elif k in (Qt.Key_Up, Qt.Key_Down):             # Raise / Lower Spectrum
             self.zoom_y(0.8 if k == Qt.Key_Up else 1.25)
+        elif k == Qt.Key_5 and mods & Qt.KeypadModifier:
+            self.zoom_cycle()
+        elif k == Qt.Key_Plus and mods & Qt.KeypadModifier:
+            self.max_expand() if mods & Qt.ShiftModifier else self.expand(0.5)
+        elif k == Qt.Key_Minus and mods & Qt.KeypadModifier:
+            self.reset_view() if mods & Qt.ShiftModifier else self.expand(2.0)
         elif k in (Qt.Key_Plus, Qt.Key_Equal):
             self.zoom_x(0.5, self._hover_idx + 0.5 if self._hover_idx is not None else None)
         elif k in (Qt.Key_Minus, Qt.Key_Underscore):
@@ -1654,7 +1957,7 @@ class PlotRenderer:
                "render_plot", "_paint_empty", "_step_polygon", "_paint_data", "_paint_minmax",
                "_paint_rois", "_px_to_x_arr", "_top_at", "_paint_labels", "_paint_highlight",
                "_paint_legend", "_legend_name", "_paint_y_axis", "_paint_x_axis", "_is_box_drag",
-               "readout")
+               "readout", "_paint_fits", "_view_min")
 
     def __init__(self, spec: Optional[Spectrum] = None, font: Optional[QFont] = None,
                  lang: Optional[str] = None):
@@ -1737,6 +2040,9 @@ class PlotRenderer:
         r.normalize_overlays = plot.normalize_overlays
         r.peaks = list(plot.peaks)
         r.rois = [Roi(x.left, x.right, x.stats) for x in plot.rois]
+        for name in ("auto_min", "fill_spectrum", "plot_all_points", "show_grid", "connect_points",
+                     "fill_rois", "show_rois", "fitted_mode"):
+            setattr(r, name, getattr(plot, name))
         for ov in plot.overlays:
             r.add_overlay(ov.spec, ov.label, ov.color)
         r.set_view(plot.x0, plot.x1, plot._ylim)

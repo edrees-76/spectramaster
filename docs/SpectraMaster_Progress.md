@@ -392,5 +392,40 @@ its true variance is larger (B·n/(2X) for an end-point-average line); the earli
 formula included this. The ROI list follows Aptec, as requested; the analysis engine (peak
 search, fits, activities) is unchanged, so no pre-registered benchmark criterion is affected.
 
-Remaining phases: View menu, spectrum operations, Peak Search / Identify / Background Subtract /
-Quantify, MultiFit.
+## Aptec-style workflow, phase 3: View menu (2026-10-15)
+
+Branch `claude/ux-aptec-view`. The View menu now follows Aptec's order and sits after *Analyze*
+(`spectramaster/gui/aptec_view_ui.py`):
+
+- **Preferences** (all display options in one dialog), **Color** (spectrum, fill, background,
+  grid, axis text, ROIs, marker, fitted peaks; *Default Colors* and *Black & White* for printing;
+  the colors also apply to printed and exported graphs), **QA Control Bar** (Ctrl+8: the buttons
+  of the main tool bar), **Default Position**, **Save Settings on Exit**.
+- **Vertical Scale**: Auto Vert (A), Auto Zero Vert (Z: the minimum follows the lowest counts in
+  view), Next / Prev Scale Type (S / Shift+S), linear / log / sqrt, Raise / Lower Spectrum (Up /
+  Down), Raise / Lower Base (Shift+Up / Down).
+- **Horizontal Scale**: Channel / Energy X Scale (C / E), Zoom (NumPad 5: 64, 16, all channels
+  around the marker), Expand / Contract (NumPad + / -), Max Expand / Contract (Shift), Marker
+  Left / Right (arrows; the window scrolls at its edge), Marker to Left / Right Edge (Home / End),
+  Marker to Far Left / Right (Shift+Home / End), Spectrum Left / Right (PgDn / PgUp, Shift: all
+  the way). These keys act when the plot has the focus.
+- **Horizontal / Vertical Split** (H / V): the whole spectrum below or beside the expanded region,
+  which is shaded on it; a click there moves the expanded region.
+- Next / Prev ROI (Space / Shift+Space), Plot All Points (L), Fill Spc (F), Grid (G), Show Fitted
+  ROIs (K: Show, Fill, Hide), Fill Normal ROIs (Shift+F), ROI Data (D: an Aptec-style ROI
+  information box with Gross, Bkgnd, Net, err, Cntr, FWHM, FWTM, Net cps, or the background
+  parameters BL, RL, RH, BH, B0-B5 in channel numbers; or off), ROI Display (Shift+D), Show ROI
+  Labels (J), Show Channel Marker (Shift+J), FWHM Percent (%), Connect Points (N).
+- Double-click indexes the next ROI (Shift: the previous one), as in Aptec; without ROIs it
+  still shows the whole spectrum. Esc and Ctrl+0 show the whole spectrum (Home now moves the
+  marker, as in Aptec).
+- SpectraMaster's own view commands (zoom history, go to, overlays, panels, overview strip) are
+  under *View > More View Options*; the language stays at the end of the View menu.
+
+**Note.** *Show Fitted ROIs* draws each peak of the analysis as a Gaussian from its centroid,
+FWHM and net area over the average background of its region; it is a display aid, not the
+fitted continuum (Fit Inspection shows the exact fit). Aptec's MultiFit (phase 6) will replace
+it with its own fitted ROIs. The analysis engine is unchanged.
+
+Remaining phases: spectrum operations, Peak Search / Identify / Background Subtract / Quantify,
+MultiFit.
