@@ -191,16 +191,21 @@ def chrome() -> str:
 
 
 def print_pdf(html_path: Path, pdf_path: Path) -> None:
+    # Chrome does not always overwrite an existing PDF (the old file was then read back as the
+    # new one): print to a fresh file and replace
     prof = Path(tempfile.mkdtemp(prefix="sm_chrome_"))
+    new = pdf_path.with_name(pdf_path.stem + ".printing.pdf")
+    new.unlink(missing_ok=True)
     try:
         cmd = [chrome(), "--headless=new", "--disable-gpu", "--no-pdf-header-footer", "--no-first-run",
                "--allow-file-access-from-files", f"--user-data-dir={prof}",
-               f"--print-to-pdf={pdf_path}", html_path.resolve().as_uri()]
+               f"--print-to-pdf={new}", html_path.resolve().as_uri()]
         subprocess.run(cmd, check=True, capture_output=True, timeout=300)
     finally:
         shutil.rmtree(prof, ignore_errors=True)
-    if not pdf_path.is_file():
+    if not new.is_file():
         raise SystemExit(f"PDF not written: {pdf_path}")
+    new.replace(pdf_path)
 
 
 def marker_pages(pdf_path: Path) -> dict[str, int]:

@@ -32,9 +32,20 @@ from spectramaster.gui.settings import Settings  # noqa: E402
 REF = Path(r"D:\الاسس و المفاهيم العامة فى استخدام برامج الطيف الجامى\اطياف مرجعية"
            r"\4- أطياف المختبر (Aptec)\الملفات الأصلية S0")
 EU, CHERN, BKG, QCY = (REF / n for n in ("Eu-152.S0", "CHERN.S0", "CHERNBKG.S0", "QCY48CAL.S0"))
-ARCHIVE_DB = ROOT / "scratch_search" / "archive.sqlite"
+def _data(rel: str) -> Path:
+    """A scratch data folder of the repository (a worktree falls back to the main checkout)."""
+    p = ROOT / rel
+    if not p.exists():
+        main = Path(r"D:\DSpectraMaster") / rel
+        if main.exists():
+            return main
+    return p
+
+
+ARCHIVE_DB = _data("scratch_search/archive.sqlite")
 ARCHIVE_ROOT = r"D:\مختبر التحاليل و القياسات الاشعاعية\04_القياسات_والبيانات_الفنية"
-QC_STORE = ROOT / "scratch_qc" / "store"
+QC_STORE = _data("scratch_qc/store")
+APTEC_LIB = Path(r"C:\APTEC\APTEC\isotope.lib")
 IMG = ROOT / "docs" / "images"
 
 app = create_app(["manual"])
@@ -140,7 +151,8 @@ def shoot(lang: str) -> None:
     save(w, lang, "main")
 
     # menus
-    for name, menu in (("menu_file", w.menu_file), ("menu_view", w.menu_view),
+    for name, menu in (("menu_file", w.menu_file), ("menu_edit", w.menu_edit), ("menu_display", w.menu_display),
+                       ("menu_setup", w.menu_setup), ("menu_roi", w.menu_roi), ("menu_view", w.menu_view),
                        ("menu_analyze", w.menu_analyze), ("menu_help", w.menu_help)):
         menu_shot(w, menu, lang, name)
     from PySide6.QtWidgets import QMenu
@@ -267,6 +279,12 @@ def shoot(lang: str) -> None:
     save(ad, lang, "activity")
     ad.close()
 
+    shoot_aptec(w, lang, st)
+    if not (TMP / "archive.sqlite").exists() or not QC_STORE.exists():
+        print("   archive / QC data not found: those screenshots are kept as they are")
+        w.close()
+        return
+
     # ---------------------------------------------------------------- archive search
     from spectramaster.gui.archive_search import ArchiveSearchWindow
     aw = ArchiveSearchWindow(w, st)
@@ -317,6 +335,93 @@ def shoot(lang: str) -> None:
     w.close()
 
 
+def shoot_aptec(w, lang: str, st) -> None:
+    """The Aptec-style menus and windows (Setup, ROI, Analyze, MultiFit, spectrum operations)."""
+    from spectramaster.analysis.aptec_analyze import IdentifySetup
+    from spectramaster.gui import aptec_analyze_ui as aau
+    from spectramaster.gui import aptec_calibration_ui as acu
+    from spectramaster.gui import aptec_edit_ui as aeu
+    from spectramaster.gui import aptec_view_ui as avu
+    from spectramaster.gui import plot as plotmod
+    from spectramaster.gui.aptec_roi_ui import RoiPropertiesDialog
+    w.plot.clear_rois()
+    w.plot.clear_overlays()
+    menu_shot(w, w.menu_a_setup, lang, "menu_analyze_setup")
+    ctl = w.aptec_analysis
+
+    # P, I, Q on a soil sample with Aptec's own library
+    w.load_file(CHERN)
+    w.set_y_mode("log")
+    ctl.ident = IdentifySetup(library=str(APTEC_LIB) if APTEC_LIB.exists() else "", fraction_limit=40.0)
+    ctl.run_peak()
+    ctl.run_identify()
+    ctl.run_quant()
+    w.roi_dock.show()
+    w.roi_dock.raise_()
+    w.plot.reset_view()
+    pump()
+    save(w, lang, "aptec_analysis")
+    save(w.roi_dock, lang, "aptec_roi_list")
+
+    # MultiFit: the Eu-152 doublet 1085.8 / 1089.7 keV
+    w.load_file(EU)
+    w.set_y_mode("linear")
+    w.plot.clear_rois()
+    pos = w.plot.pos_of_energy(1087.8)
+    if pos is not None:
+        w.plot.add_roi(int(pos - 13), int(pos + 13))
+        ctl.run_multifit()
+        w.plot.set_view(pos - 40, pos + 40, None)
+    pump()
+    save(w, lang, "aptec_multifit")
+
+    # Paint bar (F3)
+    w.plot.clear_fits()
+    w.plot.clear_rois()
+    w.set_y_mode("log")
+    w.goto(344.28, "kev", 4)
+    pos = w.plot.pos_of_energy(344.28)
+    if pos is not None:
+        w.plot.set_marker(int(pos))
+        w.plot.start_paint()
+        for _ in range(6):
+            w.plot.paint_expand(1)
+    pump()
+    save(w, lang, "aptec_paint")
+    w.plot.paint_cancel()
+
+    # dialogs
+    spec = w.current_spectrum()
+    dialogs = (("aptec_dlg_roi_props", lambda: RoiPropertiesDialog(w.plot.roi_props, w)),
+               ("aptec_dlg_peak", lambda: aau.PeakSearchDialog(ctl.peak, spec.num_channels, w, w)),
+               ("aptec_dlg_multifit", lambda: aau.MultifitDialog(ctl.multifit, w)),
+               ("aptec_dlg_ident", lambda: aau.IdentifyDialog(ctl.ident, w)),
+               ("aptec_dlg_quant", lambda: aau.QuantifyDialog(ctl.quant, "", w)),
+               ("aptec_dlg_sample", lambda: aeu.SampleDescriptionDialog(spec, w)),
+               ("aptec_dlg_quick_energy", lambda: acu.QuickEnergyDialog(w, spec, w)))
+    for name, make in dialogs:
+        try:
+            d = make()
+            d.show()
+            save(d, lang, name)
+            d.close()
+        except Exception as exc:                    # keep going: report it
+            print("   ", name, "failed:", exc)
+
+    # Compare mode with Aptec's colours
+    w.load_file(CHERN)
+    w.set_y_mode("log")
+    w.spectrum_ops.toggle_compare(str(BKG))
+    w.spectrum_ops.position(40)
+    old = plotmod.current_colors()
+    avu.apply_colors(w, plotmod.APTEC_COLORS)
+    pump()
+    save(w, lang, "aptec_compare")
+    avu.apply_colors(w, old)
+    w.spectrum_ops.toggle_compare()
+    w.plot.clear_rois()
+
+
 def annotate(lang: str) -> None:
     """Numbered callouts on main.png -> main_annotated.png."""
     from PIL import Image, ImageDraw, ImageFont
@@ -351,7 +456,8 @@ def annotate(lang: str) -> None:
 
 
 if __name__ == "__main__":
-    shutil.copy2(ARCHIVE_DB, TMP / "archive.sqlite")
+    if ARCHIVE_DB.exists():
+        shutil.copy2(ARCHIVE_DB, TMP / "archive.sqlite")
     langs = sys.argv[1:] or ["ar", "en"]
     for lg in langs:
         shoot(lg)
