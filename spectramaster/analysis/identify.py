@@ -414,6 +414,9 @@ def _n_gamma_matched(c) -> int:
 
 
 DRIFT_ACCEPT_GAIN = 1.05         # the drift-corrected identification must explain 5 % more
+# ... and only at germanium resolution: with CZT / LaBr3 / NaI peaks the natural-line fit is
+# too loose and the correction lowered U-235 recall on IAEA IDB CZT and LaBr3 spectra
+DRIFT_MAX_REL_FWHM = 0.01        # FWHM / E at 662 keV
 
 
 def _explained_score(ctx, claimed: dict) -> float:
@@ -518,7 +521,8 @@ def identify(spectrum, peaks: Optional[list[Peak]] = None, library=None, lib=Non
 
     `correct_drift`: first compare the stored energy calibration with the natural-background
     lines in the spectrum (tools.calibrate.check_drift); when a drift is detected, the peak
-    energies are corrected for the identification only and every result says so.  The stored
+    energies are corrected for the identification only and every result says so (germanium
+    resolution only, DRIFT_MAX_REL_FWHM).  The stored
     calibration is never changed (review and apply it with the drift check).
     `application`: the application library searched ("all", "environmental", "calibration",
     "safeguards", "medical"; analysis.library.APPLICATIONS) - as with commercial programs,
@@ -542,7 +546,7 @@ def identify(spectrum, peaks: Optional[list[Peak]] = None, library=None, lib=Non
     _INCLUDES.update({n: tuple(nd.includes) for n, nd in libd.items() if nd.includes})
     accepted, claimed = _explain(ctx, libd, include_xrays, min_confidence)
     drift_note = ""
-    if correct_drift:
+    if correct_drift and ctx.fwhm_kev(662.0) / 662.0 <= DRIFT_MAX_REL_FWHM:
         try:
             from ..tools.calibrate import check_drift
             dc = check_drift(spectrum, peaks=peaks)
