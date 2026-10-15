@@ -63,6 +63,7 @@ C_FIT = QColor("#2e7d32")              # fitted peaks of the analysis (Aptec Sho
 C_WINDOW = QColor(47, 109, 179, 45)    # expanded region shown on the split full-spectrum view
 
 # View > Color: the colors a user can change, with the defaults (Aptec View Color...)
+COMPARE_STEP_PX = 4            # Ctrl+Up / Ctrl+Down step of the compare spectrum (pixels)
 COLOR_ROLES = ("line", "fill", "bg", "grid", "text", "roi", "marker", "fit")
 DEFAULT_COLORS = {"line": "#1f5f99", "fill": "#3680c4", "bg": "#ffffff", "grid": "#eef1f4",
                   "text": "#3c4650", "roi": "#d64541", "marker": "#c62828", "fit": "#2e7d32"}
@@ -169,6 +170,8 @@ class Overlay:
     edges: np.ndarray = field(default=None, repr=False)      # channel edges in primary index space
     scale: float = 1.0
     by_energy: bool = False
+    compare: bool = False                                    # Aptec compare spectrum (Analyze > Compare)
+    offset_px: float = 0.0                                   # its vertical offset in pixels (Position)
 
 
 @dataclass(eq=False)
@@ -946,6 +949,18 @@ class SpectrumPlot(QWidget):
         self.overlaysChanged.emit()
         return ov
 
+    def compare_overlay(self) -> Optional[Overlay]:
+        """The Aptec compare spectrum (Analyze > Compare), if one is shown."""
+        return next((o for o in self.overlays if o.compare), None)
+
+    def move_compare(self, d_px: float) -> None:
+        """Raise (d > 0) / lower the compare spectrum on the screen (Aptec Position, Ctrl+Up / Down)."""
+        ov = self.compare_overlay()
+        if ov is not None:
+            ov.offset_px = float(ov.offset_px) + float(d_px)
+            self.update()
+            self.overlaysChanged.emit()
+
     def remove_overlay(self, i: int) -> None:
         if 0 <= i < len(self.overlays):
             del self.overlays[i]
@@ -1135,6 +1150,13 @@ class SpectrumPlot(QWidget):
                 a, b = math.sqrt(vmin), math.sqrt(vmax)
                 return max(0.0, a - 0.05 * (b - a)), b + (b - a) * (head - 1.0)
             return max(0.0, vmin - 0.05 * (vmax - vmin)), vmax + (vmax - vmin) * (head - 1.0)
+        if self.y_mode not in (Y_LOG, Y_SQRT):
+            # negative channels (derivative, strip, negative constant): show them below zero
+            low = vmin if vmin is not None else self._view_min(rect)
+            if low is not None and low < 0:
+                top = max(vmax, 0.0)
+                span = (top - low) or 1.0
+                return low - 0.05 * span, top + span * (head - 1.0)
         if self.y_mode == Y_LOG:
             ybot = 0.0 if vpos >= 1 or vpos == math.inf else max(-3.0, math.floor(math.log10(vpos)))
             top = math.log10(vmax) if vmax > 0 else 0.0
@@ -1256,6 +1278,8 @@ class SpectrumPlot(QWidget):
             if oc is None or not len(oc.vmax):
                 continue
             poly = self._step_polygon(oc, ypx, base)
+            if ov.offset_px:
+                poly.translate(0.0, -float(ov.offset_px))
             p.setPen(QPen(color, 1.2))
             p.drawPolyline(poly)
 
@@ -1966,6 +1990,8 @@ class SpectrumPlot(QWidget):
                 self.marker_to_edge(k == Qt.Key_End)
         elif k in (Qt.Key_PageUp, Qt.Key_PageDown):     # Spectrum Right / Left
             self.shift_window(1 if k == Qt.Key_PageUp else -1, bool(mods & Qt.ShiftModifier))
+        elif k in (Qt.Key_Up, Qt.Key_Down) and mods & Qt.ControlModifier and self.compare_overlay() is not None:
+            self.move_compare(COMPARE_STEP_PX if k == Qt.Key_Up else -COMPARE_STEP_PX)
         elif k in (Qt.Key_Up, Qt.Key_Down) and mods & Qt.ShiftModifier:
             self.shift_base(1 if k == Qt.Key_Up else -1)
         elif k in (Qt.Key_Up, Qt.Key_Down):             # Raise / Lower Spectrum
@@ -2126,6 +2152,7 @@ class PlotRenderer:
             setattr(r, name, getattr(plot, name))
         for ov in plot.overlays:
             r.add_overlay(ov.spec, ov.label, ov.color)
+            r.overlays[-1].compare, r.overlays[-1].offset_px = ov.compare, ov.offset_px
         r.set_view(plot.x0, plot.x1, plot._ylim)
         return r
 
