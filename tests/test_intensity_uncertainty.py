@@ -52,3 +52,14 @@ def test_ddep_cross_check_when_available():
     r = compare(folder)
     assert r["lines"] >= 100
     assert r["within_3u"] >= 0.9           # measured 2026-10-15: 97.2 % of 363 lines
+
+
+def test_heavy_element_k_beta_lines_are_resolved():
+    # ENSDF's single K-beta line (Th 106.89 keV) split into K'beta1 / K'beta2 with DDEP constants
+    lib = load_library()
+    u235 = [l for l in lib["U-235"].lines if l.kind == "x" and l.energy > 100]
+    assert [round(l.energy, 3) for l in u235] == [105.554]            # K'beta2 (0.7 %) below the 1 % cut
+    assert u235[0].intensity == pytest.approx(2.7 * 0.749, rel=1e-3)
+    np239 = [round(l.energy, 2) for l in lib["Np-239"].lines if l.kind == "x" and l.energy > 110]
+    assert np239 == [117.13, 121.02]
+    assert not any(abs(l.energy - 106.894) < 0.01 for nd in lib.values() for l in nd.lines if l.kind == "x")

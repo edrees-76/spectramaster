@@ -413,10 +413,43 @@ def extract_iaea(db: Path, wanted: list[tuple[str, bool, float]]) -> dict:
     return res
 
 
+# K-beta X-rays of heavy elements, resolved: (K'beta1 keV, K'beta2 keV, K'beta1 share of the
+# K-beta intensity).  LNHB/DDEP recommended data (LARA files, www.lnhb.fr/nuclides, read
+# 2026-10-15; K'beta1 = Kbeta1+Kbeta3+Kbeta5, K'beta2 = Kbeta2+Kbeta4+KO2,3).  ENSDF gives one
+# K-beta line at a weighted energy (Th 106.89 keV), which falls between the two peaks a
+# germanium detector resolves (Th 105.55 and 108.97 keV): the 105.5 keV peak of U/Th-bearing
+# samples was then unexplained and taken by other nuclides (Eu-155 105.3 keV).
+KBETA = {
+    "W": (67.287, 69.2707, 0.785), "Os": (71.449, 73.5843, 0.782), "Pt": (75.784, 78.0643, 0.78),
+    "Hg": (80.2797, 82.7463, 0.774), "Tl": (82.6033, 85.1387, 0.772), "Pb": (84.9527, 87.5763, 0.768),
+    "Bi": (87.347, 90.0757, 0.765), "Po": (89.8087, 92.6213, 0.763), "Rn": (94.8547, 97.8967, 0.758),
+    "Ra": (100.1, 103.3083, 0.753), "Ac": (102.8013, 106.1133, 0.751), "Th": (105.554, 108.9687, 0.749),
+    "Pa": (108.363, 111.885, 0.737), "U": (111.2277, 114.932, 0.745), "Np": (114.1497, 117.9227, 0.744),
+    "Pu": (117.13, 121.0173, 0.742), "Cm": (123.277, 127.4037, 0.74),
+}
+KBETA_MATCH_KEV = 0.8     # ENSDF weighted K-beta energy vs. this element's weighted K'beta1/K'beta2
+
+
+def split_kbeta(rad: list) -> list:
+    """Replace each heavy-element ENSDF "KB" X-ray entry by its K'beta1 and K'beta2 lines (same
+    total intensity and uncertainty share).  Elements not in KBETA are left as they are."""
+    out = []
+    for tb, tc, e, i, u in rad:
+        if tb == "X" and (tc or "").startswith("KB") and e >= 60.0:
+            best = min(KBETA.values(), key=lambda v: abs(v[2] * v[0] + (1 - v[2]) * v[1] - e))
+            b1, b2, f = best
+            if abs(f * b1 + (1 - f) * b2 - e) <= KBETA_MATCH_KEV:
+                out.append([tb, "KB1'", b1, i * f, None if u is None else u * f])
+                out.append([tb, "KB2'", b2, i * (1 - f), None if u is None else u * (1 - f)])
+                continue
+        out.append([tb, tc, e, i, u])
+    return out
+
+
 def iaea_own_lines(rec: dict) -> list[tuple[float, float, str]]:
     out = []
     agg: dict[tuple[float, str], float] = {}
-    for tb, tc, e, i, _u in rec["rad"]:
+    for tb, tc, e, i, _u in split_kbeta(rec["rad"]):
         kind = "x" if tb == "X" else "a" if tb == "AN" else "g"
         k = (round(e, 3), kind)
         agg[k] = agg.get(k, 0.0) + i / 100.0
@@ -429,7 +462,7 @@ def iaea_own_lines_u(rec: dict) -> list[tuple[float, float, str, float | None]]:
     """As iaea_own_lines, with the absolute intensity uncertainty (fraction per decay) combined in
     quadrature over the aggregated entries; None when an entry has no stated uncertainty."""
     agg: dict[tuple[float, str], list] = {}
-    for tb, tc, e, i, u in rec["rad"]:
+    for tb, tc, e, i, u in split_kbeta(rec["rad"]):
         kind = "x" if tb == "X" else "a" if tb == "AN" else "g"
         a = agg.setdefault((round(e, 3), kind), [0.0, 0.0])
         a[0] += i / 100.0
@@ -567,7 +600,9 @@ def build(verbose=False):
                 if ik == "g" and ii * 100 >= 1.0:
                     flags.append(f"{ie:.3f} keV {ii*100:.4g}%: IAEA only (no Sandia line)")
         final.sort(key=lambda r: -r[1])
-        final = final[:MAX_LINES]
+        # the K'beta2 line added by split_kbeta does not take the place of a gamma line
+        n_kb2 = sum(1 for e, i, k, src in final if k == "x" and any(abs(e - v[1]) < 1e-3 for v in KBETA.values()))
+        final = final[:MAX_LINES + n_kb2]
         final.sort(key=lambda r: r[0])
         n_flags += len(flags)
         rec0 = iaea_rec_for(iaea, s0)

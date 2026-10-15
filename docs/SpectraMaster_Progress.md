@@ -213,8 +213,10 @@ of 20 lab spectra and 53 → 52 IDB reports, Sm-153 39 → 22, HPGe implausible 
 spectrum (still FAIL), but CZT U-235 recall 0.77 → 0.68. Reverted. Cause found: in the IDB
 spectra Eu-155 is matched at 105.5 keV **and** 146.1 keV (not an X-ray), and the library stores
 each K-beta group as one weighted line (Th 106.9 keV instead of K-beta1 105.6 keV), so the
-105.5 keV peak is not recognised as an X-ray. Needs: resolved K-beta lines in the library
-(nuclear-data update, D5) before the interference test can work.
+105.5 keV peak is not recognised as an X-ray. Fixed by the nuclear-data update (D5): the library
+now resolves heavy-element K'beta1/K'beta2 (DDEP constants, `analysis/data/SOURCES.md`); U-235 and
+Ac-228 claim the 105.5 keV peak as Th K'beta1. Eu-155 12 -> 2 of 20 lab spectra, IDB HPGe implausible
+8.82 -> 8.15, no criterion changed.
 
 Full benchmark after E2-E4/F1-F2 (`docs/baseline/after_E4_F2`): FAIL 15 → 14, PASS 99 → 100,
 no criterion newly failing. HPGe recall at 0.3 % drift 0.06 → 1.0. Informational, not criteria:
