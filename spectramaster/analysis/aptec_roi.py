@@ -285,6 +285,27 @@ def _one(y, rl, rh, bl, bh, lo, hi, coeffs, props, live_time, grouped) -> AptecR
                     mda, net_cps, flags, grouped)
 
 
+def read_aptec_rois(data) -> list[tuple[int, int, int, int]]:
+    """``(BL, RL, RH, BH)`` of the ROIs stored in an Aptec ``.S0`` file (bytes or path), from the
+    published Version 6.3 layout: header 1024 B, efficiency records 130 B, energy and resolution
+    points 8 B each, then ROI records 256 B.  Channels are as stored (indices into the counts)."""
+    import struct
+    from pathlib import Path
+    d = Path(data).read_bytes() if not isinstance(data, (bytes, bytearray)) else bytes(data)
+    if len(d) < 1024 or not d[:7].startswith(b"VERSION"):
+        raise ValueError("not an Aptec Version 6.x spectrum file")
+    i16 = lambda o: struct.unpack_from("<h", d, o)[0]          # noqa: E731
+    n_eff, n_en, n_res, n_roi = i16(330), i16(618), i16(694), i16(782)
+    o = 1024 + 130 * max(n_eff, 0) + 8 * max(n_en, 0) + 8 * max(n_res, 0)
+    out = []
+    for k in range(max(n_roi, 0)):
+        if o + 256 * (k + 1) > len(d):
+            break
+        bl, rl, rh, bh = struct.unpack_from("<4h", d, o + 256 * k)
+        out.append((int(bl), int(rl), int(rh), int(bh)))
+    return out
+
+
 # Aptec's flag letters and meanings (S_List / S_CSV "Activity Flags")
 FLAGS = ("b", "m", "s", "*", "<", "?", ">")
 FLAG_TEXT = {
@@ -299,4 +320,4 @@ FLAG_TEXT = {
 
 
 __all__ = ["RoiProperties", "AptecRoi", "analyze_rois", "background_coeffs", "groups", "end_point_width",
-           "CENTROID_RANGES", "CENTROID_WEIGHTS", "FLAGS", "FLAG_TEXT", "MAX_END_POINTS"]
+           "CENTROID_RANGES", "CENTROID_WEIGHTS", "FLAGS", "read_aptec_rois", "FLAG_TEXT", "MAX_END_POINTS"]

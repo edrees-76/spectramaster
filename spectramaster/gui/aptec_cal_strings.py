@@ -144,6 +144,8 @@ EN = {
     "id_required": "Detector ID and Geometry ID are required: samples are quantified only with an "
                    "efficiency calibration of the same detector and geometry.",
     "def_title": "Edit Load ROI Defaults",
+    "def_cert": "Certificate:",
+    "def_no_cert": "(none: type the activities)",
     "def_hint": "Check that the activity units match the certificate and that the activity time is "
                 "the certificate (reference) date.",
     "calc_title": "Calculate Efficiency",
@@ -283,6 +285,8 @@ AR = {
     "id_required": "معرّف الكاشف ومعرّف الهندسة مطلوبان: العينات لا تُحسب إلا بمعايرة كفاءة لنفس "
                    "الكاشف والهندسة.",
     "def_title": "القيم الافتراضية لتحميل المناطق",
+    "def_cert": "الشهادة:",
+    "def_no_cert": "(بلا شهادة: أدخل الأنشطة يدويًا)",
     "def_hint": "تأكد أن وحدة النشاط تطابق الشهادة وأن تاريخ النشاط هو تاريخ الشهادة (المرجع).",
     "calc_title": "حساب الكفاءة",
     "calc_energy": "الطاقة (keV):",

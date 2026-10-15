@@ -616,7 +616,8 @@ class IdDialog(QDialog):
 class DefaultsDialog(QDialog):
     """S_Calib *Edit Load ROI Defaults*: activity units and time, quantity."""
 
-    def __init__(self, parent, units: str, time: Optional[datetime], quantity: float, quantity_err: float):
+    def __init__(self, parent, units: str, time: Optional[datetime], quantity: float, quantity_err: float,
+                 certificate: str = ""):
         super().__init__(parent)
         _rtl(self)
         self.setWindowTitle(atr("def_title"))
@@ -624,6 +625,15 @@ class DefaultsDialog(QDialog):
         hint = QLabel(atr("def_hint"))
         hint.setWordWrap(True)
         form.addRow(hint)
+        # Edit > Certificate: activities, errors, units and reference time from a certificate
+        from ..analysis.certificate import list_certificates
+        self.certificate = QComboBox()
+        self.certificate.addItem(atr("def_no_cert"), "")
+        for path in list_certificates():
+            self.certificate.addItem(path.stem, str(path))
+        k = self.certificate.findData(certificate)
+        self.certificate.setCurrentIndex(max(k, 0))
+        form.addRow(atr("def_cert"), self.certificate)
         self.units = QComboBox()
         self.units.setEditable(True)
         self.units.addItems(list(ac.ACTIVITY_UNITS))
@@ -660,7 +670,7 @@ class EfficiencyPointsDialog(_Messages, QDialog):
         self.spectrum = spectrum
         self.points = [copy.copy(p) for p in points]
         self.units, self.detector, self.geometry = units or "keV", detector, geometry
-        self.defaults = {"units": "Bq", "time": None, "quantity": 1.0, "quantity_err": 0.0}
+        self.defaults = {"units": "Bq", "time": None, "quantity": 1.0, "quantity_err": 0.0, "certificate": ""}
         if self.points:
             p0 = self.points[0]
             self.defaults.update(units=p0.activity_units, time=p0.activity_time, quantity=p0.quantity,
@@ -869,27 +879,40 @@ class EfficiencyPointsDialog(_Messages, QDialog):
             return 0
         if defaults is None:
             d = DefaultsDialog(self, self.defaults["units"], self.defaults["time"], self.defaults["quantity"],
-                               self.defaults["quantity_err"])
+                               self.defaults["quantity_err"], self.defaults.get("certificate", ""))
             if d.exec() != QDialog.Accepted:
                 return 0
             defaults = {"units": d.units.currentText().strip(), "time": _pydt(d.time.dateTime()),
-                        "quantity": d.quantity.value(), "quantity_err": d.quantity_err.value()}
+                        "quantity": d.quantity.value(), "quantity_err": d.quantity_err.value(),
+                        "certificate": d.certificate.currentData() or ""}
         self.defaults.update(defaults)
         spec = self.spectrum
         live = spec.live_time if spec is not None else None
         t0 = spec.start_time if spec is not None else None
         old = {(p.isotope, round(p.energy, 1)): p for p in self.points}
+        cert = None
+        if self.defaults.get("certificate"):
+            from ..analysis.certificate import Certificate
+            try:
+                cert = Certificate.load(self.defaults["certificate"])
+            except (OSError, ValueError, KeyError, TypeError) as exc:
+                self.message(str(exc))
         pts = []
         for pk in sorted(peaks, key=lambda q: q.line_energy):
             y, hl = _library_line(pk.nuclide, pk.line_energy)
             rate = pk.count_rate if pk.count_rate is not None else (pk.net_area / live if live else 0.0)
             rerr = 100.0 * pk.net_area_unc / pk.net_area if pk.net_area > 0 else 0.0
             prev = old.get((pk.nuclide, round(float(pk.line_energy), 1)))
+            act, act_err = (prev.activity, prev.activity_err) if prev else (0.0, 0.0)
+            units, when = self.defaults["units"] or "Bq", self.defaults["time"]
+            line = cert.match(pk.nuclide, float(pk.line_energy)) if cert is not None else None
+            if line is not None:
+                act, act_err, units, when = line.activity, line.activity_err, cert.units, cert.reference_time
+                y = line.yield_ or y
+                hl = line.half_life_s or hl
             pts.append(ac.EffPoint(energy=float(pk.line_energy), isotope=pk.nuclide, yield_=y or 0.0,
-                                   half_life_s=hl, activity=prev.activity if prev else 0.0,
-                                   activity_err=prev.activity_err if prev else 0.0,
-                                   activity_units=self.defaults["units"] or "Bq",
-                                   activity_time=self.defaults["time"], net_rate=float(rate or 0.0),
+                                   half_life_s=hl, activity=act, activity_err=act_err,
+                                   activity_units=units, activity_time=when, net_rate=float(rate or 0.0),
                                    net_rate_err=rerr, rate_time=t0, quantity=self.defaults["quantity"] or 1.0,
                                    quantity_err=self.defaults["quantity_err"] or 0.0))
         self.points = pts[:ac.MAX_POINTS]

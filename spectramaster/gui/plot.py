@@ -204,6 +204,7 @@ class SpectrumPlot(QWidget):
     contextRequested = Signal(QPoint, float)   # global pos, index position (nan outside)
     markerMoved = Signal(int)        # stored-array index of the channel marker
     roiIndexChanged = Signal(int)    # indexed ROI (Space / Shift+Space), -1 = none
+    selectionChanged = Signal()      # Edit > Select All / Select Region / Clear Selection
     paintChanged = Signal()          # ROI Paint / Edit started, changed or ended
 
     def __init__(self, parent=None):
@@ -247,6 +248,9 @@ class SpectrumPlot(QWidget):
         self.roi_data = "stats"              # ROI Data (D): stats / background / off
         self.fwhm_percent = False            # FWHM Percent (%)
         self.window_band: Optional[tuple[float, float]] = None   # split view: the expanded region
+        self.selection: Optional[QRectF] = None   # Edit selection (widget pixels), shown in reverse video
+        self.select_region_mode = False           # Edit > Select Region: the next drag selects a box
+        self._select_drag = False
         self.peaks: list = []                # analysis Peak objects (labels)
         self.marker: Optional[int] = None    # channel marker (stored-array index), Aptec style
         self.show_marker = True
@@ -533,6 +537,41 @@ class SpectrumPlot(QWidget):
         hw = half_channels if half_channels is not None else \
             (fwhm_mult or 5.0) * self.default_fwhm_channels(pos)
         self.zoom_to_pos(pos, hw)
+
+    # ------------------------------------------- Aptec Edit > Select All / Region / Copy
+    def select_all(self) -> None:
+        self.select_region_mode = False
+        self.selection = QRectF(self.rect())
+        self.update()
+        self.selectionChanged.emit()
+
+    def start_select_region(self) -> None:
+        """The next left drag on the plot selects a box (instead of zooming)."""
+        self.select_region_mode = True
+        self.setCursor(Qt.CrossCursor)
+
+    def clear_selection(self) -> None:
+        had = self.selection is not None or self.select_region_mode
+        self.selection = None
+        self.select_region_mode = self._select_drag = False
+        self.unsetCursor()
+        self.update()
+        if had:
+            self.selectionChanged.emit()
+
+    def selection_image(self) -> Optional[QImage]:
+        """The selected part of the plot as an image (without the reverse-video marking)."""
+        if self.selection is None:
+            return None
+        sel = self.selection.toRect().intersected(self.rect())
+        if sel.isEmpty():
+            return None
+        keep, self.selection = self.selection, None
+        try:
+            return self.grab(sel).toImage()
+        finally:
+            self.selection = keep
+            self.update()
 
     # ------------------------------------------- Aptec View > Horizontal / Vertical Scale
     def _marker_or_center(self) -> int:
@@ -1136,6 +1175,14 @@ class SpectrumPlot(QWidget):
         p.setPen(QPen(C_FRAME, 1))
         p.setBrush(Qt.NoBrush)
         p.drawRect(rect)
+        sel = getattr(self, "selection", None)
+        if interactive and self._select_drag and self._drag_start is not None and self._drag_now is not None:
+            sel = QRectF(self._drag_start, self._drag_now).normalized()
+        if interactive and sel is not None:                # Aptec: reverse video
+            p.save()
+            p.setCompositionMode(QPainter.CompositionMode_Difference)
+            p.fillRect(sel, QColor("white"))
+            p.restore()
         if interactive and self._drop_active:
             p.setPen(QPen(C_CURSOR, 2, Qt.DashLine))
             p.drawRect(rect.adjusted(3, 3, -3, -3))
@@ -1791,6 +1838,11 @@ class SpectrumPlot(QWidget):
             self._right_press = pos
         elif ev.button() == Qt.MiddleButton or (ev.button() == Qt.LeftButton and mods & Qt.ShiftModifier):
             self._begin_pan(pos)
+        elif ev.button() == Qt.LeftButton and self.select_region_mode:
+            self._select_drag = True
+            self._drag_start = pos
+            self._drag_now = pos
+            self._drag_roi = self._paint_drag = False
         elif ev.button() == Qt.LeftButton and self.plot_rect().contains(pos):
             self._drag_start = pos
             self._drag_now = pos
@@ -1809,6 +1861,15 @@ class SpectrumPlot(QWidget):
             self._right_press = None
             idx = self._px_to_x(pos.x(), rect) if rect.contains(pos) else float("nan")
             self.contextRequested.emit(self.mapToGlobal(pos.toPoint()), idx)
+        elif self._select_drag and self._drag_start is not None and self._drag_now is not None:
+            r = QRectF(self._drag_start, self._drag_now).normalized()
+            self._drag_start = self._drag_now = None
+            self._select_drag = False
+            self.select_region_mode = False
+            self.unsetCursor()
+            if r.width() >= 3 and r.height() >= 3:
+                self.selection = r
+                self.selectionChanged.emit()
         elif self._drag_start is not None and self._drag_now is not None:
             a, b = self._drag_start, self._drag_now
             box = self._is_box_drag()

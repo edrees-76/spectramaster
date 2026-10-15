@@ -132,6 +132,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         self._create_statusbar()
         from .aptec_view_ui import install_view_menu    # View menu in Aptec's order (needs the tool bars)
         install_view_menu(self)
+        from .aptec_edit_ui import install_edit_display_menus    # Edit and Display menus (Aptec)
+        install_edit_display_menus(self)
 
         # ---- restore view preferences
         mode = str(self.settings.get("view/y_mode", "") or "")
@@ -498,6 +500,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         retranslate_roi_menu(self)
         from .aptec_view_ui import retranslate_view_menu
         retranslate_view_menu(self)
+        from .aptec_edit_ui import retranslate_edit_display_menus
+        retranslate_edit_display_menus(self)
         from .fit_inspection import retranslate_session_actions
         retranslate_session_actions(self)
         from .session_io import retranslate_session_io
