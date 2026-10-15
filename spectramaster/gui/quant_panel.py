@@ -83,6 +83,8 @@ class ActivityDialog(QDialog):
         self.results: Optional[act.QuantResults] = None
         self.concentration: Optional[dict] = None      # activity.concentrations() of the results
         self.sample_info = None                        # lab.sample.SampleInfo used for it
+        self.curve = None                              # EfficiencyCurve of the results
+        self.curve_record = None                       # its CalibrationRecord (None: curve file without one)
         self.setWindowTitle(qtr("act_title"))
         self.resize(1150, 860)
         lay = QVBoxLayout(self)
@@ -366,7 +368,7 @@ class ActivityDialog(QDialog):
             QMessageBox.warning(self, qtr("act_title"), qtr("act_no_curve"))
             return None
         try:
-            curve, _rec, issues = load_curve_file(path)
+            curve, rec, issues = load_curve_file(path)
             opt = self.options()
         except Exception as exc:
             self.message(qtr("act_failed", msg=f"{type(exc).__name__}: {exc}"))
@@ -389,6 +391,7 @@ class ActivityDialog(QDialog):
             self.message(qtr("act_failed", msg=f"{type(exc).__name__}: {exc}"))
             return None
         self.results.notes.extend(issues)
+        self.curve, self.curve_record = curve, rec
         if self.settings is not None:
             self.settings.set("quant/curve", str(path))
             self.settings.set("quant/nuclides", ", ".join(opt.nuclides))
@@ -399,6 +402,9 @@ class ActivityDialog(QDialog):
         if par is not None and hasattr(par, "quant_results"):
             par.quant_results = self.results
             par.quant_concentration = self.concentration
+        ctl = getattr(par, "session_ctl", None) if par is not None else None
+        if ctl is not None:                 # record calibration, sample and activities in the session
+            ctl.activity_calculated(self)
         return self.results
 
     def compute_concentrations(self) -> Optional[dict]:

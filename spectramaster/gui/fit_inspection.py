@@ -446,6 +446,13 @@ class FitInspectionDialog(QDialog):
         if win is not None:
             win.fit_session = self.session
         self._refresh()
+        self._session_changed()
+
+    def _session_changed(self) -> None:
+        """Tell the main window's session controller (workflow status, unsaved changes)."""
+        ctl = getattr(self.main_window, "session_ctl", None)
+        if ctl is not None:
+            ctl.changed()
 
     def _session_matches(self) -> bool:
         from ..analysis.manual import counts_sha256
@@ -453,18 +460,23 @@ class FitInspectionDialog(QDialog):
         return bool(want) and want == counts_sha256(self.spectrum)
 
     def _new_session(self, peaks):
-        """Session from the displayed analysis results (same spectrum) or from the inspected fit."""
+        """Session from the displayed analysis results (same spectrum) or from the inspected fit.
+        The main window's analysis session is used when it belongs to this spectrum, so the
+        manual edits are saved with it (its activity results are kept unless stale)."""
         from ..lab.session import AnalysisSession
-        s = AnalysisSession()
+        ctl = getattr(self.main_window, "session_ctl", None)
+        s = ctl.session_for(self.spectrum) if ctl is not None else None
+        quant = ctl.kept_quant(s) if s is not None else None
+        s = s if s is not None else AnalysisSession()
         panel = getattr(self.main_window, "analysis_panel", None)
         shown, matches = list(getattr(panel, "peaks", []) or []), list(getattr(panel, "matches", []) or [])
         if shown:
             try:
-                s.set_results(shown, matches, spectrum=self.spectrum)
+                s.set_results(shown, matches, quant, spectrum=self.spectrum)
                 return s
             except ValueError:
                 pass
-        s.set_results(peaks, spectrum=self.spectrum)
+        s.set_results(peaks, quant=quant, spectrum=self.spectrum)
         return s
 
     def _on_failed(self, msg: str) -> None:
@@ -612,6 +624,7 @@ class FitInspectionDialog(QDialog):
 
     def _after_edit(self, op) -> None:
         self._refresh()
+        self._session_changed()
         win = self.main_window
         if win is None:
             return
