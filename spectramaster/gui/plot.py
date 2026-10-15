@@ -179,6 +179,7 @@ class Roi:
     left: int
     right: int
     stats: Optional[RoiStats] = None
+    fit: Optional[tuple] = None              # Aptec MultiFit (result, component index)
 
 
 @dataclass
@@ -730,6 +731,7 @@ class SpectrumPlot(QWidget):
     def set_roi_props(self, props: RoiProperties) -> None:
         """Apply Aptec ROI Properties and recalculate every ROI."""
         self.roi_props = props.validate()
+        self.clear_fits()
         self._recompute_rois()
         self.update()
         self.roisChanged.emit()
@@ -934,6 +936,38 @@ class SpectrumPlot(QWidget):
             return
         for r, st in zip(self.rois, self._compute([(r.left, r.right) for r in self.rois])):
             r.stats = st
+        self._apply_fits()
+
+    def _apply_fits(self) -> None:
+        """ROIs carrying an Aptec MultiFit component (``roi.fit = (result, k)``) report the fitted
+        Gaussian instead of the summed net counts."""
+        spec = self._spec
+        if spec is None:
+            return
+        from .roi import fitted_stats
+        energy_of = spec.energy_of if spec.energy_coeffs else None
+        for r in self.rois:
+            fit = getattr(r, "fit", None)
+            if fit is not None and r.stats is not None:
+                r.stats = fitted_stats(r.stats, fit[0], fit[1], energy_of, spec.live_time)
+
+    def clear_fits(self) -> bool:
+        """Remove the MultiFit results (Aptec: changing the ROI properties removes the Gaussian
+        fit); the component ROIs of a multiplet become one ROI again."""
+        if not any(getattr(r, "fit", None) is not None for r in self.rois):
+            return False
+        seen, keep = set(), []
+        for r in self.rois:
+            if getattr(r, "fit", None) is not None:
+                r.fit = None
+                if (r.left, r.right) in seen:
+                    continue
+                seen.add((r.left, r.right))
+            keep.append(r)
+        self.rois[:] = keep
+        if self.indexed_roi not in self.rois:
+            self.indexed_roi = None
+        return True
 
     # ============================================================= overlays
     def add_overlay(self, spec: Spectrum, label: str, color: Optional[QColor] = None) -> Overlay:
@@ -1270,6 +1304,7 @@ class SpectrumPlot(QWidget):
                 p.drawPolygon(poly)
             self._paint_rois(p, rect, cols, ypx, fm)
             self._paint_fits(p, rect, ypx)
+            self._paint_multifit(p, rect, ypx)
             p.setBrush(Qt.NoBrush)
             self._paint_points(p, cols, ypx, poly)
         # overlays (lines only)
@@ -1432,6 +1467,29 @@ class SpectrumPlot(QWidget):
             p.drawRoundedRect(box, 3, 3)
             p.setBrush(Qt.NoBrush)
             p.drawText(box, Qt.AlignCenter, tag)
+
+    def _paint_multifit(self, p, rect, ypx) -> None:
+        """Aptec MultiFit: each fitted Gaussian over the ROI background (thin) and their sum."""
+        done = set()
+        for r in self.rois:
+            fit = getattr(r, "fit", None)
+            if fit is None or id(fit[0]) in done:
+                continue
+            res = fit[0]
+            done.add(id(res))
+            if res.rh < self.x0 - 1 or res.rl > self.x1:
+                continue
+            x = np.linspace(res.rl, res.rh, max(24, (res.rh - res.rl + 1) * 6))
+            xs = self._x_to_px(x + 0.5, rect)
+            bkg = np.polynomial.polynomial.polyval(x, res.background) if res.background else np.zeros_like(x)
+            p.setPen(QPen(C_FIT, 1.0, Qt.DashLine))
+            for c in res.components:
+                s = c.fwhm / 2.3548200450309493
+                yv = bkg + c.amplitude * np.exp(-0.5 * ((x - c.centroid) / s) ** 2)
+                p.drawPolyline(QPolygonF([QPointF(float(a), float(b)) for a, b in zip(xs.tolist(), ypx(yv).tolist())]))
+            p.setPen(QPen(C_FIT, 1.6))
+            yv = res.model(x)
+            p.drawPolyline(QPolygonF([QPointF(float(a), float(b)) for a, b in zip(xs.tolist(), ypx(yv).tolist())]))
 
     def _paint_fits(self, p, rect, ypx) -> None:
         """Aptec Show Fitted ROIs: the analysis' fitted peaks (centroid, FWHM, net area) drawn
@@ -2061,7 +2119,7 @@ class PlotRenderer:
     # drawing / coordinate helpers shared with SpectrumPlot (plain functions, properties
     # and staticmethods taken from the class dict so that they bind to this object)
     _SHARED = ("_poly", "num_channels", "has_energy", "energy_at_pos", "pos_of_energy",
-               "_extrapolate_pos", "pos_of_channel", "channel_at_pos", "log_y", "_map_overlay",
+               "_extrapolate_pos", "pos_of_channel", "channel_at_pos", "log_y", "_map_overlay", "_paint_multifit",
                "_update_margins", "margins", "_plot_rect", "_x_to_px", "_px_to_x", "_t", "_t_inv",
                "y_to_px", "px_to_y", "_columns", "_columns_uncached", "_series", "_y_range_for",
                "render_plot", "_paint_empty", "_step_polygon", "_paint_data", "_paint_minmax",
@@ -2149,7 +2207,7 @@ class PlotRenderer:
         r.show_labels = plot.show_labels
         r.normalize_overlays = plot.normalize_overlays
         r.peaks = list(plot.peaks)
-        r.rois = [Roi(x.left, x.right, x.stats) for x in plot.rois]
+        r.rois = [Roi(x.left, x.right, x.stats, x.fit) for x in plot.rois]
         for name in ("auto_min", "fill_spectrum", "plot_all_points", "show_grid", "connect_points",
                      "fill_rois", "show_rois", "fitted_mode"):
             setattr(r, name, getattr(plot, name))

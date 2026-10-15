@@ -531,4 +531,27 @@ results `docs/baseline/aptec_analyze_results.md`; lab archive, numbers only):
   files, 49 of 49 agree within 0.003 %.
 - Background Subtract could not be compared (no background-subtracted file).
 
-Remaining phase: MultiFit.  The user manual will be updated after phase 6 (user decision).
+### Aptec UX phase 6: MultiFit (Analyze menu, `M` / Shift+M)
+
+`analysis/aptec_multifit.py` (no Qt): Gaussian decomposition of each ROI by Marquardt-Levenberg
+least squares, following the Aptec help (Multifit Fitting Parameters): fixed width from the
+resolution calibration or one varying scale (always varying when 511 keV is in the region),
+fixed ROI background or varying polynomial, peaks kept when amplitude >= K x its uncertainty
+(K = 1.645), Max Iterations / Percent Change / Min Reduced Chi Square stopping, Maximum Overlaps,
+multiplets only or multiplets and singlets, NaI limited to 512 channels, auto resolution
+calibration from the ROI widths when the spectrum has none.  Centroid guesses: third-derivative
+crossings (overlapped close peaks) or net maxima (separated overlaps).  With a fixed background
+the area uncertainty includes the background-line uncertainty (our addition).
+
+- A multiplet ROI becomes one ROI per fitted peak (same bounds); its statistics report the
+  fitted area, centroid and FWHM, flag `m` (multiplet component) or `s` (fitted singlet), so
+  Identify and Quantify use the fitted peaks.  The plot draws each Gaussian and their sum.
+- Changing the ROI Properties removes the fits (as in Aptec).
+
+**Validation** (no Aptec MultiFit result exists in any available file): pre-registered
+synthetic protocol `docs/baseline/aptec_multifit_protocol.md`, results
+`docs/baseline/aptec_multifit_results.md` -- all limits **passed** (singlet area bias −0.43 %;
+doublets >= 1 FWHM apart: both found 94.5–100 %, component bias <= 2.8 %, pull SD 0.90–1.17).
+At 0.8 FWHM doublets are usually fitted as one peak.
+
+All six Aptec UX phases are done; the user manual is to be updated next (user decision).

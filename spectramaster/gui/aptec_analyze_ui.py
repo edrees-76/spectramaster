@@ -21,6 +21,7 @@ from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QDialog, QDia
                                QPushButton, QRadioButton, QSpinBox, QVBoxLayout)
 
 from ..analysis import aptec_analyze as aa
+from ..analysis import aptec_multifit as amf
 from .aptec_analyze_strings import atr
 
 KEY = "aptec/analyze/"
@@ -262,6 +263,63 @@ class QuantifyDialog(QDialog):
         return self.eff.currentData() or ""
 
 
+class MultifitDialog(QDialog):
+    """Aptec *Multifit Fitting Parameters* (Shift+M)."""
+
+    def __init__(self, setup: amf.MultifitSetup, parent=None):
+        super().__init__(parent)
+        _rtl(self)
+        self.setWindowTitle(atr("mf_title"))
+        lay = QVBoxLayout(self)
+        form = QFormLayout()
+
+        def pair(key_a, key_b, first):
+            box = QVBoxLayout()
+            a, b = QRadioButton(atr(key_a)), QRadioButton(atr(key_b))
+            (a if first else b).setChecked(True)
+            box.addWidget(a)
+            box.addWidget(b)
+            grp = QButtonGroup(self)
+            grp.addButton(a)
+            grp.addButton(b)
+            return box, a
+        box, self.hpge = pair("mf_hpge", "mf_nai", setup.detector == "hpge")
+        form.addRow(atr("mf_type"), box)
+        box, self.separated = pair("mf_separated", "mf_overlapped", setup.centroid_search == "separated")
+        form.addRow(atr("mf_search"), box)
+        box, self.multiplets_only = pair("mf_multiplets", "mf_all", not setup.fit_singlets)
+        form.addRow(atr("mf_peaks"), box)
+        self.k = IdentifyDialog._spin(0.1, 10.0, setup.k_sigma, 3)
+        form.addRow(atr("mf_k"), self.k)
+        box, self.width_fixed = pair("mf_fixed", "mf_varying", setup.width_fixed)
+        form.addRow(atr("mf_width"), box)
+        box, self.bkg_fixed = pair("mf_fixed", "mf_varying", setup.background_fixed)
+        form.addRow(atr("mf_bkg"), box)
+        self.iterations = _ltr_widget(QSpinBox())
+        self.iterations.setRange(1, 1000)
+        self.iterations.setValue(int(setup.max_iterations))
+        form.addRow(atr("mf_iter"), self.iterations)
+        self.pct = IdentifyDialog._spin(0.001, 100.0, setup.percent_change, 3)
+        form.addRow(atr("mf_pct"), self.pct)
+        self.chi = IdentifyDialog._spin(0.0, 100.0, setup.min_reduced_chi2, 3)
+        form.addRow(atr("mf_chi"), self.chi)
+        self.overlaps = _ltr_widget(QSpinBox())
+        self.overlaps.setRange(1, 32)
+        self.overlaps.setValue(int(setup.max_overlaps))
+        form.addRow(atr("mf_over"), self.overlaps)
+        lay.addLayout(form)
+        lay.addWidget(_hint(atr("mf_hint")))
+        _buttons(self, lay)
+
+    def setup(self) -> amf.MultifitSetup:
+        return amf.MultifitSetup(detector="hpge" if self.hpge.isChecked() else "nai",
+                                 centroid_search="separated" if self.separated.isChecked() else "overlapped",
+                                 fit_singlets=not self.multiplets_only.isChecked(), k_sigma=self.k.value(),
+                                 width_fixed=self.width_fixed.isChecked(), background_fixed=self.bkg_fixed.isChecked(),
+                                 max_iterations=self.iterations.value(), percent_change=self.pct.value(),
+                                 min_reduced_chi2=self.chi.value(), max_overlaps=self.overlaps.value())
+
+
 class DefaultsDialog(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -296,6 +354,7 @@ class AptecAnalysis:
         self.peak = aa.PeakSearchSetup.from_dict(self._load("peak"))
         self.ident = aa.IdentifySetup.from_dict(self._load("ident"))
         self.quant = aa.QuantifySetup.from_dict(self._load("quant"))
+        self.multifit = amf.MultifitSetup.from_dict(self._load("multifit"))
         self.bkg_file = str(self._load("bkg").get("file", "")) if isinstance(self._load("bkg"), dict) else ""
         self.eff_source = str(self._load("quant_eff").get("path", "")) if isinstance(self._load("quant_eff"), dict) else ""
         self._lib_cache: dict = {}
@@ -317,12 +376,14 @@ class AptecAnalysis:
         s.set(KEY + "peak", json.dumps(self.peak.to_dict()))
         s.set(KEY + "ident", json.dumps(self.ident.to_dict()))
         s.set(KEY + "quant", json.dumps(self.quant.to_dict()))
+        s.set(KEY + "multifit", json.dumps(self.multifit.to_dict()))
         s.set(KEY + "bkg", json.dumps({"file": self.bkg_file}))
         s.set(KEY + "quant_eff", json.dumps({"path": self.eff_source}))
 
     def _all(self) -> dict:
         return {"roi": self.win.plot.roi_props.to_dict(), "peak": self.peak.to_dict(), "ident": self.ident.to_dict(),
-                "quant": self.quant.to_dict(), "bkg": self.bkg_file, "quant_eff": self.eff_source}
+                "quant": self.quant.to_dict(), "multifit": self.multifit.to_dict(), "bkg": self.bkg_file,
+                "quant_eff": self.eff_source}
 
     def _apply_all(self, d: dict) -> None:
         from ..analysis.aptec_roi import RoiProperties
@@ -333,6 +394,7 @@ class AptecAnalysis:
         self.peak = aa.PeakSearchSetup.from_dict(d.get("peak", {}))
         self.ident = aa.IdentifySetup.from_dict(d.get("ident", {}))
         self.quant = aa.QuantifySetup.from_dict(d.get("quant", {}))
+        self.multifit = amf.MultifitSetup.from_dict(d.get("multifit", {}))
         self.bkg_file = str(d.get("bkg", "") or "")
         self.eff_source = str(d.get("quant_eff", "") or "")
         self.save()
@@ -399,6 +461,18 @@ class AptecAnalysis:
         self.save()
         return True
 
+    def setup_multifit(self) -> bool:
+        d = MultifitDialog(self.multifit, self.win)
+        if d.exec() != QDialog.Accepted:
+            return False
+        try:
+            self.multifit = d.setup().validate()
+        except ValueError as exc:
+            self.message(str(exc))
+            return False
+        self.save()
+        return True
+
     def setup_quant(self) -> bool:
         d = QuantifyDialog(self.quant, self.eff_source, self.win)
         if d.exec() != QDialog.Accepted:
@@ -458,6 +532,82 @@ class AptecAnalysis:
         set_rois(plot, [(st.rl, st.rh) for st in found])
         self._show_rois()
         self.status(atr("peak_done", n=len(found), e=f"{self.peak.max_error:g}"))
+        return True
+
+    # ---------------------------------------------------------------- M
+    def fwhm_function(self, spec, rois):
+        """(FWHM in channels as a function of the index, auto) from the resolution calibration
+        (keV) or, without one, Aptec's auto resolution calibration from the ROI widths."""
+        import numpy as np
+        first = spec.first_channel
+        if spec.fwhm_coeffs and spec.energy_coeffs:
+            fc = list(spec.fwhm_coeffs)
+            ec = np.polynomial.polynomial.polyder(np.asarray(spec.energy_coeffs, dtype=float))
+
+            def f(i):
+                ch = first + float(i)
+                kev = float(np.polynomial.polynomial.polyval(ch, fc))
+                slope = float(np.polynomial.polynomial.polyval(ch, ec)) if len(ec) else 0.0
+                return kev / slope if slope > 0 else kev
+            return f, False
+        use = [r for r in rois if r.stats.centroid is not None]
+        coeffs = amf.auto_resolution([r.stats.centroid - first for r in use], [r.stats.fwhm for r in use])
+        if not coeffs:
+            return None, True
+        return (lambda i: max(float(np.polynomial.polynomial.polyval(float(i), coeffs)), 0.5)), True
+
+    def run_multifit(self) -> bool:
+        win = self.win
+        spec = _displayed(win)
+        if spec is None:
+            self.status(atr("need_spectrum"))
+            return False
+        plot = win.plot
+        plot.clear_fits()
+        plot._recompute_rois()
+        rois = [r for r in plot.rois if r.stats is not None]
+        if not rois:
+            self.status(atr("need_rois"))
+            return False
+        if self.multifit.detector == "nai" and spec.num_channels > 512:
+            self.message(atr("mf_nai_big"))
+            return False
+        fwhm_of, auto = self.fwhm_function(spec, rois)
+        if fwhm_of is None:
+            self.message(atr("err", msg=atr("mf_no_res")))
+            return False
+        first = spec.first_channel
+        energy_of = (lambda i: spec.energy_of(first + i)) if spec.energy_coeffs else None
+        from .plot import Roi
+        new, n_fit, n_peaks, n_mult = [], 0, 0, 0
+        for r in plot.rois:
+            st = r.stats
+            if st is None:
+                new.append(r)
+                continue
+            ep = list(range(st.bl, r.left)) + list(range(r.right + 1, st.bh + 1))
+            res = amf.multifit_roi(spec.counts, r.left, r.right, list(st.coeffs), fwhm_of, self.multifit,
+                                   st.fwhm, ep, energy_of)
+            if not res.fitted or not res.components:
+                new.append(r)
+                continue
+            n_fit += 1
+            n_peaks += len(res.components)
+            n_mult += bool(res.multiplet)
+            for k in range(len(res.components)):
+                q = r if k == 0 else Roi(r.left, r.right)
+                q.fit = (res, k)
+                for attr in ("aptec_id", "aptec_bkg", "aptec_q"):
+                    setattr(q, attr, None)
+                new.append(q)
+        plot.rois[:] = new
+        plot.indexed_roi = None
+        plot._recompute_rois()
+        plot.roisChanged.emit()
+        plot.roiIndexChanged.emit(-1)
+        plot.update()
+        self._show_rois()
+        self.status(atr("mf_done", n=n_fit, k=n_peaks, m=n_mult) + (atr("mf_auto") if auto else ""), 15000)
         return True
 
     # ---------------------------------------------------------------- I
@@ -713,6 +863,8 @@ def install_analyze_menu(win) -> None:
     act("act_a_setup_ident", "act_setup_ident", ctl.setup_ident, "Shift+I")
     act("act_a_setup_bkg", "act_setup_bkg", ctl.setup_bkg, "Shift+B")
     act("act_a_setup_quant", "act_setup_quant", ctl.setup_quant, "Shift+Q")
+    act("act_a_setup_mf", "act_setup_mf", ctl.setup_multifit, "Shift+M")
+    act("act_a_mf", "act_mf", ctl.run_multifit, "M")
     act("act_a_defaults", "act_defaults", ctl.defaults)
     act("act_a_ident", "act_ident", ctl.run_identify, "I")
     act("act_a_bkg", "act_bkg", ctl.run_bkg, "B")
@@ -741,7 +893,8 @@ def install_analyze_menu(win) -> None:
     sm = win.menu_a_setup
     if hasattr(win, "act_roi_props"):
         sm.addAction(win.act_roi_props)
-    for a in (win.act_a_setup_peak, win.act_a_setup_ident, win.act_a_setup_bkg, win.act_a_setup_quant):
+    for a in (win.act_a_setup_peak, win.act_a_setup_mf, win.act_a_setup_ident, win.act_a_setup_bkg,
+              win.act_a_setup_quant):
         sm.addAction(a)
     sm.addSeparator()
     sm.addAction(win.act_a_defaults)
@@ -750,7 +903,7 @@ def install_analyze_menu(win) -> None:
         win.menu_a_engine.addAction(a)
     menu.insertMenu(first, sm)
     menu.insertAction(first, win.act_analyze)
-    for a in (win.act_a_ident, win.act_a_bkg, win.act_a_quant):
+    for a in (win.act_a_mf, win.act_a_ident, win.act_a_bkg, win.act_a_quant):
         menu.insertAction(first, a)
     menu.insertSeparator(first)
     retranslate_analyze_menu(win)
@@ -765,7 +918,7 @@ def sync_enabled(win) -> None:
         win.act_analyze.setEnabled(has)
         win.act_analyze.setToolTip(atr("tip_peak"))
         win.act_analyze.setStatusTip(atr("tip_peak"))
-    for a in (win.act_a_ident, win.act_a_bkg, win.act_a_quant):
+    for a in (win.act_a_mf, win.act_a_ident, win.act_a_bkg, win.act_a_quant):
         a.setEnabled(has)
 
 
@@ -775,7 +928,7 @@ def sync_actions(win) -> None:
     ctl = win.aptec_analysis
     win._aana_engine[ctl.engine].setChecked(True)
     aptec = ctl.engine == ENGINE_APTEC
-    for a in (win.act_a_ident, win.act_a_bkg, win.act_a_quant):
+    for a in (win.act_a_mf, win.act_a_ident, win.act_a_bkg, win.act_a_quant):
         a.setVisible(aptec)
     retranslate_analyze_menu(win)
     if hasattr(win, "_update_actions"):
@@ -805,5 +958,5 @@ def retranslate_analyze_menu(win) -> None:
 
 
 __all__ = ["install_analyze_menu", "retranslate_analyze_menu", "sync_actions", "sync_enabled", "AptecAnalysis", "PeakSearchDialog",
-           "IdentifyDialog", "BackgroundDialog", "QuantifyDialog", "DefaultsDialog", "set_rois", "background_lines",
+           "IdentifyDialog", "BackgroundDialog", "QuantifyDialog", "MultifitDialog", "DefaultsDialog", "set_rois", "background_lines",
            "ENGINE_APTEC", "ENGINE_SM"]

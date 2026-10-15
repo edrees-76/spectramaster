@@ -68,13 +68,16 @@ def _show(window, spec=None):
 def test_menu_order_and_keys(window):
     acts = window.menu_analyze.actions()
     assert acts[0].menu() is window.menu_a_setup
-    assert acts[1] is window.act_analyze and acts[2:5] == [window.act_a_ident, window.act_a_bkg, window.act_a_quant]
+    assert acts[1] is window.act_analyze and acts[2:6] == [window.act_a_mf, window.act_a_ident, window.act_a_bkg,
+                                                            window.act_a_quant]
     setup = window.menu_a_setup.actions()
-    assert setup[0] is window.act_roi_props and setup[1:5] == [window.act_a_setup_peak, window.act_a_setup_ident,
-                                                                window.act_a_setup_bkg, window.act_a_setup_quant]
+    assert setup[0] is window.act_roi_props and setup[1:6] == [window.act_a_setup_peak, window.act_a_setup_mf,
+                                                                window.act_a_setup_ident, window.act_a_setup_bkg,
+                                                                window.act_a_setup_quant]
     for a, k in ((window.act_analyze, "P"), (window.act_a_ident, "I"), (window.act_a_bkg, "B"),
                  (window.act_a_quant, "Q"), (window.act_a_setup_peak, "Shift+P"), (window.act_a_setup_ident, "Shift+I"),
-                 (window.act_a_setup_bkg, "Shift+B"), (window.act_a_setup_quant, "Shift+Q")):
+                 (window.act_a_setup_bkg, "Shift+B"), (window.act_a_setup_quant, "Shift+Q"),
+                 (window.act_a_mf, "M"), (window.act_a_setup_mf, "Shift+M")):
         assert a.shortcut() == QKeySequence(k)
     assert window.act_analyze.text().replace("&", "") == "Peak Search"
     assert window._aana_engine["aptec"].isChecked()
@@ -175,3 +178,57 @@ def test_dialogs_build(window, lang):
         d.deleteLater()
     if lang == "ar":
         assert window.act_a_ident.text().replace("&", "") == "التعرّف على القمم"
+
+
+def _doublet(seed=5):
+    rng = np.random.default_rng(seed)
+    n = 4096
+    x = np.arange(n)
+    mu = np.full(n, 50.0)
+    s = 6.0 / 2.3548
+    for c, a in ((1995.0, 3000.0), (2007.0, 2000.0), (1000.0, 2500.0)):
+        mu = mu + a / (s * math.sqrt(2 * math.pi)) * np.exp(-0.5 * ((x - c) / s) ** 2)
+    return Spectrum(counts=[float(v) for v in rng.poisson(mu)], energy_coeffs=[0.0, 0.5],
+                    fwhm_coeffs=[3.0], live_time=1000.0, real_time=1000.0, start_time=datetime(2024, 5, 1))
+
+
+def test_multifit_splits_doublet_and_clears_on_properties(window):
+    plot = _show(window, _doublet())
+    plot.add_roi(1980, 2022)
+    plot.add_roi(985, 1015)
+    ctl = window.aptec_analysis
+    assert ctl.run_multifit()
+    fitted = [r for r in plot.rois if r.fit is not None]
+    doublet = [r for r in fitted if r.left == 1980]
+    assert len(doublet) == 2 and all("m" in r.stats.flags for r in doublet)
+    cen = sorted(r.stats.centroid for r in doublet)
+    assert abs(cen[0] - 1995) < 1.5 and abs(cen[1] - 2007) < 1.5
+    areas = sorted(r.stats.net for r in doublet)
+    assert areas[0] == pytest.approx(2000, rel=0.15) and areas[1] == pytest.approx(3000, rel=0.15)
+    single = [r for r in fitted if r.left == 985]
+    assert len(single) == 1 and single[0].stats.flags.startswith("s")
+    assert window.roi_panel.table.rowCount() == 3
+    window.plot.set_roi_props(window.plot.roi_props)          # changing ROI properties drops the fit
+    assert len(plot.rois) == 2 and all(r.fit is None for r in plot.rois)
+
+
+def test_multifit_auto_resolution_and_nai_limit(window):
+    spec = _doublet()
+    spec.fwhm_coeffs = []
+    plot = _show(window, spec)
+    plot.add_roi(1980, 2022)
+    plot.add_roi(985, 1015)
+    ctl = window.aptec_analysis
+    assert ctl.run_multifit()
+    assert "auto" in window.statusBar().currentMessage().lower()
+    ctl.multifit.detector = "nai"
+    assert ctl.run_multifit() is False and ctl.messages
+
+
+def test_multifit_dialog(window):
+    from spectramaster.gui import aptec_analyze_ui as u
+    from spectramaster.analysis.aptec_multifit import MultifitSetup
+    d = u.MultifitDialog(MultifitSetup(detector="nai", fit_singlets=False, width_fixed=False, max_overlaps=4))
+    s = d.setup()
+    assert s.detector == "nai" and not s.fit_singlets and not s.width_fixed and s.background_fixed
+    assert s.max_overlaps == 4 and s.k_sigma == pytest.approx(1.645)
