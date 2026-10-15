@@ -58,7 +58,7 @@ def test_panel_without_session_and_without_calibration(window, tmp_path):
     assert [t for _l, _c, t in _rows(window)] == [wtr("panel_no_spectrum")]
     window.load_file(spectrum_file(tmp_path / "data"))
     rows = _rows(window)
-    assert ("error", "calibration_required", wtr("msg_no_eff_cal")) in rows
+    assert ("info", "calibration_required", wtr("msg_no_eff_cal")) in rows    # identification only
     assert ("info", "no_results", wtr("msg_no_results")) in rows
     assert any(c == "outside_validated_scope" and t == wtr("msg_geo_unrecorded") for _l, c, t in rows)
     # colours follow the level
@@ -69,7 +69,7 @@ def test_panel_without_session_and_without_calibration(window, tmp_path):
         assert lst.item(i).foreground().color().name() == LEVEL_COLORS[level]
     # Arabic
     window.apply_language("ar")
-    assert ("error", "calibration_required", i18n.STRINGS["ar"]["wf_msg_no_eff_cal"]) in _rows(window)
+    assert ("info", "calibration_required", i18n.STRINGS["ar"]["wf_msg_no_eff_cal"]) in _rows(window)
     assert window.workflow_dock.windowTitle() == i18n.STRINGS["ar"]["wf_dock"]
     window.apply_language("en")
 

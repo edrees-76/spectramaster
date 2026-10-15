@@ -671,7 +671,14 @@ class SessionController:
         if self.session is None:
             return []
         try:
-            return workflow_status(self.session, self.spectrum())
+            # as in the report record: a missing efficiency calibration is an error only once
+            # activities are part of the work; for identification alone it is information
+            quant = bool((self.session.results or {}).get("quant"))
+            out = workflow_status(self.session, self.spectrum(), needs_activity=quant)
+            if not quant and not any(c.get("kind") == "efficiency" for c in self.session.calibrations or []):
+                out.insert(0, WorkflowStatus("calibration_required", "info",
+                                             "no efficiency calibration recorded: activities cannot be reported"))
+            return out
         except Exception as exc:                 # engine error -> a visible status, never a crash
             return [WorkflowStatus("engine_error", "warning",
                                    wtr("panel_engine_error", msg=f"{type(exc).__name__}: {exc}"))]
