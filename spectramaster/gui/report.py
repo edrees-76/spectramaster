@@ -29,7 +29,7 @@ from PySide6.QtGui import (QAbstractTextDocumentLayout, QColor, QFont, QFontData
 
 from .. import __version__
 from ..model import Spectrum
-from . import i18n
+from . import context_strings, i18n, identification_library  # noqa: F401 (strings merged into i18n)
 from .plot import PlotRenderer, Y_LINEAR, Y_LOG, Y_MODES, Y_SQRT, format_count
 
 CSS_DPI = 96.0                       # document units: CSS pixels
@@ -85,6 +85,7 @@ class ReportOptions:
     nuc_min_conf: int = 0             # percent
     nuc_hide_background: bool = False
     rois: bool = True
+    context: bool = True              # library, detector, concentrations, workflow status (session)
     extra: bool = False
     notes_on: bool = False
     notes: str = ""
@@ -257,6 +258,14 @@ class ReportData:
     plot: Optional[PlotRenderer] = None     # snapshot of the on-screen plot (zoom, ROIs, overlays)
     index: int = 0                          # spectrum number inside a multi-spectrum file
     count: int = 1
+    # laboratory context, as stored / computed in the GUI (nothing is recalculated for the report)
+    library: Optional[str] = None           # identification library (analysis.library.APPLICATIONS key)
+    has_session: bool = False               # an analysis session belongs to the spectrum
+    detector: Optional[dict] = None         # DetectorProfile snapshot of the session
+    geometry: Optional[dict] = None         # MeasurementGeometry snapshot of the session
+    mass_basis: Optional[str] = None        # sample mass basis (dry / wet) of the concentrations
+    concentration: Optional[dict] = None    # activity.concentrations() of the session's activities
+    statuses: list = field(default_factory=list)   # workflow statuses {code, level, message}
 
     @property
     def file_name(self) -> str:
@@ -522,6 +531,8 @@ class Report:
             parts.append(self._html_nuclides())
         if o.rois:
             parts.append(self._html_rois())
+        if o.context:
+            parts.append(self._html_context())
         if o.extra:
             parts.append(self._html_extra())
         if o.notes_on and o.notes.strip():
@@ -788,6 +799,8 @@ class Report:
             filt.append(t("rep_min_conf", v=o.nuc_min_conf))
         if o.nuc_hide_background:
             filt.append(t("rep_no_background"))
+        if d.library:
+            filt.insert(0, t("idl_header", name=self.library_name(d.library)))
         extra = esc(t("rep_shown_of", n=len(ms), m=len(d.matches)) + (" · " + " · ".join(filt) if filt else ""))
         if not ms:
             return self._h2("rep_nuclides", extra) + self._note(t("rep_no_nuclides"))
@@ -835,6 +848,123 @@ class Report:
                          self.num(f"{st.gross:,.0f}"), self.num(f"{st.net:,.1f} ± {st.net_unc:,.1f}"),
                          self.num(cps)])
         return self._h2("rep_rois") + self._table(headers, rows, widths=(5, 10, 10, 11, 11, 10, 12, 17, 14))
+
+    # laboratory context ---------------------------------------------------
+    def library_name(self, application: str) -> str:
+        key = "idl_short_" + application
+        return self.t(key) if key in i18n.STRINGS.get("en", {}) else application
+
+    def reportable(self) -> Optional[bool]:
+        """False when a workflow status is an error, None without a session."""
+        if not self.data.has_session:
+            return None
+        return not any(s.get("level") == "error" for s in self.data.statuses)
+
+    def _c(self, key: str, **kw) -> str:
+        from .context_strings import ctr_in
+        return ctr_in(self.lang, key, **kw)
+
+    def context_items(self) -> list[tuple[str, str]]:
+        """(label, html value) rows: library, detector, geometry, reportable."""
+        d, c = self.data, self._c
+        none = "—"
+        items = [(c("rep_library"), esc(self.library_name(d.library)) if d.library else esc(c("rep_library_none")))]
+        if d.has_session:
+            det = d.detector or {}
+            if det:
+                txt = det.get("name") or det.get("id", "")
+                extra = [x for x in (det.get("type"), det.get("serial")) if x]
+                if extra:
+                    txt += " (" + ", ".join(extra) + ")"
+                items.append((c("rep_detector"), self.num(txt)))
+            else:
+                items.append((c("rep_detector"), none))
+            geo = d.geometry or {}
+            items.append((c("rep_geometry"), self.num(geo.get("name") or geo.get("id", "")) if geo else none))
+            ok = self.reportable()
+            colour = "#2e7d32" if ok else "#c62828"
+            items.append((c("rep_reportable"), f'<b style="color:{colour};">'
+                          f'{esc(c("rep_reportable_yes" if ok else "rep_reportable_no"))}</b>'))
+        return items
+
+    def concentration_unit(self) -> str:
+        conc = self.data.concentration or {}
+        unit = conc.get("unit", "") or ""
+        basis = self.data.mass_basis
+        if unit.startswith("Bq/kg (") and basis:
+            key = "quant_conc_basis_" + basis
+            if key in i18n.STRINGS.get("en", {}):
+                return f"Bq/kg ({self.t(key).split(' (')[0]})"
+        return unit.replace("m3", "m³")
+
+    def concentration_rows(self) -> list[list[str]]:
+        """(nuclide, result text, decision, decay factor) rows, as computed (HTML cells)."""
+        rows = []
+        for r in (self.data.concentration or {}).get("rows", []):
+            detected = r.get("value") is not None
+            dec = self.t("quant_res_detected" if detected else "quant_res_lt_mda")
+            colour = "#14822a" if detected else C_MUTED
+            factor = r.get("factor")
+            rows.append([f"<b>{esc(r.get('nuclide', ''))}</b>", self.num(r.get("text") or ""),
+                         f'<span style="color:{colour};">{esc(dec)}</span>',
+                         self.num(f"{factor:.4g}") if isinstance(factor, (int, float)) else ""])
+        return rows
+
+    def missing_inputs(self) -> list[str]:
+        from .sample_panel import MISSING_KEYS
+        out = []
+        for m in (self.data.concentration or {}).get("missing", []):
+            out.append(self.t("quant_" + MISSING_KEYS[m]) if m in MISSING_KEYS else m)
+        return out
+
+    def status_rows(self) -> list[list[str]]:
+        from ..lab.workflow import WorkflowStatus
+        from .session_io import LEVEL_COLORS, code_title, level_title, status_text
+        rows = []
+        for st in self.data.statuses:
+            ws = WorkflowStatus(st.get("code", ""), st.get("level", "info"), st.get("message", ""))
+            colour = LEVEL_COLORS.get(ws.level, C_MUTED)
+            rows.append([f'<span style="color:{colour};"><b>{esc(level_title(ws.level, self.lang))}</b></span>',
+                         esc(code_title(ws.code, self.lang)), esc(status_text(ws, self.lang))])
+        return rows
+
+    def _html_context(self) -> str:
+        d, c = self.data, self._c
+        lab_style = f'bgcolor="{C_HEAD_BG}" align="{self._align_start()}"'
+        rows = "".join("<tr>" + self._cells([f'<td width="30%" {lab_style}>{esc(k)}</td>',
+                                             f'<td align="{self._align_start()}">{v}</td>']) + "</tr>"
+                       for k, v in self.context_items())
+        out = [f'<h2 dir="{self._dir()}" align="{self._align_start()}">{esc(c("rep_title"))}</h2>',
+               f'<table dir="{self._dir()}" width="100%" border="1" cellspacing="0" cellpadding="3" '
+               f'style="border-collapse: collapse; border-color: {C_RULE}; border-style: solid; '
+               f'font-size: 8.5pt;">{rows}</table>']
+        if not d.has_session:
+            out.append(self._note(c("rep_no_session")))
+            return "".join(out)
+        conc = d.concentration
+        if conc:
+            unit = self.concentration_unit()
+            out.append(f'<p dir="{self._dir()}"><b>{esc(c("rep_conc", unit=self.ltr(unit)))}</b></p>')
+            missing = self.missing_inputs()
+            if missing:
+                out.append(self._note(c("rep_conc_missing", items="; ".join(missing))))
+            notes = [n for n in conc.get("notes", []) if not n.startswith("concentration not computed")]
+            if notes:
+                out.append(f'<p dir="{self._dir()}" class="muted">{esc(c("rep_conc_notes", notes=""))}'
+                           f'{self.num("; ".join(notes))}</p>')
+            rows = self.concentration_rows()
+            if rows:
+                out.append(self._table([c("rep_col_nuclide"), c("rep_col_result"), c("rep_col_decision"),
+                                        c("rep_col_factor")], rows, widths=(16, 48, 18, 18)))
+        else:
+            out.append(f'<p dir="{self._dir()}" class="muted">{esc(c("rep_conc_none"))}</p>')
+        if d.statuses:
+            out.append(f'<p dir="{self._dir()}"><b>{esc(c("rep_statuses"))}</b></p>')
+            out.append(self._table([c("rep_col_level"), c("rep_col_status"), c("rep_col_message")],
+                                   self.status_rows(), widths=(14, 26, 60), aligns=("center", "start", "start")))
+        out.append(f'<p dir="{self._dir()}" class="muted" style="font-size:7.5pt;">'
+                   f'{esc(c("rep_not_recalculated"))}</p>')
+        return "".join(out)
 
     def _html_extra(self) -> str:
         t = self.t
@@ -1022,6 +1152,7 @@ def make_batch_data(path: Path, analyse: bool, in_fmt=None,
             try:
                 d.peaks, d.matches, d.identified = analyse_spectrum(s, application)
                 d.analysed = True
+                d.library = application if d.identified else None
             except Exception as exc:  # report the failure in the PDF, never abort the batch
                 d.analysis_error = f"{type(exc).__name__}: {exc}"
         out.append(d)

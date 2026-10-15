@@ -105,6 +105,9 @@ class ActivityDialog(QDialog):
         self.curve_status = QLabel("")
         self.curve_status.setWordWrap(True)
         form.addRow("", self.curve_status)
+        self.detector_status = QLabel("")            # detector of the session vs of the calibration (D5)
+        self.detector_status.setWordWrap(True)
+        form.addRow("", self.detector_status)
         self.curve_combo.currentIndexChanged.connect(self._curve_changed)
 
         row = QHBoxLayout()
@@ -343,16 +346,47 @@ class ActivityDialog(QDialog):
         box.exec()
         return box.clickedButton() is use
 
+    def session_detector(self) -> Optional[dict]:
+        """Detector snapshot of the analysis session of the spectrum (None: not chosen)."""
+        ctl = getattr(self.parent(), "session_ctl", None)
+        s = ctl.session_for(self.spectrum) if ctl is not None else None
+        return s.detector if s is not None else None
+
+    def _show_detectors(self, rec) -> bool:
+        """Detector of the session and of the calibration record; True when they differ."""
+        from .context_strings import ctr
+        from .detector_registry import DetectorRegistry
+        det = self.session_detector()
+        cal_id = getattr(rec, "detector_id", None) if rec is not None else None
+        if cal_id and det and cal_id == det.get("id"):
+            cal = det.get("name") or cal_id
+        elif cal_id:
+            p = DetectorRegistry().get(cal_id)
+            cal = p.name if p is not None else ctr("act_det_unknown")
+        else:
+            cal = ctr("act_det_not_recorded")
+        sess = (det.get("name") or det.get("id")) if det else ctr("act_det_not_chosen")
+        text = ctr("act_detectors", session=i18n.ltr(sess), calibration=i18n.ltr(cal))
+        mismatch = bool(cal_id and det and cal_id != det.get("id"))
+        if mismatch:
+            text += "\n⚠ " + ctr("act_det_mismatch")
+        self.detector_status.setText(text)
+        self.detector_status.setStyleSheet("color: %s;" % ("#c62828; font-weight: bold" if mismatch else "#6b7280"))
+        return mismatch
+
     def _curve_changed(self, *_):
         path = self.curve_combo.currentData()
         if not path:
             self.curve_status.setText("")
+            self._show_detectors(None)
             return
         try:
             c, _rec, _issues = load_curve_file(path)
         except Exception as exc:
             self.curve_status.setText(qtr("act_failed", msg=str(exc)))
+            self._show_detectors(None)
             return
+        self._show_detectors(_rec)
         geo = (c.geometry_record or {}).get("name") or c.geometry or qtr("act_geo_not_recorded")
         st = c.validation_status
         self.curve_status.setText(qtr("act_curve_status", status=status_text(st), geometry=geo))

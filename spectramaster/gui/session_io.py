@@ -31,7 +31,7 @@ from PySide6.QtWidgets import (QDialog, QDialogButtonBox, QDockWidget, QFileDial
                                QVBoxLayout, QWidget)
 
 from . import i18n
-from .workflow_strings import wtr
+from .workflow_strings import wtr, wtr_in
 
 SESSION_EXT = ".smsession"
 REVIEWER_KEY = "workflow/reviewer"
@@ -46,6 +46,8 @@ _NAME = r"(['\"])(?P<name>.*?)\1"
 _PATTERNS = [
     (r"the spectrum has no energy calibration", "msg_no_energy_cal"),
     (r"no efficiency calibration recorded: activities cannot be reported", "msg_no_eff_cal"),
+    (r"no FWHM calibration: the default detector resolution is used, weak-peak areas may be biased by a few %",
+     "msg_no_fwhm_cal"),
     (rf"efficiency calibration {_NAME} belongs to another detector", "msg_other_detector"),
     (rf"efficiency calibration {_NAME} belongs to another geometry: (?P<reasons>.+)", "msg_other_geometry_why"),
     (rf"efficiency calibration {_NAME} belongs to another geometry", "msg_other_geometry"),
@@ -62,9 +64,11 @@ _PATTERNS = [
 _COMPILED = [(re.compile(p + r"\Z", re.S), k) for p, k in _PATTERNS]
 
 
-def status_text(st) -> str:
-    """Translated message of a WorkflowStatus; unknown messages are shown as they are."""
+def status_text(st, lang: Optional[str] = None) -> str:
+    """Translated message of a WorkflowStatus (in `lang`, default: the interface language);
+    unknown messages are shown as they are."""
     msg = st.message
+    w = (lambda key, **kw: wtr_in(lang, key, **kw)) if lang else wtr
     for rx, key in _COMPILED:
         m = rx.match(msg)
         if m is None:
@@ -72,16 +76,24 @@ def status_text(st) -> str:
         kw = {k: v for k, v in m.groupdict().items() if v is not None}
         if "status" in kw:
             vk = "wf_val_" + kw["status"]
-            kw["status"] = wtr("val_" + kw["status"]) if vk in i18n.STRINGS["en"] else kw["status"]
+            kw["status"] = w("val_" + kw["status"]) if vk in i18n.STRINGS["en"] else kw["status"]
         for k in ("name", "reasons", "energies", "time", "note", "who"):
             if k in kw:
                 kw[k] = i18n.ltr(kw[k]) if k in ("name", "energies", "time") else kw[k]
-        return wtr(key, **kw)
+        return w(key, **kw)
     return msg
 
 
-def code_title(code: str) -> str:
-    return wtr("code_" + code) if code in KNOWN_CODES else code
+def code_title(code: str, lang: Optional[str] = None) -> str:
+    if code not in KNOWN_CODES:
+        return code
+    return wtr_in(lang, "code_" + code) if lang else wtr("code_" + code)
+
+
+def level_title(level: str, lang: Optional[str] = None) -> str:
+    if level not in LEVEL_COLORS:
+        return level
+    return wtr_in(lang, "level_" + level) if lang else wtr("level_" + level)
 
 
 def _dot(color: str) -> QIcon:
@@ -209,6 +221,9 @@ class SessionController:
         self._incoming = None                      # (session, spectrum index) while opening one
         self.concentration_session = None          # session_id the activity dialog's concentrations belong to
         self.panel = WorkflowPanel()
+        from .detector_picker import SessionContextBar
+        self.context = SessionContextBar(self)     # detector picker and geometry (D5)
+        self.panel.layout().insertWidget(0, self.context)
 
     # ------------------------------------------------------------ state
     @property
@@ -397,6 +412,74 @@ class SessionController:
     def changed(self) -> None:
         """Something edited the session elsewhere (fit inspection, undo / redo)."""
         self.refresh()
+
+    # ------------------------------------------------------------ detector and geometry (D5)
+    def detector_registry(self):
+        from .detector_registry import DetectorRegistry
+        return DetectorRegistry()
+
+    def set_detector(self, detector_id: Optional[str]) -> bool:
+        """Record the registry profile `detector_id` (None: no detector) in the session: a snapshot
+        and its id, through the undoable edit history (results are marked stale by the engine)."""
+        s = self.session
+        if s is None or (detector_id or None) == s.detector_id:
+            self.refresh()
+            return False
+        if not detector_id:
+            s.edit("set_context", ["detector"], None, reason="detector cleared")
+        else:
+            prof = self.detector_registry().get(detector_id)
+            if prof is None:
+                from .context_strings import ctr
+                self.win.show_error(ctr("detector_missing", name=i18n.ltr(detector_id)))
+                self.refresh()
+                return False
+            s.set_detector(prof, reason=f"detector chosen: {prof.name}")
+        self.refresh()
+        return True
+
+    def ask_geometry(self, current: Optional[dict]):
+        """The geometry entered by the user, None when cancelled (tests replace this)."""
+        from .detector_picker import GeometryDialog
+        dlg = GeometryDialog(self.win, current)
+        return dlg.geometry() if dlg.exec() == QDialog.Accepted else None
+
+    def edit_geometry(self, geometry=None) -> bool:
+        """Record the measurement geometry of the sample in the session (undoable)."""
+        s = self.session
+        if s is None:
+            self.win.show_info(wtr("no_session"))
+            return False
+        g = geometry if geometry is not None else self.ask_geometry(s.geometry)
+        if g is None or g.to_dict() == s.geometry:
+            return False
+        s.set_geometry(g, reason=f"measurement geometry edited: {g.name}")
+        self.refresh()
+        return True
+
+    def manage_detectors(self, show: bool = True):
+        from .detector_picker import DetectorManagerDialog
+        dlg = DetectorManagerDialog(self.win, self.detector_registry())
+        if show:
+            dlg.exec()
+            self.refresh()
+        return dlg
+
+    def context_undo_op(self):
+        """The next undo when it is a detector / geometry choice (else None)."""
+        from .detector_picker import CONTEXT_TARGETS
+        s = self.session
+        if s is None or not s.history.can_undo():
+            return None
+        op = s.history._op(s.history.undo_stack[-1])
+        return op if op.kind == "set_context" and op.target in CONTEXT_TARGETS else None
+
+    def undo_context(self) -> bool:
+        if self.context_undo_op() is None:
+            return False
+        self.session.undo()
+        self.refresh()
+        return True
 
     # ------------------------------------------------------------ open / save (A5)
     def open_session(self, path=None) -> bool:
@@ -697,6 +780,7 @@ class SessionController:
         return wtr("panel_modified", text=text) if self.path is not None and self.is_dirty() else text
 
     def refresh(self) -> None:
+        self.context.refresh()
         self.panel.show_statuses(self.statuses(), self.header_text(),
                                  wtr("panel_no_spectrum") if self.session is None else "")
         update_actions(self.win)
@@ -799,6 +883,6 @@ def open_batch_analysis(win, show: bool = True):
     return dlg
 
 
-__all__ = ["SessionController", "WorkflowPanel", "ReviewDialog", "status_text", "code_title",
+__all__ = ["SessionController", "WorkflowPanel", "ReviewDialog", "status_text", "code_title", "level_title",
            "results_to_objects", "install_session_io", "retranslate_session_io", "open_batch_analysis",
            "SESSION_EXT"]

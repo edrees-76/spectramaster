@@ -148,6 +148,9 @@ class ReportOptionsDialog(QDialog):
         g.addLayout(conf_row, r, 2); r += 1
         self.cb_rois = QCheckBox(tr("rep_inc_rois"))
         g.addWidget(self.cb_rois, r, 0, 1, 3); r += 1
+        from .context_strings import ctr
+        self.cb_context = QCheckBox(ctr("rep_inc"))
+        g.addWidget(self.cb_context, r, 0, 1, 3); r += 1
         self.cb_extra = QCheckBox(tr("rep_inc_extra"))
         g.addWidget(self.cb_extra, r, 0, 1, 3); r += 1
         self.cb_notes = QCheckBox(tr("rep_inc_notes"))
@@ -284,6 +287,7 @@ class ReportOptionsDialog(QDialog):
         self.sp_min_conf.setValue(o.nuc_min_conf)
         self.cb_nuc_bg.setChecked(o.nuc_hide_background)
         self.cb_rois.setChecked(o.rois)
+        self.cb_context.setChecked(o.context)
         self.cb_extra.setChecked(o.extra)
         self.cb_notes.setChecked(o.notes_on)
         self.ed_notes.setPlainText(o.notes)
@@ -324,7 +328,7 @@ class ReportOptionsDialog(QDialog):
             peaks=self.cb_peaks.isChecked(), peaks_identified_only=self.cb_peaks_ident.isChecked(),
             peaks_min_sig=self.sp_min_sig.value(), nuclides=self.cb_nuc.isChecked(),
             nuc_min_conf=self.sp_min_conf.value(), nuc_hide_background=self.cb_nuc_bg.isChecked(),
-            rois=self.cb_rois.isChecked(), extra=self.cb_extra.isChecked(),
+            rois=self.cb_rois.isChecked(), context=self.cb_context.isChecked(), extra=self.cb_extra.isChecked(),
             notes_on=self.cb_notes.isChecked(), notes=self.ed_notes.toPlainText().strip(),
             signatures=self.cb_sign.isChecked(), sig_prepared=self.ed_sig["prepared"].text().strip(),
             sig_reviewed=self.ed_sig["reviewed"].text().strip(),

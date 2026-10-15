@@ -479,6 +479,21 @@ class EfficiencyDialog(QDialog):
         self.det_edit = QLineEdit()
         self.det_edit.setMinimumWidth(180)
         meta.addWidget(self.det_edit, 1)
+        # detector profile of the registry (D5): its id goes into the calibration record
+        from .context_strings import ctr
+        from .detector_picker import fill_detector_combo
+        from .detector_registry import DetectorRegistry
+        meta.addSpacing(12)
+        lbl = QLabel(ctr("eff_profile"))
+        lbl.setToolTip(ctr("eff_profile_tip"))
+        meta.addWidget(lbl)
+        self.det_profile_combo = QComboBox()
+        self.det_profile_combo.setToolTip(ctr("eff_profile_tip"))
+        sess = getattr(parent, "session", None)
+        fill_detector_combo(self.det_profile_combo, DetectorRegistry(), getattr(sess, "detector_id", None),
+                            getattr(sess, "detector", None))
+        self.det_profile_combo.activated.connect(self._detector_profile_chosen)
+        meta.addWidget(self.det_profile_combo, 1)
         lay.addLayout(meta)
 
         self.tabs = QTabWidget()
@@ -716,6 +731,25 @@ class EfficiencyDialog(QDialog):
     def ask_validation_note(self) -> Optional[str]:
         text, ok = QInputDialog.getText(self, qtr("eff_mark_validated"), qtr("eff_val_note_required"))
         return text if ok else None
+
+    def detector_id(self) -> Optional[str]:
+        """Id of the chosen detector profile (None: not recorded)."""
+        return self.det_profile_combo.currentData() or None
+
+    def set_detector_id(self, detector_id: Optional[str]) -> None:
+        from .detector_picker import fill_detector_combo
+        from .detector_registry import DetectorRegistry
+        fill_detector_combo(self.det_profile_combo, DetectorRegistry(), detector_id)
+        self._detector_profile_chosen(self.det_profile_combo.currentIndex())
+
+    def _detector_profile_chosen(self, index: int) -> None:
+        """The detector name of the curve follows the profile when it was empty."""
+        did = self.det_profile_combo.itemData(index)
+        if did and not self.det_edit.text().strip():
+            from .detector_registry import DetectorRegistry
+            p = DetectorRegistry().get(did)
+            if p is not None:
+                self.det_edit.setText(p.name)
 
     @property
     def busy(self) -> bool:
@@ -1237,7 +1271,8 @@ class EfficiencyDialog(QDialog):
         from ..lab.calibration import CalibrationRecord
         c = self.curve
         geo_id = (c.geometry_record or {}).get("id") or None
-        rec = CalibrationRecord.from_efficiency_curve(c, detector_id=None, geometry_id=geo_id, source=self._origin,
+        rec = CalibrationRecord.from_efficiency_curve(c, detector_id=self.detector_id(), geometry_id=geo_id,
+                                                      source=self._origin,
                                                       note=f"detector: {c.detector}" if c.detector else "")
         if c.validation_status in ("validated", "rejected"):
             rec.set_validation(c.validation_status, self.validation_note)
@@ -1291,6 +1326,8 @@ class EfficiencyDialog(QDialog):
             self.u_common_edit.setText(f"{100 * c.u_common_rel:g}")
         self.geom_edit.setText(c.geometry)
         self.det_edit.setText(c.detector)
+        if rec is not None and rec.detector_id:
+            self.set_detector_id(rec.detector_id)
         if c.geometry_record:
             try:
                 self.geo.set_geometry(c.geometry_record)

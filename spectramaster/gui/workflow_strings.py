@@ -67,6 +67,8 @@ EN = {
     "code_reviewed": "Reviewed",
     "msg_no_energy_cal": "The spectrum has no energy calibration.",
     "msg_no_eff_cal": "No efficiency calibration recorded: activities cannot be reported.",
+    "msg_no_fwhm_cal": "No FWHM calibration: the default detector resolution is used; weak-peak areas may "
+                       "be biased by a few %.",
     "msg_other_detector": "Efficiency calibration {name} belongs to another detector.",
     "msg_other_geometry": "Efficiency calibration {name} belongs to another geometry.",
     "msg_other_geometry_why": "Efficiency calibration {name} belongs to another geometry: {reasons}",
@@ -242,6 +244,8 @@ AR = {
     "code_reviewed": "رُوجعت",
     "msg_no_energy_cal": "الطيف بلا معايرة طاقة.",
     "msg_no_eff_cal": "لم تُسجَّل معايرة كفاءة: لا يمكن الإبلاغ عن الأنشطة.",
+    "msg_no_fwhm_cal": "لا توجد معايرة FWHM: تُستخدم دقة الكاشف الافتراضية؛ وقد تنحاز مساحات القمم الضعيفة "
+                       "ببضعة بالمئة.",
     "msg_other_detector": "معايرة الكفاءة {name} تخص كاشفًا آخر.",
     "msg_other_geometry": "معايرة الكفاءة {name} تخص هندسة قياس أخرى.",
     "msg_other_geometry_why": "معايرة الكفاءة {name} تخص هندسة قياس أخرى: {reasons}",
@@ -364,3 +368,8 @@ i18n.STRINGS.setdefault("ar", {}).update({PREFIX + k: v for k, v in AR.items()})
 def wtr(key: str, **kwargs) -> str:
     """``tr`` for the keys above (namespaced with ``wf_``)."""
     return i18n.tr(PREFIX + key, **kwargs)
+
+
+def wtr_in(lang, key: str, **kwargs) -> str:
+    """``wtr`` in an explicit language (e.g. the report language)."""
+    return i18n.tr_in(lang, PREFIX + key, **kwargs)
