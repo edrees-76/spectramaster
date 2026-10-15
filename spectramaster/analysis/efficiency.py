@@ -462,7 +462,7 @@ def measure_efficiency(spectrum, cert: Sequence[CertLine], peaks=None,
 
 @dataclass
 class EfficiencyCurve:
-    model: str = "loglog"            # "loglog" | "two_branch"
+    model: str = "loglog"            # "loglog" | "two_branch" | "lnpoly" | "spline_lnln" (Aptec C/D, S)
     params: list[float] = field(default_factory=list)
     cov: list[list[float]] = field(default_factory=list)
     order: int = 3                   # loglog order, or low branch order
@@ -487,6 +487,7 @@ class EfficiencyCurve:
     name: str = ""
     source: str = ""
     note: str = ""
+    knots: list = field(default_factory=list)              # spline_lnln: ln E of the knots
 
     # --- evaluation
     def _design(self, e) -> np.ndarray:
@@ -502,6 +503,11 @@ class EfficiencyCurve:
             for i in range(1, hi + 1):
                 m[:, lo + i] = np.where(low, 0.0, x ** i)
             return m
+        if self.model == "lnpoly":          # Aptec types C/D: ln eps = sum a_i (E / e_ref)^i
+            return np.vander(e / self.e_ref, self.order + 1, increasing=True)
+        if self.model == "spline_lnln":     # Aptec type S: natural cubic spline, NaN outside
+            from .aptec_calibration import spline_design
+            return spline_design(self.knots, np.log(e))
         return np.vander(x, self.order + 1, increasing=True)
 
     def efficiency(self, energy):
@@ -537,6 +543,10 @@ class EfficiencyCurve:
     def describe(self) -> str:
         if self.model == "two_branch":
             return f"two-branch log-log, Ec = {self.e_ref:g} keV, orders {self.order}/{self.order_high}"
+        if self.model == "lnpoly":
+            return f"ln(eff) polynomial in energy, order {self.order} (Aptec)"
+        if self.model == "spline_lnln":
+            return "cubic spline of ln(eff) against ln(E) (Aptec type S)"
         return f"log-log polynomial, order {self.order}"
 
     # --- persistence

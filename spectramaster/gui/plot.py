@@ -5,6 +5,7 @@ Interaction (see ``SHORTCUTS`` in i18n for the user-facing list)
   * left drag (horizontal)  : zoom to the dragged channel range (Y auto)
   * left drag (box)         : rubber-band zoom of X and Y
   * Ctrl + left drag        : define a region of interest (ROI)
+  * left click              : move the channel marker (``markerMoved``)
   * Shift + left drag, right/middle drag : pan (Y too when Y is zoomed)
   * wheel                   : zoom X around the cursor
   * Ctrl + wheel / Up, Down : zoom Y
@@ -42,6 +43,7 @@ C_LINE = QColor("#1f5f99")
 C_FILL_TOP = QColor(54, 128, 196, 150)
 C_FILL_BOTTOM = QColor(54, 128, 196, 40)
 C_CURSOR = QColor("#d9822b")
+C_MARKER = QColor("#c62828")           # channel marker (Aptec style)
 C_SELECT = QColor(217, 130, 43, 50)
 C_BOX = QColor(47, 109, 179, 40)
 C_ROI = QColor(214, 69, 65)
@@ -148,6 +150,7 @@ class SpectrumPlot(QWidget):
     roisChanged = Signal()
     overlaysChanged = Signal()
     contextRequested = Signal(QPoint, float)   # global pos, index position (nan outside)
+    markerMoved = Signal(int)        # stored-array index of the channel marker
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -174,6 +177,8 @@ class SpectrumPlot(QWidget):
         self.rois: list[Roi] = []
         self.last_roi: Optional[Roi] = None
         self.peaks: list = []                # analysis Peak objects (labels)
+        self.marker: Optional[int] = None    # channel marker (stored-array index), Aptec style
+        self.show_marker = True
         self.highlight: Optional[Highlight] = None
         self._history: list[tuple] = []
         self._hist_idx = -1
@@ -197,6 +202,8 @@ class SpectrumPlot(QWidget):
         self._spec = spec
         self._y = np.asarray(spec.counts, dtype=float) if spec else np.zeros(0)
         n = len(self._y)
+        if self.marker is not None and self.marker >= n:
+            self.marker = None
         self._edges = np.arange(n + 1, dtype=float)
         self._energies = spec.energies() if spec else None
         self._edge_energy = None
@@ -471,6 +478,27 @@ class SpectrumPlot(QWidget):
         self.update()
         self.roisChanged.emit()
         return roi
+
+    def set_marker(self, idx: Optional[int]) -> None:
+        """Move the channel marker to stored-array index `idx` (None removes it)."""
+        if idx is not None:
+            if not len(self._y):
+                return
+            idx = int(min(max(int(idx), 0), len(self._y) - 1))
+        self.marker = idx
+        self.update()
+        if idx is not None:
+            self.markerMoved.emit(idx)
+
+    def marker_channel(self) -> Optional[float]:
+        """Channel number of the marker (first_channel applied), or None."""
+        if self.marker is None:
+            return None
+        return float(self.marker + (self._spec.first_channel if self._spec else 0))
+
+    def marker_roi(self) -> int:
+        """Index of the ROI containing the marker, or -1."""
+        return self.roi_at(self.marker + 0.5) if self.marker is not None else -1
 
     def remove_roi(self, i: int) -> None:
         if 0 <= i < len(self.rois):
@@ -819,6 +847,11 @@ class SpectrumPlot(QWidget):
             else:
                 p.fillRect(QRectF(xa, rect.top(), xb - xa, rect.height()), C_SELECT)
 
+        if (interactive and self.show_marker and self.marker is not None
+                and self.x0 - 1 <= self.marker < self.x1):
+            mx = float(self._x_to_px(self.marker + 0.5, rect))
+            p.setPen(QPen(C_MARKER, 1))
+            p.drawLine(QPointF(mx, rect.top()), QPointF(mx, rect.bottom()))
         if interactive and self._hover_idx is not None and self.x0 - 1 <= self._hover_idx < self.x1:
             cx = float(self._x_to_px(self._hover_idx + 0.5, rect))
             p.setPen(QPen(C_CURSOR, 1, Qt.DashLine))
@@ -1257,6 +1290,8 @@ class SpectrumPlot(QWidget):
                     self.zoom_box(QRectF(QPointF(xa, min(a.y(), b.y())), QPointF(xb, max(a.y(), b.y()))))
                 else:
                     self.set_view(self._px_to_x(xa, rect), self._px_to_x(xb, rect), None)
+            elif rect.contains(b):                       # a click: move the channel marker
+                self.set_marker(int(math.floor(self._px_to_x(b.x(), rect))))
         self.update()
 
     def mouseDoubleClickEvent(self, ev):

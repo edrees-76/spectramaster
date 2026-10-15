@@ -312,6 +312,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         install_session_actions(self)
         from .session_io import install_session_io    # File > sessions, report record; workflow dock (A5, F3)
         install_session_io(self)
+        from .aptec_calibration_ui import install_setup_menu    # Setup > Quick / Full calibrations (Aptec)
+        install_setup_menu(self)
         self.menu_help = mb.addMenu("")
         self.menu_help.addAction(self.act_shortcuts)
         self.menu_help.addAction(self.act_integration)
@@ -485,6 +487,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         retranslate_manual_menu(self)
         from .calibration_dialog import retranslate_calibration_actions
         retranslate_calibration_actions(self)
+        from .aptec_calibration_ui import retranslate_setup_menu
+        retranslate_setup_menu(self)
         from .fit_inspection import retranslate_session_actions
         retranslate_session_actions(self)
         from .session_io import retranslate_session_io
