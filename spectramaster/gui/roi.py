@@ -188,3 +188,28 @@ def compute_rois_aptec(counts: Sequence[float], bounds: Sequence[tuple[int, int]
             bl=r.bl, bh=r.bh, coeffs=tuple(r.coeffs), err_pct=r.err_pct, fwtm=r.fwtm, fwtm_kev=fwtm_kev,
             mda_cps=r.mda_cps, flags=r.flags, grouped=r.grouped))
     return out
+
+
+def fitted_stats(st: AptecRoiStats, result, k: int, energy_of=None, live_time: Optional[float] = None) -> AptecRoiStats:
+    """ROI statistics of component ``k`` of a MultiFit ``result``: the fitted Gaussian replaces
+    the summed net counts (area, its uncertainty, centroid and FWHM); flag ``m`` for a component
+    of a multiplet, ``s`` for a fitted singlet (Aptec's letters)."""
+    from dataclasses import replace
+    c = result.components[k]
+    first = st.first_channel
+    cen = first + c.centroid
+    cen_e = fw_kev = None
+    if energy_of is not None:
+        cen_e = energy_of(cen)
+        ea, eb = energy_of(cen - c.fwhm / 2), energy_of(cen + c.fwhm / 2)
+        if cen_e is not None and ea is not None and eb is not None:
+            fw_kev = abs(eb - ea)
+    rate = rate_unc = None
+    if live_time and live_time > 0:
+        rate, rate_unc = c.area / live_time, c.area_unc / live_time
+    flags = ("m" if result.multiplet else "s")
+    if rate is not None and st.mda_cps is not None and rate < st.mda_cps:
+        flags += "?"
+    return replace(st, net=c.area, net_unc=c.area_unc, centroid=cen, centroid_energy=cen_e, fwhm=c.fwhm,
+                   fwhm_kev=fw_kev, count_rate=rate, count_rate_unc=rate_unc,
+                   err_pct=100.0 * c.area_unc / c.area if c.area else None, flags=flags)
