@@ -224,8 +224,20 @@ class PreviewFileDialog(QFileDialog):
             self.preview.request(path)
 
 
+PREVIEW_SETTING = "ui/open_dialog_preview"   # False (default): the operating system's own dialog
+
+
+def use_preview_dialog(settings) -> bool:
+    return bool(settings is not None and settings.get_bool(PREVIEW_SETTING, False))
+
+
 def get_open_file_name(parent, title: str, folder: str, flt: str, selected: str = "",
                        settings=None) -> str:
+    """Open dialog for a spectrum: the native (Windows) dialog by default; the Qt dialog with
+    the description panel when chosen in View > Description panel in the open dialog."""
+    if not use_preview_dialog(settings):
+        path, _ = QFileDialog.getOpenFileName(parent, title, folder, flt, selected)
+        return path or ""
     in_fmt = settings.input_format() if settings is not None else None
     dlg = PreviewFileDialog(parent, title, folder, flt, selected, settings, in_fmt)
     if dlg.exec() == QFileDialog.Accepted:
