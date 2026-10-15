@@ -399,6 +399,12 @@ def install_view_menu(win) -> None:
     s = win.settings
     win._view_actions = []
     win.qa_hidden = set()
+    # Settings version 2: the spectrum is drawn as points like Aptec.  Fill / Connect / All Points
+    # saved while trying the first View menu (filled-histogram default) start again from Aptec's.
+    if str(s.get(KEY + "version", "")) != "2":
+        for key in ("fill_spc", "connect", "all_points"):
+            s.set(KEY + key, False)
+        s.set(KEY + "version", "2")
     # colors first (they also apply to printed graphs)
     plotmod.apply_colors(load_colors(s))
 

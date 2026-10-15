@@ -39,7 +39,7 @@ EN = {
     "status_relocated": "The spectrum file was relocated (same SHA-256): {path}",
     "status_unverified": "The session records no fingerprint of the spectrum file: {path} was not verified.",
     "opened_stale": "The stored results of this session require recalculation:\n{reasons}\n\nThey are "
-                    "shown as stored and were not recalculated.  Run Analyze (F5) to recalculate them.",
+                    "shown as stored and were not recalculated.  Run Analyze (P) to recalculate them.",
     "banner_stale": "Stored results (not recalculated): they require recalculation.",
     "banner_stored": "Results restored from the session.",
     "results_unreadable": "The stored results could not be displayed: {msg}",
@@ -216,7 +216,7 @@ AR = {
     "status_relocated": "نُقل مرجع ملف الطيف إلى موقعه الجديد (البصمة نفسها SHA-256): {path}",
     "status_unverified": "لا تسجل الجلسة بصمة لملف الطيف: لم يُتحقق من {path}.",
     "opened_stale": "النتائج المخزنة في هذه الجلسة تحتاج إلى إعادة حساب:\n{reasons}\n\nتُعرض كما خُزنت "
-                    "ولم يُعد حسابها.  شغّل التحليل (F5) لإعادة حسابها.",
+                    "ولم يُعد حسابها.  شغّل التحليل (P) لإعادة حسابها.",
     "banner_stale": "نتائج مخزنة (لم يُعد حسابها): تحتاج إلى إعادة حساب.",
     "banner_stored": "نتائج مسترجعة من الجلسة.",
     "results_unreadable": "تعذّر عرض النتائج المخزنة: {msg}",

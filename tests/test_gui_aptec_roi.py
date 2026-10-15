@@ -121,7 +121,7 @@ def test_paint_bar_expand_shrink_shift_set(window):
     # while painting, F3-F6 belong to the paint bar
     assert window.act_paint_expand.shortcut() == QKeySequence("F3")
     assert window.act_roi_paint.shortcut().isEmpty()
-    assert window.act_analyze.shortcut().isEmpty()
+    assert window.act_e_sample.shortcut().isEmpty()              # F5 = Sample Description
     window.act_paint_expand.trigger()
     assert plot.paint == [a - 1, b + 1]
     window.act_paint_shrink.trigger()
@@ -138,7 +138,7 @@ def test_paint_bar_expand_shrink_shift_set(window):
     assert plot.roi_index == 0
     # shortcuts restored
     assert window.act_roi_paint.shortcut() == QKeySequence("F3")
-    assert window.act_analyze.shortcut() == QKeySequence("F5")
+    assert window.act_analyze.shortcut() == QKeySequence("P")
     assert window.act_paint_expand.shortcut().isEmpty()
 
 

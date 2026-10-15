@@ -431,5 +431,35 @@ FWHM and net area over the average background of its region; it is a display aid
 fitted continuum (Fit Inspection shows the exact fit). Aptec's MultiFit (phase 6) will replace
 it with its own fitted ROIs. The analysis engine is unchanged.
 
+## Aptec-style workflow: Edit and Display menus (2026-10-15)
+
+Branch `claude/ux-aptec-edit`, requested with screenshots of Aptec's Edit and Display menus. Menu
+bar order now: File, Edit, Display, Setup, ROI, Analyze, View (`spectramaster/gui/aptec_edit_ui.py`).
+
+- **Edit**: Select All / Select Region (reverse video, as in Aptec), Copy to ClipBrd (Ctrl+Ins: the
+  selected part of the display as a picture), Clear Selection (Ctrl+Del); Sample Description (F5:
+  title, spectrum label, user, detector, geometry and sample IDs, sampling start / stop); Quantity
+  Description (F6: quantity and units, W/X/Y constants, convert-factor units, activity units and
+  time, total quantity; Quantify reads the quantity); Spectrum Data (start, live and true time,
+  with Aptec's warning); Certificate (calibration-source certificates, `analysis/certificate.py`);
+  Library (read-only view of the identification library); Decay Correction Calculation
+  (`analysis/decay_calc.py`: activity and half-life units, A(t) = A0·exp(−ln2·Δt/T½), with the
+  half-life contribution to the uncertainty); Load Header Information (energy and resolution
+  calibrations, efficiency calibration of an Aptec file saved to the efficiency library, sample and
+  quantity descriptions, ROIs read from the `.S0` ROI records, spectrum data); Reset Header (with
+  confirmation). Load File into MCArd stays disabled: acquisition hardware is out of scope.
+- **Display**: Normal Spectrum; Energy, Resolution and Efficiency Calibration drawn in place of the
+  spectrum with their points (Aptec files: the points Aptec stored), Space / Shift+Space index the
+  points and show the calculated value and deviation. Intermediate and Stabilized Spectrum (digital
+  stabilizer hardware) stay disabled.
+- Keys as in Aptec: F5 / F6 are Sample / Quantity Description; peak search & identify moved from F5
+  to P (Aptec's Peak Search key).
+- The efficiency calibration's *Load ROIs* defaults can name a certificate: activities, their
+  errors, units, reference time, yields and half-lives then come from it (lines matched by isotope
+  and energy within 1 keV).
+
+All edits apply to a copy of the displayed spectrum; no file is overwritten until it is saved. The
+analysis engine is unchanged.
+
 Remaining phases: spectrum operations, Peak Search / Identify / Background Subtract / Quantify,
 MultiFit.
