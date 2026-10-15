@@ -86,10 +86,11 @@ class AnalysisWorker(QObject):
     done = Signal(int, object, object, bool)
     failed = Signal(int, str, str)
 
-    def __init__(self, spectrum, token: int = 0):
+    def __init__(self, spectrum, token: int = 0, application: str = "all"):
         super().__init__()
         self.spectrum = spectrum
         self.token = token
+        self.application = application          # identification library (analysis.library.APPLICATIONS)
 
     @Slot()
     def run(self) -> None:
@@ -105,7 +106,8 @@ class AnalysisWorker(QObject):
                 identify = identify.identify
             peaks = list(find_peaks(self.spectrum) or [])
             identified = bool(self.spectrum.energy_coeffs)
-            matches = list(identify(self.spectrum, peaks) or []) if identified else []
+            matches = (list(identify(self.spectrum, peaks, application=self.application) or [])
+                       if identified else [])
         except (ImportError, NotImplementedError) as exc:
             self.failed.emit(self.token, "missing", f"{type(exc).__name__}: {exc}")
             return
@@ -113,3 +115,54 @@ class AnalysisWorker(QObject):
             self.failed.emit(self.token, "error", f"{type(exc).__name__}: {exc}")
             return
         self.done.emit(self.token, peaks, matches, identified)
+
+class CallWorker(QObject):
+    """Runs ``fn()`` once in a QThread (dialogs of Release B: calibration proposal, drift check,
+    fit inspection, manual refits).  Science stays in the called function.
+
+    Signals
+      done(result)        -- the return value
+      failed(message)     -- "ExceptionType: message"
+    """
+
+    done = Signal(object)
+    failed = Signal(str)
+
+    def __init__(self, fn):
+        super().__init__()
+        self.fn = fn
+
+    @Slot()
+    def run(self) -> None:
+        try:
+            result = self.fn()
+        except Exception as exc:  # engine error -> message, never a crash
+            self.failed.emit(f"{type(exc).__name__}: {exc}")
+            return
+        self.done.emit(result)
+
+
+def start_call(owner, fn, on_done, on_failed):
+    """Run ``fn`` on a new QThread owned by `owner` (a QObject); `on_done(result)` /
+    `on_failed(message)` are called in the GUI thread (bound methods of `owner`).
+    Returns the QThread (kept on ``owner._call_threads`` until it finishes)."""
+    from PySide6.QtCore import QThread
+    thread = QThread(owner)
+    worker = CallWorker(fn)
+    worker.moveToThread(thread)
+    thread.started.connect(worker.run)
+    worker.done.connect(on_done)
+    worker.failed.connect(on_failed)
+    worker.done.connect(thread.quit)
+    worker.failed.connect(thread.quit)
+    keep = owner.__dict__.setdefault("_call_threads", [])
+    keep.append((thread, worker))
+
+    def _finished():
+        if (thread, worker) in keep:
+            keep.remove((thread, worker))
+        worker.deleteLater()
+        thread.deleteLater()
+    thread.finished.connect(_finished)
+    thread.start()
+    return thread

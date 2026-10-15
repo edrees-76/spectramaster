@@ -16,6 +16,7 @@ from PySide6.QtWidgets import (QApplication, QButtonGroup, QCheckBox, QComboBox,
 from . import i18n
 from . import report as rp
 from .i18n import tr
+from .identification_library import stored_library
 from .plot import Y_MODES
 
 MODES = ("print", "preview", "pdf", "batch")
@@ -147,6 +148,9 @@ class ReportOptionsDialog(QDialog):
         g.addLayout(conf_row, r, 2); r += 1
         self.cb_rois = QCheckBox(tr("rep_inc_rois"))
         g.addWidget(self.cb_rois, r, 0, 1, 3); r += 1
+        from .context_strings import ctr
+        self.cb_context = QCheckBox(ctr("rep_inc"))
+        g.addWidget(self.cb_context, r, 0, 1, 3); r += 1
         self.cb_extra = QCheckBox(tr("rep_inc_extra"))
         g.addWidget(self.cb_extra, r, 0, 1, 3); r += 1
         self.cb_notes = QCheckBox(tr("rep_inc_notes"))
@@ -283,6 +287,7 @@ class ReportOptionsDialog(QDialog):
         self.sp_min_conf.setValue(o.nuc_min_conf)
         self.cb_nuc_bg.setChecked(o.nuc_hide_background)
         self.cb_rois.setChecked(o.rois)
+        self.cb_context.setChecked(o.context)
         self.cb_extra.setChecked(o.extra)
         self.cb_notes.setChecked(o.notes_on)
         self.ed_notes.setPlainText(o.notes)
@@ -323,7 +328,7 @@ class ReportOptionsDialog(QDialog):
             peaks=self.cb_peaks.isChecked(), peaks_identified_only=self.cb_peaks_ident.isChecked(),
             peaks_min_sig=self.sp_min_sig.value(), nuclides=self.cb_nuc.isChecked(),
             nuc_min_conf=self.sp_min_conf.value(), nuc_hide_background=self.cb_nuc_bg.isChecked(),
-            rois=self.cb_rois.isChecked(), extra=self.cb_extra.isChecked(),
+            rois=self.cb_rois.isChecked(), context=self.cb_context.isChecked(), extra=self.cb_extra.isChecked(),
             notes_on=self.cb_notes.isChecked(), notes=self.ed_notes.toPlainText().strip(),
             signatures=self.cb_sign.isChecked(), sig_prepared=self.ed_sig["prepared"].text().strip(),
             sig_reviewed=self.ed_sig["reviewed"].text().strip(),
@@ -416,8 +421,10 @@ class ReportBatchWorker(QObject):
     finished = Signal(int, int, int, bool)
 
     def __init__(self, files: Sequence[Path], options: rp.ReportOptions, out_dir: Optional[Path] = None,
-                 combined: Optional[Path] = None, analyse: bool = True, in_fmt=None):
+                 combined: Optional[Path] = None, analyse: bool = True, in_fmt=None,
+                 application: str = "all"):
         super().__init__()
+        self.application = application            # identification library
         self.files = [Path(f) for f in files]
         self.options = options
         self.out_dir = Path(out_dir) if out_dir else None
@@ -457,7 +464,8 @@ class ReportBatchWorker(QObject):
                 if self._cancel:
                     break
                 try:
-                    datas = rp.make_batch_data(src, self.analyse, self.in_fmt, lambda: self._cancel)
+                    datas = rp.make_batch_data(src, self.analyse, self.in_fmt, lambda: self._cancel,
+                                               self.application)
                     n_pages = 0
                     if writer is not None:
                         for d in datas:
@@ -697,7 +705,8 @@ class ReportBatchDialog(QDialog):
         self.summary.setText(tr("rep_batch_running", i=0, n=n))
         self._set_running(True)
         self._worker = ReportBatchWorker(self.files, self.options, out_dir, combined,
-                                         self.cb_analyse.isChecked(), self.settings.input_format())
+                                         self.cb_analyse.isChecked(), self.settings.input_format(),
+                                         application=stored_library(self.settings))
         self._thread = QThread(self)
         self._worker.moveToThread(self._thread)
         self._thread.started.connect(self._worker.run)

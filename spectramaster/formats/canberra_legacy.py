@@ -40,7 +40,8 @@ Code 15 ``ci_accuspec``  Canberra AccuSpec *.dat   read-only
     No gamma-spectrum AccuSpec sample was available; DataMaster itself could
     not write this format, and neither do we.
     NOTE: ``LN 881.dat`` in the APTEC sample folder is *not* AccuSpec (fails the
-    signature; it holds ASCII dates and calibration text) - it is left alone.
+    signature; it holds ASCII dates and calibration text): it is read by
+    ``lab_binary_dat.py`` (code 80).
 
 Code 17 ``eml_sanderson``  EML / C.G. Sanderson PC test spectra *.dat  read-only
     US DOE EML (1990) intercomparison spectra.  README: "1 header line, 409 lines

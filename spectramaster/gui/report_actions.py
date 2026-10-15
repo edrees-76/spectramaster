@@ -75,12 +75,36 @@ class ReportActionsMixin:
         if spec is None:
             return None
         panel = self.analysis_panel
-        return rp.ReportData(
+        data = rp.ReportData(
             spectrum=spec, path=self._path, fmt_name=self._fmt.name if self._fmt else "",
             peaks=list(panel.peaks), matches=list(panel.matches),
             analysed=bool(getattr(panel, "analysed", False) or panel.peaks or panel.matches),
             identified=panel.identified, plot=PlotRenderer.from_plot(self.plot),
             index=self._index, count=len(self._spectra))
+        self._report_context(data, spec)
+        return data
+
+    def _report_context(self, data: rp.ReportData, spec) -> None:
+        """Library, detector, geometry, concentrations and workflow statuses of the analysis session
+        of the displayed spectrum, as stored (nothing is recalculated)."""
+        panel = self.analysis_panel
+        if data.analysed and data.identified:
+            data.library = getattr(panel, "results_application", None)
+        ctl = getattr(self, "session_ctl", None)
+        s = ctl.session_for(spec) if ctl is not None else None
+        if s is None:
+            return
+        from dataclasses import asdict
+        data.has_session = True
+        data.library = (s.processing_settings or {}).get("identification_library") or data.library
+        data.detector = s.detector
+        data.geometry = s.geometry
+        data.mass_basis = (s.sample or {}).get("mass_basis")
+        data.concentration = ctl.concentrations()
+        try:
+            data.statuses = [asdict(st) for st in ctl.statuses()]
+        except Exception:                  # the report is never blocked by the workflow panel
+            data.statuses = []
 
     def ensure_analysis_for_report(self, opts: rp.ReportOptions) -> None:
         """Peaks / nuclides wanted but not analysed: offer to run the analysis (never blocks)."""
@@ -94,7 +118,8 @@ class ReportActionsMixin:
         spec = self.current_spectrum()
         QApplication.setOverrideCursor(Qt.BusyCursor)
         try:
-            peaks, matches, identified = rp.analyse_spectrum(spec)
+            self._ana_application = panel.application()
+            peaks, matches, identified = rp.analyse_spectrum(spec, application=self._ana_application)
         except Exception as exc:
             QApplication.restoreOverrideCursor()
             panel.show_message(tr("ana_failed", msg=f"{type(exc).__name__}: {exc}"))

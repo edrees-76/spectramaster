@@ -55,6 +55,8 @@ bash build_exe/build_installer.sh   # one-folder build + Inno Setup 6 installer 
 | `spectramaster/formats/` | format readers/writers (format layouts documented in each module) |
 | `spectramaster/analysis/` | peak search, identification, efficiency, activity; nuclide library in `data/` |
 | `spectramaster/tools/` | archive index/search, QC, arithmetic, recalibration |
+| `spectramaster/lab/` | detector, geometry, calibration-record, sample and analysis-session models (versioned JSON, undo/redo) |
+| `spectramaster/validation/` | reproducible analysis-engine benchmark (`python -m spectramaster.validation.benchmark`); results in `docs/baseline/` |
 | `spectramaster/gui/` | PySide6 application |
 | `docs/` | user manuals (PDF/HTML) and their build tools |
 | `installer/` | Inno Setup script, licenses, sample spectra |

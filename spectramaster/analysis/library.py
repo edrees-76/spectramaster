@@ -30,6 +30,7 @@ class Line:
     intensity: float       # photons per 100 decays
     kind: str = "g"        # g gamma, x X-ray, a annihilation
     source: str = ""       # I = IAEA, S = SandiaDecay, U = user
+    intensity_unc: Optional[float] = None   # standard uncertainty, photons per 100 decays (None: not stated)
 
 
 @dataclass
@@ -57,7 +58,8 @@ Library = dict[str, NuclideData]
 def _from_json(doc: dict) -> Library:
     out: Library = {}
     for name, e in doc.get("nuclides", {}).items():
-        lines = [Line(float(l[0]), float(l[1]), l[2] if len(l) > 2 else "g", l[3] if len(l) > 3 else "")
+        lines = [Line(float(l[0]), float(l[1]), l[2] if len(l) > 2 else "g", l[3] if len(l) > 3 else "",
+                      float(l[4]) if len(l) > 4 and l[4] is not None else None)
                  for l in e.get("lines", [])]
         out[name] = NuclideData(
             name=name, lines=sorted(lines, key=lambda l: l.energy), half_life=e.get("half_life", ""),
@@ -98,6 +100,19 @@ def _load_path(path: str) -> Library:
     return _from_json(json.loads(p.read_text(encoding="utf-8")))
 
 
+def intensity_rel_unc(nuclide: str, energy: float, lib: Optional[Library] = None, tol_kev: float = 0.05
+                      ) -> Optional[float]:
+    """Relative standard uncertainty of the library emission probability of `nuclide` at
+    `energy` (the line within `tol_kev`), or None when the library states none."""
+    nd = (lib if lib is not None else load_library()).get(nuclide)
+    if nd is None:
+        return None
+    best = min(nd.lines, key=lambda l: abs(l.energy - energy), default=None)
+    if best is None or abs(best.energy - energy) > tol_kev or best.intensity_unc is None or best.intensity <= 0:
+        return None
+    return best.intensity_unc / best.intensity
+
+
 def load_library(source: Union[None, str, Path, dict] = None) -> Library:
     """The bundled library (default), a JSON/CSV file path, or an already parsed dict/Library."""
     if source is None:
@@ -107,6 +122,39 @@ def load_library(source: Union[None, str, Path, dict] = None) -> Library:
             return source  # type: ignore[return-value]
         return _from_json(source)
     return _load_path(str(Path(source).resolve()))
+
+
+# Application libraries, defined by the library's own categories (not by picking nuclides).
+# A category string such as "activation/calibration" belongs to every set that contains one
+# of its parts listed for that application.
+APPLICATIONS = {
+    "all": None,
+    # soil, water, food, air filters: natural, cosmogenic and fission products, plus the
+    # long-lived activation products that are also calibration sources (Co-60, Mn-54, Zn-65,
+    # Eu-152/154) and fallout Am-241 / Cs-137
+    "environmental": {"natural", "cosmogenic", "fission", "activation/calibration", "actinide/calibration",
+                      "fission/calibration", "calibration/cosmogenic", "fission/medical"},
+    "calibration": {"calibration", "natural", "cosmogenic"},
+    "safeguards": {"actinide", "natural"},
+    "medical": {"medical", "natural", "cosmogenic"},
+}
+
+
+def _in_application(category: str, wanted: set) -> bool:
+    if category in wanted:
+        return True
+    parts = set(category.split("/"))
+    return any(w in parts or w == category for w in wanted if "/" not in w)
+
+
+def application_library(lib: Library, application: str = "all") -> Library:
+    """The nuclides of `lib` used for one kind of work (see APPLICATIONS)."""
+    if application not in APPLICATIONS:
+        raise ValueError(f"unknown application library {application!r}; choose one of {sorted(APPLICATIONS)}")
+    wanted = APPLICATIONS[application]
+    if wanted is None:
+        return lib
+    return {n: nd for n, nd in lib.items() if _in_application(nd.category or "", wanted)}
 
 
 def lines_of(name: str, source=None) -> list[Line]:

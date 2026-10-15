@@ -210,6 +210,12 @@ def _measurement_to_spectrum(sf, m, file_remarks: list[str]) -> Spectrum:
     if det:
         extra["detector_name"] = det
     try:
+        dtype = (m.detectorType() or "").strip()     # e.g. N42 <DetectorType>HPGe 50%</DetectorType>
+    except Exception:
+        dtype = ""
+    if dtype:
+        extra["detector_type"] = dtype
+    try:
         extra["sample_number"] = int(m.sampleNumber())
     except Exception:
         pass

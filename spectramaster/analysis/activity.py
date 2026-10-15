@@ -8,8 +8,9 @@ Per gamma line (energy E, emission probability I as a fraction)::
     D      = exp(-lambda * (t_start - t_ref))      decay from the reference (sampling) date to the start
     C      = (1 - exp(-lambda * t_real)) / (lambda * t_real)   decay during counting
     N      = net peak area, minus the live-time-normalised background-spectrum peak
-             (peak-by-peak mode, N = N_s - (t_s/t_b) N_b) or measured on the net spectrum
-             (full-spectrum mode)
+             (peak-by-peak mode, N = N_s - (t_s/t_b) N_b, the background fitted at the sample
+             peaks' energies and widths, analysis.background) or measured on the net spectrum
+             S - kB with its variance S + k^2 B (full-spectrum mode).  Negative N is kept.
     F_att  = 1 / (self-attenuation correction factor)  (user value, default 1)
 
     u_rel^2 = u_count^2 + u_eff^2 + u_I^2 + u_mass^2 + u_att^2
@@ -25,7 +26,9 @@ Specific activity a = A / m (Bq/kg, Bq/L ...); expanded uncertainty U = 2 u.
 Detection limits (counts), continuum B under the expected peak region of n channels
 (+-1.25 FWHM from the FWHM model), estimated from m channels on each side::
 
-    sigma0^2 = B (1 + n / (2 m)) + k_b^2 N_bkgpeak-variance      (blank variance)
+    sigma0^2 = B (1 + n / (2 m)) + k N_b + k^2 u(N_b)^2        (blank variance, peak mode)
+    sigma0^2 = B (1 + n / (2 m)) + k^2 B_b (1 + n / (2 m))     (full-spectrum mode, B_b = background
+                                                                counts in the window)
     Currie:  L_C = k * sigma0,   L_D = k^2 + 2 L_C   (k = 1.645, alpha = beta = 5 %)
     MDA      = L_D / (f_w * eps * I * t_live * C * D * F_att)   f_w = window fraction of the peak
 
@@ -49,7 +52,7 @@ from typing import Optional, Sequence, Union
 
 import numpy as np
 
-from .efficiency import (EfficiencyCurve, counting_decay_factor, decay_factor, match_peak)
+from .efficiency import (TCS_NUCLIDES, EfficiencyCurve, counting_decay_factor, decay_factor, match_peak)
 
 K_DEFAULT = 1.645
 
@@ -81,8 +84,6 @@ KEY_LINES: dict[str, dict] = {
 DEFAULT_NUCLIDES = ["Cs-137", "K-40", "Ra-226", "Th-232", "Cs-134", "Co-60", "I-131", "Be-7", "Am-241"]
 
 # cascade emitters (true-coincidence summing relevant in close geometries)
-TCS_NUCLIDES = {"Co-60", "Cs-134", "Bi-214", "Tl-208", "Ac-228", "Eu-152", "Y-88", "Ba-133",
-                "Ra-226", "Th-232", "Th-228", "Ra-228", "Na-22", "Sb-125", "Eu-154", "Co-58"}
 
 UNIT_FACTORS = {"kg": 1.0, "g": 1e-3, "l": 1.0, "ml": 1e-3, "m3": 1.0}   # quantity -> base unit (kg or L)
 
@@ -116,6 +117,7 @@ class LineResult:
     detected: bool = False
     peak_found: bool = False
     in_range: bool = True
+    int_rel_unc: float = 0.0     # library emission-probability uncertainty of this line (relative)
     note: str = ""
 
 
@@ -178,13 +180,15 @@ class ActivityOptions:
     quantity_rel_unc: float = 0.0        # fraction
     attenuation: Union[float, dict] = 1.0   # correction factor(s) (multiplies the activity), per nuclide dict ok
     attenuation_rel_unc: float = 0.0
-    intensity_rel_unc: float = 0.0       # library intensities carry no uncertainty; optional extra
+    intensity_rel_unc: float = 0.0       # optional extra; each line's library (ENSDF) uncertainty is added
     bkg_mode: str = "peak"               # "peak" | "spectrum"
     mda_method: str = "currie"           # "currie" | "iso11929"
     k_alpha: float = K_DEFAULT
     k_beta: float = K_DEFAULT
     min_sig: float = 3.0
     min_intensity_pct: float = 1.0       # generic nuclides: lines used
+    geometry: Optional[object] = None    # lab.detector.MeasurementGeometry of the sample
+    allow_geometry_mismatch: bool = False    # use an incompatible calibration anyway (reported)
 
 
 @dataclass
@@ -205,6 +209,41 @@ class QuantResults:
 
     def rows(self) -> list[dict]:
         return [result_row(r) for r in self.nuclides]
+
+    @classmethod
+    def from_dict(cls, d: dict) -> "QuantResults":
+        """Rebuild stored results (``lab.session.quant_to_dict``) exactly as saved - nothing is
+        recalculated; unknown keys are ignored (forward-tolerant)."""
+        import dataclasses
+
+        def known(c, x):
+            names = {f.name for f in dataclasses.fields(c)}
+            return {k: v for k, v in (x or {}).items() if k in names}
+
+        def when(v):
+            return datetime.fromisoformat(v) if isinstance(v, str) and v else None
+
+        o = known(ActivityOptions, d.get("options"))
+        if o.get("ref_date"):
+            o["ref_date"] = when(o["ref_date"])
+        if isinstance(o.get("geometry"), dict):
+            from ..lab.detector import MeasurementGeometry
+            o["geometry"] = MeasurementGeometry.from_dict(o["geometry"])
+        if "nuclides" in o:
+            o["nuclides"] = tuple(o["nuclides"])
+        nucl = []
+        for n in d.get("nuclides") or []:
+            kw = known(NuclideResult, n)
+            kw["lines"] = [LineResult(**known(LineResult, ln)) for ln in n.get("lines") or []]
+            nucl.append(NuclideResult(**kw))
+        top = known(cls, d)
+        top.update(start_time=when(d.get("start_time")), ref_date=when(d.get("ref_date")),
+                   options=ActivityOptions(**o), nuclides=nucl, notes=list(d.get("notes") or []))
+        for k in ("sample", "source_path", "curve_name", "curve_model", "background"):
+            top.setdefault(k, "")
+        top.setdefault("live_time", 0.0)
+        top.setdefault("real_time", None)
+        return cls(**top)
 
 
 # ------------------------------------------------------------------ helpers
@@ -309,6 +348,32 @@ def _as_float(v) -> float:
 # ------------------------------------------------------------------ main entry
 
 
+def calibration_checks(curve: EfficiencyCurve, opt: "ActivityOptions") -> list[str]:
+    """Notes on the efficiency calibration used; raises ValueError for a calibration of an
+    incompatible geometry unless ``opt.allow_geometry_mismatch``."""
+    out = []
+    status = getattr(curve, "validation_status", "") or "unvalidated"
+    if status != "validated":
+        out.append(f"efficiency calibration {status}: not independently validated")
+    rec = getattr(curve, "geometry_record", None) or {}
+    if opt.geometry is not None and rec:
+        from ..lab.detector import MeasurementGeometry
+        reasons = MeasurementGeometry.from_dict(rec).compatibility(opt.geometry)
+        if reasons:
+            text = "; ".join(reasons)
+            if not opt.allow_geometry_mismatch:
+                raise ValueError("the efficiency calibration belongs to another measurement geometry "
+                                 f"({rec.get('name', '?')} vs {opt.geometry.name}): {text}")
+            out.append(f"geometry mismatch accepted by the user ({rec.get('name', '?')} vs "
+                       f"{opt.geometry.name}): {text}")
+    elif opt.geometry is not None:
+        out.append("calibration geometry not recorded: compatibility with the sample geometry not checked")
+    elif rec:
+        out.append(f"sample geometry not given: compatibility with the calibration geometry "
+                   f"({rec.get('name', '?')}) not checked")
+    return out
+
+
 def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[ActivityOptions] = None,
                        background=None, peaks=None, bkg_peaks=None) -> QuantResults:
     """Activities / MDAs for ``options.nuclides`` in ``spectrum`` (see module docstring)."""
@@ -322,27 +387,40 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     t_real = float(spectrum.real_time or spectrum.live_time)
     ref = opt.ref_date or spectrum.start_time
     notes: list[str] = []
+    notes.extend(calibration_checks(curve, opt))
     k_b = 0.0
     work = spectrum
-    extra_var = None
+    net_var = None          # full-spectrum mode: variance S + k^2 B of the net channels
+    bcounts = None          # full-spectrum mode: background counts on the sample grid
+    bfit = None             # peak mode: background fitted at the sample peaks
+    bkg_under: dict = {}
+    from .background import SUBTRACTED, BackgroundFitter, check_not_subtracted, compatibility, net_spectrum
     if background is not None:
+        check_not_subtracted(spectrum)
         if not background.live_time:
             raise ValueError("the background spectrum has no live time")
+        notes.extend(compatibility(spectrum, background))
         k_b = t_live / float(background.live_time)
         if opt.bkg_mode == "spectrum":
-            from ..tools.arithmetic import align_to, same_calibration, subtract_background
-            net, _sig = subtract_background(spectrum, background)
+            from ..tools.arithmetic import align_to, same_calibration
+            work, net_var, _k = net_spectrum(spectrum, background)
             bal = background if same_calibration(spectrum, background) else align_to(background, spectrum)
             bcounts = np.clip(np.asarray(bal.counts, dtype=float), 0, None)
-            extra_var = k_b * (1.0 + k_b) * bcounts      # var(S - kB) - var_fit(net)
-            from dataclasses import replace
-            work = replace(net, counts=[max(c, 0.0) for c in net.counts])
-            peaks = None
-        else:
-            if bkg_peaks is None:
-                bkg_peaks = find_peaks(background, min_sig=opt.min_sig) if background.energy_coeffs else []
+            peaks = find_peaks(work, min_sig=opt.min_sig, variance=net_var)
+        elif bkg_peaks is None:
+            bfit = BackgroundFitter(spectrum, background)
+            if bfit.note:
+                notes.append(bfit.note)
+    elif (spectrum.extra or {}).get("operation") == SUBTRACTED:
+        notes.append("the spectrum is background subtracted: its counts are treated as Poisson, which "
+                     "underestimates the uncertainties; analyse the sample with the background instead")
+    fit_report = None
     if peaks is None:
-        peaks = find_peaks(work, min_sig=opt.min_sig)
+        from .peaks import FitReport
+        fit_report = FitReport() if bfit is not None else None
+        peaks = find_peaks(work, min_sig=opt.min_sig, report=fit_report)
+    if bfit is not None:
+        bkg_under = bfit.under_peaks(peaks, fit_report)
     y = np.asarray(spectrum.counts, dtype=float)
     fw_ch, _src = fwhm_model(spectrum, y)
     if spectrum.start_time is None and opt.ref_date is not None:
@@ -370,6 +448,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                         "and parent/daughter equilibrium").strip("; ")
         for ln_name, e, inten, b in lines:
             lr = LineResult(ln_name, e, inten, b)
+            lr.int_rel_unc = _line_int_unc(ln_name, e)
             eff = float(curve.efficiency(e))
             lr.efficiency = eff
             lr.eff_rel_unc = float(curve.rel_uncertainty(e))
@@ -387,17 +466,31 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             lr.continuum = B
             var0 = B * (1.0 + n / (2.0 * m))
             p = match_peak(peaks, e)
-            bp = match_peak(bkg_peaks, e) if (bkg_peaks and opt.bkg_mode == "peak") else None
-            if bp is not None:
-                lr.bkg_peak = k_b * bp.net_area
-                var0 += lr.bkg_peak + (k_b * bp.net_area_unc) ** 2
-            if extra_var is not None:
-                idx = _channel_of_energy(spectrum, e)
-                if idx is not None:
+            bnet = None           # (k N_b, k u_b) under this line
+            if bfit is not None:
+                if p is not None:
+                    bnet = bkg_under.get(id(p))
+                else:
+                    idx = _channel_of_energy(spectrum, e)
+                    if idx is not None:
+                        bnet = bfit.at_energy(idx, float(fw_ch[int(min(max(round(idx), 0), len(fw_ch) - 1))]))
+            elif bkg_peaks and opt.bkg_mode == "peak":      # legacy: caller-supplied background peaks
+                bp = match_peak(bkg_peaks, e)
+                if bp is not None:
+                    bnet = (k_b * bp.net_area, k_b * bp.net_area_unc)
+            if bnet is not None:
+                lr.bkg_peak = bnet[0]
+                var0 += max(bnet[0], 0.0) + bnet[1] ** 2
+            if bcounts is not None:
+                cb = continuum_under(spectrum, e, fw_ch, counts=bcounts)
+                if cb is not None:
+                    idx = _channel_of_energy(spectrum, e)
                     h = max(1, int(round(1.25 * fw_ch[int(round(idx))])))
-                    var0 += float(extra_var[max(0, int(idx) - h):int(idx) + h + 1].sum())
+                    bwin = float(bcounts[max(0, int(round(idx)) - h):int(round(idx)) + h + 1].sum())
+                    var0 += k_b ** 2 * bwin * (1.0 + cb[1] / (2.0 * cb[2]))
             sigma0 = math.sqrt(max(var0, 0.0))
-            w_rel = math.sqrt(lr.eff_rel_unc ** 2 + opt.intensity_rel_unc ** 2 + opt.attenuation_rel_unc ** 2)
+            w_rel = math.sqrt(lr.eff_rel_unc ** 2 + opt.intensity_rel_unc ** 2 + lr.int_rel_unc ** 2
+                              + opt.attenuation_rel_unc ** 2)
             if opt.mda_method == "iso11929":
                 ys, yd = iso11929_limits(sigma0, w / fwin, w_rel, opt.k_alpha, opt.k_beta)
                 lr.lc_counts, lr.ld_counts = ys / w * fwin, yd / w * fwin
@@ -409,12 +502,9 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             if p is not None:
                 lr.peak_found = True
                 nnet, unet = float(p.net_area), float(p.net_area_unc)
-                if extra_var is not None:
-                    lo, hi = max(0, p.left), min(len(extra_var) - 1, p.right)
-                    unet = math.sqrt(unet ** 2 + float(extra_var[lo:hi + 1].sum()))
-                if bp is not None:
-                    nnet -= lr.bkg_peak
-                    unet = math.hypot(unet, k_b * bp.net_area_unc)
+                if bnet is not None:          # not clipped: a negative net area is kept
+                    nnet -= bnet[0]
+                    unet = math.hypot(unet, bnet[1])
                 lr.net_area, lr.net_unc = nnet, unet
                 used_peaks.setdefault(id(p), []).append(name)
                 lr.activity = nnet * w
@@ -444,7 +534,8 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             r.unit = f"Bq/{unit}"
             if r.activity is not None:
                 r.specific = r.activity / qb
-                r.specific_u = (r.u or 0.0) / qb
+                # u(a/q)/(a/q) = sqrt(u_rel(a)^2 + u_rel(q)^2): quantity uncertainty added here only
+                r.specific_u = math.hypot((r.u or 0.0) / qb, abs(r.specific) * opt.quantity_rel_unc)
             r.specific_mda = r.mda / qb if r.mda else None
     if background is not None:
         notes.append(f"background: {background.source_path or background.sample_id or '?'} "
@@ -488,14 +579,18 @@ def _combine(res: NuclideResult, opt: ActivityOptions) -> None:
         l = cand[0]
         a = l.activity
         uc, ue = abs(a) * l.u_count_rel, abs(a) * l.eff_rel_unc
+        ul = abs(a) * l.int_rel_unc
         res.detected = l.detected
     else:
-        # weights from the uncorrelated part (counting + intensity)
-        var_unc = [(l.activity * l.u_count_rel) ** 2 + (l.activity * ui) ** 2 for l in cand]
+        # weights from the uncorrelated part (counting + intensity, incl. each line's library
+        # emission-probability uncertainty)
+        var_unc = [(l.activity * l.u_count_rel) ** 2 + (l.activity * ui) ** 2 + (l.activity * l.int_rel_unc) ** 2
+                   for l in cand]
         wts = [1.0 / v if v > 0 else 0.0 for v in var_unc]
         sw = sum(wts)
         a = sum(w * l.activity for w, l in zip(wts, cand)) / sw
         uc = math.sqrt(sum((w * l.activity * l.u_count_rel) ** 2 for w, l in zip(wts, cand))) / sw
+        ul = math.sqrt(sum((w * l.activity * l.int_rel_unc) ** 2 for w, l in zip(wts, cand))) / sw
         ue = sum(w * abs(l.activity) * l.eff_rel_unc for w, l in zip(wts, cand)) / sw
         # decision threshold of the combination
         s0 = [l.decision_threshold / opt.k_alpha for l in cand]
@@ -506,17 +601,100 @@ def _combine(res: NuclideResult, opt: ActivityOptions) -> None:
         if chi2 / (len(cand) - 1) > 4.0:
             res.note = (res.note + f"; lines inconsistent (chi2/dof = {chi2 / (len(cand) - 1):.1f})").strip("; ")
     a_abs = abs(a) if a else 0.0
-    comp = {"counting": uc, "efficiency": ue, "intensity": a_abs * ui, "quantity": a_abs * um,
-            "attenuation": a_abs * ua}
+    # Budget of the activity in Bq.  The mass/volume uncertainty does not belong here: it only
+    # enters the specific activity (Bq/kg, Bq/L, ...), see compute_activities.
+    comp = {"counting": uc, "efficiency": ue, "intensity": math.hypot(a_abs * ui, ul), "attenuation": a_abs * ua}
     res.activity = a
     res.u = math.sqrt(sum(v * v for v in comp.values()))
     res.budget = {k: (100.0 * v / a_abs if a_abs else 0.0) for k, v in comp.items()}
+
+
+def _line_int_unc(nuclide: str, energy: float) -> float:
+    """Relative emission-probability uncertainty of a library line (0 when not stated)."""
+    from .library import intensity_rel_unc
+    try:
+        return float(intensity_rel_unc(nuclide, energy) or 0.0)
+    except Exception:
+        return 0.0
 
 
 # ------------------------------------------------------------------ table / export
 
 ROW_KEYS = ["nuclide", "lines", "net_area", "net_unc", "activity_bq", "u_bq", "specific", "specific_U2",
             "unit", "mda_bq", "mda_specific", "decision", "budget", "note"]
+
+
+def sampling_decay_factor(half_life_s: Optional[float], sampling_s: Optional[float]) -> float:
+    """K = lambda t_s / (1 - exp(-lambda t_s)): mean air concentration over a sampling time t_s
+    from the activity on the filter at the END of sampling (constant concentration assumed)."""
+    if not half_life_s or not sampling_s or sampling_s <= 0:
+        return 1.0
+    x = math.log(2.0) / half_life_s * sampling_s
+    return x / (-math.expm1(-x)) if x > 1e-9 else 1.0
+
+
+def concentrations(res: "QuantResults", sample, unit: str, quantity_rel_unc: float = 0.0) -> dict:
+    """Express the activities of `res` in `unit` ("Bq", "Bq/kg", "Bq/L", "Bq/m3") with the
+    sample information `sample` (lab.sample.SampleInfo).
+
+    Nothing is computed when an input is missing: ``{"missing": [...], "rows": []}`` - a
+    missing mass is never 1 kg.  Bq/kg is labelled with its basis ("Bq/kg (dry)").  Bq/m3:
+    C = A_end K / (V f eta) with A_end the activity at the END of sampling (the results are
+    decay-corrected from their reference date), K = sampling_decay_factor, f the measured filter
+    fraction and eta the stated collection efficiency (an assumption, reported as such).
+    ``quantity_rel_unc`` is the relative uncertainty of the mass / volume / air volume; it is
+    added to the activity's relative uncertainty in quadrature (not to the MDA).  A nuclide not
+    detected is reported as "< MDA" in the same unit, never as zero.
+    """
+    missing = sample.concentration_unit_inputs(unit)
+    out = {"unit": unit, "missing": missing, "rows": [], "notes": []}
+    if missing:
+        out["notes"].append("concentration not computed: missing " + "; ".join(missing))
+        return out
+    label = unit
+    notes = out["notes"]
+    if unit == "Bq":
+        q = 1.0
+    elif unit == "Bq/kg":
+        q = sample.mass_kg
+        label = f"Bq/kg ({sample.mass_basis})"
+    elif unit == "Bq/L":
+        q = sample.volume_l
+    else:
+        q = sample.air_volume() * sample.filter_fraction * sample.collection_efficiency
+        notes.append(f"air volume {sample.air_volume():.4g} m3, measured filter fraction {sample.filter_fraction:g}, "
+                     f"collection efficiency {sample.collection_efficiency:g} (assumption"
+                     + (f": {sample.collection_efficiency_note}" if sample.collection_efficiency_note else "") + ")")
+    out["unit"] = label
+    t_end = datetime.fromisoformat(sample.sampling_end) if (unit == "Bq/m3" and sample.sampling_end) else None
+    hours = sample.sampling_hours() if unit == "Bq/m3" else None
+    if unit == "Bq/m3":
+        if t_end is not None and res.ref_date is None:
+            notes.append("acquisition start unknown: activities NOT decay-corrected to the end of sampling "
+                         "(underestimated for short-lived nuclides measured after sampling)")
+        if t_end is None:
+            notes.append("sampling end not given: activities used at their reference date, no decay during sampling")
+        elif hours is None:
+            notes.append("sampling duration not given: no correction for decay during sampling")
+    for r in res.nuclides:
+        hl = r.half_life_s
+        f = 1.0
+        if t_end is not None and res.ref_date is not None and hl:
+            f *= decay_factor(hl, (t_end - res.ref_date).total_seconds())       # reference -> end of sampling
+        if unit == "Bq/m3" and hours:
+            f *= sampling_decay_factor(hl, hours * 3600.0)
+        row = {"nuclide": r.nuclide, "unit": label, "decision": r.decision, "factor": f}
+        if r.activity is not None and r.detected:
+            v = r.activity * f / q
+            urel = math.hypot((r.u or 0.0) / r.activity if r.activity else 0.0, quantity_rel_unc)
+            row.update(value=v, u=abs(v) * urel, U=2.0 * abs(v) * urel)
+        else:
+            row.update(value=None, u=None, U=None)
+        row["mda"] = r.mda * f / q if r.mda else None
+        row["text"] = (f"{row['value']:.4g} +- {row['U']:.2g} (k=2) {label}" if row["value"] is not None
+                       else (f"< {row['mda']:.3g} {label} (MDA)" if row["mda"] else "not determined"))
+        out["rows"].append(row)
+    return out
 
 
 def result_row(r: NuclideResult) -> dict:

@@ -38,3 +38,33 @@ extract is bundled).
   `provenance.flags` lists every line ≥ 1 % where the two sources differ by > 0.1 keV or > 5 %
   relative intensity, or where a line exists in only one source (232 flags in 66 nuclides, e.g.
   Th-234 63.3 keV: IAEA 3.7 % vs Sandia 4.85 %; Lu-177m, Ho-166m, W-187, Tb-160).
+
+## Emission-probability uncertainties (added 2026-10-15)
+
+`gamma_library.json` lines from IAEA ENSDF (`src` "I") carry a 5th value: the standard uncertainty
+of the intensity (photons per 100 decays) from the same ndlab extract (`intensity_unc` column),
+combined in quadrature over merged entries and scaled like the intensity (2542 of 2732 lines;
+none for SandiaDecay-only lines or where ENSDF states none). Energies and intensities are unchanged
+(`build_library.py` asserts that the uncertainty-carrying merge reproduces them).
+
+Independent cross-check: LNHB/DDEP recommended data (Laboratoire National Henri Becquerel, LARA
+files `https://www.lnhb.fr/nuclides/<nuclide>.lara.txt`, downloaded 2026-10-15 for 126 of the 200
+library nuclides; kept outside the repository in `D:/SpectraMaster_public_data/lnhb_lara`, not
+bundled). `python -m spectramaster.validation.ddep_check`: 363 single gamma lines >= 1 % of 81
+nuclides, 94.8 % agree within 2 combined standard uncertainties and 97.2 % within 3. Largest
+differences: Cu-67 (DDEP 2026 re-evaluation, about 10 %), Ra-223 (about 10 %), Nd-147, Ho-166m,
+Np-239; Mn-54/Co-60/Sc-46 appear only because the library rounds intensities to 4 significant
+digits. The IAEA LiveChart API was not used: it answers automated requests with a browser
+challenge.
+
+## Resolved K-beta X-rays of heavy elements (added 2026-10-15)
+
+ENSDF gives one K-beta X-ray line per element at a weighted energy (Th 106.89 keV) that lies between
+the two peaks a germanium detector resolves. `build_library.py` (`KBETA`, `split_kbeta`) splits it,
+for W ... Cm, into K'beta1 and K'beta2 with the energies and the K'beta1 share (0.74-0.79) of the
+LNHB/DDEP recommended data (same intensity in total). Only X-ray lines of 20 nuclides change; no
+gamma line changes (the line cap does not count the added K'beta2 line).
+Effect (measured before/after): Eu-155 reported in 12 -> 2 of the 20 longest laboratory spectra and
+no longer among the frequent implausible IAEA IDB identifications (53 -> below the top 15); IDB
+HPGe implausible 8.82 -> 8.15 per spectrum; U-235 / Pu-239 recall and all synthetic criteria
+unchanged; informational NaI false identifications with the environmental library 0.29 -> 0.375.

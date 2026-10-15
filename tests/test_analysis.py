@@ -291,3 +291,46 @@ def test_peak_dataclass_additions_have_defaults():
     assert p.centroid_unc is None and p.multiplet == 1 and p.nuclide == ""
     m = NuclideMatch("Cs-137", 0.9)
     assert m.background is False and m.series == ""
+
+
+# ------------------------------------------------- unresolved strong doublets (baseline P1)
+@pytest.mark.parametrize("seed", range(4))
+def test_strong_doublet_one_fwhm_not_discarded(seed):
+    """A 3:1 doublet 1 FWHM apart used to be fitted as one over-wide singlet whose
+    chi2-inflated uncertainty made it look like a 'Compton hump', so 1.3e5 counts vanished
+    without a warning (docs/SpectraMaster_Baseline_Report.md, P1)."""
+    from spectramaster.validation.synthetic import HPGE, Continuum, TruePeak, make_spectrum
+    fw = float(HPGE.fwhm_kev(662.0))
+    truth = [TruePeak(662.0, 1.0e5), TruePeak(662.0 + fw, 1.0e5 / 3)]
+    syn = make_spectrum(HPGE, truth, Continuum(exp_amp=300, exp_scale_kev=400, flat=10), seed=1000 + seed)
+    near = sorted((p for p in find_peaks(syn.spectrum) if abs(p.energy - 662.5) < 3 * fw), key=lambda p: p.energy)
+    assert len(near) == 2
+    for p, t in zip(near, truth):
+        assert abs(p.energy - t.energy) < 0.25 * fw
+        assert abs(p.net_area - t.area) < 4 * p.net_area_unc + 0.02 * t.area
+
+# ------------------------------------------- detector type of unlabelled spectra (baseline P2)
+@pytest.mark.parametrize("seed", range(3))
+def test_unlabelled_nai_on_4096_channels_is_not_hpge(seed):
+    """NaI on a 4096-channel MCA (0.75 keV/ch) used to be guessed as HPGe from the channel count,
+    so the ~30x too narrow resolution model lost almost every peak (Baseline Report, P2)."""
+    from spectramaster.analysis.peaks import guess_detector
+    from spectramaster.validation.synthetic import NAI_4K, Continuum, TruePeak, make_spectrum
+    truth = [TruePeak(e, 1.0e5) for e in (662.0, 1332.0)]
+    syn = make_spectrum(NAI_4K, truth, Continuum(exp_amp=300, exp_scale_kev=400, flat=10), seed=2000 + seed)
+    assert guess_detector(syn.spectrum) == "NaI"
+    pk = find_peaks(syn.spectrum)
+    for t in truth:
+        near = [p for p in pk if abs(p.energy - t.energy) < 0.5 * NAI_4K.fwhm_kev(t.energy)]
+        assert len(near) == 1
+        assert abs(near[0].net_area - t.area) < 0.05 * t.area
+
+
+def test_detector_label_overrides_measured_widths():
+    from spectramaster.analysis.peaks import guess_detector
+    from spectramaster.validation.synthetic import HPGE, NAI_4K, Continuum, TruePeak, make_spectrum
+    nai = make_spectrum(NAI_4K, [TruePeak(662.0, 1.0e5)], Continuum(exp_amp=300, exp_scale_kev=400, flat=10), seed=7)
+    hpge = make_spectrum(HPGE, [TruePeak(662.0, 1.0e5)], Continuum(exp_amp=300, exp_scale_kev=400, flat=10), seed=7)
+    assert guess_detector(hpge.spectrum) == "HPGe"
+    nai.spectrum.detector = "HPGe coaxial"     # an explicit label (e.g. from a DetectorProfile) wins
+    assert guess_detector(nai.spectrum) == "HPGe"

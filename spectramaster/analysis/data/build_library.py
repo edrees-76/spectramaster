@@ -413,15 +413,75 @@ def extract_iaea(db: Path, wanted: list[tuple[str, bool, float]]) -> dict:
     return res
 
 
+# K-beta X-rays of heavy elements, resolved: (K'beta1 keV, K'beta2 keV, K'beta1 share of the
+# K-beta intensity).  LNHB/DDEP recommended data (LARA files, www.lnhb.fr/nuclides, read
+# 2026-10-15; K'beta1 = Kbeta1+Kbeta3+Kbeta5, K'beta2 = Kbeta2+Kbeta4+KO2,3).  ENSDF gives one
+# K-beta line at a weighted energy (Th 106.89 keV), which falls between the two peaks a
+# germanium detector resolves (Th 105.55 and 108.97 keV): the 105.5 keV peak of U/Th-bearing
+# samples was then unexplained and taken by other nuclides (Eu-155 105.3 keV).
+KBETA = {
+    "W": (67.287, 69.2707, 0.785), "Os": (71.449, 73.5843, 0.782), "Pt": (75.784, 78.0643, 0.78),
+    "Hg": (80.2797, 82.7463, 0.774), "Tl": (82.6033, 85.1387, 0.772), "Pb": (84.9527, 87.5763, 0.768),
+    "Bi": (87.347, 90.0757, 0.765), "Po": (89.8087, 92.6213, 0.763), "Rn": (94.8547, 97.8967, 0.758),
+    "Ra": (100.1, 103.3083, 0.753), "Ac": (102.8013, 106.1133, 0.751), "Th": (105.554, 108.9687, 0.749),
+    "Pa": (108.363, 111.885, 0.737), "U": (111.2277, 114.932, 0.745), "Np": (114.1497, 117.9227, 0.744),
+    "Pu": (117.13, 121.0173, 0.742), "Cm": (123.277, 127.4037, 0.74),
+}
+KBETA_MATCH_KEV = 0.8     # ENSDF weighted K-beta energy vs. this element's weighted K'beta1/K'beta2
+
+
+def split_kbeta(rad: list) -> list:
+    """Replace each heavy-element ENSDF "KB" X-ray entry by its K'beta1 and K'beta2 lines (same
+    total intensity and uncertainty share).  Elements not in KBETA are left as they are."""
+    out = []
+    for tb, tc, e, i, u in rad:
+        if tb == "X" and (tc or "").startswith("KB") and e >= 60.0:
+            best = min(KBETA.values(), key=lambda v: abs(v[2] * v[0] + (1 - v[2]) * v[1] - e))
+            b1, b2, f = best
+            if abs(f * b1 + (1 - f) * b2 - e) <= KBETA_MATCH_KEV:
+                out.append([tb, "KB1'", b1, i * f, None if u is None else u * f])
+                out.append([tb, "KB2'", b2, i * (1 - f), None if u is None else u * (1 - f)])
+                continue
+        out.append([tb, tc, e, i, u])
+    return out
+
+
 def iaea_own_lines(rec: dict) -> list[tuple[float, float, str]]:
     out = []
     agg: dict[tuple[float, str], float] = {}
-    for tb, tc, e, i, _u in rec["rad"]:
+    for tb, tc, e, i, _u in split_kbeta(rec["rad"]):
         kind = "x" if tb == "X" else "a" if tb == "AN" else "g"
         k = (round(e, 3), kind)
         agg[k] = agg.get(k, 0.0) + i / 100.0
     for (e, kind), i in agg.items():
         out.append((e, i, kind))
+    return out
+
+
+def iaea_own_lines_u(rec: dict) -> list[tuple[float, float, str, float | None]]:
+    """As iaea_own_lines, with the absolute intensity uncertainty (fraction per decay) combined in
+    quadrature over the aggregated entries; None when an entry has no stated uncertainty."""
+    agg: dict[tuple[float, str], list] = {}
+    for tb, tc, e, i, u in split_kbeta(rec["rad"]):
+        kind = "x" if tb == "X" else "a" if tb == "AN" else "g"
+        a = agg.setdefault((round(e, 3), kind), [0.0, 0.0])
+        a[0] += i / 100.0
+        if a[1] is not None:
+            a[1] = None if u is None else a[1] + (u / 100.0) ** 2
+    return [(e, i, kind, None if v is None else v ** 0.5) for (e, kind), (i, v) in agg.items()]
+
+
+def merge_close_u(lines, tol=0.05):
+    """merge_close carrying the uncertainty (quadrature; None stays None)."""
+    lines = sorted(lines, key=lambda r: r[:3])
+    out = []
+    for e, i, k, u in lines:
+        if out and abs(out[-1][0] - e) < tol and out[-1][2] == k:
+            pe, pi, pk, pu = out[-1]
+            nu = None if (pu is None or u is None) else (pu * pu + u * u) ** 0.5
+            out[-1] = ((pe * pi + e * i) / (pi + i) if pi + i > 0 else e, pi + i, k, nu)
+        else:
+            out.append((e, i, k, u))
     return out
 
 
@@ -482,17 +542,24 @@ def build(verbose=False):
         s_lines = merge_close(s_lines)
         # IAEA lines: parent dataset first, daughters only for lines the parent does not list
         i_lines: list[tuple[float, float, str]] = []
+        i_lines_u: list = []
         have_iaea = False
         for idx, (m, f) in enumerate(members):
             rec = iaea_rec_for(iaea, m)
             if rec is None:
                 continue
             have_iaea = True
-            for e, i, k in iaea_own_lines(rec):
+            for (e, i, k), (_e, _i, _k, u) in zip(iaea_own_lines(rec), iaea_own_lines_u(rec)):
                 if idx > 0 and any(abs(e - pe) < 0.5 and pk == k for pe, _, pk in i_lines):
                     continue
                 i_lines.append((e, i * f, k))
+                i_lines_u.append((e, i * f, k, None if u is None else u * f))
         i_lines = merge_close(i_lines)
+        i_lines_u = merge_close_u(i_lines_u)
+        # the uncertainty-carrying merge must reproduce the values exactly
+        assert [(round(a, 9), round(b, 12), c) for a, b, c in i_lines] == \
+            [(round(a, 9), round(b, 12), c) for a, b, c, _u in i_lines_u], name
+        unc_of = {(round(e, 3), k): u for e, i, k, u in i_lines_u}
         # weak emitters (Pu-239, U-238 ...): keep lines down to 2 % of the strongest gamma
         gmax = max([i for e, i, k in s_lines + i_lines if k == "g" and EMIN <= e <= EMAX] or [0.0])
         _GMIN[0] = min(MIN_INTENSITY, max(0.02 * gmax * 100, 1e-4))
@@ -533,7 +600,9 @@ def build(verbose=False):
                 if ik == "g" and ii * 100 >= 1.0:
                     flags.append(f"{ie:.3f} keV {ii*100:.4g}%: IAEA only (no Sandia line)")
         final.sort(key=lambda r: -r[1])
-        final = final[:MAX_LINES]
+        # the K'beta2 line added by split_kbeta does not take the place of a gamma line
+        n_kb2 = sum(1 for e, i, k, src in final if k == "x" and any(abs(e - v[1]) < 1e-3 for v in KBETA.values()))
+        final = final[:MAX_LINES + n_kb2]
         final.sort(key=lambda r: r[0])
         n_flags += len(flags)
         rec0 = iaea_rec_for(iaea, s0)
@@ -554,7 +623,10 @@ def build(verbose=False):
             "half_life_s": (rec0.get("half_life_s") if rec0 and rec0.get("half_life_s") else
                             (None if math.isinf(hl_s) else hl_s)),
             "category": cat,
-            "lines": [[round(e, 3), float(f"{i*100:.4g}"), k, src] for e, i, k, src in final],
+            "lines": [[round(e, 3), float(f"{i*100:.4g}"), k, src]
+                      + ([float(f"{unc_of[(round(e, 3), k)] * 100:.3g}")]
+                         if src == "I" and unc_of.get((round(e, 3), k)) else [])
+                      for e, i, k, src in final],
         }
         inc: dict[str, float] = {}
         for m, f in members[1:]:
@@ -583,7 +655,9 @@ def build(verbose=False):
                        "short-lived daughters (branching x equilibrium activity ratio). Natural-series "
                        "members are separate entries; series_factor = activity relative to series head "
                        "at secular equilibrium. kind g=gamma x=X-ray a=annihilation; src I=IAEA ENSDF "
-                       "(ndlab/LiveChart), S=SandiaDecay"),
+                       "(ndlab/LiveChart), S=SandiaDecay; optional 5th value = standard uncertainty of "
+                       "the intensity (photons per 100 decays, ENSDF, combined in quadrature over merged "
+                       "entries and scaled like the intensity; absent when not stated or for S lines)"),
         "sources": {
             "sandia": "SandiaDecay sandia.decay.nocoinc.min.xml, github.com/sandialabs/SandiaDecay "
                       "commit cd75314b56e12b80497531a1fbeed9c8e9968403, LGPL-2.1",

@@ -244,13 +244,23 @@ COMMON = {
 }
 
 
+WEAK_EMITTER_MAX_LINES = 2       # the weak-emitter penalty applies to so few matched gamma lines
+MISSING_MIN_KEV = 30.0           # unmatched lines below this are not counted as missing
+
+
 def _prior(nd: NuclideData, ctx: _Context, used: dict, lines: list) -> float:
-    """Plausibility prior: uncommon nuclides, weak emitters and very short half-lives."""
+    """Plausibility prior: uncommon nuclides, weak emitters and very short half-lives.
+
+    The weak-emitter penalty (matched gamma lines summing to < 10 % per decay) applies only
+    when at most WEAK_EMITTER_MAX_LINES gamma lines are matched: one or two weak lines easily
+    coincide with unrelated peaks, but several lines with consistent areas are evidence in
+    their own right (e.g. Pu-239: lines of 1e-5 to 1e-4 per decay, very high activity)."""
     f = 1.0
     if nd.name not in COMMON:
         f *= 0.65 if ctx.det == "NaI" else 0.8
+    ng = sum(1 for li in used if lines[li].kind == "g")
     gsum = sum(lines[li].intensity for li in used if lines[li].kind == "g")
-    if gsum < 10.0:
+    if gsum < 10.0 and ng <= WEAK_EMITTER_MAX_LINES:
         f *= (max(gsum, 0.05) / 10.0) ** 0.25
     if nd.half_life_s and nd.half_life_s < 3600 and not nd.series and nd.name not in COMMON:
         f *= 0.8
@@ -351,6 +361,8 @@ def _score(c: _Cand, ctx: _Context, claimed: dict) -> float:
                 if r < 0.2 and ln.kind == "g" and ln.energy > 150 and                         exp_area > 3 * ctx.detection_limit(ln.energy):
                     ratio_pen *= 0.85
             continue
+        if ln.energy < MISSING_MIN_KEV:
+            continue        # L X-rays / very soft lines: absorbers and dead layer make them unpredictable
         ld = ctx.detection_limit(ln.energy)
         if not math.isfinite(ld) or exp_area <= 0:
             continue
@@ -391,6 +403,32 @@ def _score(c: _Cand, ctx: _Context, claimed: dict) -> float:
     return float(max(0.0, min(conf, 1.0)))
 
 
+RANK_LINES_POWER = 0.5           # weight of the number of matched peaks in the ranking
+PARSIMONY_MAX_REL_FWHM = 0.04    # ... applied only when FWHM/E at 662 keV is at most this
+
+
+def _n_gamma_matched(c) -> int:
+    """Distinct peaks matched well by gamma lines (two lines on one broad peak count once)."""
+    peaks = {j for li, (j, q) in c.matches.items() if c.lines[li].kind == "g" and q >= 0.5}
+    return max(1, min(len(peaks), 6))
+
+
+DRIFT_ACCEPT_GAIN = 1.05         # the drift-corrected identification must explain 5 % more
+# ... and only at germanium resolution: with CZT / LaBr3 / NaI peaks the natural-line fit is
+# too loose and the correction lowered U-235 recall on IAEA IDB CZT and LaBr3 spectra
+DRIFT_MAX_REL_FWHM = 0.01        # FWHM / E at 662 keV
+
+
+def _explained_score(ctx, claimed: dict) -> float:
+    """Significance-weighted share of the peaks explained by accepted nuclides."""
+    tot = 0.0
+    for j, d in claimed.items():
+        p = ctx.peaks[j]
+        frac = min(sum(d.values()) / p.net_area, 1.0) if p.net_area > 0 else 0.0
+        tot += frac * min(p.significance, 100.0)
+    return tot
+
+
 def _explain(ctx, libd, include_xrays, min_confidence):
     cands = []
     for nd in libd.values():
@@ -398,7 +436,10 @@ def _explain(ctx, libd, include_xrays, min_confidence):
         if c is not None:
             cands.append(c)
 
-    # greedy explanation with interference handling
+    # greedy explanation with interference handling.  Parsimony (several matched peaks rank
+    # first) only at good resolution: with NaI each broad peak covers tens of keV, so a nuclide
+    # with many lines matches unrelated peaks by chance (Ag-110m took Cs-137's 662 keV peak).
+    rank_power = RANK_LINES_POWER if ctx.fwhm_kev(662.0) / 662.0 <= PARSIMONY_MAX_REL_FWHM else 0.0
     claimed: dict[int, dict] = {}
     accepted: list[_Cand] = []
     pool = cands[:]
@@ -409,8 +450,10 @@ def _explain(ctx, libd, include_xrays, min_confidence):
         if not ok:
             break
         # explain the strongest evidence first (resolves shared lines in favour of the
-        # nuclide that accounts for more of the spectrum), confidence as tie-breaker
-        best = max(ok, key=lambda c: c.conf * max(c.evidence, 1.0) ** 0.1)
+        # nuclide that accounts for more of the spectrum), confidence as tie-breaker; a nuclide
+        # whose several lines are matched comes before one that matches a single peak
+        # (parsimony: one nuclide explaining five peaks beats five explaining one each)
+        best = max(ok, key=lambda c: c.conf * max(c.evidence, 1.0) ** 0.1 * _n_gamma_matched(c) ** rank_power)
         pool.remove(best)
         accepted.append(best)
         touched = set()
@@ -472,8 +515,18 @@ def _calibration_correction(ctx: _Context, accepted: list):
 
 def identify(spectrum, peaks: Optional[list[Peak]] = None, library=None, lib=None,
              min_confidence: float = 0.25, include_xrays: bool = True, max_results: int = 40,
-             _debug: bool = False, **_ignored) -> list[NuclideMatch]:
-    """Identify nuclides. `library`/`lib`: path or parsed library (default: bundled)."""
+             correct_drift: bool = True, application: str = "all", _debug: bool = False,
+             **_ignored) -> list[NuclideMatch]:
+    """Identify nuclides. `library`/`lib`: path or parsed library (default: bundled).
+
+    `correct_drift`: first compare the stored energy calibration with the natural-background
+    lines in the spectrum (tools.calibrate.check_drift); when a drift is detected, the peak
+    energies are corrected for the identification only and every result says so (germanium
+    resolution only, DRIFT_MAX_REL_FWHM).  The stored
+    calibration is never changed (review and apply it with the drift check).
+    `application`: the application library searched ("all", "environmental", "calibration",
+    "safeguards", "medical"; analysis.library.APPLICATIONS) - as with commercial programs,
+    restricting the candidates to the kind of work avoids coincidental matches."""
     if not spectrum.energy_coeffs:
         return []
     if peaks is None:
@@ -484,13 +537,37 @@ def identify(spectrum, peaks: Optional[list[Peak]] = None, library=None, lib=Non
         p.nuclide, p.line_energy = "", None
     if not cal_peaks:
         return []
-    libd = load_library(library if library is not None else lib)
+    from .library import application_library
+    libd = application_library(load_library(library if library is not None else lib), application)
     det = guess_detector(spectrum)
     ctx = _Context(spectrum, cal_peaks, det)
 
     _INCLUDES.clear()
     _INCLUDES.update({n: tuple(nd.includes) for n, nd in libd.items() if nd.includes})
     accepted, claimed = _explain(ctx, libd, include_xrays, min_confidence)
+    drift_note = ""
+    if correct_drift and ctx.fwhm_kev(662.0) / 662.0 <= DRIFT_MAX_REL_FWHM:
+        try:
+            from ..tools.calibrate import check_drift
+            dc = check_drift(spectrum, peaks=peaks)
+        except Exception:          # no calibration lines, too few peaks ...: identify as stored
+            dc = None
+        if dc is not None and dc.detected and dc.correction:
+            # keep the correction only if it explains the significant peaks better: a drift check
+            # can be fooled where few natural lines exist (U/Pu spectra), and identification must
+            # not get worse because of it
+            a, b = dc.correction
+            pe0 = ctx.pe
+            ctx.pe = a + b * pe0
+            ctx._ld.clear()
+            acc2, cl2 = _explain(ctx, libd, include_xrays, min_confidence)
+            if _explained_score(ctx, cl2) > DRIFT_ACCEPT_GAIN * _explained_score(ctx, claimed):
+                accepted, claimed = acc2, cl2
+                drift_note = (f"calibration drift detected (gain {100 * (b - 1):+.2f} %, offset {a:+.2f} keV): "
+                              "energies corrected for identification only, stored calibration unchanged")
+            else:
+                ctx.pe = pe0
+                ctx._ld.clear()
     # energy-calibration refinement from confidently identified lines, then a second pass
     corr = _calibration_correction(ctx, accepted)
     if corr is not None:
@@ -553,6 +630,8 @@ def identify(spectrum, peaks: Optional[list[Peak]] = None, library=None, lib=Non
             notes.append(nd.note)
         if nd.name in extra_note:
             notes.append(extra_note[nd.name])
+        if drift_note:
+            notes.append(drift_note)
         if _debug:
             notes.append("[" + c.detail + "]")
         results.append(NuclideMatch(nuclide=nd.name, confidence=round(c.conf, 3), matched=matched,

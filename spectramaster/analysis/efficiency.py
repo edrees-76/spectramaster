@@ -19,11 +19,21 @@ Pure functions, no GUI imports.  Conventions
                     ln eps = a_0 + sum_i c_i x^i  (E >= Ec),  x = ln(E / Ec)
                     the shared a_0 makes the curve continuous at the crossover Ec.
 
-  The parameter covariance is (J^T W J)^-1, multiplied by the reduced chi^2 when that is
-  > 1 (Birge scaling).  u(eps(E))/eps = sqrt(g^T C g + u_sys^2) with g = d ln eps / d a;
-  ``u_sys`` (relative) is the part of the certificate uncertainty common to all points
-  (fully correlated, it does not average down) - by default the smallest relative
-  activity uncertainty of the certificate.
+  Generalised least squares with the full covariance of the points (relative, on ln eps)::
+
+      V_ij = delta_ij (u_count_i^2 + u_I_i^2)          independent: counting, emission probability
+           + [nuclide_i = nuclide_j] u_A_i u_A_j       certificate activity, shared by the lines
+                                                       of one nuclide
+           + u_common^2                                common to the whole standard (e.g.
+                                                       gravimetric preparation), if stated
+
+  The parameter covariance is (A^T V^-1 A)^-1, multiplied by chi^2/dof when that is > 1
+  (Birge scaling); u(eps(E))/eps = sqrt(g^T C g), g = d ln eps / d a.  Every component is
+  counted once: the certificate activity enters only through V (before Release D it was
+  in each point's independent weight *and* again added to the curve as ``u_sys``).
+  Points without a component breakdown (manual points, curves saved earlier) are treated as
+  independent with their total uncertainty; ``u_sys_rel`` of a loaded older curve is still
+  added to its uncertainty as it was.
 * Curves are saved as JSON (``EfficiencyCurve.save`` / ``load_curve``), by default in
   :func:`default_curve_dir`.
 
@@ -45,6 +55,11 @@ from typing import Iterable, Optional, Sequence
 import numpy as np
 
 LN2 = math.log(2.0)
+# cascade emitters: their full-energy peaks lose (and sum-peaks gain) counts by true-coincidence
+# summing, which grows as the source gets closer to the detector; not corrected
+TCS_NUCLIDES = {"Co-60", "Cs-134", "Bi-214", "Tl-208", "Ac-228", "Eu-152", "Y-88", "Ba-133",
+                "Ra-226", "Th-232", "Th-228", "Ra-228", "Na-22", "Sb-125", "Eu-154", "Co-58"}
+TCS_NOTE = "cascade emitter: true-coincidence summing not corrected (biased in close geometries)"
 YEAR_S = 365.2422 * 86400.0
 E0_LOGLOG = 1000.0
 
@@ -136,17 +151,18 @@ def certificate_lines(entries: Iterable[CertNuclide], min_intensity_pct: float =
         nd = lib.get(c.nuclide)
         hl = c.half_life_s if c.half_life_s else (nd.half_life_s if nd else None)
         if c.lines:
-            lines = list(c.lines)
+            lines = [(e, i, 0.0) for e, i in c.lines]        # certificate lines: their own data
         elif nd:
-            lines = [(l.energy, l.intensity / 100.0) for l in nd.gammas(min_intensity_pct)
-                     if e_min <= l.energy <= e_max]
+            # library lines carry the evaluated emission-probability uncertainty (ENSDF)
+            lines = [(l.energy, l.intensity / 100.0, (l.intensity_unc or 0.0) / 100.0)
+                     for l in nd.gammas(min_intensity_pct) if e_min <= l.energy <= e_max]
         else:
             raise KeyError(f"{c.nuclide}: not in the nuclide library - give the lines explicitly")
-        for e, i in lines:
+        for e, i, ui in lines:
             if any(o.nuclide == c.nuclide and abs(o.energy - float(e)) < 0.01 for o in out):
                 continue        # duplicated row
             out.append(CertLine(c.nuclide, float(e), float(i), float(c.activity), float(c.activity_unc),
-                                c.ref_date, hl))
+                                c.ref_date, hl, intensity_unc=float(ui)))
     return sorted(out, key=lambda l: l.energy)
 
 
@@ -342,6 +358,9 @@ class EfficiencyPoint:
     use: bool = True
     manual: bool = False
     note: str = ""
+    u_act_rel: float = 0.0           # certificate activity (shared by the lines of `group`)
+    u_int_rel: float = 0.0           # emission probability (independent per line)
+    group: str = ""                  # correlation group of the activity component (nuclide)
 
     @property
     def rel_unc(self) -> float:
@@ -369,8 +388,9 @@ def measure_efficiency(spectrum, cert: Sequence[CertLine], peaks=None,
                        background=None, min_sig: float = 3.0) -> list[EfficiencyPoint]:
     """Measured FEP efficiency points of the certified lines found in `spectrum`.
 
-    `background`: optional background spectrum; its peaks at the same energies (live-time
-    normalised) are subtracted peak by peak.  Lines without a matching peak are skipped.
+    `background`: optional background spectrum, subtracted peak by peak (live-time
+    normalised) with the sample fit's own estimator (analysis.background.BackgroundFitter),
+    so blends are split identically in both spectra.  Lines without a matching peak are skipped.
     Lines of different nuclides falling on the same peak are flagged and not used.
     """
     from .peaks import find_peaks
@@ -378,12 +398,15 @@ def measure_efficiency(spectrum, cert: Sequence[CertLine], peaks=None,
         raise ValueError("the calibration spectrum has no energy calibration")
     if not spectrum.live_time:
         raise ValueError("the calibration spectrum has no live time")
+    from .background import BackgroundFitter
+    from .peaks import FitReport
+    rep = None
     if peaks is None:
-        peaks = find_peaks(spectrum, min_sig=min_sig)
-    bkg_peaks, k = [], 0.0
-    if background is not None and background.live_time:
-        bkg_peaks = find_peaks(background, min_sig=min_sig) if background.energy_coeffs else []
-        k = spectrum.live_time / background.live_time
+        rep = FitReport() if background is not None else None
+        peaks = find_peaks(spectrum, min_sig=min_sig, report=rep)
+    bkg_under: dict = {}
+    if background is not None:
+        bkg_under = BackgroundFitter(spectrum, background).under_peaks(peaks, rep)
     t0 = spectrum.start_time
     owners: dict[int, list[CertLine]] = {}
     found = []
@@ -400,12 +423,11 @@ def measure_efficiency(spectrum, cert: Sequence[CertLine], peaks=None,
         others = {o.nuclide for o in owners[id(p)]} - {ln.nuclide}
         n, un = float(p.net_area), float(p.net_area_unc)
         note = ""
-        if bkg_peaks:
-            bp = match_peak(bkg_peaks, ln.energy)
-            if bp is not None:
-                n -= k * bp.net_area
-                un = math.hypot(un, k * bp.net_area_unc)
-                note = "background peak subtracted"
+        if id(p) in bkg_under:
+            nb, ub = bkg_under[id(p)]
+            n -= nb
+            un = math.hypot(un, ub)
+            note = "background peak subtracted"
         # sum of intensities of lines of the same nuclide on that peak (unresolved doublets)
         same = [o for o in owners[id(p)] if o.nuclide == ln.nuclide]
         if same and same[0] is not ln:
@@ -418,15 +440,19 @@ def measure_efficiency(spectrum, cert: Sequence[CertLine], peaks=None,
             continue
         eff = n / (spectrum.live_time * a0 * c * inten)
         ur = (un / n) if n > 0 else 1.0
-        uref = math.hypot(ln.activity_unc / ln.activity if ln.activity else 0.0,
-                          ln.intensity_unc / ln.intensity if ln.intensity else 0.0)
+        ua = ln.activity_unc / ln.activity if ln.activity else 0.0
+        ui = (math.sqrt(sum(o.intensity_unc ** 2 for o in same)) / inten) if inten else 0.0
+        uref = math.hypot(ua, ui)
         pt = EfficiencyPoint(ln.energy if len(same) == 1 else p.energy, eff, eff * math.hypot(ur, uref),
-                             ln.nuclide, n, un, a0, inten, ur, uref, note=note)
+                             ln.nuclide, n, un, a0, inten, ur, uref, note=note,
+                             u_act_rel=ua, u_int_rel=ui, group=ln.nuclide)
         if others:
             pt.use = False
             pt.note = ("interference: " + ", ".join(sorted(others)) + "; " + pt.note).strip("; ")
         if not ln.ref_date or not t0:
             pt.note = (pt.note + "; no decay correction (date missing)").strip("; ")
+        if ln.nuclide in TCS_NUCLIDES:
+            pt.note = (pt.note + "; " + TCS_NOTE).strip("; ")
         pts.append(pt)
     return sorted(pts, key=lambda q: q.energy)
 
@@ -442,7 +468,12 @@ class EfficiencyCurve:
     order: int = 3                   # loglog order, or low branch order
     order_high: int = 2              # two_branch: high branch order
     e_ref: float = E0_LOGLOG         # E0 (loglog) or crossover Ec (two_branch), keV
-    u_sys_rel: float = 0.0
+    u_sys_rel: float = 0.0           # added to the curve uncertainty (older curves only)
+    u_common_rel: float = 0.0        # common standard component included in the fit covariance
+    cov_method: str = ""             # "gls" (Release D) or "" (older: independent weights + u_sys)
+    selection: str = ""              # how the model orders were chosen
+    u_model_rel: float = 0.0         # model (interpolation) error from leave-one-out residuals
+    warnings: list = field(default_factory=list)   # points to review (large residuals ...)
     chi2: float = 0.0
     dof: int = 0
     e_min: float = 0.0
@@ -450,6 +481,8 @@ class EfficiencyCurve:
     points: list[EfficiencyPoint] = field(default_factory=list)
     geometry: str = ""
     detector: str = ""
+    geometry_record: dict = field(default_factory=dict)   # lab.detector.MeasurementGeometry.to_dict()
+    validation_status: str = "unvalidated"                 # "validated" only after an explicit check
     date: str = ""
     name: str = ""
     source: str = ""
@@ -479,7 +512,7 @@ class EfficiencyCurve:
         """Relative 1-sigma uncertainty of eps(E) (fit covariance + u_sys)."""
         g = self._design(energy)
         c = np.asarray(self.cov, dtype=float) if self.cov else np.zeros((g.shape[1], g.shape[1]))
-        v = np.einsum("ij,jk,ik->i", g, c, g) + self.u_sys_rel ** 2
+        v = np.einsum("ij,jk,ik->i", g, c, g) + self.u_sys_rel ** 2 + self.u_model_rel ** 2
         r = np.sqrt(np.maximum(v, 0.0))
         return float(r[0]) if np.ndim(energy) == 0 else r
 
@@ -547,16 +580,29 @@ def list_curves(folder=None) -> list[Path]:
     return sorted(f.glob("*.json")) if f.is_dir() else []
 
 
-def fit_efficiency(points: Sequence[EfficiencyPoint], model: str = "loglog", order: int = 3,
-                   crossover: float = 200.0, order_high: int = 2, u_sys_rel: Optional[float] = None,
+def fit_efficiency(points: Sequence[EfficiencyPoint], model: str = "loglog", order: Optional[int] = None,
+                   crossover: float = 200.0, order_high: Optional[int] = None, u_sys_rel: Optional[float] = None,
                    birge: bool = True, **meta) -> EfficiencyCurve:
-    """Weighted least-squares fit of ln(eps); see the module docstring for the models.
+    """Generalised least-squares fit of ln(eps); see the module docstring.
 
-    ``u_sys_rel`` None = the smallest certificate (reference) relative uncertainty among the
-    used points (the correlated part of the standard's uncertainty).
+    Orders left as None (and ``crossover="auto"`` for the two-branch model) are chosen by
+    leave-one-out cross-validation (:func:`select_orders`): the simplest model that predicts
+    each point best from the others, so a branch with few points does not get a polynomial
+    that swings between them.  Explicit orders are used as given.
+
+    ``u_sys_rel``: relative uncertainty common to every point of the standard (e.g. the
+    gravimetric preparation of a mixed standard) when the certificate states one; it enters
+    the covariance of the points, not the curve afterwards.  None or 0 = not stated.
     """
     use = [p for p in points if p.use and p.efficiency > 0 and p.energy > 0]
-    if model == "two_branch" and (crossover is None or str(crossover).lower() == "auto"):
+    auto_x = model == "two_branch" and (crossover is None or str(crossover).lower() == "auto")
+    selection = ""
+    if order is None or (model == "two_branch" and order_high is None):
+        fixed_x = None if (auto_x or model != "two_branch") else float(crossover)
+        order, order_high, crossover, score = select_orders(points, model, fixed_x, order, order_high)
+        selection = (f"orders chosen by leave-one-out cross-validation (mean squared normalised "
+                     f"prediction error {score:.2f})")
+    elif auto_x:
         crossover = auto_crossover(points, order, order_high)
     if model not in ("loglog", "two_branch"):
         raise ValueError(f"unknown efficiency model {model!r}")
@@ -576,32 +622,165 @@ def fit_efficiency(points: Sequence[EfficiencyPoint], model: str = "loglog", ord
             raise ValueError(f"crossover {crossover:g} keV leaves {nlo} points below / {nhi} above")
     e = np.array([p.energy for p in use])
     y = np.log([p.efficiency for p in use])
-    s = np.array([max(p.rel_unc, 1e-6) if math.isfinite(p.rel_unc) else 1.0 for p in use])
+    u_common = float(u_sys_rel or 0.0)
+    V = point_covariance(use, u_common)
     a = curve._design(e)
-    w = 1.0 / s
-    aw = a * w[:, None]
-    yw = y * w
+    try:
+        L = np.linalg.cholesky(V)
+    except np.linalg.LinAlgError:
+        L = np.linalg.cholesky(V + np.eye(len(use)) * 1e-12)
+    aw = np.linalg.solve(L, a)                 # whitened design and data
+    yw = np.linalg.solve(L, y)
     params, *_ = np.linalg.lstsq(aw, yw, rcond=None)
     cov = np.linalg.pinv(aw.T @ aw)
-    res = (y - a @ params) / s
+    res = yw - aw @ params
     chi2 = float(res @ res)
     dof = len(use) - npar
     if birge and dof > 0 and chi2 / dof > 1.0:
         cov = cov * (chi2 / dof)
-    if u_sys_rel is None:
-        refs = [p.u_ref_rel for p in use if p.u_ref_rel > 0 and not p.manual]
-        u_sys_rel = min(refs) if refs else 0.0
     curve.params = [float(v) for v in params]
     curve.cov = [[float(v) for v in row] for row in cov]
     curve.chi2, curve.dof = chi2, dof
-    curve.u_sys_rel = float(u_sys_rel)
+    curve.u_sys_rel = 0.0
+    curve.u_common_rel = u_common
+    curve.cov_method = "gls"
+    curve.selection = selection
+    curve.u_model_rel = model_error(points, model, order, order_high, float(crossover) if model == "two_branch"
+                                    else 200.0)
     curve.e_min, curve.e_max = float(e.min()), float(e.max())
     curve.points = list(points)
+    curve.warnings = []
+    for p, r_pct, z in curve.residuals():
+        if p.use and abs(z) > OUTLIER_Z:
+            curve.warnings.append(f"{p.nuclide} {p.energy:.1f} keV: {r_pct:+.1f} % from the curve "
+                                  f"({z:+.1f} sigma) - check interferences, summing and the peak fit")
     curve.date = meta.pop("date", "") or datetime.now().strftime("%Y-%m-%d %H:%M")
     for k, v in meta.items():
         if hasattr(curve, k):
             setattr(curve, k, v)
     return curve
+
+
+OUTLIER_Z = 3.0                  # calibration points this far from the curve are listed for review
+LOO_ORDERS = {"loglog": [(o, None) for o in (1, 2, 3, 4)],
+              "two_branch": [(lo, hi) for lo in (1, 2, 3) for hi in (1, 2, 3)]}
+
+
+def loo_score(points: Sequence[EfficiencyPoint], model: str, order: int, order_high: int = 2,
+              crossover: float = 200.0) -> Optional[float]:
+    """Mean squared normalised leave-one-out prediction error of ln(eps) (None if a point
+    cannot be left out: too few points for the parameters or for a branch)."""
+    use = [p for p in points if p.use and p.efficiency > 0 and p.energy > 0]
+    probe = EfficiencyCurve(model=model, order=order, order_high=order_high or 0,
+                            e_ref=E0_LOGLOG if model == "loglog" else float(crossover))
+    e = np.array([p.energy for p in use])
+    y = np.log([p.efficiency for p in use])
+    s = np.array([max(p.rel_unc, 1e-6) if math.isfinite(p.rel_unc) else 1.0 for p in use])
+    a = probe._design(e)
+    npar = a.shape[1]
+    errs = []
+    for i in range(len(use)):
+        keep = np.arange(len(use)) != i
+        if keep.sum() <= npar:
+            return None
+        if model == "two_branch":
+            lo = int(np.sum(e[keep] < crossover))
+            if lo < order or keep.sum() - lo < order_high:
+                return None
+        aw = a[keep] / s[keep, None]
+        par, *_ = np.linalg.lstsq(aw, y[keep] / s[keep], rcond=None)
+        errs.append(((y[i] - a[i] @ par) / s[i]) ** 2)
+    return float(np.mean(errs))
+
+
+def _loo_residuals(points, model, order, order_high, crossover):
+    use = [p for p in points if p.use and p.efficiency > 0 and p.energy > 0]
+    probe = EfficiencyCurve(model=model, order=order, order_high=order_high or 0,
+                            e_ref=E0_LOGLOG if model == "loglog" else float(crossover))
+    e = np.array([p.energy for p in use])
+    y = np.log([p.efficiency for p in use])
+    s = np.array([max(p.rel_unc, 1e-6) if math.isfinite(p.rel_unc) else 1.0 for p in use])
+    a = probe._design(e)
+    out = []
+    for i in range(len(use)):
+        keep = np.arange(len(use)) != i
+        if keep.sum() <= a.shape[1]:
+            return None
+        if model == "two_branch":
+            lo = int(np.sum(e[keep] < crossover))
+            if lo < order or keep.sum() - lo < (order_high or 0):
+                return None
+        aw = a[keep] / s[keep, None]
+        par, *_ = np.linalg.lstsq(aw, y[keep] / s[keep], rcond=None)
+        # prediction variance of the left-out point from the reduced fit
+        try:
+            cov = np.linalg.inv(aw.T @ aw)
+            vp = float(a[i] @ cov @ a[i])
+        except np.linalg.LinAlgError:
+            vp = 0.0
+        out.append((float(y[i] - a[i] @ par), float(s[i]), vp))
+    return out
+
+
+def model_error(points: Sequence[EfficiencyPoint], model: str, order: int, order_high: Optional[int] = 2,
+                crossover: float = 200.0) -> float:
+    """Relative interpolation (model) error: the part of the leave-one-out prediction errors
+    not explained by the point uncertainties and the prediction uncertainty,
+    u_model^2 = max(0, mean(r_i^2 - s_i^2 - v_i)).  Added to the curve uncertainty; 0 when the
+    points do not allow leaving one out."""
+    res = _loo_residuals(points, model, order, order_high, crossover)
+    if not res:
+        return 0.0
+    ex = float(np.mean([r * r - s * s - v for r, s, v in res]))
+    return math.sqrt(ex) if ex > 0 else 0.0
+
+
+def select_orders(points: Sequence[EfficiencyPoint], model: str, crossover: Optional[float] = None,
+                  order: Optional[int] = None, order_high: Optional[int] = None):
+    """(order, order_high, crossover, score) with the smallest leave-one-out error; fixed
+    arguments are kept; ``crossover`` None searches between measured points (two-branch)."""
+    if model not in LOO_ORDERS:
+        raise ValueError(f"unknown efficiency model {model!r}")
+    cands = [(o, h) for o, h in LOO_ORDERS[model] if (order is None or o == order)
+             and (order_high is None or model == "loglog" or h == order_high)]
+    if model == "two_branch" and crossover is None:
+        es = sorted({p.energy for p in points if p.use and p.efficiency > 0})
+        xs = [math.sqrt(a * b) for a, b in zip(es, es[1:]) if 80.0 <= math.sqrt(a * b) <= 600.0]
+    else:
+        xs = [crossover if crossover is not None else 200.0]
+    best = None
+    for o, h in cands:
+        npar = 1 + o + (h or 0) if model == "two_branch" else o + 1
+        for x in xs:
+            sc = loo_score(points, model, o, h or 2, x)
+            if sc is None:
+                continue
+            key = (sc, npar)                      # ties go to the simpler model
+            if best is None or key < best[0]:
+                best = (key, o, h, x)
+    if best is None:
+        raise ValueError("too few points to choose the model orders - give them explicitly")
+    (sc, _n), o, h, x = best
+    return o, (h if h is not None else 2), (round(float(x), 1) if model == "two_branch" else x), sc
+
+
+def point_covariance(points: Sequence[EfficiencyPoint], u_common: float = 0.0) -> np.ndarray:
+    """Covariance of ln(eps) of the points (see the module docstring)."""
+    n = len(points)
+    V = np.zeros((n, n))
+    for i, p in enumerate(points):
+        tot = max(p.rel_unc, 1e-6) if math.isfinite(p.rel_unc) else 1.0
+        if p.manual or not (p.u_act_rel or p.u_int_rel or p.u_count_rel):
+            V[i, i] = tot ** 2                       # no breakdown: independent
+            continue
+        V[i, i] = p.u_count_rel ** 2 + p.u_int_rel ** 2 + p.u_act_rel ** 2
+        for j in range(i + 1, n):
+            q = points[j]
+            if p.group and q.group == p.group and not q.manual:
+                V[i, j] = V[j, i] = p.u_act_rel * q.u_act_rel
+    if u_common:
+        V += u_common ** 2
+    return V
 
 
 def auto_crossover(points: Sequence[EfficiencyPoint], order: int = 2, order_high: int = 2,
@@ -622,6 +801,43 @@ def auto_crossover(points: Sequence[EfficiencyPoint], order: int = 2, order_high
     if best is None:
         raise ValueError("no valid crossover energy for the two-branch model - use the log-log model")
     return float(round(best, 1))
+
+
+VALIDATION_MAX_Z = 3.0           # independent check: no point further than this
+VALIDATION_MAX_MEAN_Z2 = 2.0     # and mean z^2 at most this (chi^2/n; ~ 95 % for a few points)
+
+
+def validate_curve(curve: EfficiencyCurve, points: Sequence[EfficiencyPoint]) -> dict:
+    """Independent check of a curve with points NOT used in its fit (another source, the same
+    detector and geometry).  z = (eps_point - eps_curve) / sqrt(u_point^2 + u_curve^2).
+
+    Returns {"rows": [...], "n": n, "max_abs_z", "mean_z2", "consistent": bool, "message"}.
+    ``consistent`` applies VALIDATION_MAX_Z and VALIDATION_MAX_MEAN_Z2; the decision to mark the
+    calibration as validated stays with the user (CalibrationRecord.set_validation)."""
+    rows = []
+    used = {(round(p.energy, 3), p.nuclide) for p in curve.points if p.use}
+    for p in points:
+        if not p.use or p.efficiency <= 0:
+            continue
+        f = float(curve.efficiency(p.energy))
+        u = math.hypot(p.unc, float(curve.uncertainty(p.energy)))
+        rows.append({"nuclide": p.nuclide, "energy": p.energy, "point": p.efficiency, "curve": f,
+                     "dev_pct": 100.0 * (p.efficiency / f - 1.0), "z": (p.efficiency - f) / u if u > 0 else 0.0,
+                     "in_range": curve.in_range(p.energy, margin=0.0),
+                     "also_in_fit": (round(p.energy, 3), p.nuclide) in used})
+    indep = [r for r in rows if not r["also_in_fit"]]
+    if not indep:
+        return {"rows": rows, "n": 0, "max_abs_z": None, "mean_z2": None, "consistent": False,
+                "message": "no independent points (every point was used in the fit)"}
+    zs = [r["z"] for r in indep]
+    mz = max(abs(z) for z in zs)
+    m2 = sum(z * z for z in zs) / len(zs)
+    ok = mz <= VALIDATION_MAX_Z and m2 <= VALIDATION_MAX_MEAN_Z2
+    msg = (f"{len(indep)} independent point(s): largest |z| = {mz:.1f}, mean z^2 = {m2:.2f} -> "
+           + ("consistent with the curve" if ok else "NOT consistent with the curve"))
+    if any(not r["in_range"] for r in indep):
+        msg += "; some points lie outside the calibrated range"
+    return {"rows": rows, "n": len(indep), "max_abs_z": mz, "mean_z2": m2, "consistent": ok, "message": msg}
 
 
 def manual_point(energy: float, efficiency: float, rel_unc_pct: float = 2.0, note: str = "") -> EfficiencyPoint:

@@ -111,7 +111,7 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         self.roi_dock = QDockWidget()
         self.roi_dock.setObjectName("roiDock")
         self.roi_dock.setWidget(self.roi_panel)
-        self.analysis_panel = AnalysisPanel()
+        self.analysis_panel = AnalysisPanel(settings=self.settings)
         self.analysis_panel.peakActivated.connect(self.zoom_to_peak)
         self.analysis_panel.nuclideSelected.connect(self._on_nuclide_selected)
         self.analysis_panel.exportRequested.connect(lambda: self.export_analysis())
@@ -302,6 +302,12 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         self.menu_analyze.addAction(self.act_labels)
         from .quant_panel import install_quant    # Analyze > Efficiency / Activity (sets self.quant_results)
         install_quant(self)
+        from .calibration_dialog import install_calibration_actions    # Analyze > Energy calibration / drift
+        install_calibration_actions(self)
+        from .fit_inspection import install_session_actions    # Analyze > Fit inspection & manual refit
+        install_session_actions(self)
+        from .session_io import install_session_io    # File > sessions, report record; workflow dock (A5, F3)
+        install_session_io(self)
         self.menu_help = mb.addMenu("")
         self.menu_help.addAction(self.act_shortcuts)
         self.menu_help.addAction(self.act_integration)
@@ -472,6 +478,12 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         retranslate_qc_menu(self)
         from .manual import retranslate_manual_menu
         retranslate_manual_menu(self)
+        from .calibration_dialog import retranslate_calibration_actions
+        retranslate_calibration_actions(self)
+        from .fit_inspection import retranslate_session_actions
+        retranslate_session_actions(self)
+        from .session_io import retranslate_session_io
+        retranslate_session_io(self)
         for i, mode in enumerate(Y_MODES):
             self.yscale_combo.setItemText(i, tr(f"y_{mode}"))
         self.yscale_combo.setToolTip(tr("tip_yscale"))
@@ -594,6 +606,9 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         if not path.is_file():
             self.show_error(tr("err_not_found", path=str(path)))
             return False
+        ctl = getattr(self, "session_ctl", None)
+        if ctl is not None and not ctl.confirm_discard():    # unsaved analysis session
+            return False
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             spectra, used = read_spectra(path, in_fmt)
@@ -627,6 +642,12 @@ class MainWindow(ReportActionsMixin, QMainWindow):
     def show_index(self, i: int) -> None:
         if not (0 <= i < len(self._spectra)) or i == self._index:
             return
+        ctl = getattr(self, "session_ctl", None)
+        if self._index >= 0 and ctl is not None and not ctl.can_switch():    # unsaved analysis session
+            self.info.spectrum_combo.blockSignals(True)
+            self.info.spectrum_combo.setCurrentIndex(self._index)
+            self.info.spectrum_combo.blockSignals(False)
+            return
         self._index = i
         spec = self._spectra[i]
         self._ana_token += 1               # results of a running analysis are now stale
@@ -640,7 +661,10 @@ class MainWindow(ReportActionsMixin, QMainWindow):
             self.info.spectrum_combo.blockSignals(False)
         self.goto_unit.setCurrentIndex(0 if self.plot.has_energy() else 1)
         self._update_actions()
-        if self.act_auto_analyze.isChecked() and self._ana_reason is None:
+        if ctl is not None:
+            ctl.spectrum_shown(spec)
+        # an opened session shows its stored results: never recalculated automatically
+        if self.act_auto_analyze.isChecked() and self._ana_reason is None and not (ctl is not None and ctl.restoring):
             self.run_analysis(silent=True)
 
     # =============================================================== actions
@@ -995,7 +1019,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         self._ana_token += 1
         self._ana_silent = silent
         thread = QThread(self)
-        worker = AnalysisWorker(spec, self._ana_token)
+        self._ana_application = self.analysis_panel.application()
+        worker = AnalysisWorker(spec, self._ana_token, application=self._ana_application)
         worker.moveToThread(thread)
         thread.started.connect(worker.run)
         worker.done.connect(self._on_analysis_done)
@@ -1022,7 +1047,7 @@ class MainWindow(ReportActionsMixin, QMainWindow):
     def _on_analysis_done(self, token: int, peaks, matches, identified: bool) -> None:
         if token != self._ana_token:
             return
-        self.analysis_panel.set_results(peaks, matches, identified)
+        self.analysis_panel.set_results(peaks, matches, identified, getattr(self, "_ana_application", None))
         self.plot.set_peaks(peaks)
         self.plot.set_highlight(None)
         if self.analysis_dock.isHidden():
@@ -1030,6 +1055,9 @@ class MainWindow(ReportActionsMixin, QMainWindow):
             self.resizeDocks([self.analysis_dock], [max(200, self.height() // 3)], Qt.Vertical)
         self.analysis_dock.raise_()
         self.statusBar().showMessage(tr("ana_done", p=len(peaks), n=len(matches)), 10000)
+        ctl = getattr(self, "session_ctl", None)
+        if ctl is not None:
+            ctl.analysis_done(self.current_spectrum(), peaks, matches, getattr(self, "_ana_application", None))
 
     def _on_analysis_failed(self, token: int, kind: str, msg: str) -> None:
         if token != self._ana_token:
@@ -1104,7 +1132,12 @@ class MainWindow(ReportActionsMixin, QMainWindow):
             self.restoreState(state)
 
     def closeEvent(self, ev):
-        for dlg in list(getattr(self, "_report_batch_dialogs", [])) + list(self._batch_dialogs):
+        ctl = getattr(self, "session_ctl", None)
+        if ctl is not None and not ctl.confirm_discard():    # unsaved analysis session
+            ev.ignore()
+            return
+        for dlg in (list(getattr(self, "_report_batch_dialogs", [])) + list(self._batch_dialogs)
+                    + list(getattr(self, "_analysis_batch_dialogs", []))):
             if dlg.is_running():
                 dlg.cancel()
                 dlg.wait()

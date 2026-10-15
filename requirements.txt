@@ -1,0 +1,6 @@
+# Runtime dependencies of SpectraMaster (GUI and engine); see README.md
+numpy
+scipy
+openpyxl
+PySide6
+SandiaSpecUtils
