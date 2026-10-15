@@ -244,6 +244,9 @@ def cat_identification(det, n_seeds) -> dict:
     by_mix: dict[str, dict] = defaultdict(lambda: {"tp": 0, "n": 0, "fp": 0, "spectra": 0, "false": defaultdict(int),
                                                    "missed": defaultdict(int)})
     times = []
+    from ..analysis.library import application_library
+    env_names = set(application_library(lib, "environmental"))
+    env = {"tp": 0, "n": 0, "fp": 0, "spectra": 0}       # informational: environmental library, drift 0
     for syn in scenarios.identification(det, n_seeds):
         t0 = time.perf_counter()
         peaks = find_peaks(syn.spectrum)
@@ -252,6 +255,15 @@ def cat_identification(det, n_seeds) -> dict:
         reported = {r.nuclide for r in res}
         present = set(syn.meta["present"])
         allowed_groups = {alias.get(n, n) for n in present | set(syn.meta["weak"])}
+        if syn.meta["drift"] == 0:
+            rep_env = {r.nuclide for r in identify(syn.spectrum, peaks, application="environmental")}
+            pres_env = present & env_names
+            env["tp"] += sum(n in rep_env or (lib[n].series and any(alias.get(r) == lib[n].series for r in rep_env))
+                             or any(n in lib[r].includes for r in rep_env if r in lib) for n in pres_env)
+            env["n"] += len(pres_env)
+            env["fp"] += sum(1 for r in rep_env if alias.get(r, r) not in allowed_groups
+                             and not any(r in lib[n].includes for n in present | set(syn.meta["weak"])))
+            env["spectra"] += 1
         # a present nuclide counts as found if it or a member of the same decay chain is reported
         # (e.g. Bi-214 present, "Ra-226" reported); includes (Cs-137 -> Ba-137m) count too
         def found(n):
@@ -285,6 +297,8 @@ def cat_identification(det, n_seeds) -> dict:
             "by_mixture": {k: {"recall": v["tp"] / max(v["n"], 1), "false_per_spectrum": v["fp"] / max(v["spectra"], 1),
                                "false_nuclides": dict(v["false"]), "missed": dict(v["missed"])}
                            for k, v in by_mix.items()},
+            "false_per_spectrum_environmental_library": env["fp"] / max(env["spectra"], 1),
+            "recall_environmental_library": env["tp"] / max(env["n"], 1),
             "median_time_s": statistics.median(times) if times else None}
 
 

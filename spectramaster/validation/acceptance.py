@@ -146,6 +146,12 @@ for det in ("HPGe", "NaI"):
        "Reported nuclides that are absent (aliases of the same decay chain count as present).")
     _c(f"{det}.id.drift", det, "identification", "recall_by_drift", "report", None,
        "Recall vs. deliberate gain error (0, 0.1, 0.3, 1 %): informational, no a-priori limit.")
+    _c(f"{det}.id.false_per_spectrum_environmental", det, "identification",
+       "false_per_spectrum_environmental_library", "report", None,
+       "Same spectra searched with the environmental application library (the GUI default): "
+       "informational; the scored criteria keep the full library for comparability.")
+    _c(f"{det}.id.recall_environmental", det, "identification", "recall_environmental_library", "report", None,
+       "Recall with the environmental library, over present nuclides that belong to it.")
 
 # -------------------------------------------------------------------- detector-type guess (P2)
 # Added 2026-10-14 for increment A8, BEFORE the P2 fix was written or the benchmark was re-run
