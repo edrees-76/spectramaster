@@ -130,6 +130,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         self._create_toolbar()
         self._create_nav_toolbar()
         self._create_statusbar()
+        from .aptec_view_ui import install_view_menu    # View menu in Aptec's order (needs the tool bars)
+        install_view_menu(self)
 
         # ---- restore view preferences
         mode = str(self.settings.get("view/y_mode", "") or "")
@@ -148,6 +150,7 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         except (TypeError, ValueError):
             w = GOTO_DEFAULT_WIDTH
         self.goto_width.setCurrentIndex(w if 0 <= w < len(GOTO_WIDTHS) else GOTO_DEFAULT_WIDTH)
+        self._default_state = (self.saveState(), self.splitter.saveState())    # View > Default Position
         self._restore_geometry()
         self.apply_language(self.settings.language, save=False)
         self.refresh_analysis_available()
@@ -493,6 +496,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         retranslate_setup_menu(self)
         from .aptec_roi_ui import retranslate_roi_menu
         retranslate_roi_menu(self)
+        from .aptec_view_ui import retranslate_view_menu
+        retranslate_view_menu(self)
         from .fit_inspection import retranslate_session_actions
         retranslate_session_actions(self)
         from .session_io import retranslate_session_io
@@ -1158,9 +1163,11 @@ class MainWindow(ReportActionsMixin, QMainWindow):
             self._ana_token += 1
             self._ana_thread.quit()
             self._ana_thread.wait(5000)
-        self.settings.set("window/geometry", self.saveGeometry())
-        self.settings.set("window/splitter", self.splitter.saveState())
-        self.settings.set("window/state", self.saveState())
+        from .aptec_view_ui import save_on_exit
+        if save_on_exit(self):                                 # View > Save Settings on Exit
+            self.settings.set("window/geometry", self.saveGeometry())
+            self.settings.set("window/splitter", self.splitter.saveState())
+            self.settings.set("window/state", self.saveState())
         self.settings.sync()
         super().closeEvent(ev)
 
