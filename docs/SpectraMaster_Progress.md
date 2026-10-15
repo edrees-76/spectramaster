@@ -198,7 +198,9 @@ each K-beta group as one weighted line (Th 106.9 keV instead of K-beta1 105.6 ke
 Full benchmark after E2-E4/F1-F2 (`docs/baseline/after_E4_F2`): FAIL 15 → 14, PASS 99 → 100,
 no criterion newly failing. HPGe recall at 0.3 % drift 0.06 → 1.0. Informational, not criteria:
 IDB CZT U-235 0.82 → 0.77 and LaBr3 0.69 → 0.62 (drift correction applied to scintillator
-spectra; to be reviewed), HPGe Pu-239 0.78 → 0.80.
+spectra), HPGe Pu-239 0.78 → 0.80. Fixed in 631c763: the identification drift correction now
+runs only at germanium resolution (FWHM/E ≤ 1 % at 662 keV); CZT U-235 0.82 and LaBr3 0.69 restored,
+implausible CZT 5.09 → 4.79 and LaBr3 5.78 → 5.43 per spectrum; synthetic HPGe/NaI criteria unchanged.
 
 E2 result (synthetic, 4 seeds per mixture): HPGe recall at 0.1 / 0.3 / 1 % drift
 0.98 / 0.06 / 0.06 → 1.0 / 1.0 / 1.0; false identifications at drift ≤ 0.09 per spectrum; NaI
