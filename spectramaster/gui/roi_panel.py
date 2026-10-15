@@ -6,24 +6,35 @@ from pathlib import Path
 from typing import Optional
 
 from PySide6.QtCore import Qt, Signal
-from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (QAbstractItemView, QHBoxLayout, QHeaderView, QLabel, QPushButton,
                                QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget)
 
+from . import aptec_roi_strings  # noqa: F401  (aroi_ strings)
 from .i18n import tr
 from .plot import SpectrumPlot, format_count
 
 COLS = ["roi_col_n", "roi_col_start", "roi_col_end", "roi_col_centroid", "roi_col_energy",
-        "roi_col_fwhm", "roi_col_fwhm_kev", "roi_col_gross", "roi_col_net", "roi_col_unc",
-        "roi_col_cps"]
+        "roi_col_fwhm", "roi_col_fwhm_kev", "roi_col_gross", "aroi_col_bkg", "roi_col_net",
+        "roi_col_unc", "aroi_col_err", "roi_col_cps", "aroi_col_flags"]
 
 
 def _f(v, fmt="{:.2f}") -> str:
     return "" if v is None else fmt.format(v)
 
 
+def _err(st, k: float) -> str:
+    v = getattr(st, "err_pct", None)
+    return "" if v is None else f"{v * k:.2f}"
+
+
+def _end_ch(st, name: str) -> str:
+    v = getattr(st, name, None)
+    return "" if v is None else str(st.first_channel + v)
+
+
 def roi_rows(plot: SpectrumPlot) -> list[list[str]]:
     rows = []
+    k = float(plot.roi_props.error_sigma)
     for i, roi in enumerate(plot.rois):
         st = roi.stats
         if st is None:
@@ -31,7 +42,8 @@ def roi_rows(plot: SpectrumPlot) -> list[list[str]]:
         cps = "" if st.count_rate is None else "\u2066" + f"{st.count_rate:.4g} ± {st.count_rate_unc:.2g}" + "\u2069"
         rows.append([str(i + 1), str(st.start_channel), str(st.end_channel), _f(st.centroid),
                      _f(st.centroid_energy), _f(st.fwhm), _f(st.fwhm_kev), f"{st.gross:.0f}",
-                     f"{st.net:.1f}", f"{st.net_unc:.1f}", cps])
+                     f"{st.background:.1f}", f"{st.net:.1f}", f"{st.net_unc:.1f}", _err(st, k), cps,
+                     getattr(st, "flags", "")])
     return rows
 
 
@@ -46,7 +58,8 @@ def export_rois_csv(plot: SpectrumPlot, path) -> Path:
             w.writerow(["# live_time_s", spec.live_time if spec.live_time is not None else ""])
             w.writerow(["# real_time_s", spec.real_time if spec.real_time is not None else ""])
         w.writerow(["roi", "start_ch", "end_ch", "centroid_ch", "centroid_keV", "fwhm_ch", "fwhm_keV",
-                    "gross", "background", "net", "net_unc_1s", "net_cps", "net_cps_unc"])
+                    "gross", "background", "net", "net_unc_1s", "net_cps", "net_cps_unc", "err_pct_1s",
+                    "bkg_first_ch", "bkg_last_ch", "fwtm_ch", "mda_cps", "flags"])
         for i, roi in enumerate(plot.rois):
             st = roi.stats
             if st is None:
@@ -54,7 +67,10 @@ def export_rois_csv(plot: SpectrumPlot, path) -> Path:
             w.writerow([i + 1, st.start_channel, st.end_channel, _f(st.centroid, "{:.4f}"),
                         _f(st.centroid_energy, "{:.4f}"), _f(st.fwhm, "{:.4f}"), _f(st.fwhm_kev, "{:.4f}"),
                         f"{st.gross:.0f}", f"{st.background:.3f}", f"{st.net:.3f}", f"{st.net_unc:.3f}",
-                        _f(st.count_rate, "{:.6g}"), _f(st.count_rate_unc, "{:.6g}")])
+                        _f(st.count_rate, "{:.6g}"), _f(st.count_rate_unc, "{:.6g}"),
+                        _f(getattr(st, "err_pct", None), "{:.4f}"), _end_ch(st, "bl"), _end_ch(st, "bh"),
+                        _f(getattr(st, "fwtm", None), "{:.4f}"), _f(getattr(st, "mda_cps", None), "{:.6g}"),
+                        getattr(st, "flags", "")])
     return path
 
 
@@ -78,6 +94,7 @@ class RoiPanel(QWidget):
         self.table.horizontalHeader().setStretchLastSection(False)
         self.table.setAlternatingRowColors(True)
         self.table.doubleClicked.connect(self._zoom_row)
+        self.table.clicked.connect(lambda idx: self.plot.index_roi(idx.row()))
         lay.addWidget(self.table, 1)
         btns = QHBoxLayout()
         self.del_btn = QPushButton()
@@ -91,15 +108,18 @@ class RoiPanel(QWidget):
         btns.addStretch(1)
         btns.addWidget(self.export_btn)
         lay.addLayout(btns)
-        sc = QShortcut(QKeySequence.Delete, self.table)
-        sc.setContext(Qt.WidgetShortcut)
-        sc.activated.connect(self.delete_selected)
+        # Del is the window's ROI > Delete Indexed, which deletes the selected rows when the
+        # list has the focus
         plot.roisChanged.connect(self.refresh)
+        plot.roiIndexChanged.connect(self._show_index)
         self.retranslate()
 
     def retranslate(self) -> None:
-        self.table.setHorizontalHeaderLabels([tr(k) for k in COLS])
-        self.hint.setText(tr("roi_hint"))
+        p = self.plot.roi_props
+        self.table.setHorizontalHeaderLabels([tr(k, k=f"{p.error_sigma:g}") for k in COLS])
+        bkg = tr("aroi_hint_avg") if p.bkg_degree == 0 else tr("aroi_hint_lsq", k=p.bkg_degree)
+        x = f"{p.end_points_low}-{p.end_points_high}" if p.variable_end_points else str(p.end_points)
+        self.hint.setText(tr("aroi_hint", bkg=bkg, x=x))
         self.del_btn.setText(tr("roi_delete"))
         self.clear_btn.setText(tr("roi_clear"))
         self.export_btn.setText(tr("roi_export"))
@@ -114,6 +134,7 @@ class RoiPanel(QWidget):
                 it.setTextAlignment(Qt.AlignAbsolute | Qt.AlignRight | Qt.AlignVCenter)
                 self.table.setItem(r, c, it)
         has = bool(rows)
+        self._show_index(self.plot.roi_index)
         self.del_btn.setEnabled(has)
         self.clear_btn.setEnabled(has)
         self.export_btn.setEnabled(has)
@@ -122,6 +143,11 @@ class RoiPanel(QWidget):
         from PySide6.QtCore import QItemSelectionModel
         idx = self.table.model().index(r, 0)
         self.table.selectionModel().select(idx, QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows)
+
+    def _show_index(self, i: int) -> None:
+        if 0 <= i < self.table.rowCount():
+            self.select_row(i)
+            self.table.scrollToItem(self.table.item(i, 0))
 
     def selected_rows(self) -> list[int]:
         return sorted({i.row() for i in self.table.selectedIndexes()}, reverse=True)

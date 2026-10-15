@@ -5,6 +5,8 @@ Interaction (see ``SHORTCUTS`` in i18n for the user-facing list)
   * left drag (horizontal)  : zoom to the dragged channel range (Y auto)
   * left drag (box)         : rubber-band zoom of X and Y
   * Ctrl + left drag        : define a region of interest (ROI)
+  * Ctrl + click            : Aptec quick paint -- left side, then right side of a new ROI
+                              (in Paint mode: Set)
   * left click              : move the channel marker (``markerMoved``)
   * Shift + left drag, right/middle drag : pan (Y too when Y is zoomed)
   * wheel                   : zoom X around the cursor
@@ -33,7 +35,8 @@ from PySide6.QtWidgets import QApplication, QSizePolicy, QWidget
 
 from ..model import Spectrum
 from .i18n import tr
-from .roi import RoiStats, compute_roi
+from ..analysis.aptec_roi import RoiProperties
+from .roi import RoiStats, compute_rois_aptec
 
 C_BG = QColor("#ffffff")
 C_FRAME = QColor("#b8c2cc")
@@ -49,6 +52,7 @@ C_BOX = QColor(47, 109, 179, 40)
 C_ROI = QColor(214, 69, 65)
 C_LABEL = QColor("#7a2e8e")
 C_HILITE = QColor("#c2185b")
+C_PAINT = QColor(46, 125, 50)          # ROI being painted / edited (Aptec Paint)
 OVERLAY_COLORS = ["#d9822b", "#2e9d4f", "#c2185b", "#6a4fb3", "#00838f", "#8d6e63", "#5d6d7e"]
 
 Y_LINEAR, Y_LOG, Y_SQRT = "linear", "log", "sqrt"
@@ -119,7 +123,7 @@ class Overlay:
     by_energy: bool = False
 
 
-@dataclass
+@dataclass(eq=False)
 class Roi:
     left: int
     right: int
@@ -151,6 +155,8 @@ class SpectrumPlot(QWidget):
     overlaysChanged = Signal()
     contextRequested = Signal(QPoint, float)   # global pos, index position (nan outside)
     markerMoved = Signal(int)        # stored-array index of the channel marker
+    roiIndexChanged = Signal(int)    # indexed ROI (Space / Shift+Space), -1 = none
+    paintChanged = Signal()          # ROI Paint / Edit started, changed or ended
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -176,6 +182,11 @@ class SpectrumPlot(QWidget):
         self.overlays: list[Overlay] = []
         self.rois: list[Roi] = []
         self.last_roi: Optional[Roi] = None
+        self.roi_props = RoiProperties()     # Aptec ROI Properties (Shift+R)
+        self.indexed_roi: Optional[Roi] = None   # Aptec "indexed" ROI (Space / Shift+Space)
+        self.paint: Optional[list[int]] = None   # [left, right] of the ROI being painted / edited
+        self.paint_edit: Optional[Roi] = None    # the ROI being edited (None: painting a new one)
+        self._paint_drag = False
         self.peaks: list = []                # analysis Peak objects (labels)
         self.marker: Optional[int] = None    # channel marker (stored-array index), Aptec style
         self.show_marker = True
@@ -218,7 +229,12 @@ class SpectrumPlot(QWidget):
             self._map_overlay(ov)
         # ROIs are kept (same channel windows) and re-evaluated on the new data
         self.rois = [r for r in self.rois if n and r.right < n]
+        if self.indexed_roi not in self.rois:
+            self.indexed_roi = None
         self._recompute_rois()
+        if self.paint is not None:
+            self.paint = self.paint_edit = None
+            self.paintChanged.emit()
         self.peaks = []
         self.highlight = None
         self._history = []
@@ -470,7 +486,10 @@ class SpectrumPlot(QWidget):
         left, right = max(0, left), min(n - 1, right)
         if right - left + 1 < 3:
             return None
-        roi = Roi(left, right)
+        return self._insert_roi(left, right)
+
+    def _insert_roi(self, left: int, right: int) -> Roi:
+        roi = Roi(int(left), int(right))
         self.last_roi = roi
         self.rois.append(roi)
         self.rois.sort(key=lambda r: r.left)
@@ -502,15 +521,218 @@ class SpectrumPlot(QWidget):
 
     def remove_roi(self, i: int) -> None:
         if 0 <= i < len(self.rois):
-            del self.rois[i]
+            gone = self.rois.pop(i)
+            if gone is self.indexed_roi:      # Aptec: the next ROI to the right becomes indexed
+                self.indexed_roi = self.rois[min(i, len(self.rois) - 1)] if self.rois else None
+                self.roiIndexChanged.emit(self.roi_index)
+            if gone is self.paint_edit:
+                self.paint = self.paint_edit = None
+                self.paintChanged.emit()
+            self._recompute_rois()
             self.update()
             self.roisChanged.emit()
 
     def clear_rois(self) -> None:
         if self.rois:
             self.rois.clear()
+            if self.indexed_roi is not None:
+                self.indexed_roi = None
+                self.roiIndexChanged.emit(-1)
+            if self.paint_edit is not None:
+                self.paint = self.paint_edit = None
+                self.paintChanged.emit()
             self.update()
             self.roisChanged.emit()
+
+    # ---------------------------------------------------- Aptec ROI menu
+    def set_roi_props(self, props: RoiProperties) -> None:
+        """Apply Aptec ROI Properties and recalculate every ROI."""
+        self.roi_props = props.validate()
+        self._recompute_rois()
+        self.update()
+        self.roisChanged.emit()
+        if self.paint is not None:
+            self.paintChanged.emit()
+
+    @property
+    def roi_index(self) -> int:
+        """Position of the indexed ROI in ``rois`` (-1 when none)."""
+        return next((i for i, r in enumerate(self.rois) if r is self.indexed_roi), -1)
+
+    def index_roi(self, i: int) -> None:
+        """Index ROI ``i`` (-1: none): the channel marker moves to its centroid, in view."""
+        if not 0 <= i < len(self.rois):
+            self.indexed_roi = None
+            self.update()
+            self.roiIndexChanged.emit(-1)
+            return
+        roi = self.indexed_roi = self.rois[i]
+        st = roi.stats
+        if st is not None and st.centroid is not None:
+            mid = int(round(st.centroid - st.first_channel))
+        else:
+            mid = (roi.left + roi.right) // 2
+        if roi.left < self.x0 or roi.right + 1 > self.x1:
+            half = max((self.x1 - self.x0) / 2, roi.right + 1 - roi.left)
+            self.set_view(mid + 0.5 - half, mid + 0.5 + half, None)
+        self.set_marker(mid)
+        self.roiIndexChanged.emit(i)
+
+    def index_next(self) -> None:
+        """Space: index the next ROI to the right (wraps around)."""
+        if not self.rois:
+            return
+        i = self.roi_index
+        if i < 0:
+            ref = self.marker if self.marker is not None else -1
+            i = next((k for k, r in enumerate(self.rois) if r.left > ref), 0)
+        else:
+            i = (i + 1) % len(self.rois)
+        self.index_roi(i)
+
+    def index_prev(self) -> None:
+        """Shift+Space: index the next ROI to the left (wraps around)."""
+        if not self.rois:
+            return
+        i = self.roi_index
+        if i < 0:
+            ref = self.marker if self.marker is not None else len(self._y)
+            left = [k for k, r in enumerate(self.rois) if r.right < ref]
+            i = left[-1] if left else len(self.rois) - 1
+        else:
+            i = (i - 1) % len(self.rois)
+        self.index_roi(i)
+
+    def delete_indexed(self) -> bool:
+        """ROI Delete Indexed (no warning, as in Aptec)."""
+        i = self.roi_index
+        if i < 0:
+            return False
+        self.remove_roi(i)
+        return True
+
+    def sort_rois(self) -> None:
+        """ROI Sort: renumber the ROIs by increasing centroid."""
+        def key(r):
+            st = r.stats
+            c = st.centroid if st is not None else None
+            return (c if c is not None else r.left + (st.first_channel if st else 0), r.left)
+        order = sorted(self.rois, key=key)
+        if any(a is not b for a, b in zip(order, self.rois)):
+            self.rois[:] = order
+            self.update()
+            self.roisChanged.emit()
+            if self.indexed_roi is not None:
+                self.roiIndexChanged.emit(self.roi_index)
+
+    # ---------------------------------------------------- Aptec ROI Paint / Edit
+    def start_paint(self, center: Optional[int] = None) -> bool:
+        """ROI Paint (F3): a new ROI at the channel marker, about two FWHM wide."""
+        n = len(self._y)
+        if not n:
+            return False
+        if center is None:
+            center = self.marker if self.marker is not None else int((self.x0 + self.x1) / 2)
+        center = int(min(max(center, 0), n - 1))
+        half = max(1, int(round(self.default_fwhm_channels(center + 0.5))))
+        self.paint = [max(0, center - half), min(n - 1, center + half)]
+        self.paint_edit = None
+        self.update()
+        self.paintChanged.emit()
+        return True
+
+    def edit_indexed(self) -> bool:
+        """ROI Edit (F4): edit the indexed ROI."""
+        i = self.roi_index
+        if i < 0:
+            return False
+        roi = self.rois[i]
+        self.paint = [roi.left, roi.right]
+        self.paint_edit = roi
+        self.update()
+        self.paintChanged.emit()
+        return True
+
+    def _set_paint(self, left: int, right: int) -> None:
+        n = len(self._y)
+        left, right = sorted((int(left), int(right)))
+        self.paint = [max(0, left), min(n - 1, right)]
+        self.update()
+        self.paintChanged.emit()
+
+    def paint_expand(self, d: int = 1) -> None:
+        """<< >> (F3, d = 1) and >> << (F4, d = -1): one channel on each side."""
+        if self.paint is None:
+            return
+        a, b = self.paint[0] - d, self.paint[1] + d
+        if b >= a:
+            self._set_paint(a, b)
+
+    def paint_shift(self, d: int) -> None:
+        """<<-- (F5, d = -1) and -->> (F6, d = 1): move the painted ROI one channel."""
+        if self.paint is None:
+            return
+        a, b = self.paint[0] + d, self.paint[1] + d
+        if a >= 0 and b < len(self._y):
+            self._set_paint(a, b)
+
+    def paint_set(self) -> Optional[Roi]:
+        """Set (Ctrl-Click): accept the painted ROI."""
+        if self.paint is None:
+            return None
+        a, b = self.paint
+        edit = self.paint_edit
+        self.paint = self.paint_edit = None
+        if edit is not None and edit in self.rois:
+            edit.left, edit.right = a, b
+            self.rois.sort(key=lambda r: r.left)
+            self.last_roi = edit
+            self._recompute_rois()
+            roi = edit
+            self.update()
+            self.roisChanged.emit()
+        else:
+            roi = self._insert_roi(a, b)
+        self.paintChanged.emit()
+        self.indexed_roi = roi
+        self.roiIndexChanged.emit(self.roi_index)
+        return roi
+
+    def paint_cancel(self) -> None:
+        """Cancel: leave the ROI as it was (or do not create it)."""
+        if self.paint is None:
+            return
+        self.paint = self.paint_edit = None
+        self.update()
+        self.paintChanged.emit()
+
+    def paint_delete(self) -> None:
+        """Delete: remove the ROI being edited (cancels a new one)."""
+        edit = self.paint_edit
+        self.paint_cancel()
+        if edit is not None and edit in self.rois:
+            self.remove_roi(self.rois.index(edit))
+
+    def paint_stats(self) -> Optional[RoiStats]:
+        """Aptec results of the ROI being painted, with the other ROIs in place."""
+        if self.paint is None or not len(self._y):
+            return None
+        others = [r for r in self.rois if r is not self.paint_edit]
+        return self._compute([(r.left, r.right) for r in others] + [tuple(self.paint)])[-1]
+
+    def quick_paint_click(self, idx: int) -> None:
+        """Ctrl-click: the first click marks the left side, the second the right side and sets
+        the ROI (Aptec quick paint); while painting, a Ctrl-click is Set."""
+        if self.paint is None:
+            self.set_marker(idx)
+            self.paint_edit = None
+            self._set_paint(idx, idx)
+        elif self.paint[0] == self.paint[1] and self.paint_edit is None:
+            self._set_paint(self.paint[0], idx)
+            if self.paint[1] > self.paint[0]:
+                self.paint_set()
+        else:
+            self.paint_set()
 
     def roi_at(self, pos: float) -> int:
         for i, r in enumerate(self.rois):
@@ -518,13 +740,18 @@ class SpectrumPlot(QWidget):
                 return i
         return -1
 
-    def _recompute_rois(self) -> None:
+    def _compute(self, bounds) -> list:
         spec = self._spec
-        for r in self.rois:
-            r.stats = compute_roi(self._y, r.left, r.right,
-                                  spec.first_channel if spec else 0,
+        return compute_rois_aptec(self._y, bounds, spec.first_channel if spec else 0,
                                   spec.energy_of if spec and spec.energy_coeffs else None,
-                                  spec.live_time if spec else None)
+                                  spec.live_time if spec else None, self.roi_props)
+
+    def _recompute_rois(self) -> None:
+        """Aptec rules: end points outside the ROI, shared by touching / close ROIs."""
+        if not self.rois or not len(self._y):
+            return
+        for r, st in zip(self.rois, self._compute([(r.left, r.right) for r in self.rois])):
+            r.stats = st
 
     # ============================================================= overlays
     def add_overlay(self, spec: Spectrum, label: str, color: Optional[QColor] = None) -> Overlay:
@@ -833,8 +1060,8 @@ class SpectrumPlot(QWidget):
         if interactive and self._drag_start is not None and self._drag_now is not None:
             xa = min(self._drag_start.x(), self._drag_now.x())
             xb = max(self._drag_start.x(), self._drag_now.x())
-            if self._drag_roi:
-                c = QColor(C_ROI)
+            if self._drag_roi or getattr(self, "_paint_drag", False):
+                c = QColor(C_ROI if self._drag_roi else C_PAINT)
                 c.setAlpha(45)
                 p.fillRect(QRectF(xa, rect.top(), xb - xa, rect.height()), c)
             elif self._is_box_drag():
@@ -847,6 +1074,15 @@ class SpectrumPlot(QWidget):
             else:
                 p.fillRect(QRectF(xa, rect.top(), xb - xa, rect.height()), C_SELECT)
 
+        if interactive and getattr(self, "paint", None) is not None:
+            a, b = self.paint
+            pl, pr = float(self._x_to_px(a, rect)), float(self._x_to_px(b + 1, rect))
+            c = QColor(C_PAINT)
+            c.setAlpha(55)
+            p.fillRect(QRectF(pl, rect.top(), max(pr - pl, 1.0), rect.height()), c)
+            p.setPen(QPen(C_PAINT, 1.5))
+            p.drawLine(QPointF(pl, rect.top()), QPointF(pl, rect.bottom()))
+            p.drawLine(QPointF(pr, rect.top()), QPointF(pr, rect.bottom()))
         if (interactive and self.show_marker and self.marker is not None
                 and self.x0 - 1 <= self.marker < self.x1):
             mx = float(self._x_to_px(self.marker + 0.5, rect))
@@ -921,7 +1157,8 @@ class SpectrumPlot(QWidget):
                 p.drawPolyline(QPolygonF(bl))
             # bracket + number along the bottom edge (the top is used by labels)
             yb = rect.bottom() - 3
-            p.setPen(QPen(C_ROI, 1.5))
+            indexed = roi is getattr(self, "indexed_roi", None)
+            p.setPen(QPen(C_HILITE if indexed else C_ROI, 2.5 if indexed else 1.5))
             p.drawLine(QPointF(pl, yb), QPointF(pr, yb))
             p.drawLine(QPointF(pl, yb), QPointF(pl, yb - 7))
             p.drawLine(QPointF(pr, yb), QPointF(pr, yb - 7))
@@ -1260,6 +1497,7 @@ class SpectrumPlot(QWidget):
             self._drag_start = pos
             self._drag_now = pos
             self._drag_roi = bool(mods & Qt.ControlModifier)
+            self._paint_drag = self.paint is not None and not self._drag_roi
 
     def mouseReleaseEvent(self, ev):
         rect = self.plot_rect()
@@ -1277,14 +1515,25 @@ class SpectrumPlot(QWidget):
             a, b = self._drag_start, self._drag_now
             box = self._is_box_drag()
             roi = self._drag_roi
+            painting = self._paint_drag
             self._drag_start = self._drag_now = None
-            self._drag_roi = False
+            self._drag_roi = self._paint_drag = False
             xa, xb = min(a.x(), b.x()), max(a.x(), b.x())
+            ia = int(math.floor(self._px_to_x(xa, rect)))
+            ib = int(math.floor(self._px_to_x(xb, rect)))
             if roi:
-                if xb - xa >= 2:
-                    ia = int(math.floor(self._px_to_x(xa, rect)))
-                    ib = int(math.floor(self._px_to_x(xb, rect)))
+                if xb - xa >= 2 and self.paint is not None:
+                    self._set_paint(ia, ib)
+                    self.paint_set()
+                elif xb - xa >= 2:
                     self.add_roi(ia, ib)
+                elif rect.contains(b):                   # Ctrl-click: Aptec quick paint / Set
+                    self.quick_paint_click(ib)
+            elif painting:                               # Paint mode: the mouse paints the ROI
+                if xb - xa >= 2:
+                    self._set_paint(ia, ib)
+                elif rect.contains(b):
+                    self.set_marker(ib)
             elif xb - xa >= 5:
                 if box:
                     self.zoom_box(QRectF(QPointF(xa, min(a.y(), b.y())), QPointF(xb, max(a.y(), b.y()))))
@@ -1326,7 +1575,12 @@ class SpectrumPlot(QWidget):
         mods = ev.modifiers()
         if self._drag_start is not None and k == Qt.Key_Escape:
             self._drag_start = self._drag_now = None
+            self._drag_roi = self._paint_drag = False
             self.update()
+        elif self.paint is not None and k == Qt.Key_Escape:
+            self.paint_cancel()
+        elif self.paint is not None and k in (Qt.Key_Return, Qt.Key_Enter):
+            self.paint_set()
         elif k in (Qt.Key_Home, Qt.Key_Escape):
             self.reset_view()
         elif k == Qt.Key_Backspace or (k == Qt.Key_Left and mods & Qt.AltModifier):

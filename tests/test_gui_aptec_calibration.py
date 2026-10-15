@@ -69,7 +69,7 @@ def _peak(ch, nuclide, e, rate, fwhm=4.0):
 
 def test_setup_menu_like_aptec(window):
     titles = [a.text().replace("&", "") for a in window.menuBar().actions()]
-    assert titles.index("Setup") == titles.index("Analyze") - 1
+    assert titles.index("Setup") == titles.index("ROI") - 1 == titles.index("Analyze") - 2
     acts = window.menu_setup.actions()
     assert acts[:4] == [window.act_quick_energy, window.act_full_energy, window.act_full_res, window.act_full_eff]
     assert window.act_quick_energy.shortcut() == QKeySequence("F2")

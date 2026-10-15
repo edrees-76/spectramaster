@@ -31,6 +31,8 @@ against the ROI records Aptec stored in its spectrum files (79 ROIs in the Aptec
   (rounded to whole channels) or the whole ROI.                                 69/73
 * **MDA** (counts per second) = ``(K^2 + 2 K sqrt(2 B)) / live time``, K = MDA sigma
   (help file; not stored per ROI in the examples, so not verified).
+* **Flags** -- Aptec's letters (S_List "Activity Flags"); here only ``?`` (net rate below the
+  MDA) is set, the others come with background subtraction, MultiFit and quantification.
 
 Channels here are indices into the stored counts (``Spectrum.counts``); add
 ``Spectrum.first_channel`` for channel numbers.
@@ -111,6 +113,7 @@ class AptecRoi:
     mda_cps: Optional[float] = None
     net_cps: Optional[float] = None
     flags: str = ""
+    grouped: bool = False               # shares its background with a neighbouring ROI
 
     @property
     def net_unc(self) -> float:
@@ -241,7 +244,7 @@ def _one(y, rl, rh, bl, bh, lo, hi, coeffs, props, live_time, grouped) -> AptecR
     net_total = gross - background
     err = math.sqrt(max(gross + background, 0.0)) / abs(net_total) * 100.0 if net_total else None
     net = y - np.polynomial.polynomial.polyval(np.arange(len(y)), coeffs)
-    flags = "M" if grouped else ""
+    flags = ""
     if rh - rl < 2:
         cen = float(rl + rh) / 2.0
         hm = tm = (float(rl), float(rh))
@@ -270,29 +273,30 @@ def _one(y, rl, rh, bl, bh, lo, hi, coeffs, props, live_time, grouped) -> AptecR
         v = net[x]
         w = v * np.abs(v) if props.centroid_weight == "squared" else v
         cen = float((w * x).sum() / w.sum()) if w.sum() != 0 else None
-        if fwhm is None:
-            flags += "W"
-    if net_total <= 0:
-        flags += "N"
     net_cps = mda = None
     if live_time and live_time > 0:
         net_cps = net_total / live_time
         k = float(props.mda_sigma)
         mda = (k * k + 2.0 * k * math.sqrt(2.0 * max(background, 0.0))) / live_time
         if net_cps < mda:
-            flags += "D"
+            flags += "?"
     return AptecRoi(rl, rh, bl, bh, lo, hi, list(coeffs), gross, background, net_total, err, cen,
                     (float(hm[0]), float(hm[1])), (float(tm[0]), float(tm[1])), fwhm, fwtm, live_time,
-                    mda, net_cps, flags)
+                    mda, net_cps, flags, grouped)
 
 
+# Aptec's flag letters and meanings (S_List / S_CSV "Activity Flags")
+FLAGS = ("b", "m", "s", "*", "<", "?", ">")
 FLAG_TEXT = {
-    "M": "multiplet: the ROI touches another ROI and shares its background end points",
-    "W": "FWHM not found: the net counts do not fall below half of the maximum inside the ROI",
-    "N": "net counts zero or negative",
-    "D": "net count rate below the MDA (minimum detectable activity) of the ROI",
+    "b": "Background subtracted",
+    "m": "Fitted peak (MultiFit)",
+    "s": "Fitted singlet",
+    "*": "MDA ROI assigned by peak identification",
+    "<": "MDA activity (listing only)",
+    "?": "Activity shown is less than the MDA value",
+    ">": "Half life is too great, activity overflow occurred when back decay corrected",
 }
 
 
 __all__ = ["RoiProperties", "AptecRoi", "analyze_rois", "background_coeffs", "groups", "end_point_width",
-           "CENTROID_RANGES", "CENTROID_WEIGHTS", "FLAG_TEXT", "MAX_END_POINTS"]
+           "CENTROID_RANGES", "CENTROID_WEIGHTS", "FLAGS", "FLAG_TEXT", "MAX_END_POINTS"]

@@ -55,7 +55,7 @@ def test_centroid_fwhm_and_fwtm_of_a_gaussian():
     r = ar.analyze_rois(y, [(80, 120)])[0]
     assert r.fwhm == pytest.approx(2.3548 * 3.0, rel=0.03)
     assert r.fwtm == pytest.approx(4.2919 * 3.0, rel=0.03)
-    assert r.flags == ""
+    assert r.flags == "" and not r.grouped
 
 
 def test_touching_rois_share_one_background_and_are_flagged():
@@ -63,20 +63,20 @@ def test_touching_rois_share_one_background_and_are_flagged():
     a, b = ar.analyze_rois(y, [(80, 100), (101, 122)], ar.RoiProperties(end_points=3))
     assert (a.bl, a.bh) == (b.bl, b.bh) == (77, 125)
     assert a.coeffs == b.coeffs
-    assert "M" in a.flags and "M" in b.flags
+    assert a.grouped and b.grouped
     alone = ar.analyze_rois(y, [(80, 100)])[0]
-    assert "M" not in alone.flags
+    assert not alone.grouped
 
 
 def test_rois_closer_than_the_end_points_are_grouped_with_the_gap_as_end_points():
     y = _peak(pos=90.0) + _peak(pos=112.0, bkg=(0.0, 0.0))
     p = ar.RoiProperties(end_points=3)
     a, b = ar.analyze_rois(y, [(80, 98), (101, 122)], p)        # 98 + 3 reaches 101
-    assert (a.bl, a.bh) == (b.bl, b.bh) == (77, 125) and "M" in a.flags
+    assert (a.bl, a.bh) == (b.bl, b.bh) == (77, 125) and a.grouped
     expect = ar.background_coeffs(y, 77, 80, 122, 125, 1, inner=[99, 100])
     assert a.coeffs == pytest.approx(expect)
     a, b = ar.analyze_rois(y, [(80, 97), (101, 122)], p)        # 97 + 3 stops short of 101
-    assert (a.bl, a.bh, b.bl, b.bh) == (77, 100, 98, 125) and "M" not in a.flags
+    assert (a.bl, a.bh, b.bl, b.bh) == (77, 100, 98, 125) and not a.grouped
 
 
 def test_variable_end_points_and_groups():
@@ -89,12 +89,12 @@ def test_variable_end_points_and_groups():
 def test_flags_negative_net_and_mda():
     y = np.full(100, 40.0)
     r = ar.analyze_rois(y, [(40, 60)], live_time=100.0)[0]
-    assert "N" in r.flags and "D" in r.flags
+    assert r.net <= 0 and r.flags == "?"
     bg = r.background
     k = 1.645
     assert r.mda_cps == pytest.approx((k * k + 2 * k * math.sqrt(2 * bg)) / 100.0)
     strong = ar.analyze_rois(_peak(area=1e5), [(85, 115)], live_time=100.0)[0]
-    assert "D" not in strong.flags and strong.net_cps > strong.mda_cps
+    assert strong.flags == "" and strong.net_cps > strong.mda_cps
 
 
 def test_properties_round_trip_and_reject_bad_values():
