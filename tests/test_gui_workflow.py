@@ -156,6 +156,19 @@ def test_activity_results_enter_the_session_and_the_record(window, tmp_path):
     assert doc["results"]["concentrations"] == json.loads(json.dumps(window.quant_concentration, default=str)) \
         or window.quant_concentration is None
     ad.close()
+    # the stored activities come back as they were saved (no recalculation)
+    from test_gui_session_io import _make_window
+    out = tmp_path / "q.smsession"
+    assert ctl.save_session_to(out)
+    w2 = _make_window(tmp_path, "s3.ini")
+    try:
+        assert w2.session_ctl.open_session(out), w2.errors
+        q = w2.quant_results
+        assert q is not None and [r.nuclide for r in q.nuclides] == ["Cs-137", "K-40"]
+        assert [r.activity for r in q.nuclides] == [r.activity for r in window.quant_results.nuclides]
+    finally:
+        w2.session_ctl.ask_save_changes = lambda: "discard"
+        w2.close()
 
 
 def test_status_texts_translate_known_messages_and_keep_unknown():

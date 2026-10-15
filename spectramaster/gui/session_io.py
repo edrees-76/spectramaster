@@ -522,6 +522,13 @@ class SessionController:
                                        (s.processing_settings or {}).get("identification_library"))
         win.analysis_panel.show_message(wtr("banner_stale" if s.status.get("results_stale") else "banner_stored"))
         win.plot.set_peaks(peaks)
+        quant = s.results.get("quant")
+        if quant:
+            from ..analysis.activity import QuantResults
+            try:                                 # stored activities, as saved (report printing)
+                win.quant_results = QuantResults.from_dict(quant)
+            except Exception as exc:
+                win.analysis_panel.show_message(wtr("results_unreadable", msg=f"{type(exc).__name__}: {exc}"))
         if win.analysis_dock.isHidden():
             win.analysis_dock.show()
 

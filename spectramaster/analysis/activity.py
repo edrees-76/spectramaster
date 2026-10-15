@@ -209,6 +209,41 @@ class QuantResults:
     def rows(self) -> list[dict]:
         return [result_row(r) for r in self.nuclides]
 
+    @classmethod
+    def from_dict(cls, d: dict) -> "QuantResults":
+        """Rebuild stored results (``lab.session.quant_to_dict``) exactly as saved - nothing is
+        recalculated; unknown keys are ignored (forward-tolerant)."""
+        import dataclasses
+
+        def known(c, x):
+            names = {f.name for f in dataclasses.fields(c)}
+            return {k: v for k, v in (x or {}).items() if k in names}
+
+        def when(v):
+            return datetime.fromisoformat(v) if isinstance(v, str) and v else None
+
+        o = known(ActivityOptions, d.get("options"))
+        if o.get("ref_date"):
+            o["ref_date"] = when(o["ref_date"])
+        if isinstance(o.get("geometry"), dict):
+            from ..lab.detector import MeasurementGeometry
+            o["geometry"] = MeasurementGeometry.from_dict(o["geometry"])
+        if "nuclides" in o:
+            o["nuclides"] = tuple(o["nuclides"])
+        nucl = []
+        for n in d.get("nuclides") or []:
+            kw = known(NuclideResult, n)
+            kw["lines"] = [LineResult(**known(LineResult, ln)) for ln in n.get("lines") or []]
+            nucl.append(NuclideResult(**kw))
+        top = known(cls, d)
+        top.update(start_time=when(d.get("start_time")), ref_date=when(d.get("ref_date")),
+                   options=ActivityOptions(**o), nuclides=nucl, notes=list(d.get("notes") or []))
+        for k in ("sample", "source_path", "curve_name", "curve_model", "background"):
+            top.setdefault(k, "")
+        top.setdefault("live_time", 0.0)
+        top.setdefault("real_time", None)
+        return cls(**top)
+
 
 # ------------------------------------------------------------------ helpers
 

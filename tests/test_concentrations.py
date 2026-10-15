@@ -50,3 +50,16 @@ def test_air_concentration_corrects_for_decay_during_sampling(res):
     a = next(r for r in res.nuclides if r.nuclide == "Cs-137")
     assert cs["value"] == pytest.approx(a.activity / (1680.0 * 0.95), rel=1e-3)
     assert any("assumption" in n for n in out["notes"])
+
+
+def test_stored_results_rebuild_exactly(res):
+    import json
+    from spectramaster.analysis.activity import QuantResults
+    from spectramaster.lab.session import quant_to_dict
+    d = json.loads(json.dumps(quant_to_dict(res)))           # as written in a session file
+    back = QuantResults.from_dict(d)
+    assert quant_to_dict(back) == d
+    assert back.ref_date == res.ref_date and back.start_time == res.start_time
+    assert [r.decision for r in back.nuclides] == [r.decision for r in res.nuclides]
+    unit = SampleInfo(matrix_type="soil", mass_kg=0.5, mass_basis="dry")
+    assert concentrations(back, unit, "Bq/kg") == concentrations(res, unit, "Bq/kg")
