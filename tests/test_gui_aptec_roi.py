@@ -17,6 +17,7 @@ from PySide6.QtWidgets import QApplication, QDialog, QMessageBox
 
 from spectramaster.analysis.aptec_roi import RoiProperties
 from spectramaster.gui import i18n
+from spectramaster.gui.roi_panel import COLS
 from spectramaster.model import Spectrum
 
 
@@ -244,4 +245,4 @@ def test_flag_question_mark_below_mda(window):
     strong = plot.add_roi(285, 315)
     assert weak.stats.flags == "?"
     assert strong.stats.flags == ""
-    assert window.roi_panel.table.item(1, window.roi_panel.table.columnCount() - 1).text() == "?"
+    assert window.roi_panel.table.item(1, COLS.index("aroi_col_flags")).text() == "?"

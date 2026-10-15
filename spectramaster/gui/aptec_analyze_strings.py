@@ -1,0 +1,228 @@
+"""English/Arabic strings of the Aptec-style Analyze menu (Setup, Peak Search, Identify,
+Background Subtract, Quantify, Analyze Defaults, analysis method), merged into ``i18n.STRINGS``
+on import with the prefix ``aana_``."""
+from __future__ import annotations
+
+from . import i18n
+
+EN = {
+    "menu_setup": "&Setup",
+    "act_setup_peak": "&Peak Search...",
+    "act_setup_ident": "&Identification...",
+    "act_setup_bkg": "&Background Subtract...",
+    "act_setup_quant": "&Quantify...",
+    "act_defaults": "Analyze &Defaults...",
+    "menu_engine": "Analysis &Method",
+    "engine_aptec": "&Aptec (ROIs: peak search, identify, background subtract, quantify)",
+    "engine_sm": "&SpectraMaster (fitted peaks, identification scores)",
+    "act_peak": "&Peak Search",
+    "act_ident": "&Identify Peaks",
+    "act_bkg": "&Background Subtract",
+    "act_quant": "&Quantify",
+    "tip_setup_peak": "Max Peak Error and search range of the peak search (Shift+P)",
+    "tip_setup_ident": "Isotope library, match tolerance and fraction limit (Shift+I)",
+    "tip_setup_bkg": "Background spectrum file for Background Subtract (Shift+B)",
+    "tip_setup_quant": "Activity units, quantity and constants, efficiency (Shift+Q)",
+    "tip_defaults": "Factory defaults, or save / recall your own defaults for all analysis setups",
+    "tip_engine": "Which method P runs: Aptec's ROI method or SpectraMaster's fitted analysis",
+    "tip_peak": "Search the spectrum for peaks and set ROIs on them (P)",
+    "tip_ident": "Identify the ROIs with the isotope library (I)",
+    "tip_bkg": "Subtract the background count rate of matching identified ROIs (B)",
+    "tip_quant": "Activity of the identified ROIs (Q)",
+    "need_spectrum": "Open a spectrum first.",
+    "need_rois": "There are no ROIs: run Peak Search (P) or paint ROIs (F3) first.",
+    "need_ident": "No ROI is identified: run Identify Peaks (I) first.",
+    "need_bkg_file": "Choose the background spectrum in Analyze > Setup > Background Subtract first.",
+    "peak_done": "Peak search: {n} ROIs (Max Peak Error {e} %).",
+    "ident_done": "Identify: {n} of {m} ROIs identified ({lib}).",
+    "bkg_done": "Background subtract: {n} ROIs corrected with {name}.",
+    "quant_done": "Quantify: {n} activities in {units}.",
+    "quant_note": "{n} ROIs could not be quantified: {why}",
+    "err": "The analysis was not done: {msg}",
+    "stale": "The ROIs changed: identify and quantify again.",
+    # peak search setup
+    "peak_title": "Peak Search Setup",
+    "peak_all": "All: search all channels",
+    "peak_partial": "Partial: search between Start and Stop",
+    "peak_start": "Start channel:",
+    "peak_stop": "Stop channel:",
+    "peak_err": "Max Peak Error (%, 1 sigma):",
+    "peak_props": "ROI Properties...",
+    "peak_hint": "ROIs whose net error is above the Max Peak Error are rejected; backgrounds come from "
+                 "the ROI Properties end points.  This search follows the Aptec help but does not "
+                 "reproduce Aptec's ROIs exactly (about 80 % of them found).",
+    # identification setup
+    "id_title": "Setup Identification",
+    "id_library": "Library:",
+    "id_lib_sm": "SpectraMaster library (bundled)",
+    "id_lib_browse": "Aptec library (.lib)...",
+    "id_match_fwhm": "Tolerance based on peak width (FWHM)",
+    "id_match_fixed": "Fixed tolerance",
+    "id_fwhm_fract": "FWHM fraction:",
+    "id_fixed": "Fixed tolerance (keV):",
+    "id_fraction": "Fraction Limit (%):",
+    "id_hl_limit": "Half Life Limit (half-lives):",
+    "id_hl_reject": "Use to reject",
+    "id_hint": "An isotope is accepted when its lines with an ROI carry at least the Fraction Limit of "
+               "the yield of all its lines in the spectrum's energy range.",
+    "fd_library": "Aptec isotope library",
+    # background subtract setup
+    "bkg_title": "Setup Background Subtract",
+    "bkg_file": "Background spectrum:",
+    "bkg_select": "Select...",
+    "bkg_none": "(none)",
+    "bkg_hint": "Background count rates are subtracted only between ROIs identified with the same "
+                "isotope line, and only when the background rate is above its MDA.  The background "
+                "spectrum is searched and identified with the same setups.",
+    "fd_bkg": "Background spectrum",
+    # quantify setup
+    "q_title": "Setup Quantification",
+    "q_as": "Quantify as:",
+    "q_activity": "Activity (in the sample)",
+    "q_conc": "Concentration (per unit quantity)",
+    "q_total": "Total activity (concentration × total quantity)",
+    "q_units": "Activity units:",
+    "q_use_w": "Multiply by W constant",
+    "q_use_x": "Multiply by X constant",
+    "q_use_y": "Multiply by Y constant",
+    "q_true": "Correct the decay during the count",
+    "q_eff": "Efficiency:",
+    "q_eff_spec": "Efficiency calibration of the spectrum file",
+    "q_eff_none": "(no efficiency calibration)",
+    "q_hint": "Activity = net rate / (efficiency × yield), decay-corrected to the activity time "
+              "(Quantity Description, F6).  The efficiency is taken at the ROI centroid energy, as "
+              "Aptec does.",
+    # defaults
+    "def_title": "Analyze Defaults",
+    "def_text": "All analysis setups (ROI Properties, Peak Search, Identification, Background "
+                "Subtract, Quantify):",
+    "def_factory": "Factory Defaults",
+    "def_recall": "Recall User Defaults",
+    "def_save": "Save as User Defaults",
+    "def_done_factory": "The factory defaults are set.",
+    "def_done_recall": "Your defaults are set.",
+    "def_done_save": "Your defaults are saved.",
+    "def_none": "No user defaults saved yet.",
+    # ROI table columns
+    "col_iso": "Isotope",
+    "col_line": "Line keV",
+    "col_act": "Activity",
+    "col_act_err": "Err %",
+    "col_mda": "MDA",
+}
+
+AR = {
+    "menu_setup": "إ&عداد",
+    "act_setup_peak": "&بحث القمم...",
+    "act_setup_ident": "ال&تعرّف...",
+    "act_setup_bkg": "&طرح الخلفية...",
+    "act_setup_quant": "ال&قياس الكمي...",
+    "act_defaults": "الإعدادات الا&فتراضية للتحليل...",
+    "menu_engine": "&طريقة التحليل",
+    "engine_aptec": "&Aptec (المناطق: بحث القمم، التعرّف، طرح الخلفية، القياس الكمي)",
+    "engine_sm": "&SpectraMaster (ملاءمة القمم، درجات التعرّف)",
+    "act_peak": "&بحث القمم",
+    "act_ident": "ال&تعرّف على القمم",
+    "act_bkg": "&طرح الخلفية",
+    "act_quant": "ال&قياس الكمي",
+    "tip_setup_peak": "الحد الأقصى لخطأ القمة ومدى البحث (Shift+P)",
+    "tip_setup_ident": "مكتبة النظائر وتسامح المطابقة وحد النسبة (Shift+I)",
+    "tip_setup_bkg": "ملف طيف الخلفية لطرح الخلفية (Shift+B)",
+    "tip_setup_quant": "وحدات النشاط والكمية والثوابت والكفاءة (Shift+Q)",
+    "tip_defaults": "إعدادات المصنع، أو حفظ واستعادة إعداداتك لكل إعدادات التحليل",
+    "tip_engine": "ما الذي ينفّذه P: طريقة المناطق في Aptec أم التحليل بالملاءمة في SpectraMaster",
+    "tip_peak": "البحث عن القمم في الطيف ووضع مناطق عليها (P)",
+    "tip_ident": "التعرّف على المناطق بمكتبة النظائر (I)",
+    "tip_bkg": "طرح معدل عدّ الخلفية للمناطق المتعرَّف عليها المتطابقة (B)",
+    "tip_quant": "نشاط المناطق المتعرَّف عليها (Q)",
+    "need_spectrum": "افتح طيفًا أولًا.",
+    "need_rois": "لا توجد مناطق: نفّذ بحث القمم (P) أو ارسم مناطق (F3) أولًا.",
+    "need_ident": "لم يُتعرَّف على أي منطقة: نفّذ التعرّف على القمم (I) أولًا.",
+    "need_bkg_file": "اختر طيف الخلفية من تحليل > إعداد > طرح الخلفية أولًا.",
+    "peak_done": "بحث القمم: {n} منطقة (الحد الأقصى لخطأ القمة {e} ٪).",
+    "ident_done": "التعرّف: {n} من {m} منطقة ({lib}).",
+    "bkg_done": "طرح الخلفية: صُحّحت {n} منطقة بالطيف {name}.",
+    "quant_done": "القياس الكمي: {n} نشاط بوحدة {units}.",
+    "quant_note": "{n} منطقة لم يُحسب نشاطها: {why}",
+    "err": "لم يُنفَّذ التحليل: {msg}",
+    "stale": "تغيرت المناطق: أعد التعرّف والقياس الكمي.",
+    "peak_title": "إعداد بحث القمم",
+    "peak_all": "الكل: البحث في كل القنوات",
+    "peak_partial": "جزئي: البحث بين قناة البداية والنهاية",
+    "peak_start": "قناة البداية:",
+    "peak_stop": "قناة النهاية:",
+    "peak_err": "الحد الأقصى لخطأ القمة (٪، 1 سيغما):",
+    "peak_props": "خصائص المناطق...",
+    "peak_hint": "تُرفض المناطق التي يزيد خطأ صافيها عن الحد الأقصى؛ وتُحسب الخلفية من نقاط الطرفين في "
+                 "خصائص المناطق.  هذا البحث يتبع دليل Aptec لكنه لا يطابق مناطق Aptec تمامًا "
+                 "(يجد نحو 80 ٪ منها).",
+    "id_title": "إعداد التعرّف",
+    "id_library": "المكتبة:",
+    "id_lib_sm": "مكتبة SpectraMaster (المرفقة)",
+    "id_lib_browse": "مكتبة Aptec...",
+    "id_match_fwhm": "تسامح يعتمد على عرض القمة (FWHM)",
+    "id_match_fixed": "تسامح ثابت",
+    "id_fwhm_fract": "نسبة من FWHM:",
+    "id_fixed": "التسامح الثابت (keV):",
+    "id_fraction": "حد النسبة (٪):",
+    "id_hl_limit": "حد عمر النصف (عدد أعمار النصف):",
+    "id_hl_reject": "استخدامه للرفض",
+    "id_hint": "يُقبل النظير عندما تحمل خطوطه التي عليها مناطق نسبةً لا تقل عن حد النسبة من شدة كل "
+               "خطوطه الواقعة في مدى طاقة الطيف.",
+    "fd_library": "مكتبة نظائر Aptec",
+    "bkg_title": "إعداد طرح الخلفية",
+    "bkg_file": "طيف الخلفية:",
+    "bkg_select": "اختيار...",
+    "bkg_none": "(لا يوجد)",
+    "bkg_hint": "يُطرح معدل عدّ الخلفية فقط بين المناطق المتعرَّف عليها بنفس خط النظير، وفقط عندما "
+                "يكون معدل الخلفية أعلى من MDA الخاص به.  يُبحث في طيف الخلفية ويُتعرَّف عليه "
+                "بنفس الإعدادات.",
+    "fd_bkg": "طيف الخلفية",
+    "q_title": "إعداد القياس الكمي",
+    "q_as": "حساب النتيجة كـ:",
+    "q_activity": "نشاط (في العينة)",
+    "q_conc": "تركيز (لكل وحدة كمية)",
+    "q_total": "نشاط كلي (التركيز × الكمية الكلية)",
+    "q_units": "وحدة النشاط:",
+    "q_use_w": "الضرب في الثابت W",
+    "q_use_x": "الضرب في الثابت X",
+    "q_use_y": "الضرب في الثابت Y",
+    "q_true": "تصحيح التحلل أثناء العدّ",
+    "q_eff": "الكفاءة:",
+    "q_eff_spec": "معايرة الكفاءة في ملف الطيف",
+    "q_eff_none": "(لا توجد معايرة كفاءة)",
+    "q_hint": "النشاط = معدل العد الصافي / (الكفاءة × الشدة)، مصحّحًا للتحلل حتى زمن النشاط "
+              "(وصف الكمية، F6).  تؤخذ الكفاءة عند طاقة مركز المنطقة كما يفعل Aptec.",
+    "def_title": "الإعدادات الافتراضية للتحليل",
+    "def_text": "كل إعدادات التحليل (خصائص المناطق، بحث القمم، التعرّف، طرح الخلفية، القياس الكمي):",
+    "def_factory": "إعدادات المصنع",
+    "def_recall": "استعادة إعداداتي",
+    "def_save": "حفظ كإعداداتي",
+    "def_done_factory": "طُبّقت إعدادات المصنع.",
+    "def_done_recall": "طُبّقت إعداداتك.",
+    "def_done_save": "حُفظت إعداداتك.",
+    "def_none": "لم تُحفظ إعدادات خاصة بعد.",
+    "col_iso": "النظير",
+    "col_line": "الخط keV",
+    "col_act": "النشاط",
+    "col_act_err": "الخطأ ٪",
+    "col_mda": "MDA",
+}
+
+PREFIX = "aana_"
+i18n.STRINGS.setdefault("en", {}).update({PREFIX + k: v for k, v in EN.items()})
+i18n.STRINGS.setdefault("ar", {}).update({PREFIX + k: v for k, v in AR.items()})
+
+_SC = [
+    ("P  /  I  /  B  /  Q", "Peak Search / Identify / Background Subtract / Quantify",
+     "بحث القمم / التعرّف / طرح الخلفية / القياس الكمي"),
+    ("Shift + P / I / B / Q", "Setup of Peak Search / Identification / Background Subtract / Quantify",
+     "إعداد بحث القمم / التعرّف / طرح الخلفية / القياس الكمي"),
+]
+i18n.SHORTCUTS[:] = [row for row in i18n.SHORTCUTS if row[0] != "P"]
+i18n.SHORTCUTS.extend(row for row in _SC if row not in i18n.SHORTCUTS)
+
+
+def atr(key: str, **kwargs) -> str:
+    """``tr`` for the keys above (namespaced with ``aana_``)."""
+    return i18n.tr(PREFIX + key, **kwargs)

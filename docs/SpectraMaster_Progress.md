@@ -494,3 +494,41 @@ smoothing weights ((1 2 1)/4, (1 4 6 4 1)/16, …, renormalised at the spectrum 
 by central differences; Normalize multiplies the times by |factor|. A stripped spectrum keeps no
 per-channel variance yet: ROI errors computed on it assume Poisson counts and are too small; the
 Background Subtract of phase 5 will propagate the background uncertainty.
+
+### Aptec UX phase 5: Peak Search, Identify, Background Subtract, Quantify (Analyze menu)
+
+Aptec's method is now the default (user decision); SpectraMaster's fitted analysis stays
+available under Analyze > Setup > Analysis Method.  Calculations: `analysis/aptec_analyze.py`
+(no Qt); `.S0` analysis records: `analysis/aptec_s0.py`; menu and dialogs:
+`gui/aptec_analyze_ui.py`.
+
+- **Analyze menu in Aptec's order**: Setup > (ROI Properties Shift+R, Peak Search Shift+P,
+  Identification Shift+I, Background Subtract Shift+B, Quantify Shift+Q, Analyze Defaults,
+  Analysis Method), Peak Search `P`, Identify Peaks `I`, Background Subtract `B`, Quantify `Q`.
+- **P** sets ROIs on the peaks (ROI statistics with the ROI Properties; ROIs whose 1-sigma net
+  error is above Max Peak Error rejected, backgrounds recalculated, until stable).
+- **I** identifies the ROIs with an Aptec isotope library (`.lib`) or the bundled library
+  (S_Ident logic: FWHM-based or fixed tolerance, fraction limit, optional half-life reject).
+- **B** subtracts the net rate of the same identified line in a background spectrum (searched
+  and identified with the same setups) when it is above its MDA; flag `b`.
+- **Q** activity = net rate / (efficiency × yield), decay-corrected to the activity time,
+  per quantity, W / X / Y, in the chosen units; efficiency from the spectrum's Aptec
+  calibration or a saved efficiency curve, taken at the ROI centroid energy.
+- Results are kept on the ROIs: the ROI list gains Isotope, Line keV, Activity, Err %, MDA
+  (also in the CSV export) and the plot labels each ROI with its isotope.
+- Analyze Defaults: factory defaults, save / recall user defaults for all analysis setups.
+
+**Comparison with Aptec** (pre-registered protocols, `docs/baseline/aptec_*_protocol.md`;
+results `docs/baseline/aptec_analyze_results.md`; lab archive, numbers only):
+
+- Peak Search **failed** its limits: on the test set (4203 spectra, 28 030 stored ROIs) it
+  finds 79 % of Aptec's ROIs with 62 % precision, median edge difference 2 channels.  The
+  acceptance rule (1-sigma error) and the edge rule (lowest count between edge and top) were
+  established from the stored ROIs; how Aptec picks peak tops and window extents was not.
+- Identify **failed** its limits: 88 % ROI agreement (84 files, 736 ROIs) against 95 %.
+- Quantify: the pre-registered comparison (efficiency at the line energy) **failed** (45 of 49
+  within 0.5 %); with the efficiency at the ROI centroid energy, found afterwards on the same
+  files, 49 of 49 agree within 0.003 %.
+- Background Subtract could not be compared (no background-subtracted file).
+
+Remaining phase: MultiFit.  The user manual will be updated after phase 6 (user decision).

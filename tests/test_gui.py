@@ -728,6 +728,7 @@ def test_analysis_uncalibrated_message(window, monkeypatch):
 
 
 def test_analysis_missing_engine_degrades(window, monkeypatch):
+    window.aptec_analysis.set_engine("spectramaster")    # SpectraMaster's own engine (P)
     from spectramaster.gui import analysis_panel
     monkeypatch.setattr(analysis_panel, "engine_status", lambda: "spectramaster.analysis.identify not installed")
     window.refresh_analysis_available()
@@ -739,6 +740,7 @@ def test_analysis_missing_engine_degrades(window, monkeypatch):
 
 
 def test_analysis_engine_error_is_reported(window, monkeypatch):
+    window.aptec_analysis.set_engine("spectramaster")    # SpectraMaster's own engine (P)
     _fake_engine(monkeypatch)
     from spectramaster import analysis
 
