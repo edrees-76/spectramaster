@@ -463,3 +463,34 @@ analysis engine is unchanged.
 
 Remaining phases: spectrum operations, Peak Search / Identify / Background Subtract / Quantify,
 MultiFit.
+
+### Aptec UX phase 4: spectrum operations (Analyze menu)
+
+The lower part of Aptec's Analyze menu, in Aptec's order. The calculations are in
+`tools/spectrum_ops.py` (no Qt); the menu and dialogs in `gui/aptec_ops_ui.py`.
+
+- **Add Constant** (whole number, may be negative), **Normalize** (counts and live / true times
+  multiplied; with a compare spectrum the default factor is Aptec's live time matching multiplier,
+  compare / displayed live time, shown with 16 significant figures; −1 inverts), **Shift** (left /
+  right by whole channels, calibrations unchanged, vacated channels zero), **Smooth** (3, 5, 7, 9
+  points), **Reduce Channels** (2, 4, 8 … : 1, gross counts unchanged; energy and resolution
+  calibrations, stored calibration points, ROI end points and the view follow), **Derivative**
+  (1st / 2nd / 3rd, always taken from the original data, "Original data" restores it; optional
+  smoothing first).
+- **Compare** loads a spectrum file and draws it over the displayed one (again: leaves compare
+  mode); **Position** and Ctrl+Up / Ctrl+Down move it vertically in pixels; **Exchange** swaps the
+  two spectra; **Combine** / **Strip** add / subtract it channel by channel (live and true times
+  added by Combine), after a confirmation that shows both live times and warns when they differ
+  or when the energy calibrations differ.
+- Not in Aptec: **Undo Spectrum Operation** (Ctrl+Z, 20 steps) and **Reload Original Spectrum**.
+- Every operation changes only the spectrum on the screen; the operations done are listed in
+  `extra["aptec_status"]` with Aptec's wAnalyzeStatus names (ConstantAdded, Normalized,
+  Left/RightShifted, Smoothed, Packed, Derivative, Combined, Stripped). After smoothing, stripping,
+  a derivative, a constant or a normalization `extra["counts_are_poisson"] = "no"` and the status
+  bar warns that sqrt(counts) uncertainties are not valid. Negative channels are drawn below zero.
+
+Not documented by Aptec, hence our own choices, **not verified against Aptec output**: binomial
+smoothing weights ((1 2 1)/4, (1 4 6 4 1)/16, …, renormalised at the spectrum ends); derivatives
+by central differences; Normalize multiplies the times by |factor|. A stripped spectrum keeps no
+per-channel variance yet: ROI errors computed on it assume Poisson counts and are too small; the
+Background Subtract of phase 5 will propagate the background uncertainty.

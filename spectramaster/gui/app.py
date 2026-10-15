@@ -323,6 +323,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         install_setup_menu(self)
         from .aptec_roi_ui import install_roi_menu    # ROI menu and Paint bar (Aptec)
         install_roi_menu(self)
+        from .aptec_ops_ui import install_ops_menu    # Analyze > Add Constant ... Position (Aptec)
+        install_ops_menu(self)
         self.menu_help = mb.addMenu("")
         self.menu_help.addAction(self.act_shortcuts)
         self.menu_help.addAction(self.act_integration)
@@ -500,6 +502,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         retranslate_setup_menu(self)
         from .aptec_roi_ui import retranslate_roi_menu
         retranslate_roi_menu(self)
+        from .aptec_ops_ui import retranslate_ops_menu
+        retranslate_ops_menu(self)
         from .aptec_view_ui import retranslate_view_menu
         retranslate_view_menu(self)
         from .aptec_edit_ui import retranslate_edit_display_menus
@@ -567,6 +571,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         self.act_analyze.setEnabled(has and self._ana_reason is None and self._ana_thread is None)
         self._update_report_actions()
         self._update_history_actions()
+        from .aptec_ops_ui import sync_actions
+        sync_actions(self)
 
     def _update_history_actions(self) -> None:
         self.act_back.setEnabled(self.plot.can_go_back())
@@ -651,6 +657,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         return True
 
     def display(self, spectra: Sequence[Spectrum], fmt: Optional[FormatSpec], path: Optional[Path]) -> None:
+        if getattr(self, "spectrum_ops", None) is not None:
+            self.spectrum_ops.reset()                  # another file: no spectrum operation to undo
         self._spectra = list(spectra)
         self._fmt = fmt
         self._path = Path(path) if path else None
