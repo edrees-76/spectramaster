@@ -131,3 +131,60 @@ def compute_roi(counts: Sequence[float], left: int, right: int, first_channel: i
                     background=background, net=net, net_unc=net_unc, bg_left=bl, bg_right=br,
                     centroid=centroid, centroid_energy=centroid_energy, fwhm=fwhm, fwhm_kev=fwhm_kev,
                     live_time=live_time, count_rate=rate, count_rate_unc=rate_unc, n_avg=m)
+
+
+# --------------------------------------------------------------------------- Aptec rules
+@dataclass
+class AptecRoiStats(RoiStats):
+    """RoiStats computed with Aptec's rules (spectramaster.analysis.aptec_roi).
+
+    The background is the polynomial ``coeffs`` (index space) fitted to end points outside the
+    ROI; ``net_unc`` is Aptec's statistical error sqrt(G + B) at 1 sigma."""
+    bl: int = 0                   # first / last end-point index
+    bh: int = 0
+    coeffs: tuple = ()
+    err_pct: Optional[float] = None   # 1 sigma
+    fwtm: Optional[float] = None
+    fwtm_kev: Optional[float] = None
+    mda_cps: Optional[float] = None
+    flags: str = ""
+    grouped: bool = False
+
+    def background_at(self, idx: float) -> float:
+        v = 0.0
+        for k, c in enumerate(self.coeffs):
+            v += c * idx ** k
+        return v
+
+
+def compute_rois_aptec(counts: Sequence[float], bounds: Sequence[tuple[int, int]], first_channel: int = 0,
+                       energy_of: Optional[Callable[[float], Optional[float]]] = None,
+                       live_time: Optional[float] = None, props=None) -> list[AptecRoiStats]:
+    """Aptec ROI results for every ``(left, right)`` index pair, in the order given."""
+    from ..analysis.aptec_roi import analyze_rois
+    res = analyze_rois(counts, bounds, props, live_time)
+    out = []
+    for r in res:
+        cen = None if r.centroid is None else first_channel + r.centroid
+        cen_e = fwhm_kev = fwtm_kev = None
+        if energy_of is not None and cen is not None:
+            cen_e = energy_of(cen)
+
+            def width_kev(w):
+                if w is None or cen_e is None:
+                    return None
+                ea, eb = energy_of(cen - w / 2), energy_of(cen + w / 2)
+                return abs(eb - ea) if ea is not None and eb is not None else None
+            fwhm_kev, fwtm_kev = width_kev(r.fwhm), width_kev(r.fwtm)
+        rate = rate_unc = None
+        if live_time and live_time > 0:
+            rate = r.net / live_time
+            rate_unc = r.net_unc / live_time
+        out.append(AptecRoiStats(
+            left=r.rl, right=r.rh, first_channel=first_channel, gross=r.gross, background=r.background,
+            net=r.net, net_unc=r.net_unc, bg_left=float(r.background_at(r.rl)),
+            bg_right=float(r.background_at(r.rh)), centroid=cen, centroid_energy=cen_e, fwhm=r.fwhm,
+            fwhm_kev=fwhm_kev, live_time=live_time, count_rate=rate, count_rate_unc=rate_unc, n_avg=0,
+            bl=r.bl, bh=r.bh, coeffs=tuple(r.coeffs), err_pct=r.err_pct, fwtm=r.fwtm, fwtm_kev=fwtm_kev,
+            mda_cps=r.mda_cps, flags=r.flags, grouped=r.grouped))
+    return out

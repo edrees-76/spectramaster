@@ -352,3 +352,45 @@ still does. No pre-registered benchmark criterion is affected: the analysis engi
 
 Remaining phases: ROI menu, View menu, spectrum operations, Peak Search / Identify / Background
 Subtract / Quantify, MultiFit.
+
+## Aptec-style workflow, phase 2: ROI menu (2026-10-15)
+
+Branch `claude/ux-aptec-roi`. The ROIs drawn on the plot are now calculated with Aptec's rules
+(`spectramaster/analysis/aptec_roi.py`), verified against the ROI records Aptec stored in its
+sample spectra (`tests/test_aptec_roi.py`; ROI layout from the help file's `.S0` structure):
+
+| Aptec rule | Verified on (Aptec sample files) |
+|---|---|
+| End points: X channels outside each side (`BL = RL - X`, `BH = RH + X`), or X varying from a low- to a high-energy value | 79/79 ROIs, including the groups below |
+| Group: when an ROI's end points would fall inside its neighbour, the ROIs share one background (end points outside the group plus the channels between them); `chern.s0` (3-channel gap, X = 5) is grouped, `co60cal.s0` (2-channel gap, X = 2) is not | 79/79 |
+| Background: degree 0 = line between end-point averages placed at `RL-1` / `RH+1`; degree 1-5 = unweighted least squares through the end points | 73/79 |
+| Gross = Σ RL..RH; Net = Gross - Background; % error (1σ) = √(G + B) / Net · 100 | gross 79/79; background, net, error 73/79 |
+| FWHM / FWTM: outward from the maximum net channel to the first channel below 1/2 (1/10), linear interpolation; edge sentinels when not found | FWHM 72/73, FWTM 64/73 |
+| Centroid: Net or Net·\|Net\| weighting over gross half max, net FWHM, net FWTM (rounded) or the whole ROI | 69/73 |
+| MDA (cps) = (K² + 2K√(2B)) / live time | help file only; not stored per ROI, not verified |
+
+The six ROIs that do not match are all in `nai1x1.s0`: no end-point window or weighting
+reproduces their stored background from the stored counts, so they were presumably computed from
+an earlier state of that file; the other comparisons exclude it. The remaining FWHM, FWTM and
+centroid differences are weak, noisy peaks. A help-file note (Aptec 6.x change log) about
+searching the maximum from the ROI centre outward was tested and matched worse, so it is not used.
+
+**Interface.** New *ROI* menu between *Setup* and *Analyze*: Properties (Shift+R: background line,
+end points, centroid range and weighting, MDA and error sigma; saved in the settings), Paint (F3,
+Ctrl-click), Edit (F4), Delete Indexed (Del, no warning, as in Aptec), Delete All (with
+confirmation), Sort (by centroid), Flag Definitions (Aptec's letters b, m, s, *, <, ?, >).
+Space / Shift+Space index the next / previous ROI (the marker moves to its centroid; the ROI is
+outlined). While painting or editing, the ROI Paint bar appears above the status bar (Set,
+Delete, Cancel, << >> F3, >> << F4, <<-- F5, -->> F6), the mouse paints the ROI and the status
+bar shows its live gross, net and centroid; Enter sets, Esc cancels. Quick paint: Ctrl-click the
+left side of a peak, then the right side. The ROI list gained Background, % Err (×error sigma)
+and Flags columns, and its CSV export the end-point channels, FWTM, MDA and flags.
+
+**Scientific note.** Aptec's error √(G + B) treats the background as if it had been counted over
+the ROI width. The background is estimated from 2X end-point channels, so with few end points
+its true variance is larger (B·n/(2X) for an end-point-average line); the earlier MAESTRO-style
+formula included this. The ROI list follows Aptec, as requested; the analysis engine (peak
+search, fits, activities) is unchanged, so no pre-registered benchmark criterion is affected.
+
+Remaining phases: View menu, spectrum operations, Peak Search / Identify / Background Subtract /
+Quantify, MultiFit.
