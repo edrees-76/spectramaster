@@ -416,6 +416,10 @@ Branch `claude/ux-aptec-view`. The View menu now follows Aptec's order and sits 
   information box with Gross, Bkgnd, Net, err, Cntr, FWHM, FWTM, Net cps, or the background
   parameters BL, RL, RH, BH, B0-B5 in channel numbers; or off), ROI Display (Shift+D), Show ROI
   Labels (J), Show Channel Marker (Shift+J), FWHM Percent (%), Connect Points (N).
+- The spectrum is drawn as Aptec draws it: one point per channel, and with more channels than
+  screen columns only the highest channel of each column; Fill Spc (F) gives the filled
+  histogram, Connect Points (N) the connected line, Plot All Points (L) all channels of each
+  column. *View > Color > Aptec Colors* gives Aptec's yellow points on black.
 - Double-click indexes the next ROI (Shift: the previous one), as in Aptec; without ROIs it
   still shows the whole spectrum. Esc and Ctrl+0 show the whole spectrum (Home now moves the
   marker, as in Aptec).

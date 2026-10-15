@@ -96,6 +96,12 @@ def test_view_menu_like_aptec(window):
 
 def test_display_toggles_change_plot_and_are_saved(window, qapp, tmp_path):
     plot = _show(window)
+    assert plot.fill_spectrum is False                 # Aptec: points by default
+    window.act_v_fill_spc.trigger()
+    assert plot.fill_spectrum is True
+    assert not plot.grab().isNull()
+    assert plot.plot_all_points is False               # Aptec: highest channel per column
+    window.act_v_all_points.trigger()
     for attr, pattr in (("act_v_grid", "show_grid"), ("act_v_fill_spc", "fill_spectrum"),
                         ("act_v_all_points", "plot_all_points"), ("act_v_fill_rois", "fill_rois"),
                         ("act_v_roi_display", "show_rois"), ("act_v_marker", "show_marker")):
@@ -247,6 +253,8 @@ def test_colors_quick_access_bar_and_positions(window, monkeypatch, tmp_path):
     dlg = ui.ColorDialog(plotmod.current_colors(), window)
     dlg.set_colors(plotmod.DEFAULT_COLORS)
     assert dlg.colors["line"] == "#1f5f99"
+    dlg.aptec_btn.click()
+    assert dlg.colors["bg"] == "#000000" and dlg.colors["line"] == "#ffff00"
     # quick access control bar
     assert window.act_print in window.toolbar.actions()
     ui.apply_qa_bar(window, {"act_print", "act_folder"})

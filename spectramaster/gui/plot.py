@@ -66,6 +66,8 @@ C_WINDOW = QColor(47, 109, 179, 45)    # expanded region shown on the split full
 COLOR_ROLES = ("line", "fill", "bg", "grid", "text", "roi", "marker", "fit")
 DEFAULT_COLORS = {"line": "#1f5f99", "fill": "#3680c4", "bg": "#ffffff", "grid": "#eef1f4",
                   "text": "#3c4650", "roi": "#d64541", "marker": "#c62828", "fit": "#2e7d32"}
+APTEC_COLORS = {"line": "#ffff00", "fill": "#808000", "bg": "#000000", "grid": "#303030",
+                "text": "#3c4650", "roi": "#e53935", "marker": "#ffffff", "fit": "#00e5ff"}
 BW_COLORS = {"line": "#000000", "fill": "#9a9a9a", "bg": "#ffffff", "grid": "#e0e0e0",
              "text": "#000000", "roi": "#4d4d4d", "marker": "#000000", "fit": "#000000"}
 
@@ -1200,15 +1202,7 @@ class SpectrumPlot(QWidget):
             self._paint_rois(p, rect, cols, ypx, fm)
             self._paint_fits(p, rect, ypx)
             p.setBrush(Qt.NoBrush)
-            p.setPen(QPen(C_LINE, 1))
-            if getattr(self, "connect_points", False) and not cols.per_pixel:
-                ys = ypx(cols.vmax).tolist()
-                xs = ((cols.xl + cols.xr) / 2).tolist()
-                p.drawPolyline(QPolygonF([QPointF(x, y) for x, y in zip(xs, ys)]))
-            else:
-                p.drawPolyline(poly)
-            if cols.per_pixel and getattr(self, "plot_all_points", True):
-                self._paint_minmax(p, cols, ypx)
+            self._paint_points(p, cols, ypx, poly)
         # overlays (lines only)
         for key, y, edges, color, ov in series[1:]:
             oc = self._columns(key, y, edges, rect)
@@ -1273,6 +1267,32 @@ class SpectrumPlot(QWidget):
         p.restore()
         if self.overlays:
             self._paint_legend(p, rect, fm)
+
+    def _paint_points(self, p: QPainter, cols: _Cols, ypx, poly: QPolygonF) -> None:
+        """The primary spectrum, as Aptec draws it: one point per channel (default), the points
+        connected by lines (Connect Points, N) and / or filled to the base line as a histogram
+        (Fill Spc, F).  Several channels per screen column: all of them (Plot All Points, L)
+        form a vertical min-max segment; otherwise only the highest channel is drawn."""
+        fill = getattr(self, "fill_spectrum", True)
+        connect = getattr(self, "connect_points", False)
+        all_points = getattr(self, "plot_all_points", True)
+        p.setPen(QPen(C_LINE, 1))
+        if connect:
+            ys = ypx(cols.vmax).tolist()
+            xs = ((cols.xl + cols.xr) / 2).tolist()
+            p.drawPolyline(QPolygonF([QPointF(x, y) for x, y in zip(xs, ys)]))
+        elif fill:
+            p.drawPolyline(poly)
+        else:
+            xs = ((cols.xl + cols.xr) / 2).tolist()
+            ys = ypx(cols.vmax).tolist()
+            pen = QPen(C_LINE, 2 if (not cols.per_pixel and (cols.xr[0] - cols.xl[0]) >= 3) else 1.5)
+            pen.setCapStyle(Qt.SquareCap)
+            p.setPen(pen)
+            p.drawPoints(QPolygonF([QPointF(x, y) for x, y in zip(xs, ys)]))
+            p.setPen(QPen(C_LINE, 1))
+        if cols.per_pixel and all_points:
+            self._paint_minmax(p, cols, ypx)
 
     def _paint_minmax(self, p: QPainter, cols: _Cols, ypx) -> None:
         mask = cols.vmin < cols.vmax
@@ -1957,7 +1977,7 @@ class PlotRenderer:
                "render_plot", "_paint_empty", "_step_polygon", "_paint_data", "_paint_minmax",
                "_paint_rois", "_px_to_x_arr", "_top_at", "_paint_labels", "_paint_highlight",
                "_paint_legend", "_legend_name", "_paint_y_axis", "_paint_x_axis", "_is_box_drag",
-               "readout", "_paint_fits", "_view_min")
+               "readout", "_paint_fits", "_view_min", "_paint_points")
 
     def __init__(self, spec: Optional[Spectrum] = None, font: Optional[QFont] = None,
                  lang: Optional[str] = None):

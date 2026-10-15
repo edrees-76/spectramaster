@@ -25,8 +25,8 @@ from .plot import FITTED_MODES, ROI_DATA_MODES, Y_MODES, SpectrumPlot
 KEY = "aptec_view/"
 # display toggles: (action attribute, plot attribute, string key, shortcut, default)
 TOGGLES = (
-    ("act_v_all_points", "plot_all_points", "all_points", "L", True),
-    ("act_v_fill_spc", "fill_spectrum", "fill_spc", "F", True),
+    ("act_v_all_points", "plot_all_points", "all_points", "L", False),   # Aptec: highest channel
+    ("act_v_fill_spc", "fill_spectrum", "fill_spc", "F", False),     # Aptec draws points
     ("act_v_grid", "show_grid", "grid", "G", True),
     ("act_v_fill_rois", "fill_rois", "fill_rois", "Shift+F", True),
     ("act_v_roi_display", "show_rois", "roi_display", "Shift+D", True),
@@ -182,6 +182,8 @@ class ColorDialog(QDialog):
         bb = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         self.default_btn = bb.addButton(vtr("col_default"), QDialogButtonBox.ResetRole)
         self.bw_btn = bb.addButton(vtr("col_bw"), QDialogButtonBox.ResetRole)
+        self.aptec_btn = bb.addButton(vtr("col_aptec"), QDialogButtonBox.ResetRole)
+        self.aptec_btn.clicked.connect(lambda: self.set_colors(plotmod.APTEC_COLORS))
         self.default_btn.clicked.connect(lambda: self.set_colors(plotmod.DEFAULT_COLORS))
         self.bw_btn.clicked.connect(lambda: self.set_colors(plotmod.BW_COLORS))
         bb.accepted.connect(self.accept)
