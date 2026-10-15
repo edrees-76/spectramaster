@@ -117,6 +117,7 @@ class LineResult:
     detected: bool = False
     peak_found: bool = False
     in_range: bool = True
+    int_rel_unc: float = 0.0     # library emission-probability uncertainty of this line (relative)
     note: str = ""
 
 
@@ -179,7 +180,7 @@ class ActivityOptions:
     quantity_rel_unc: float = 0.0        # fraction
     attenuation: Union[float, dict] = 1.0   # correction factor(s) (multiplies the activity), per nuclide dict ok
     attenuation_rel_unc: float = 0.0
-    intensity_rel_unc: float = 0.0       # library intensities carry no uncertainty; optional extra
+    intensity_rel_unc: float = 0.0       # optional extra; each line's library (ENSDF) uncertainty is added
     bkg_mode: str = "peak"               # "peak" | "spectrum"
     mda_method: str = "currie"           # "currie" | "iso11929"
     k_alpha: float = K_DEFAULT
@@ -447,6 +448,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                         "and parent/daughter equilibrium").strip("; ")
         for ln_name, e, inten, b in lines:
             lr = LineResult(ln_name, e, inten, b)
+            lr.int_rel_unc = _line_int_unc(ln_name, e)
             eff = float(curve.efficiency(e))
             lr.efficiency = eff
             lr.eff_rel_unc = float(curve.rel_uncertainty(e))
@@ -487,7 +489,8 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                     bwin = float(bcounts[max(0, int(round(idx)) - h):int(round(idx)) + h + 1].sum())
                     var0 += k_b ** 2 * bwin * (1.0 + cb[1] / (2.0 * cb[2]))
             sigma0 = math.sqrt(max(var0, 0.0))
-            w_rel = math.sqrt(lr.eff_rel_unc ** 2 + opt.intensity_rel_unc ** 2 + opt.attenuation_rel_unc ** 2)
+            w_rel = math.sqrt(lr.eff_rel_unc ** 2 + opt.intensity_rel_unc ** 2 + lr.int_rel_unc ** 2
+                              + opt.attenuation_rel_unc ** 2)
             if opt.mda_method == "iso11929":
                 ys, yd = iso11929_limits(sigma0, w / fwin, w_rel, opt.k_alpha, opt.k_beta)
                 lr.lc_counts, lr.ld_counts = ys / w * fwin, yd / w * fwin
@@ -576,14 +579,18 @@ def _combine(res: NuclideResult, opt: ActivityOptions) -> None:
         l = cand[0]
         a = l.activity
         uc, ue = abs(a) * l.u_count_rel, abs(a) * l.eff_rel_unc
+        ul = abs(a) * l.int_rel_unc
         res.detected = l.detected
     else:
-        # weights from the uncorrelated part (counting + intensity)
-        var_unc = [(l.activity * l.u_count_rel) ** 2 + (l.activity * ui) ** 2 for l in cand]
+        # weights from the uncorrelated part (counting + intensity, incl. each line's library
+        # emission-probability uncertainty)
+        var_unc = [(l.activity * l.u_count_rel) ** 2 + (l.activity * ui) ** 2 + (l.activity * l.int_rel_unc) ** 2
+                   for l in cand]
         wts = [1.0 / v if v > 0 else 0.0 for v in var_unc]
         sw = sum(wts)
         a = sum(w * l.activity for w, l in zip(wts, cand)) / sw
         uc = math.sqrt(sum((w * l.activity * l.u_count_rel) ** 2 for w, l in zip(wts, cand))) / sw
+        ul = math.sqrt(sum((w * l.activity * l.int_rel_unc) ** 2 for w, l in zip(wts, cand))) / sw
         ue = sum(w * abs(l.activity) * l.eff_rel_unc for w, l in zip(wts, cand)) / sw
         # decision threshold of the combination
         s0 = [l.decision_threshold / opt.k_alpha for l in cand]
@@ -596,10 +603,19 @@ def _combine(res: NuclideResult, opt: ActivityOptions) -> None:
     a_abs = abs(a) if a else 0.0
     # Budget of the activity in Bq.  The mass/volume uncertainty does not belong here: it only
     # enters the specific activity (Bq/kg, Bq/L, ...), see compute_activities.
-    comp = {"counting": uc, "efficiency": ue, "intensity": a_abs * ui, "attenuation": a_abs * ua}
+    comp = {"counting": uc, "efficiency": ue, "intensity": math.hypot(a_abs * ui, ul), "attenuation": a_abs * ua}
     res.activity = a
     res.u = math.sqrt(sum(v * v for v in comp.values()))
     res.budget = {k: (100.0 * v / a_abs if a_abs else 0.0) for k, v in comp.items()}
+
+
+def _line_int_unc(nuclide: str, energy: float) -> float:
+    """Relative emission-probability uncertainty of a library line (0 when not stated)."""
+    from .library import intensity_rel_unc
+    try:
+        return float(intensity_rel_unc(nuclide, energy) or 0.0)
+    except Exception:
+        return 0.0
 
 
 # ------------------------------------------------------------------ table / export

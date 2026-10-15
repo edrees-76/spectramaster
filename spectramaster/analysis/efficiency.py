@@ -151,17 +151,18 @@ def certificate_lines(entries: Iterable[CertNuclide], min_intensity_pct: float =
         nd = lib.get(c.nuclide)
         hl = c.half_life_s if c.half_life_s else (nd.half_life_s if nd else None)
         if c.lines:
-            lines = list(c.lines)
+            lines = [(e, i, 0.0) for e, i in c.lines]        # certificate lines: their own data
         elif nd:
-            lines = [(l.energy, l.intensity / 100.0) for l in nd.gammas(min_intensity_pct)
-                     if e_min <= l.energy <= e_max]
+            # library lines carry the evaluated emission-probability uncertainty (ENSDF)
+            lines = [(l.energy, l.intensity / 100.0, (l.intensity_unc or 0.0) / 100.0)
+                     for l in nd.gammas(min_intensity_pct) if e_min <= l.energy <= e_max]
         else:
             raise KeyError(f"{c.nuclide}: not in the nuclide library - give the lines explicitly")
-        for e, i in lines:
+        for e, i, ui in lines:
             if any(o.nuclide == c.nuclide and abs(o.energy - float(e)) < 0.01 for o in out):
                 continue        # duplicated row
             out.append(CertLine(c.nuclide, float(e), float(i), float(c.activity), float(c.activity_unc),
-                                c.ref_date, hl))
+                                c.ref_date, hl, intensity_unc=float(ui)))
     return sorted(out, key=lambda l: l.energy)
 
 

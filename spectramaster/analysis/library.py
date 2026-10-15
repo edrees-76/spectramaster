@@ -30,6 +30,7 @@ class Line:
     intensity: float       # photons per 100 decays
     kind: str = "g"        # g gamma, x X-ray, a annihilation
     source: str = ""       # I = IAEA, S = SandiaDecay, U = user
+    intensity_unc: Optional[float] = None   # standard uncertainty, photons per 100 decays (None: not stated)
 
 
 @dataclass
@@ -57,7 +58,8 @@ Library = dict[str, NuclideData]
 def _from_json(doc: dict) -> Library:
     out: Library = {}
     for name, e in doc.get("nuclides", {}).items():
-        lines = [Line(float(l[0]), float(l[1]), l[2] if len(l) > 2 else "g", l[3] if len(l) > 3 else "")
+        lines = [Line(float(l[0]), float(l[1]), l[2] if len(l) > 2 else "g", l[3] if len(l) > 3 else "",
+                      float(l[4]) if len(l) > 4 and l[4] is not None else None)
                  for l in e.get("lines", [])]
         out[name] = NuclideData(
             name=name, lines=sorted(lines, key=lambda l: l.energy), half_life=e.get("half_life", ""),
@@ -96,6 +98,19 @@ def _load_path(path: str) -> Library:
     if p.suffix.lower() in (".csv", ".txt"):
         return _from_csv(p)
     return _from_json(json.loads(p.read_text(encoding="utf-8")))
+
+
+def intensity_rel_unc(nuclide: str, energy: float, lib: Optional[Library] = None, tol_kev: float = 0.05
+                      ) -> Optional[float]:
+    """Relative standard uncertainty of the library emission probability of `nuclide` at
+    `energy` (the line within `tol_kev`), or None when the library states none."""
+    nd = (lib if lib is not None else load_library()).get(nuclide)
+    if nd is None:
+        return None
+    best = min(nd.lines, key=lambda l: abs(l.energy - energy), default=None)
+    if best is None or abs(best.energy - energy) > tol_kev or best.intensity_unc is None or best.intensity <= 0:
+        return None
+    return best.intensity_unc / best.intensity
 
 
 def load_library(source: Union[None, str, Path, dict] = None) -> Library:
