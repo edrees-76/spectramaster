@@ -24,6 +24,7 @@ jobs:
         with:
           python-version: "3.14"
           cache: pip
+          cache-dependency-path: requirements.txt
 
       - name: System libraries for Qt (offscreen)
         run: |
@@ -34,7 +35,7 @@ jobs:
       - name: Python packages
         run: |
           python -m pip install --upgrade pip
-          pip install numpy scipy openpyxl PySide6 SandiaSpecUtils pytest
+          pip install -r requirements.txt pytest
 
       # Laboratory, IAEA and DDEP data are not in the repository: the tests that need them skip.
       # The engine timing test is machine dependent (shared CI runners); runtime is tracked by
