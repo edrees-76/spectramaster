@@ -1,16 +1,31 @@
-# Pinned packages of the CI test run (.github/workflows/tests.yml), wheels only.
-# Versions of the development machine; update them together with requirements.txt.
-numpy==2.3.5
-scipy==1.16.3
-openpyxl==3.1.5
-et_xmlfile==2.0.0
-PySide6==6.11.1
-PySide6_Essentials==6.11.1
-PySide6_Addons==6.11.1
-shiboken6==6.11.1
-SandiaSpecUtils==0.0.11
-pytest==9.0.3
-iniconfig==2.3.0
-packaging==25.0
-pluggy==1.6.0
-Pygments==2.19.2
+# Pinned packages of the CI test run (.github/workflows/tests.yml): Linux x86-64 wheels for
+# CPython 3.14, installed with --require-hashes.  Versions of the development machine; update
+# them together with requirements.txt (hashes from PyPI).
+numpy==2.3.5 \
+    --hash=sha256:fffe29a1ef00883599d1dc2c51aa2e5d80afe49523c261a74933df395c15c520
+scipy==1.16.3 \
+    --hash=sha256:d3837938ae715fc0fe3c39c0202de3a8853aff22ca66781ddc2ade7554b7e2cc
+openpyxl==3.1.5 \
+    --hash=sha256:5282c12b107bffeef825f4617dc029afaf41d0ea60823bbb665ef3079dc79de2
+et_xmlfile==2.0.0 \
+    --hash=sha256:7a91720bc756843502c3b7504c77b8fe44217c85c537d85037f0f536151b2caa
+PySide6==6.11.1 \
+    --hash=sha256:b1fc521ba2bb5109425ab8add06bddbdd524abcad06cfa012cc39a22a189feb2
+PySide6_Essentials==6.11.1 \
+    --hash=sha256:e3ef7027b41e4e55fadb56e3b3257dc8ee92154b639fe67fc4c8e05e9d976c60
+PySide6_Addons==6.11.1 \
+    --hash=sha256:8e6c65fbd73a512d6f72cda8d8277444a85a34dc99dd1dae9c21d35b8671bb1f
+shiboken6==6.11.1 \
+    --hash=sha256:9a8bccfafc8805254cabcfa1edfaf55cd52889f4998c91ad0d9a4433fb1bcdbe
+SandiaSpecUtils==0.0.11 \
+    --hash=sha256:d7b254662f11c5401b5741ca689c103070e3101dd87b170a98fb345afd3989ed
+pytest==9.0.3 \
+    --hash=sha256:2c5efc453d45394fdd706ade797c0a81091eccd1d6e4bccfcd476e2b8e0ab5d9
+iniconfig==2.3.0 \
+    --hash=sha256:f631c04d2c48c52b84d0d0549c99ff3859c98df65b3101406327ecc7d53fbf12
+packaging==25.0 \
+    --hash=sha256:29572ef2b1f17581046b3a2227d5c611fb25ec70ca1ba8554b24b0e69331a484
+pluggy==1.6.0 \
+    --hash=sha256:e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746
+Pygments==2.19.2 \
+    --hash=sha256:86540386c03d588bb81d44bc3928634ff26449851e99741617ecb9037ee5ec0b
