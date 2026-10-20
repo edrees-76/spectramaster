@@ -7,7 +7,7 @@ from spectramaster.analysis import activity as act
 from spectramaster.analysis import coincidence as co
 from spectramaster.analysis import efficiency as eff
 from spectramaster.validation import tcs_mc
-from test_activity import LIVE, cal_curve, lib_line, make_spectrum, true_eff  # noqa: F401
+from test_activity import LIVE, cal_curve, gui_settings, lib_line, make_spectrum, qapp, true_eff  # noqa: F401
 from test_reagent_blank import SAMPLE_REF, START
 
 PT = (0.24, -0.63)
@@ -101,3 +101,41 @@ def test_cli_tcs(cal_curve, tmp_path, capsys):
                      "--nuclides", "Co-60", "--tcs-pt", "0.24,-0.63"]) == 0
     text = capsys.readouterr().out
     assert "true-coincidence summing corrected" in text and "peak-to-total" in text
+
+
+def test_activity_dialog_tcs(cal_curve, qapp, gui_settings, tmp_path):
+    from PySide6.QtCore import QDateTime
+    from spectramaster.gui import i18n
+    from spectramaster.gui.quant_panel import ActivityDialog
+    from spectramaster.lab.sample import SampleInfo
+    _pts, curve = cal_curve
+    path = tmp_path / "curves" / "c.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    curve.save(path)
+    i18n.set_language("en")
+    try:
+        ad = ActivityDialog(None, co60_spectrum(summing=True), gui_settings)
+        assert not ad.tcs_box.isChecked() and ad.tcs() is None             # off by default
+        ad.set_curve_path(path)
+        ad.nuc_edit.setText("Co-60")
+        ad.method_combo.setCurrentIndex(ad.method_combo.findData("mean"))
+        ad.ref_start.setChecked(False)
+        ad.ref_edit.setDateTime(QDateTime(SAMPLE_REF))
+        low = ad.calculate().nuclides[0].activity
+        assert low < 0.97 * A_CO60
+        ad.tcs_box.setChecked(True)
+        ad.tcs_a.setValue(PT[0])
+        ad.tcs_b.setValue(PT[1])
+        ad.tcs_u.setValue(10.0)
+        res = ad.calculate()
+        r = res.nuclides[0]
+        assert r.activity == pytest.approx(A_CO60, rel=0.01) and "coincidence summing" in r.budget
+        conc = act.concentrations(res, SampleInfo(), "Bq")                  # shown in the report
+        assert any("peak-to-total" in n and "assumed" in n for n in conc["notes"])
+        assert gui_settings.get("quant/tcs", "") == "0.24,-0.63,10"
+        ad.close()
+        ad2 = ActivityDialog(None, co60_spectrum(summing=True), gui_settings)
+        assert not ad2.tcs_box.isChecked() and ad2.tcs_a.value() == pytest.approx(0.24)
+        ad2.close()
+    finally:
+        i18n.set_language("ar")

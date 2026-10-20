@@ -877,3 +877,16 @@ Not covered:
 - A measured P/T. The P/T comes from the user.
 
 The interface comes next.
+
+## True-coincidence summing in the interface (2026-10-20)
+
+The activity dialog has a checkable group "True-coincidence summing correction". It is off by
+default; when it is ticked, the calculation applies `ActivityOptions.tcs`.
+
+- The fields are the peak-to-total at 1 MeV (a), the slope b, and the uncertainty in %.
+- The defaults are an example coaxial HPGe model, 0.24 / -0.63 / 10 %. An orange label says that
+  they are assumed values, to be replaced by those of the detector and geometry.
+- The tooltip explains the model and its limits: gamma-gamma only, no angular correlation, and
+  first order in very close geometries.
+- The values are remembered (`quant/tcs`). The tick is not remembered.
+- The report's concentration notes state the correction with the assumed P/T.
