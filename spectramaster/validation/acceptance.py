@@ -76,6 +76,23 @@ for det in ("HPGe", "NaI"):
        "No invented separation: a true singlet reported as two or more peaks within 1 FWHM in "
        "more than 5 % of cases means the doublet retry fires on noise.")
 
+    # ---------------------------------------------------------------- tailed peaks with the detector's
+    # peak-shape calibration (limits pre-registered 2026-10-20 in docs/baseline/peak_tail_protocol.md;
+    # moved unchanged from the per-spectrum estimate to the shape-calibrated category, see its amendment)
+    _c(f"{det}.tailed.area_bias", det, "tailed_shape_cal", "area_bias", "abs<=", 0.005,
+       "Strong peaks with a 4 % low-energy tail, fitted with the shape calibration of the detector: "
+       "the statistical sd is ~0.3 %; the tail must no longer bias the area (uncalibrated baseline "
+       "-1.05 % HPGe, -1.42 % NaI).")
+    _c(f"{det}.tailed.cov2", det, "tailed_shape_cal", "z_cov2", "in", _COV2,
+       "The stated area uncertainties must cover the error for tailed peaks (baseline 0.78 / 0.03).")
+    _c(f"{det}.tailed.split", det, "tailed_shape_cal", "split_fraction", "<=", 0.05,
+       "The tail must not become a second peak.")
+    _c(f"{det}.tailed.false_per_spectrum", det, "tailed_shape_cal", "false_per_spectrum", "<=", 1.5,
+       "Unmatched peaks per spectrum stay at the strong-peak level (baseline ~1).")
+    _c(f"{det}.tailed.cov1", det, "tailed_shape_cal", "z_cov1", "report", None, "Reported only.")
+    _c(f"{det}.shape_cal.gaussian_area_bias", det, "strong_shape_cal", "area_bias", "abs<=", 0.01,
+       "A shape calibration measured on a detector without a tail must not bias Gaussian peaks "
+       "(same limit as the strong-peak area criterion).")
     # ---------------------------------------------------------------- weak isolated peaks
     # A-priori estimate: fitted-area sigma ~ sqrt(A + c*B) with c ~ 1.5-2 for a 2.5 FWHM
     # window, so the engine's significance ~ s/1.3.  With min_sig = 3, P(detect) ~ Phi(s/1.3-3):

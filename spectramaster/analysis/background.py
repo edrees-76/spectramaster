@@ -107,12 +107,12 @@ class BackgroundFitter:
         self.s = np.asarray(sample.counts, dtype=float)
         self.b = np.maximum(np.asarray(background.counts, dtype=float), 0.0)
 
-    def _apply(self, lo: int, hi: int, cents, sigmas, step_h: float = 0.0, cont=None, w2=None):
+    def _apply(self, lo: int, hi: int, cents, sigmas, step_h: float = 0.0, cont=None, w2=None, tails=None):
         """Linear estimator of the amplitudes for components at `cents` (index channels) with
         Gaussian `sigmas` on lo..hi; returns [(k*N_b, k*u_b)] or None.  `cont` (continuum
         columns) and `w2` (weights) default to a straight line and 1/max(S, 1); the sample's
-        FitReport supplies the fit's own ones (log-linear continuum, model weights)."""
-        from .peaks import SQRT2PI, erfc
+        FitReport supplies the fit's own ones (log-linear continuum, model weights, peak tail)."""
+        from .peaks import SQRT2PI, erfc, peak_shape
         n = len(self.s)
         lo, hi = max(int(lo), 0), min(int(hi), n - 1)
         if hi - lo + 1 < 3 + len(cents):
@@ -123,8 +123,8 @@ class BackgroundFitter:
             cont = w2 = None
         cols = list(cont) if cont is not None else [np.ones_like(x), x - xm]
         nc = len(cols)
-        for c, sg in zip(cents, sigmas):
-            col = np.exp(-0.5 * ((x - c) / sg) ** 2)
+        for j, (c, sg) in enumerate(zip(cents, sigmas)):
+            col = peak_shape((x - c) / sg, tails[j] if tails else None)
             if step_h:
                 col = col + step_h * 0.5 * erfc((x - c) / (sg * math.sqrt(2.0)))
             cols.append(col)
@@ -158,7 +158,7 @@ class BackgroundFitter:
                     continue
                 cents = [c.centroid - self.f0 for c in comps]
                 res = self._apply(g.lo - self.f0, g.hi - self.f0, cents, [c.fwhm * F2S for c in comps],
-                                  g.step_height, g.continuum_columns, g.weights)
+                                  g.step_height, g.continuum_columns, g.weights, [c.tail for c in comps])
                 if res is None:
                     continue
                 for c, r in zip(comps, res):

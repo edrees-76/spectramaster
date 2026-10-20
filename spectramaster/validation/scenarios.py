@@ -47,6 +47,16 @@ def isolated_strong(det: DetectorSpec, n: int = 40, tail: bool = False) -> Itera
         yield make_spectrum(det, peaks, base_continuum(det), seed_of(det, cat, i), meta={"category": cat})
 
 
+def shape_calibration_spectra(det: DetectorSpec, n: int = 3, tail: bool = True) -> Iterator[SyntheticSpectrum]:
+    """Calibration spectra of the same detector as `isolated_strong(tail=...)` (other seeds):
+    the peak-shape calibration is measured on them and applied to the sample spectra."""
+    cat = "shape_cal" if tail else "shape_cal_gauss"
+    for i in range(n):
+        peaks = [TruePeak(e, 1.0e5, tail_frac=0.04 if tail else 0.0, tail_slope=1.5,
+                          step_frac=0.001 if tail else 0.0) for e in _energies(det, "strong")]
+        yield make_spectrum(det, peaks, base_continuum(det), seed_of(det, cat, i), meta={"category": cat})
+
+
 SNR_LEVELS = (3.0, 5.0, 7.0, 10.0)
 
 

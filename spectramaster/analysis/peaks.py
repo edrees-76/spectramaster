@@ -21,6 +21,11 @@ Algorithm
    that model is kept when it improves the fit significantly; a component that the step
    alone explains is then discarded with that reason, not reported as a peak.
    Net area, centroid and their 1-sigma uncertainties come from the covariance matrix.
+   With a **peak-shape calibration** of the detector (``extra["peak_tail"]``, measured by
+   :func:`shape_calibration` on calibration spectra and attached with :func:`set_peak_tail`)
+   every peak is a Gaussian plus a fraction eta of a low-energy exponential tail (slope tau
+   sigma, exponentially modified Gaussian, same area normalisation); without it the peaks are
+   Gaussian, exactly as before.
    ``find_peaks(..., variance=v)`` replaces the Poisson variance by an explicit per-channel
    variance (e.g. S + k^2 B of a background-subtracted spectrum, which may be negative and is
    not Poisson); the counts are then neither clipped nor floored.
@@ -197,6 +202,33 @@ class _Model:
         return float(self.a[i])
 
 
+# --------------------------------------------------------------- peak shape with a low-energy tail
+def _tail_k(T, tau: float):
+    """Area-normalised low-energy tail in units of the Gaussian height: an exponential
+    exp((x - c) / (tau sigma)) for x < c convolved with the Gaussian (exponentially modified
+    Gaussian), K(T) = sqrt(2 pi) / (2 tau) exp(T/tau + 1/(2 tau^2)) erfc((T + 1/tau) / sqrt 2),
+    T = (x - c) / sigma; integral of K dT = sqrt(2 pi) like the Gaussian.  Evaluated as
+    erfcx(z) exp(-T^2/2) where z >= 0 (no overflow) and directly where z < 0."""
+    from scipy.special import erfc as _erfc, erfcx
+    T = np.asarray(T, dtype=float)
+    z = (T + 1.0 / tau) / math.sqrt(2.0)
+    c = math.sqrt(2.0 * math.pi) / (2.0 * tau)
+    pos = c * erfcx(np.maximum(z, 0.0)) * np.exp(-0.5 * T * T)
+    neg = c * np.exp(np.minimum(T / tau + 0.5 / (tau * tau), 0.0)) * _erfc(np.minimum(z, 0.0))
+    return np.where(z >= 0.0, pos, neg)
+
+
+def peak_shape(T, tail: Optional[tuple] = None):
+    """Unit-height peak shape at T = (x - c) / sigma: the Gaussian exp(-T^2/2), or with
+    tail = (eta, tau) the mixture (1 - eta) Gaussian + eta K(T) (same area for every eta)."""
+    T = np.asarray(T, dtype=float)
+    ex = np.exp(-0.5 * T * T)
+    if not tail or tail[0] <= 0:
+        return ex
+    eta, tau = float(tail[0]), float(tail[1])
+    return (1.0 - eta) * ex + eta * _tail_k(T, tau)
+
+
 def fwhm_model(spectrum, y: np.ndarray) -> tuple[np.ndarray, str]:
     """FWHM (channels) per index, and the source of the model."""
     n = len(y)
@@ -327,6 +359,7 @@ class FitComponent:
     amplitude: float          # counts/channel at the centroid
     kept: bool                # reported as a peak
     reason: str = ""          # why it was not reported
+    tail: Optional[tuple] = None   # (eta, tau) of the low-energy tail, None = Gaussian
 
 
 @dataclass
@@ -356,7 +389,7 @@ class FitGroup:
     def component_curve(self, j: int) -> np.ndarray:
         c = self.components[j]
         s = c.fwhm * F2S
-        return c.amplitude * np.exp(-0.5 * ((self.channels - c.centroid) / s) ** 2)
+        return c.amplitude * peak_shape((self.channels - c.centroid) / s, c.tail)
 
     @property
     def residuals(self) -> np.ndarray:
@@ -368,6 +401,7 @@ class FitGroup:
 class FitReport:
     fwhm_source: str = ""
     groups: list = field(default_factory=list)
+    tail: Optional[tuple] = None     # (eta, tau) of the low-energy tail used, None = Gaussian
 
     def group_at(self, channel: float) -> Optional[FitGroup]:
         for g in self.groups:
@@ -388,9 +422,10 @@ def _record_group(rec: FitReport, spectrum, y, r, retry: str, kept: dict, reason
     comps = []
     for j in range(len(r.centroids)):
         a, sg, c = float(r.amps[j]), float(r.sigmas[j]), float(r.centroids[j])
-        tot = tot + a * np.exp(-0.5 * ((x - c) / sg) ** 2)
+        tl = getattr(r, "tail", None)
+        tot = tot + a * peak_shape((x - c) / sg, tl)
         comps.append(FitComponent(c + f0, float(r.cent_unc[j]), float(r.fwhms[j]), float(r.areas[j]),
-                                  float(r.area_unc[j]), a, j in kept, reasons.get(j, "")))
+                                  float(r.area_unc[j]), a, j in kept, reasons.get(j, ""), tl))
     g = FitGroup(r.lo + f0, r.hi + f0, y[r.lo:r.hi + 1].copy(), tot, bk, comps, float(r.chi2r), r.dof,
                  float(r.scale) if r.free_width else 1.0, r.free_width, bool(r.at_bound), r.step_h, retry)
     if hasattr(r, "cont_cols"):
@@ -440,6 +475,10 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
     d = y[lo:hi + 1]
     if len(x) < 5:
         return None
+    tail = getattr(model, "tail", None)
+    if tail is not None and not tail[0] > 0:
+        tail = None
+    eta, tau = (float(tail[0]), float(tail[1])) if tail else (0.0, 1.0)
     w = 1.0 / np.sqrt(np.maximum(d if var is None else var[lo:hi + 1], 1.0))
     k = len(cents)
     base_f = np.array([model.at(c) for c in cents])
@@ -468,7 +507,7 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
     # linear pre-solve: background + amplitudes at the search centroids / model widths
     try:
         sg = base_f * F2S
-        G = np.exp(-0.5 * ((x[None, :] - np.array(cents)[:, None]) / sg[:, None]) ** 2)
+        G = peak_shape((x[None, :] - np.array(cents)[:, None]) / sg[:, None], tail)
         cols = [np.ones_like(x), x - xm]
         if edge is not None:
             cols.append(0.5 * erfc((x - p[5]) / (1.5 * sig_e0 * math.sqrt(2.0))))
@@ -523,11 +562,17 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
         s = base_f * (sc * F2S)
         T = (x[None, :] - c[:, None]) / s[:, None]
         EX = np.exp(-0.5 * T * T)
+        if tail:
+            KT = _tail_k(T, tau)
+            SH = (1.0 - eta) * EX + eta * KT                 # peak shape
+            DS = -(1.0 - eta) * T * EX + eta * (KT - EX) / tau     # dSH/dT (dK/dT = (K - EX)/tau)
+        else:
+            SH, DS = EX, -T * EX
         if loglin:
             B = np.exp(np.clip(p[0] + p[1] * xs, -50.0, 50.0))
-            m = B + a @ EX
+            m = B + a @ SH
         else:
-            m = p[0] + p[1] * xs + a @ EX
+            m = p[0] + p[1] * xs + a @ SH
         if use_step:
             EC = 0.5 * erfc(T / R2)
             m = m + h * (a @ EC)
@@ -544,9 +589,10 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
             J[:, 5] = p[4] * gE
             J[:, 6] = p[4] * gE * (x - p[5]) / p[6]
         aEX = a[:, None] * EX
-        dc = aEX * T / s[:, None]
-        dsc = (aEX * T * T).sum(axis=0) / sc
-        J[:, ia] = EX.T
+        aDS = a[:, None] * DS
+        dc = -aDS / s[:, None]                       # dT/dc = -1/s
+        dsc = (-aDS * T).sum(axis=0) / sc            # dT/dsc = -T/sc
+        J[:, ia] = SH.T
         J[:, ic] = dc.T
         if use_step:
             gp = aEX / (s[:, None] * SQRT2PI)          # a * gaussian density
@@ -659,6 +705,7 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
     fit.at_bound = bool(free_width and (sc >= width_bounds[1] - 1e-6 or sc <= width_bounds[0] + 1e-6))
     # parameters kept for fit inspection (FitReport); not used by the search itself
     fit.amps, fit.sigmas, fit.step_h = amp, sig, float(hst)
+    fit.tail = (eta, tau) if tail else None
     fit.free_width, fit.dof, fit.width_bounds = bool(free_width), int(dof), tuple(width_bounds)
     fit.edge = edge_f              # (height, position, sigma) of the continuum step, or None
     fit.loglinear = bool(loglin)
@@ -748,6 +795,9 @@ def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit
     cands = _candidates(y, f, min_sig * 0.8, start, var=var)
     if not cands:
         return []
+    model.tail = peak_tail_of(spectrum)        # detector shape calibration, None = Gaussian
+    if report is not None:
+        report.tail = model.tail
     if len(cands) > max_peaks:
         cands = sorted(sorted(cands, key=lambda c: -c[1])[:max_peaks])
     peaks: list[Peak] = []
@@ -919,6 +969,140 @@ def _estimate_fwhm_from_data(y) -> np.ndarray:
     return np.full(n, float(np.median(fw[ok])) if ok.any() else med)
 
 
+TAIL_MIN_Z = 40.0                # search significance of the peaks used
+TAIL_TAUS = (0.5, 0.75, 1.0, 1.5, 2.0, 3.0, 4.0)   # tail slopes tried, in sigma units
+TAIL_MIN_PEAKS = 2               # peaks needed for a spectrum-wide tail
+TAIL_MIN_ETA = 0.005             # smaller tail fractions are ignored (pure Gaussian)
+TAIL_MIN_SIG = 3.0               # combined tail fraction must be this many sigma above 0
+TAIL_MAX_ETA = 0.3
+TAIL_WINDOW_FWHM = 4.0           # fit window on the low-energy side of the peaks used
+
+
+def _tail_one(y, model, c, lo, hi, var=None) -> Optional[tuple[float, float, float, float]]:
+    """(eta, u(eta), tau, chi2) of one strong isolated peak: for each tau the Gaussian and tail
+    amplitudes are linear (with the continuum and step), the width and centroid come from a
+    fit with the current tail; two passes."""
+    m = _Model(model.a)
+    tail = None
+    best = None
+    for _pass in range(2):
+        m.tail = tail
+        r = _fit_group(y, m, [c], lo, hi, free_width=True, step=True, var=var)
+        if r is None or r.at_bound or r.area_unc[0] <= 0 or r.areas[0] / r.area_unc[0] < 30:
+            return None
+        cc, sg = float(r.centroids[0]), float(r.sigmas[0])
+        x = np.arange(lo, hi + 1, dtype=float)
+        d = y[lo:hi + 1]
+        T = (x - cc) / sg
+        ex = np.exp(-0.5 * T * T)
+        ec = 0.5 * erfc(T / math.sqrt(2.0))
+        wt = 1.0 / np.maximum(r.bkg(x) + r.amps[0] * peak_shape(T, tail), 1.0) if var is None             else 1.0 / np.maximum(var[lo:hi + 1], 1.0)
+        best = None
+        for tau in TAIL_TAUS:
+            # the fit's own continuum terms (log-linear for scintillators: a straight line
+            # under a curved NaI continuum looks like a tail)
+            X = np.vstack(list(r.cont_cols(x)) + [ex, _tail_k(T, tau), ec]).T
+            A = X.T @ (X * wt[:, None])
+            try:
+                cov = np.linalg.inv(A)
+            except np.linalg.LinAlgError:
+                continue
+            sol = cov @ (X.T @ (d * wt))
+            res = d - X @ sol
+            chi2 = float(res @ (res * wt))
+            if best is None or chi2 < best[0]:
+                best = (chi2, tau, sol, cov)
+        if best is None:
+            return None
+        chi2, tau, sol, cov = best
+        nb = len(sol) - 3
+        a1, a2 = float(sol[nb]), float(sol[nb + 1])
+        if a1 + a2 <= 0:
+            return None
+        eta = a2 / (a1 + a2)
+        g = np.array([-a2, a1]) / (a1 + a2) ** 2          # d eta / d (a1, a2)
+        nb = X.shape[1] - 3                                  # continuum columns
+        u = math.sqrt(max(float(g @ cov[nb:nb + 2, nb:nb + 2] @ g), 0.0) * max(chi2 / max(len(x) - X.shape[1], 1), 1.0))
+        tail = (min(max(eta, 0.0), TAIL_MAX_ETA), tau) if eta > 0 else None
+    return eta, u, tau, chi2
+
+
+def _tail_points(y, model, cands, start, var=None) -> list[tuple[float, float, float, float, float]]:
+    """(channel, eta, u(eta), tau, chi2) of up to 10 strong isolated peaks of one spectrum."""
+    n = len(y)
+    allc = sorted(c for c, _ in cands)
+    out = []
+    for c, z in sorted(cands, key=lambda cz: -cz[1])[:10]:
+        if z < TAIL_MIN_Z:
+            break
+        fw = model.at(c)
+        if any(c - (TAIL_WINDOW_FWHM + 2.0) * fw < o < c + 4.0 * fw and abs(o - c) > 1e-9 for o in allc):
+            continue
+        lo, hi = int(max(c - TAIL_WINDOW_FWHM * fw, start, 0)), int(min(c + 3.0 * fw, n - 1))
+        if c - lo < 0.9 * TAIL_WINDOW_FWHM * fw:
+            continue
+        t = _tail_one(y, model, c, lo, hi, var)
+        if t is not None and t[1] > 0:
+            out.append((float(c),) + tuple(float(v) for v in t))
+    return out
+
+
+def shape_calibration(spectra, min_sig: float = 3.0) -> dict:
+    """Peak-shape (low-energy tail) calibration of a detector from calibration spectra: strong
+    isolated peaks of all `spectra` are pooled; eta is their inverse-variance mean, tau the
+    median slope.  Returns {"eta", "u_eta", "tau", "n_peaks", "energies_kev", "note"};
+    eta = 0 (Gaussian peaks) when fewer than TAIL_MIN_PEAKS peaks qualify or the tail is not
+    significant.  Apply it to the spectra of that detector with :func:`set_peak_tail`."""
+    pts, energies = [], []
+    for sp in spectra:
+        y = np.maximum(np.asarray(sp.counts, dtype=float), 0.0)
+        if len(y) < 16 or not np.isfinite(y).all() or y.sum() <= 0:
+            continue
+        f, _src, st = width_model(sp, y)
+        model = _Model(f)
+        model.loglinear = loglinear_continuum(sp)
+        cands = _candidates(y, f, min_sig * 0.8, st)
+        for c, eta, u, tau, _chi2 in (_tail_points(y, model, cands, st) if cands else []):
+            pts.append((eta, u, tau))
+            energies.append(float(sp.energy_of(c + sp.first_channel)) if sp.energy_coeffs else float("nan"))
+    out = {"eta": 0.0, "u_eta": None, "tau": None, "n_peaks": len(pts),
+           "energies_kev": [round(e, 2) for e in energies], "note": ""}
+    if len(pts) < TAIL_MIN_PEAKS:
+        out["note"] = f"{len(pts)} strong isolated peak(s); at least {TAIL_MIN_PEAKS} are needed"
+        return out
+    wts = np.array([1.0 / u ** 2 for _e, u, _t in pts])
+    eta = float(np.sum(wts * np.array([e for e, _u, _t in pts])) / wts.sum())
+    u = 1.0 / math.sqrt(float(wts.sum()))
+    out["u_eta"] = u
+    if eta < TAIL_MIN_ETA or eta < TAIL_MIN_SIG * u:
+        out["note"] = f"tail not significant (eta = {eta:.4f} +- {u:.4f}): Gaussian peaks"
+        return out
+    out.update(eta=min(eta, TAIL_MAX_ETA), tau=float(np.median([t for _e, _u, t in pts])))
+    return out
+
+
+def peak_tail_of(spectrum) -> Optional[tuple[float, float]]:
+    """(eta, tau) of the spectrum's peak-shape calibration (``extra["peak_tail"]``), or None."""
+    d = (getattr(spectrum, "extra", None) or {}).get("peak_tail")
+    try:
+        eta, tau = float(d["eta"]), float(d["tau"])
+    except (TypeError, KeyError, ValueError):
+        return None
+    if not (0.0 < eta <= TAIL_MAX_ETA and 0.0 < tau <= 20.0):
+        return None
+    return eta, tau
+
+
+def set_peak_tail(spectrum, cal: Optional[dict]) -> None:
+    """Attach a shape calibration (:func:`shape_calibration`) to `spectrum`; None or eta = 0
+    removes it (Gaussian peaks)."""
+    extra = spectrum.extra
+    if cal and float(cal.get("eta") or 0.0) > 0 and cal.get("tau"):
+        extra["peak_tail"] = {"eta": float(cal["eta"]), "tau": float(cal["tau"])}
+    else:
+        extra.pop("peak_tail", None)
+
+
 def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optional[FitReport] = None,
                   var=None, edges=(), others=()) -> list[Peak]:
     n = len(y)
@@ -974,8 +1158,8 @@ def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optiona
     if len(cents) == 1 and r.chi2r > 4.0 and hi - lo > 8:
         retry = "tried"
         x = np.arange(lo, hi + 1)
-        g = r.areas[0] / (r.fwhms[0] * F2S * SQRT2PI) * np.exp(
-            -0.5 * ((x - r.centroids[0]) / (r.fwhms[0] * F2S)) ** 2)
+        g = r.areas[0] / (r.fwhms[0] * F2S * SQRT2PI) * peak_shape(
+            (x - r.centroids[0]) / (r.fwhms[0] * F2S), getattr(r, "tail", None))
         res = y[lo:hi + 1] - r.bkg(x) - g
         j = int(np.argmax(res))
         c2 = float(x[j])
@@ -1056,7 +1240,7 @@ def _residual_candidate(y, r, model, var=None) -> Optional[float]:
     x = np.arange(r.lo, r.hi + 1, dtype=float)
     tot = r.bkg(x)
     for a_, c_, s_ in zip(r.amps, r.centroids, r.sigmas):
-        tot = tot + a_ * np.exp(-0.5 * ((x - c_) / s_) ** 2)
+        tot = tot + a_ * peak_shape((x - c_) / s_, getattr(r, "tail", None))
     d = y[r.lo:r.hi + 1]
     v = np.maximum(d if var is None else var[r.lo:r.hi + 1], 1.0)
     res = d - tot

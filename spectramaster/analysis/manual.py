@@ -84,6 +84,8 @@ def refit_region(spectrum, lo: int, hi: int, centroids: Sequence[float],
                "width": width, "step": bool(step), "fix_centroids": fix, "fwhm_model": src,
                "counts_sha256": counts_sha256(spectrum)}
     model.loglinear = loglinear_continuum(spectrum)       # same continuum shape as find_peaks
+    from .peaks import peak_tail_of
+    model.tail = peak_tail_of(spectrum)                   # and the same peak-shape calibration
     r = _fit_group(y, model, cents, lo_i, hi_i, free_width=free, step=step, width_bounds=bounds,
                    fix_centroids=fix)
     if r is None:
