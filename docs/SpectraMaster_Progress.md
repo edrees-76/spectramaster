@@ -555,3 +555,27 @@ doublets >= 1 FWHM apart: both found 94.5–100 %, component bias <= 2.8 %, pull
 At 0.8 FWHM doublets are usually fitted as one peak.
 
 All six Aptec UX phases are done; the user manual is to be updated next (user decision).
+
+## External review fixes (2026-10-20)
+
+Findings of an external review (Gemini) and a SonarQube Cloud scan, checked one by one against
+the code; only the confirmed ones are fixed.
+
+- **mBq read as MBq** (found while checking the units; neither review reported it): the Aptec
+  activity units matched case-insensitively, so `mBq` gave a factor 10^9 wrong.  Exact match
+  first now; `mBq` added to the units table.
+- Quantify: *total quantity* selected but missing → not quantified ("total quantity is
+  missing") instead of silently omitted; activity date far after the count → flag `<`, "decay
+  correction underflow" instead of activity 0; units `cps` / `cpm` → the net count rate (no
+  efficiency, yield or decay), instead of "unknown units".
+- Peak search and ROI statistics reject NaN / infinite counts with a clear message.
+- Strip records `strip_live_time_warning` when the live times differ (the dialog already warned;
+  counts are subtracted as they are, as Aptec: normalize first).
+- Engine messages of the Aptec Analyze commands are shown in the interface language.
+- CI installs pinned wheels (`requirements-ci.txt`); NaN tests with `math.isnan`; the peak cache
+  hash is marked not for security.
+
+Not changed, by design: Aptec's ROI area uncertainty sqrt(G + B), Background Subtract only for
+background lines above their MDA, channel-by-channel Strip -- these reproduce Aptec (the
+SpectraMaster engine has the full propagation).  NaI and true-coincidence summing remain the
+documented limitations.

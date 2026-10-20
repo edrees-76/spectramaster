@@ -11,6 +11,7 @@ P runs SpectraMaster's own analysis (fitted peaks, identification scores) as bef
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 from typing import Optional
 
@@ -22,12 +23,12 @@ from PySide6.QtWidgets import (QButtonGroup, QCheckBox, QComboBox, QDialog, QDia
 
 from ..analysis import aptec_analyze as aa
 from ..analysis import aptec_multifit as amf
-from .aptec_analyze_strings import atr
+from .aptec_analyze_strings import atr, engine_text
 
 KEY = "aptec/analyze/"
 ENGINE_APTEC = "aptec"
 ENGINE_SM = "spectramaster"
-UNITS = ("Bq", "kBq", "MBq", "mBq", "pCi", "nCi", "uCi", "mCi", "Ci", "dps", "dpm", "gamma/s", "gamma/m")
+UNITS = ("Bq", "kBq", "MBq", "mBq", "pCi", "nCi", "uCi", "mCi", "Ci", "dps", "dpm", "gamma/s", "gamma/m", "cps", "cpm")
 
 
 def _rtl(w) -> None:
@@ -527,7 +528,7 @@ class AptecAnalysis:
         try:
             found = aa.peak_search(spec.counts, self.peak, plot.roi_props, spec.live_time)
         except ValueError as exc:
-            self.message(atr("err", msg=str(exc)))
+            self.message(atr("err", msg=engine_text(str(exc))))
             return False
         set_rois(plot, [(st.rl, st.rh) for st in found])
         self._show_rois()
@@ -625,7 +626,7 @@ class AptecAnalysis:
         try:
             lines, lib_name = self.library_lines()
         except (OSError, ValueError) as exc:
-            self.message(atr("err", msg=str(exc)))
+            self.message(atr("err", msg=engine_text(str(exc))))
             return False
         e_range = None
         if spec.energy_coeffs:
@@ -665,7 +666,7 @@ class AptecAnalysis:
             lines, _name = self.library_lines()
             table = background_lines(bkg, win.plot.roi_props, self.peak, self.ident, lines)
         except Exception as exc:                # unreadable file, no calibration, ...
-            self.message(atr("err", msg=str(exc) or type(exc).__name__))
+            self.message(atr("err", msg=engine_text(str(exc)) or type(exc).__name__))
             return False
         n = 0
         for r in rois:
@@ -709,7 +710,7 @@ class AptecAnalysis:
         try:
             eff = self.efficiency_at(spec)
         except Exception as exc:
-            self.message(atr("err", msg=str(exc) or type(exc).__name__))
+            self.message(atr("err", msg=engine_text(str(exc)) or type(exc).__name__))
             return False
         if eff is None:
             self.message(atr("err", msg=atr("q_eff_none")))
@@ -749,7 +750,7 @@ class AptecAnalysis:
         self._refresh()
         text = atr("quant_done", n=n_ok, units=self.units_label(spec))
         if n_ok < len(rois):
-            text += "  " + atr("quant_note", n=len(rois) - n_ok, why="; ".join(sorted(w for w in why if w)))
+            text += "  " + atr("quant_note", n=len(rois) - n_ok, why="; ".join(sorted(engine_text(w) for w in why if w)))
         self.status(text, 15000)
         return True
 
@@ -769,7 +770,7 @@ def _float(v) -> Optional[float]:
         f = float(v)
     except (TypeError, ValueError):
         return None
-    return f if f == f else None
+    return None if math.isnan(f) else f
 
 
 def _parse_dt(v):

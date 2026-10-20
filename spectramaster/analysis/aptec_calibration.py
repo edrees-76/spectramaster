@@ -66,18 +66,31 @@ VERIFIED_TYPES = {"A", "B", "D"}
 
 # activity unit -> Bq factor; "emission" units already include the yield
 ACTIVITY_UNITS: dict[str, float] = {
-    "Bq": 1.0, "kBq": 1e3, "MBq": 1e6, "GBq": 1e9, "dps": 1.0, "dpm": 1.0 / 60.0,
+    "Bq": 1.0, "mBq": 1e-3, "kBq": 1e3, "MBq": 1e6, "GBq": 1e9, "dps": 1.0, "dpm": 1.0 / 60.0,
     "Ci": 3.7e10, "mCi": 3.7e7, "uCi": 3.7e4, "nCi": 37.0, "pCi": 0.037,
     "gamma/s": 1.0, "gamma/m": 1.0 / 60.0,
 }
 EMISSION_UNITS = {"gamma/s", "gamma/m"}
+# count-rate units (cps per unit): the result is the net count rate, without efficiency or yield
+COUNT_RATE_UNITS: dict[str, float] = {"cps": 1.0, "cpm": 1.0 / 60.0}
 
 
 def activity_factor(units: str) -> Optional[float]:
-    """Bq per unit (case-insensitive; ``µ`` accepted for ``u``); None if unknown."""
+    """Bq per unit (exact, else case-insensitive; ``µ`` accepted for ``u``); None if unknown."""
     u = (units or "").strip().replace("µ", "u").replace("μ", "u")
+    if u in ACTIVITY_UNITS:                   # exact first: mBq and MBq differ only by case
+        return ACTIVITY_UNITS[u]
     for k, v in ACTIVITY_UNITS.items():
         if k.lower() == u.lower():
+            return v
+    return None
+
+
+def count_rate_factor(units: str) -> Optional[float]:
+    """cps per unit for the count-rate units ``cps`` / ``cpm`` (case-insensitive); None otherwise."""
+    u = (units or "").strip().lower()
+    for k, v in COUNT_RATE_UNITS.items():
+        if k == u:
             return v
     return None
 
@@ -555,7 +568,8 @@ def upper_to_matrix(upper: Sequence[float], n: int) -> np.ndarray:
 
 
 __all__ = ["read_aptec_calibrations", "upper_to_matrix", "MAX_DEGREE", "MAX_QUICK_POINTS", "MAX_POINTS", "DEFAULT_DEGREE", "EFF_TYPES", "EFF_TYPE_TEXT",
-           "VERIFIED_TYPES", "ACTIVITY_UNITS", "activity_factor", "is_emission_unit", "PolyCalibration",
+           "VERIFIED_TYPES", "ACTIVITY_UNITS", "COUNT_RATE_UNITS", "activity_factor", "count_rate_factor",
+           "is_emission_unit", "PolyCalibration",
            "fit_polynomial", "fwhm_channels_to_kev", "fwhm_kev_to_channels", "EffPoint", "EffCalibration",
            "fit_efficiency", "calculate_efficiency", "to_efficiency_curve", "spline_design", "poly_report",
            "eff_report"]

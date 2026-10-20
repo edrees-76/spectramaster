@@ -112,7 +112,7 @@ def _cached_width_guess(spectrum) -> str:
     identification both ask for the type of the same spectrum)."""
     import hashlib
     y = np.ascontiguousarray(np.asarray(spectrum.counts, dtype=float))
-    key = (hashlib.sha1(y.tobytes()).hexdigest(), tuple(float(c) for c in spectrum.energy_coeffs),
+    key = (hashlib.sha1(y.tobytes(), usedforsecurity=False).hexdigest(), tuple(float(c) for c in spectrum.energy_coeffs),
            int(spectrum.first_channel))
     if key not in _WIDTH_GUESS_CACHE:
         if len(_WIDTH_GUESS_CACHE) >= 64:

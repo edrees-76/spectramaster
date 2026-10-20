@@ -39,6 +39,20 @@ EN = {
     "quant_done": "Quantify: {n} activities in {units}.",
     "quant_note": "{n} ROIs could not be quantified: {why}",
     "err": "The analysis was not done: {msg}",
+    "eng_0": 'no live time',
+    "eng_1": 'the spectrum has no live time',
+    "eng_2": 'the background spectrum has no live time',
+    "eng_3": 'no efficiency at this energy',
+    "eng_4": 'line yield is zero',
+    "eng_5": 'decay correction overflow (activity date too early)',
+    "eng_6": 'decay correction underflow (activity date too late)',
+    "eng_7": 'sample quantity is missing',
+    "eng_8": 'total quantity is missing',
+    "eng_9": 'count-rate units: net count rate, not an activity',
+    "eng_10": 'not an Aptec isotope library',
+    "eng_11": 'truncated Aptec isotope library',
+    "eng_12": "unknown activity units '{0}'",
+    "eng_13": 'the spectrum has {0} channels that are not numbers (first: {1})',
     "stale": "The ROIs changed: identify and quantify again.",
     # peak search setup
     "peak_title": "Peak Search Setup",
@@ -176,6 +190,20 @@ AR = {
     "quant_done": "القياس الكمي: {n} نشاط بوحدة {units}.",
     "quant_note": "{n} منطقة لم يُحسب نشاطها: {why}",
     "err": "لم يُنفَّذ التحليل: {msg}",
+    "eng_0": "لا يوجد زمن حي",
+    "eng_1": "الطيف بلا زمن حي",
+    "eng_2": "طيف الخلفية بلا زمن حي",
+    "eng_3": "لا توجد كفاءة عند هذه الطاقة",
+    "eng_4": "احتمال انبعاث الخط صفر",
+    "eng_5": "تجاوز في تصحيح الاضمحلال (تاريخ النشاط مبكر جدًا)",
+    "eng_6": "تلاشٍ في تصحيح الاضمحلال (تاريخ النشاط متأخر جدًا)",
+    "eng_7": "كمية العينة غير مُدخلة",
+    "eng_8": "الكمية الكلية غير مُدخلة",
+    "eng_9": "وحدة معدل عدّ: معدل العد الصافي وليس نشاطًا",
+    "eng_10": "الملف ليس مكتبة نظائر Aptec",
+    "eng_11": "مكتبة نظائر Aptec ناقصة",
+    "eng_12": "وحدة نشاط غير معروفة '{0}'",
+    "eng_13": "في الطيف {0} قناة قيمها ليست أرقامًا (أولها: {1})",
     "stale": "تغيرت المناطق: أعد التعرّف والقياس الكمي.",
     "peak_title": "إعداد بحث القمم",
     "peak_all": "الكل: البحث في كل القنوات",
@@ -281,6 +309,42 @@ _SC = [
 ]
 i18n.SHORTCUTS[:] = [row for row in i18n.SHORTCUTS if row[0] != "P"]
 i18n.SHORTCUTS.extend(row for row in _SC if row not in i18n.SHORTCUTS)
+
+
+# messages of the analysis engine (English) shown translated: (exact text, pattern, key)
+_ENGINE = [
+    ('no live time', None, "eng_0"),
+    ('the spectrum has no live time', None, "eng_1"),
+    ('the background spectrum has no live time', None, "eng_2"),
+    ('no efficiency at this energy', None, "eng_3"),
+    ('line yield is zero', None, "eng_4"),
+    ('decay correction overflow', None, "eng_5"),
+    ('decay correction underflow', None, "eng_6"),
+    ('sample quantity is missing', None, "eng_7"),
+    ('total quantity is missing', None, "eng_8"),
+    ('count-rate units: net count rate, not an activity', None, "eng_9"),
+    ('not an Aptec isotope library', None, "eng_10"),
+    ('truncated Aptec isotope library', None, "eng_11"),
+    (None, "unknown activity units '(.*)'", "eng_12"),
+    (None, 'the spectrum has (\\d+) channels that are not numbers \\(first: (\\d+)\\)', "eng_13"),
+]
+
+
+def engine_text(msg: str) -> str:
+    """An engine message (note or exception text) in the interface language; unknown ones as they are."""
+    import re
+    msg = str(msg or "")
+    for exact, pat, key in _ENGINE:
+        if exact is not None and msg == exact:
+            return atr(key)
+        if pat is not None:
+            m = re.fullmatch(pat, msg)
+            if m:
+                text = atr(key)
+                for i, g in enumerate(m.groups()):
+                    text = text.replace("{%d}" % i, g)
+                return text
+    return msg
 
 
 def atr(key: str, **kwargs) -> str:

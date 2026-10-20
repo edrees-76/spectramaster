@@ -199,6 +199,14 @@ def _gross_half_max(counts: np.ndarray, rl: int, rh: int) -> tuple[int, int]:
     return a, b
 
 
+def check_finite(y) -> None:
+    """Raise ValueError if the counts hold NaN or infinite values (a damaged spectrum)."""
+    bad = ~np.isfinite(y)
+    if bad.any():
+        raise ValueError(f"the spectrum has {int(bad.sum())} channels that are not numbers "
+                         f"(first: {int(np.argmax(bad))})")
+
+
 def analyze_rois(counts: Sequence[float], rois: Sequence[tuple[int, int]],
                  props: Optional[RoiProperties] = None, live_time: Optional[float] = None,
                  end_points: Optional[Sequence[tuple[int, int]]] = None) -> list[AptecRoi]:
@@ -207,6 +215,7 @@ def analyze_rois(counts: Sequence[float], rois: Sequence[tuple[int, int]],
     ``end_points`` overrides the computed ``(BL, BH)`` per ROI (e.g. those stored in a file)."""
     props = (props or RoiProperties()).validate()
     y = np.asarray(counts, dtype=float)
+    check_finite(y)
     n = len(y)
     norm = [(max(0, min(int(a), int(b))), min(n - 1, max(int(a), int(b)))) for a, b in rois]
     out: list[Optional[AptecRoi]] = [None] * len(norm)
@@ -320,5 +329,5 @@ FLAG_TEXT = {
 }
 
 
-__all__ = ["RoiProperties", "AptecRoi", "analyze_rois", "background_coeffs", "groups", "end_point_width",
+__all__ = ["RoiProperties", "AptecRoi", "analyze_rois", "check_finite", "background_coeffs", "groups", "end_point_width",
            "CENTROID_RANGES", "CENTROID_WEIGHTS", "FLAGS", "read_aptec_rois", "FLAG_TEXT", "MAX_END_POINTS"]

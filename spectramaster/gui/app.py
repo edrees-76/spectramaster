@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import io
+import math
 import os
 import re
 import sys
@@ -1010,7 +1011,7 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         for a in self.act_y.values():
             ym.addAction(a)
         menu.addSeparator()
-        if pos == pos:   # not NaN
+        if not math.isnan(pos):
             k = self.plot.roi_at(pos)
             if k >= 0:
                 a = menu.addAction(tr("act_delete_roi_here", n=k + 1))
