@@ -1,4 +1,6 @@
 """Non-ASCII (Arabic) sample text: formats that cannot store it must warn."""
+import datetime as dt
+
 import pytest
 
 from spectramaster.convert import ASCII_ONLY_TEXT, read_spectra, write_spectrum
@@ -11,7 +13,8 @@ EN_ID, EN_DESC = "TEA 12", "Black tea sample"
 
 def _spec(sid, desc):
     return Spectrum(counts=[float(i % 50) for i in range(1024)], energy_coeffs=[0.0, 0.5],
-                    live_time=100.0, real_time=101.0, sample_id=sid, description=desc)
+                    live_time=100.0, real_time=101.0, sample_id=sid, description=desc,
+                    start_time=dt.datetime(2020, 5, 6, 7, 8, 9))
 
 
 def _roundtrip(tmp_path, fmt, sid, desc, tag):

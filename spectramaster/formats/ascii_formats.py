@@ -220,11 +220,11 @@ def read_ascii1(path: Path) -> list[Spectrum]:
             continue
         nums = _numeric_tokens(line)
         if nums is None:
-            if not spec.counts:
+            if len(spec.counts) == 0:
                 header.append(line.strip())
             continue
         spec.counts.append(_count_value(nums[-1] if len(nums) == 2 else nums[0]))
-    if not spec.counts:
+    if len(spec.counts) == 0:
         raise FormatError("no counts found")
     if header:
         spec.sample_id = spec.sample_id or header[0]
@@ -549,7 +549,7 @@ def read_ieee_asc(path: Path) -> list[Spectrum]:
             continue
         per_line.append(len(nums))
         spec.counts.extend(_count_value(v) for v in nums)
-    if not spec.counts:
+    if len(spec.counts) == 0:
         raise FormatError("no counts found")
     if header:
         spec.sample_id = spec.sample_id or header[0]

@@ -937,3 +937,31 @@ Each case first got a test that failed (`tests/test_tcs_safety.py`).
 - A first-order COI <= 0 gives no result for the line. A summing-out above 10 % is noted.
 - The protocol's summing-in formula is corrected to divide by I_i eps_p(E_i), the formula the
   implementation already used (erratum in `tcs_protocol.md`).
+
+## Format fidelity (2026-10-20, from the second external review)
+
+Writing a spectrum to a format that cannot hold part of it now refuses or reports the loss,
+never changes it silently. A round trip through every writable format checks each rule
+(`tests/test_format_fidelity.py`), and the sets in `convert.py` are kept in step with it.
+
+- Negative counts are refused by formats that only store non-negative channels. Before, CHN
+  and CNF set them to 0. Such spectra come from background subtraction or Strip. The affected
+  formats are CHN, SPC, CNF, Exploranium, NPL ASCII and SPC ASCII. The last of these was
+  written but could not be read back.
+- Fractional counts written to an integer format are rounded with a warning that gives the
+  largest change.
+- An unknown start time in a format that always stores a date is reported. CHN's placeholder
+  (2000-01-01 00:00:00) now reads back as unknown, instead of a false date that a decay
+  correction would use.
+- Arabic-Indic digits in the sample ID and description are written as 0-9, with a warning.
+  This covers the ASCII-only formats and the cp1256 formats (Aptec S0 and ASCII, IEC 1455 and
+  others), which had turned them into '?'. Other characters a cp1256 format cannot hold are
+  reported.
+- Aptec S0 writes the channels below `first_channel` as zeros, as the Aptec ASCII writers do.
+  Before, the energy calibration was shifted by the offset (50 keV in the test).
+- Counts given as a numpy array no longer stop most writers. NaN or infinite counts are
+  refused.
+- A spectrum already stripped with Aptec's Strip is not background-subtracted again. When the
+  channel contents are not Poisson counts (subtracted, stripped, normalized, smoothed), the
+  activity results carry a note that their uncertainties, decision thresholds and MDA are not
+  valid.

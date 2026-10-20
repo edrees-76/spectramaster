@@ -272,7 +272,7 @@ def _read_with(path: Path, parser) -> list[Spectrum]:
 
 
 def _build_specfile(spec: Spectrum) -> "_SU.SpecFile":
-    if not spec.counts:
+    if len(spec.counts) == 0:
         raise FormatError("spectrum has no channels")
     n = len(spec.counts)
     m = _SU.Measurement.new()
@@ -332,6 +332,9 @@ def _reader(parser):
 
 # ------------------------------------------------------------------ ORTEC CHN
 _MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
+# CHN always holds a date: an unknown start is written as 2000-01-01 00:00:00 and read
+# back as unknown (an MCA clock that was never set gives the same placeholder).
+_CHN_NO_DATE = (b"00", b"01JAN001", b"0000")
 
 
 def _chn_read(path: Path) -> list[Spectrum]:
@@ -348,6 +351,8 @@ def _chn_read(path: Path) -> list[Spectrum]:
         raise FormatError(f"{Path(path).name}: truncated CHN file")
     counts = [float(c) for c in struct.unpack_from(f"<{nch}I", b, 32)]
     start = None
+    if (secs.encode(), date.encode(), hhmm.encode()) == _CHN_NO_DATE:
+        date = ""                      # the placeholder of an unknown start time
     try:
         day = int(date[0:2]); mon = _MONTHS.index(date[2:5].upper()); yy = int(date[5:7])
         # ORTEC: 8th char '1' = 2000s, '0' = 1900s.  Older writers leave it blank/NUL;
@@ -405,7 +410,7 @@ def _chn_write(spec: Spectrum, path: Path) -> None:
     for c in spec.counts:
         v = int(round(float(c)))
         if v < 0:
-            v = 0
+            raise FormatError(f"CHN cannot store a negative count ({c:g})")
         if v > 0xFFFFFFFF:
             raise FormatError("channel content exceeds 32-bit CHN range")
         counts.append(v)
@@ -416,7 +421,7 @@ def _chn_write(spec: Spectrum, path: Path) -> None:
                 + ("1" if st.year >= 2000 else "0")).encode()
         hhmm = f"{st.hour:02d}{st.minute:02d}".encode()
     else:
-        secs, date, hhmm = b"00", b"01JAN001", b"0000"
+        secs, date, hhmm = _CHN_NO_DATE
     rt = int(round((spec.real_time or 0.0) * 50))
     lt = int(round((spec.live_time or 0.0) * 50))
     first = int(spec.first_channel or 0)
@@ -668,7 +673,7 @@ def _cnf_write(spec: Spectrum, path: Path) -> None:
     for c in spec.counts:
         v = int(round(float(c)))
         if v < 0:
-            v = 0
+            raise FormatError(f"CNF cannot store a negative count ({c:g})")
         if v > 0xFFFFFFFF:
             raise FormatError("channel content exceeds 32-bit CNF range")
         counts.append(v)

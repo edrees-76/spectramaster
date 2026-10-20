@@ -502,7 +502,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     bcounts = None          # full-spectrum mode: background counts on the sample grid
     bfit = None             # peak mode: background fitted at the sample peaks
     bkg_under: dict = {}
-    from .background import SUBTRACTED, BackgroundFitter, check_not_subtracted, compatibility, net_spectrum
+    from .background import BackgroundFitter, check_not_subtracted, compatibility, net_spectrum, not_poisson_note
     if background is not None:
         check_not_subtracted(spectrum)
         check_measurement(background, "background spectrum")
@@ -518,9 +518,8 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             bfit = BackgroundFitter(spectrum, background)
             if bfit.note:
                 notes.append(bfit.note)
-    elif (spectrum.extra or {}).get("operation") == SUBTRACTED:
-        notes.append("the spectrum is background subtracted: its counts are treated as Poisson, which "
-                     "underestimates the uncertainties; analyse the sample with the background instead")
+    if not_poisson_note(spectrum):
+        notes.append(not_poisson_note(spectrum))
     fit_report = None
     if peaks is None:
         from .peaks import FitReport

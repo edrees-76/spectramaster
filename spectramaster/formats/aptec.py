@@ -131,6 +131,7 @@ import struct
 import sys
 import zlib
 from array import array
+from dataclasses import replace
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -418,6 +419,11 @@ def _short_name(name: str) -> str:
 
 def write_aptec(spec: Spectrum, path: Path) -> None:
     path = Path(path)
+    # S0 has no channel offset: the channels below first_channel are written as zeros so
+    # that the calibration keeps its channel numbering (as the Aptec ASCII writers do)
+    first = max(int(spec.first_channel or 0), 0)
+    if first:
+        spec = replace(spec, counts=[0.0] * first + list(spec.counts), first_channel=0)
     n = len(spec.counts)
     if not 0 < n <= 65535:
         raise FormatError(f"APTEC S0 needs 1..65535 channels, got {n}")
