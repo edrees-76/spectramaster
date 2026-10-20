@@ -890,3 +890,30 @@ default; when it is ticked, the calculation applies `ActivityOptions.tcs`.
   first order in very close geometries.
 - The values are remembered (`quant/tcs`). The tick is not remembered.
 - The report's concentration notes state the correction with the assumed P/T.
+
+## External review round 2: uncertainty and input fixes (2026-10-20)
+
+Two external reviews (Codex and Gemini, commit c527f4e) found defects. This change fixes those
+that concern the uncertainties and the input checks. Each one first got a test that failed
+(`tests/test_uncertainty_fixes.py`).
+
+- ISO 11929 detection limit. The fixed-point iteration stopped after 200 steps without
+  converging as k u_rel(w) -> 1. For example, at u_rel = 0.607 it gave 31.4 instead of 120.0.
+  It is now the closed-form root of the quadratic, and it is infinite when k u_rel >= 1.
+- A net value of exactly zero gave u = NaN, because the relative counting uncertainty was
+  infinite. Counting uncertainties are now carried in Bq (`LineResult.u_count_bq`).
+- Reagent blank with a reference peak correction. The blank's own reference uncertainty was
+  dropped, and the sample's u_rel(K) was applied to the net difference only. Now each spectrum's
+  reference-peak counting is independent, and the expected rate is common to both
+  (`QuantResults.reference_u_count_rel`, `reference_u_rate_rel`).
+- Blank options that differ from the sample's are noted: attenuation, true-coincidence summing,
+  reference peak, and background spectrum or mode.
+- Unphysical input is refused with a clear message, instead of silently giving "no usable line"
+  and MDA = 0. This covers a live time that is negative, NaN or infinite, a real time that is
+  negative or NaN, and counts that are not finite. It applies to the sample, background,
+  reference and calibration spectra (`efficiency.check_measurement`).
+- QC statistics use `math.fsum`. A spread at the rounding level counts as zero, so identical
+  readings no longer raise false Westgard alarms on Python versions without compensated `sum`.
+
+The other review findings (true-coincidence summing safety, formats, fit windows, the interface
+thread, traceability) follow in separate changes.

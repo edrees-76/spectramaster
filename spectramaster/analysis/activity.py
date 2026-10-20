@@ -35,7 +35,7 @@ Detection limits (counts), continuum B under the expected peak region of n chann
 ISO 11929 (simple formulation, activity domain, w = 1/(eps I t C D F_att)):
 
     decision threshold  y* = k_{1-a} * w * sigma0
-    detection limit     y# = y* + k_{1-b} * sqrt( w^2 (y#/w + sigma0^2) + y#^2 u_rel(w)^2 )  (iterated)
+    detection limit     y# = y* + k_{1-b} * sqrt( w^2 (y#/w + sigma0^2) + y#^2 u_rel(w)^2 )  (closed-form root)
 
 With ISO 11929 the best estimate of the (non-negative) true value and the probabilistically
 symmetric coverage interval are also given (ISO 11929-1:2019), from the primary result y
@@ -73,6 +73,14 @@ analysed with the same curve, options and laboratory background), per line::
 
 Efficiency, emission probability and attenuation stay relative to the net value (the same curve,
 line and geometry: fully correlated).  A line without a peak in the blank is not corrected (noted).
+With reference peak corrections (K_s of the sample, K_b of the blank) the counting of each
+spectrum's reference peak is independent and the expected rate is common::
+
+    u_ref(A)^2 = (A_gross u_count(K_s))^2 + (A_b' u_count(K_b))^2 + (A_gross u_rate - A_b' u_rate,b)^2
+
+Counting uncertainties are carried in Bq (``LineResult.u_count_bq``), so a net value of exactly
+zero keeps its uncertainty.  Options of the blank that differ from the sample's (attenuation,
+true-coincidence summing, reference peak, background) are noted.
 
 A nuclide is "detected" when its activity exceeds the decision threshold (Currie L_C or
 ISO y*); otherwise "< MDA" is reported.  True-coincidence summing is NOT corrected
@@ -90,7 +98,8 @@ from typing import Optional, Sequence, Union
 import numpy as np
 
 from . import coincidence
-from .efficiency import (TCS_NUCLIDES, EfficiencyCurve, counting_decay_factor, decay_factor, match_peak)
+from .efficiency import (TCS_NUCLIDES, EfficiencyCurve, check_measurement, counting_decay_factor, decay_factor,
+                         match_peak)
 
 K_DEFAULT = 1.645
 
@@ -147,7 +156,9 @@ class LineResult:
     efficiency: float = 0.0
     eff_rel_unc: float = 0.0
     activity: Optional[float] = None       # parent Bq at reference date
-    u_count_rel: float = 0.0
+    u_count_rel: float = 0.0               # relative counting uncertainty (inf for a zero net area)
+    u_count_bq: float = 0.0                # counting standard uncertainty, Bq (finite at zero)
+    ref_unc_bq: float = 0.0                # reference peak component, Bq (sample and blank)
     lc_counts: float = 0.0
     ld_counts: float = 0.0
     decision_threshold: float = 0.0        # Bq (parent)
@@ -268,7 +279,9 @@ class QuantResults:
     notes: list[str] = field(default_factory=list)
     blank: str = ""                      # reagent blank sample (empty: no blank correction)
     reference_factor: Optional[float] = None    # reference peak correction K (None: not applied)
-    reference_u_rel: float = 0.0
+    reference_u_rel: float = 0.0                # u_rel(K), both parts below
+    reference_u_count_rel: float = 0.0          # counting of the measured reference peak (this spectrum)
+    reference_u_rate_rel: float = 0.0           # the expected rate (common to sample and blank)
 
     def rows(self) -> list[dict]:
         return [result_row(r) for r in self.nuclides]
@@ -357,18 +370,20 @@ def currie_limits(sigma0: float, k_alpha: float = K_DEFAULT, k_beta: float = K_D
 
 def iso11929_limits(sigma0: float, w: float, w_rel_unc: float, k_alpha: float = K_DEFAULT,
                     k_beta: float = K_DEFAULT) -> tuple[float, float]:
-    """(decision threshold y*, detection limit y#) in activity units (simple formulation)."""
+    """(decision threshold y*, detection limit y#) in activity units (simple formulation).
+
+    y# solves y# = y* + k_b sqrt(w y# + w^2 sigma0^2 + y#^2 u_rel^2), i.e. the larger root of
+    (1 - k_b^2 u_rel^2) y#^2 - (2 y* + k_b^2 w) y# + y*^2 - k_b^2 w^2 sigma0^2 = 0
+    (closed form: the fixed-point iteration converges too slowly as k_b u_rel -> 1).
+    No detection limit exists (inf) when k_b u_rel >= 1."""
     ys = k_alpha * w * sigma0
-    yd = 2.0 * ys if ys > 0 else w * k_beta ** 2
-    for _ in range(200):
-        u = math.sqrt(w * w * (yd / w + sigma0 ** 2) + (yd * w_rel_unc) ** 2)
-        new = ys + k_beta * u
-        if abs(new - yd) < 1e-12 * max(new, 1e-300):
-            yd = new
-            break
-        yd = new
-    if k_beta * w_rel_unc >= 1:
-        yd = float("inf")
+    a = 1.0 - (k_beta * w_rel_unc) ** 2
+    if a <= 0:
+        return ys, float("inf")
+    b = 2.0 * ys + k_beta ** 2 * w
+    c = ys * ys - (k_beta * w * sigma0) ** 2
+    disc = max(b * b - 4.0 * a * c, 0.0)
+    yd = (b + math.sqrt(disc)) / (2.0 * a)            # the larger root: y# >= y*
     return ys, yd
 
 
@@ -470,8 +485,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     opt = options or ActivityOptions()
     if not spectrum.energy_coeffs:
         raise ValueError("the spectrum has no energy calibration")
-    if not spectrum.live_time:
-        raise ValueError("the spectrum has no live time")
+    check_measurement(spectrum)
     t_live = float(spectrum.live_time)
     t_real = float(spectrum.real_time or spectrum.live_time)
     ref = opt.ref_date or spectrum.start_time
@@ -486,8 +500,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     from .background import SUBTRACTED, BackgroundFitter, check_not_subtracted, compatibility, net_spectrum
     if background is not None:
         check_not_subtracted(spectrum)
-        if not background.live_time:
-            raise ValueError("the background spectrum has no live time")
+        check_measurement(background, "background spectrum")
         notes.extend(compatibility(spectrum, background))
         k_b = t_live / float(background.live_time)
         if opt.bkg_mode == "spectrum":
@@ -515,10 +528,11 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     if spectrum.start_time is None and opt.ref_date is not None:
         notes.append("acquisition start unknown: no decay correction")
     dt = (spectrum.start_time - ref).total_seconds() if (spectrum.start_time and ref) else 0.0
-    ref_k, ref_u = 1.0, 0.0
+    ref_k, ref_uc, ref_ur = 1.0, 0.0, 0.0
     if opt.reference_peak:
-        ref_k, ref_u, note = reference_correction(spectrum, peaks, opt.reference_peak, t_live)
+        ref_k, ref_uc, ref_ur, note = reference_correction(spectrum, peaks, opt.reference_peak, t_live)
         notes.append(note)
+    ref_u = math.hypot(ref_uc, ref_ur)
     tcs_on = bool(opt.tcs)
     if tcs_on:
         pa, pb = (float(v) for v in opt.tcs["peak_to_total"])
@@ -532,8 +546,13 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                      f"peak-to-total PT(E) = min(1, {pa:g} (E/1000 keV)^{pb:g}) +- {100 * tcs_u:g} % (assumed), "
                      "efficiencies of the curve clamped to its range")
     blank_dt = 0.0          # seconds from the blank's reference date to the sample's
+    bl_uc = bl_ur = 0.0     # the blank's own reference peak correction: counting, expected rate
     if blank is not None:
-        notes.extend(_blank_checks(blank, curve, opt))
+        notes.extend(_blank_checks(blank, curve, opt, background))
+        if blank.reference_factor is not None:
+            bl_uc, bl_ur = blank.reference_u_count_rel, blank.reference_u_rate_rel
+            if not (bl_uc or bl_ur):        # results saved before the split: all independent
+                bl_uc = blank.reference_u_rel
         if blank.ref_date is not None and ref is not None:
             blank_dt = (ref - blank.ref_date).total_seconds()
         elif blank.ref_date is not None or ref is not None:
@@ -608,7 +627,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                 else:
                     kd = decay_factor(hl, blank_dt)
                     lr.blank_activity = bl.activity * kd
-                    lr.blank_unc = abs(bl.activity) * bl.u_count_rel * kd
+                    lr.blank_unc = (bl.u_count_bq or abs(bl.activity) * bl.u_count_rel) * kd
                     blank_counts = lr.blank_activity / w
                     var0 += (lr.blank_unc * fwin / w) ** 2
             if bcounts is not None:
@@ -638,18 +657,24 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                 lr.net_area, lr.net_unc = nnet, unet
                 used_peaks.setdefault(id(p), []).append(name)
                 lr.activity = nnet * w
-                lr.u_count_rel = unet / abs(nnet) if nnet else float("inf")
+                gross = lr.activity
                 if lr.blank_activity is not None:
-                    lr.gross_activity = lr.activity
+                    lr.gross_activity = gross
                     nnet -= blank_counts
                     unet = math.hypot(unet, lr.blank_unc / w)
                     lr.activity = nnet * w
-                    lr.u_count_rel = unet / abs(nnet) if nnet else float("inf")
+                lr.u_count_bq = unet * w
+                lr.u_count_rel = unet / abs(nnet) if nnet else float("inf")
+                # reference peak: each spectrum's own peak counting is independent, the expected
+                # rate is common (fully correlated) to the sample and the blank
+                ab = lr.blank_activity or 0.0
+                lr.ref_unc_bq = math.sqrt((gross * ref_uc) ** 2 + (ab * bl_uc) ** 2
+                                          + (gross * ref_ur - ab * bl_ur) ** 2)
                 lr.detected = nnet > lr.lc_counts
             else:
                 lr.note = (lr.note + "; no peak").strip("; ")
             res.lines.append(lr)
-        _combine(res, opt, ref_u)
+        _combine(res, opt)
         results.append(res)
     # shared peaks
     shared: dict[str, set] = {}
@@ -697,15 +722,15 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                         ref_date=ref, curve_name=curve.name or curve.geometry, curve_model=curve.describe(),
                         background=(background.source_path or background.sample_id) if background is not None else "",
                         options=opt, nuclides=results, notes=notes, blank=blank_name,
-                        reference_factor=ref_k if opt.reference_peak else None, reference_u_rel=ref_u)
+                        reference_factor=ref_k if opt.reference_peak else None, reference_u_rel=ref_u,
+                        reference_u_count_rel=ref_uc, reference_u_rate_rel=ref_ur)
 
 
 def reference_rate(spectrum, energy: float, min_sig: float = 3.0) -> tuple[float, float]:
     """(rate, standard uncertainty) in counts per live second of the peak at `energy` in a
     reference (low-rate) measurement of a fixed reference source."""
     from .peaks import find_peaks
-    if not spectrum.live_time:
-        raise ValueError("the reference spectrum has no live time")
+    check_measurement(spectrum, "reference spectrum")
     p = match_peak(find_peaks(spectrum, min_sig=min_sig), energy)
     if p is None:
         raise ValueError(f"reference peak at {energy:g} keV not found in the reference spectrum")
@@ -713,8 +738,10 @@ def reference_rate(spectrum, energy: float, min_sig: float = 3.0) -> tuple[float
     return float(p.net_area) / t, float(p.net_area_unc) / t
 
 
-def reference_correction(spectrum, peaks, ref: dict, t_live: float) -> tuple[float, float, str]:
-    """(K, u_rel(K), note) of the reference peak correction (module docstring)."""
+def reference_correction(spectrum, peaks, ref: dict, t_live: float) -> tuple[float, float, float, str]:
+    """(K, u_rel of the measured reference peak, u_rel of the expected rate, note) of the reference
+    peak correction (module docstring); u_rel(K) = hypot of the two.  The expected rate is common
+    to every spectrum corrected with the same reference, the peak's counting is not."""
     energy = float(ref["energy"])
     rate = float(ref["rate"])
     if rate <= 0:
@@ -728,10 +755,11 @@ def reference_correction(spectrum, peaks, ref: dict, t_live: float) -> tuple[flo
         rate *= decay_factor(float(hl), (spectrum.start_time - t_ref).total_seconds())
     measured = float(p.net_area) / t_live
     k = rate / measured
-    u = math.hypot(float(p.net_area_unc) / float(p.net_area), float(ref.get("rate_rel_unc") or 0.0))
+    u_count = float(p.net_area_unc) / float(p.net_area)
+    u_rate = float(ref.get("rate_rel_unc") or 0.0)
     note = (f"reference peak correction at {energy:g} keV: expected {rate:.5g} cps, measured {measured:.5g} cps, "
-            f"K = {k:.4f} +- {100 * u:.2f} %")
-    return k, u, note
+            f"K = {k:.4f} +- {100 * math.hypot(u_count, u_rate):.2f} %")
+    return k, u_count, u_rate, note
 
 
 def _blank_line(blank: "QuantResults", nuclide: str, energy: float) -> Optional[LineResult]:
@@ -745,12 +773,37 @@ def _blank_line(blank: "QuantResults", nuclide: str, energy: float) -> Optional[
     return None
 
 
-def _blank_checks(blank: "QuantResults", curve: EfficiencyCurve, opt: ActivityOptions) -> list[str]:
+def _blank_checks(blank: "QuantResults", curve: EfficiencyCurve, opt: ActivityOptions,
+                  background=None) -> list[str]:
     """Warnings when the blank was not analysed like the sample."""
     out = []
     name = curve.name or curve.geometry
     if blank.curve_name and name and blank.curve_name != name:
         out.append(f"reagent blank analysed with another efficiency curve ({blank.curve_name})")
+    bo = blank.options
+    if bo is not None:
+        def att(o):
+            return o.attenuation if isinstance(o.attenuation, dict) else float(o.attenuation or 1.0)
+        differ = []
+        a_b, a_s = att(bo), att(opt)
+        if isinstance(a_b, dict) or isinstance(a_s, dict):
+            same_att = a_b == a_s
+        else:
+            same_att = math.isclose(a_b, a_s, rel_tol=1e-12)
+        if not same_att:
+            differ.append("attenuation correction")
+        if bool(bo.tcs) != bool(opt.tcs) or (bo.tcs and opt.tcs and bo.tcs != opt.tcs):
+            differ.append("true-coincidence summing correction")
+        if bool(bo.reference_peak) != bool(opt.reference_peak):
+            differ.append("reference peak correction")
+        if ((blank.background != "") != (background is not None)
+                or (background is not None and bo.bkg_mode != opt.bkg_mode)):
+            differ.append("background mode")
+        if differ:
+            out.append("reagent blank analysed with other options than the sample: " + ", ".join(differ))
+    bkg = (background.source_path or background.sample_id) if background is not None else ""
+    if blank.background and bkg and blank.background != bkg:
+        out.append(f"reagent blank analysed with another background spectrum ({blank.background})")
     if blank.blank:
         out.append("the reagent blank's results are themselves blank-corrected")
     missing = [n for n in opt.nuclides if n.strip() and not any(r.nuclide == n.strip() for r in blank.nuclides)]
@@ -759,7 +812,7 @@ def _blank_checks(blank: "QuantResults", curve: EfficiencyCurve, opt: ActivityOp
     return out
 
 
-def _combine(res: NuclideResult, opt: ActivityOptions, ref_u: float = 0.0) -> None:
+def _combine(res: NuclideResult, opt: ActivityOptions) -> None:
     lines = [l for l in res.lines if l.mda > 0]
     if not lines:
         res.note = (res.note + "; no usable line").strip("; ")
@@ -791,22 +844,24 @@ def _combine(res: NuclideResult, opt: ActivityOptions, ref_u: float = 0.0) -> No
     if len(cand) == 1:
         l = cand[0]
         a = l.activity
-        uc, ue = abs(a) * l.u_count_rel, abs(a) * l.eff_rel_unc
+        uc, ue = l.u_count_bq, abs(a) * l.eff_rel_unc
         ul = abs(a) * l.int_rel_unc
         ut = abs(a) * l.coi_rel_unc
+        ur = l.ref_unc_bq
         res.detected = l.detected
     else:
         # weights from the uncorrelated part (counting + intensity, incl. each line's library
         # emission-probability uncertainty)
-        var_unc = [(l.activity * l.u_count_rel) ** 2 + (l.activity * ui) ** 2 + (l.activity * l.int_rel_unc) ** 2
+        var_unc = [l.u_count_bq ** 2 + (l.activity * ui) ** 2 + (l.activity * l.int_rel_unc) ** 2
                    for l in cand]
         wts = [1.0 / v if v > 0 else 0.0 for v in var_unc]
         sw = sum(wts)
         a = sum(w * l.activity for w, l in zip(wts, cand)) / sw
-        uc = math.sqrt(sum((w * l.activity * l.u_count_rel) ** 2 for w, l in zip(wts, cand))) / sw
+        uc = math.sqrt(sum((w * l.u_count_bq) ** 2 for w, l in zip(wts, cand))) / sw
         ul = math.sqrt(sum((w * l.activity * l.int_rel_unc) ** 2 for w, l in zip(wts, cand))) / sw
         ue = sum(w * abs(l.activity) * l.eff_rel_unc for w, l in zip(wts, cand)) / sw
         ut = sum(w * abs(l.activity) * l.coi_rel_unc for w, l in zip(wts, cand)) / sw   # P/T: correlated
+        ur = sum(w * l.ref_unc_bq for w, l in zip(wts, cand)) / sw                      # reference: correlated
         # decision threshold of the combination
         s0 = [l.decision_threshold / opt.k_alpha for l in cand]
         res.decision_threshold = opt.k_alpha / math.sqrt(sum(1.0 / (s * s) for s in s0 if s > 0))
@@ -819,8 +874,8 @@ def _combine(res: NuclideResult, opt: ActivityOptions, ref_u: float = 0.0) -> No
     # Budget of the activity in Bq.  The mass/volume uncertainty does not belong here: it only
     # enters the specific activity (Bq/kg, Bq/L, ...), see compute_activities.
     comp = {"counting": uc, "efficiency": ue, "intensity": math.hypot(a_abs * ui, ul), "attenuation": a_abs * ua}
-    if ref_u:
-        comp["reference peak"] = a_abs * ref_u
+    if ur:
+        comp["reference peak"] = ur
     if ut:
         comp["coincidence summing"] = ut
     res.activity = a
