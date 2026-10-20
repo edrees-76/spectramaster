@@ -19,7 +19,7 @@ def test_refit_keeps_energies_close(tmp_path, key):
     src = _spectrum()
     out = tmp_path / ("x" + fmt.default_ext)
     warnings = write_spectrum(src, out, fmt)
-    assert warnings and "refitted" in warnings[0]
+    assert any("refitted" in w for w in warnings)
     back = read_spectra(out, fmt)[0][0]
     assert len(back.energy_coeffs) <= MAX_CAL_TERMS[key]
     worst = max(abs(src.energy_of(c) - back.energy_of(c)) for c in range(0, 8192, 16))

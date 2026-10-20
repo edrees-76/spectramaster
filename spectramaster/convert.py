@@ -58,16 +58,101 @@ ASCII_ONLY_TEXT = {
 }
 
 
+# Formats that store text in the Windows Arabic code page (cp1256): Arabic letters are
+# kept but Arabic-Indic digits (U+0660..U+0669, U+06F0..U+06F9) are not; they are
+# written as 0-9.  Re-checked by tests/test_format_fidelity.py.
+CP1256_TEXT = {
+    "iec1455", "ieee_asc", "aptec_s0", "aptec_ascii", "davidson_ascii", "iaea_ascii_dat",
+    "rump_ascii", "wallac_ascii",
+}
+
+# Formats whose channels hold non-negative values only.  A negative count (a
+# background-subtracted or stripped spectrum) is refused rather than set to 0;
+# formats not listed here either keep the sign or refuse it in their own writer.
+NO_NEGATIVE_COUNTS = {
+    "ortec_chn", "ortec_spc", "ci_cnf", "exploranium_gr130", "exploranium_gr135", "npl_ascii",
+    "spc_ascii",     # SpecUtils writes it, but cannot read the file back
+}
+
+# Formats whose channels hold integers: fractional counts are rounded.
+INTEGER_COUNTS = {
+    "ortec_chn", "ortec_spc", "iec1455", "ieee_asc", "aptec_s0", "ci_s100", "ci_cnf",
+    "exploranium_gr130", "exploranium_gr135", "aptec_ascii", "chandata_csv", "davidson_ascii",
+    "iaea_ascii_dat", "npl_ascii", "rump_ascii", "wallac_ascii", "laval_ascii", "oxford_ans",
+    "nd66",
+}
+
+# Formats that always hold an acquisition date: an unknown start time is written
+# as a placeholder date that reads back as a real one.  (ORTEC CHN reads its
+# placeholder back as unknown.)
+DATE_REQUIRED = {
+    "ortec_spc", "ci_cnf", "spc_float", "exploranium_gr130", "exploranium_gr135",
+    "davidson_ascii", "rump_ascii",
+}
+
+_ARABIC_DIGITS = {**{0x0660 + i: str(i) for i in range(10)}, **{0x06F0 + i: str(i) for i in range(10)}}
+
+
+def _text_fields(spec: Spectrum):
+    return (("sample ID", spec.sample_id), ("description", spec.description))
+
+
 def text_warning(spec: Spectrum, fmt: FormatSpec) -> Optional[str]:
     """Warning if `fmt` cannot store the non-ASCII text of `spec`, else None."""
+    if fmt.key in CP1256_TEXT:
+        def lost(v):
+            try:
+                v.encode("cp1256")
+                return False
+            except UnicodeEncodeError:
+                return True
+        fields = [name for name, value in _text_fields(spec) if value and lost(value)]
+        if not fields:
+            return None
+        return (f"{fmt.name} stores text in the Arabic code page (cp1256): characters it cannot hold "
+                f"in the {' and '.join(fields)} are lost")
     if fmt.key not in ASCII_ONLY_TEXT:
         return None
-    fields = [name for name, value in (("sample ID", spec.sample_id), ("description", spec.description))
-              if value and not value.isascii()]
+    fields = [name for name, value in _text_fields(spec) if value and not value.isascii()]
     if not fields:
         return None
     return (f"{fmt.name} stores only ASCII text: non-ASCII (e.g. Arabic) characters in the "
             f"{' and '.join(fields)} are lost")
+
+
+def _fit_for_format(spec: Spectrum, fmt: FormatSpec, warnings: list[str]) -> Spectrum:
+    """Counts, start time and text of `spec` as `fmt` can hold them: what it cannot hold is
+    refused or reported, never changed silently."""
+    import numpy as np
+
+    counts = [float(c) for c in spec.counts]       # also accepts a numpy array
+    if len(counts) == 0:
+        raise FormatError("spectrum has no channels")
+    if not all(np.isfinite(counts)):
+        raise FormatError("the spectrum has non-finite channel contents (NaN or infinity)")
+    changes = {"counts": counts}
+    neg = sum(1 for c in counts if c < 0)
+    if neg and fmt.key in NO_NEGATIVE_COUNTS:
+        raise FormatError(f"{fmt.name} cannot store negative counts ({neg} channels are negative, "
+                          "e.g. after a background subtraction); write it to a format that keeps them "
+                          "(IAEA SPE, N42, JSON, Excel)")
+    if fmt.key in INTEGER_COUNTS:
+        diff = [abs(c - round(c)) for c in counts]
+        n_frac = sum(1 for d in diff if d > 1e-9)
+        if n_frac:
+            warnings.append(f"{fmt.name} stores whole counts: {n_frac} fractional channel contents rounded "
+                            f"(largest change {max(diff):.3g} counts)")
+    if spec.start_time is None and fmt.key in DATE_REQUIRED:
+        warnings.append(f"{fmt.name} always stores an acquisition date: the unknown start time is written "
+                        "as a placeholder date, which reads back as a real date")
+    if fmt.key in CP1256_TEXT | ASCII_ONLY_TEXT:
+        fields = [name for name, value in _text_fields(spec) if value and value != value.translate(_ARABIC_DIGITS)]
+        if fields:
+            changes["sample_id"] = spec.sample_id.translate(_ARABIC_DIGITS)
+            changes["description"] = spec.description.translate(_ARABIC_DIGITS)
+            warnings.append(f"{fmt.name} cannot store Arabic-Indic digits: written as 0-9 in the "
+                            f"{' and '.join(fields)}")
+    return replace(spec, **changes)
 
 
 def fit_calibration(spec: Spectrum, terms: int) -> tuple[list[float], float]:
@@ -89,6 +174,7 @@ def write_spectrum(spec: Spectrum, path: Path, fmt: FormatSpec) -> list[str]:
     if not fmt.can_write:
         raise FormatError(f"{fmt.name} cannot be written")
     warnings: list[str] = []
+    spec = _fit_for_format(spec, fmt, warnings)
     limit = MAX_CAL_TERMS.get(fmt.key)
     coeffs = list(spec.energy_coeffs)
     while coeffs and coeffs[-1] == 0.0:

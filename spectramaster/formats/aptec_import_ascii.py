@@ -179,7 +179,7 @@ def _ival(c) -> int:
 
 def _abs_counts(spec: Spectrum) -> list[int]:
     """Counts indexed by absolute channel number (leading zeros for an offset)."""
-    if not spec.counts:
+    if len(spec.counts) == 0:
         raise FormatError("empty spectrum")
     return [0] * max(spec.first_channel, 0) + [_ival(c) for c in spec.counts]
 

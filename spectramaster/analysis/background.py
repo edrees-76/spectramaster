@@ -39,12 +39,37 @@ GROUP_GAP_FWHM = 3.5          # same grouping as the automatic search (peaks.fin
 REGION_MARGIN_FWHM = 2.2
 
 
+def _stripped(extra: dict) -> bool:
+    """Aptec's Strip (spectrum_ops.strip) subtracts a spectrum channel by channel."""
+    return any(t.strip().startswith("Stripped") for t in str(extra.get("aptec_status", "")).split(";"))
+
+
 def check_not_subtracted(spectrum) -> None:
     """Refuse a second background subtraction."""
-    if (getattr(spectrum, "extra", None) or {}).get("operation") == SUBTRACTED:
-        src = spectrum.extra.get("background_source", "?")
+    extra = getattr(spectrum, "extra", None) or {}
+    if extra.get("operation") == SUBTRACTED:
+        src = extra.get("background_source", "?")
         raise ValueError(f"the spectrum is already background subtracted (background: {src}); "
                          "subtracting a background again would remove it twice")
+    if _stripped(extra):
+        src = extra.get("stripped_with", "?")
+        raise ValueError(f"a spectrum was already stripped from this one ({src}); "
+                         "subtracting a background again could remove it twice")
+
+
+def not_poisson_note(spectrum) -> Optional[str]:
+    """Note when the channel contents are not Poisson counts (subtracted, stripped,
+    normalized, smoothed ...), so that sqrt(counts) uncertainties do not hold."""
+    extra = getattr(spectrum, "extra", None) or {}
+    if extra.get("operation") == SUBTRACTED or _stripped(extra):
+        what = "background subtracted"
+    elif str(extra.get("counts_are_poisson", "yes")) == "no":
+        what = f"changed by {extra.get('aptec_status') or 'a spectrum operation'}"
+    else:
+        return None
+    return (f"the spectrum is {what}: its channel contents are not Poisson counts but are treated as such, "
+            "so the uncertainties, decision thresholds and MDA are not valid; analyse the measured "
+            "spectrum (with the background) instead")
 
 
 BACKGROUND_AGE_DAYS = 180         # older backgrounds are reported (shielding/radon conditions change)
