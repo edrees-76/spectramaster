@@ -212,7 +212,19 @@ energies are identical in both programs; only the channel numbers differ by one.
       remembered.</li>
 </ol>
 <figure class="medium"><img src="images/en/output_format.png" alt="Output format"><figcaption>Choosing the output format.</figcaption></figure>
-<p>Warnings (for example a refitted calibration) appear in the status bar after saving.</p>
+<p>Warnings (for example a refitted calibration) appear in the status bar after saving. What a format cannot
+hold is never changed silently:</p>
+<ul>
+  <li><b>Negative counts</b> (after a background subtraction or Strip) are refused by the formats that store
+      only non-negative channels (CHN, SPC, CNF, Exploranium, NPL ASCII, SPC ASCII): choose a format that keeps
+      them, e.g. IAEA SPE, N42, JSON or Excel.</li>
+  <li><b>Fractional counts</b> are rounded in integer formats, with a warning giving the largest change.</li>
+  <li>An <b>unknown acquisition date</b> is reported for formats that always store one; CHN reads its
+      placeholder date back as unknown.</li>
+  <li><b>Arabic-Indic digits</b> (١٢٣) in the sample ID and description are written as 0–9 in formats that
+      cannot hold them, with a warning.</li>
+  <li>A spectrum with NaN or infinite counts is not written.</li>
+</ul>
 
 <h3 id="conv-naming">4.2 The DataMaster naming rule</h3>
 <p>The output name is the input name with its extension appended after an underscore, plus the extension of
@@ -342,10 +354,14 @@ significance (net area / its uncertainty) and the assigned nuclide. A double cli
 Notes mark special peaks: <i>X-ray region</i>, <i>annihilation</i> (511 keV), <i>single / double escape</i>,
 <i>sum peak</i> (e.g. 1173+1332), <i>possible backscatter</i>.</p>
 <p>How it works, in brief: the FWHM model comes from the FWHM calibration (or the energy calibration and a
-detector-type guess) and is rescaled to the strongest isolated peaks; peaks are searched with a
+detector-type guess) and is rescaled to the strongest isolated peaks; for HPGe without a FWHM calibration
+its energy dependence is corrected too, between the lowest and highest of those peaks. Peaks are searched with a
 Gaussian matched filter (second-difference method) and accepted above a significance of 3; neighbouring
-peaks are fitted together as multiplets (Gaussians + linear background + step), and areas and
-uncertainties come from the fit covariance.</p>
+peaks are fitted together as multiplets (Gaussians + background + step), and areas and
+uncertainties come from the fit covariance. HPGe peaks sit on a straight background; scintillator (NaI)
+peaks on a log-quadratic continuum whose curvature is measured on a wider region that stops before the
+neighbouring peaks. When the detector's peak shape was measured (section <a href="#ana-det">6.6</a>), peaks are
+fitted with its low-energy tail.</p>
 
 <h3 id="ana-nuc">6.3 The nuclides table and the confidence value</h3>
 <p>Each candidate nuclide shows its <b>confidence</b>, half-life, category (natural, fission, activation,
@@ -376,12 +392,27 @@ On the command line another library can be used: <code>smconvert identify FILE -
 lines <code>nuclide, energy_keV, intensity_%[, half_life, category]</code>.</p>
 <h4>Limitations</h4>
 <ul>
-  <li>No true-coincidence summing correction and no detailed efficiency model: the expected line ratios use a
-      generic HPGe/NaI efficiency shape.</li>
+  <li>The identification does not correct true-coincidence summing and uses no detailed efficiency model: the
+      expected line ratios use a generic HPGe/NaI efficiency shape. (The activity calculation can correct
+      summing, section <a href="#q-tcs">9.5</a>.)</li>
   <li>Strongly overlapping multiplets and very low-statistics spectra can give false or missed identifications.</li>
   <li>Decay since the measurement is not considered: a nuclide is proposed if its lines are present, even if it
       is implausible for the sample history.</li>
 </ul>
+
+<h3 id="ana-det">6.6 Detector profiles, peak shape and analysis sessions</h3>
+<p>The <b>Workflow</b> panel (<span class="menu">View › Workflow Status</span>) shows the analysis session of the
+displayed spectrum: its detector, geometry, calibrations and the status of each step. <b>Detectors…</b> opens
+the detector profiles. A profile keeps a permanent id, so renaming a detector keeps its calibrations and
+sessions. Choosing the detector of a measurement is an undoable edit, and an efficiency calibration of another
+detector is then reported as incompatible.</p>
+<p><b>Peak Shape…</b> in the detector profiles measures the low-energy tail of that detector's peaks from
+calibration spectra with strong, well separated peaks. You confirm it before it is recorded. From then on, the
+analysis of that detector's samples fits peaks with this shape. Without it, peaks are Gaussian.</p>
+<p><span class="menu">File › Save Session</span> stores the session (<code>.smsession</code>): the spectrum
+reference with its SHA-256 fingerprint, the calibrations, the background and reagent blank files, the results
+and the edit history. When a session is opened, the spectrum file is checked against the fingerprint. Results
+computed by an older analysis engine are shown as stored and marked as requiring recalculation.</p>
 
 <!-- ================================================================== 7 -->
 <h2 id="ch-aptec">7. The Aptec method: menus and workflow</h2>
@@ -591,8 +622,9 @@ smconvert rebin X.S0 --start 100 --stop 4196 --renumber -o part.spe</pre>
 <h2 id="ch-quant">9. Efficiency calibration and activity</h2>
 <div class="warn"><b>Before you start.</b> The efficiency curve is valid only for the <b>same detector, geometry
 (container, filling height, distance) and matrix density</b> as the standard. True-coincidence summing (TCS) is
-<b>not</b> corrected (cascade emitters such as Co-60, Cs-134, Y-88, Eu-152 are flagged), and self-attenuation is
-corrected only by a <b>manual factor</b>. Results must be validated by the laboratory.</div>
+corrected only when you enable it and give the peak-to-total ratio of your detector and geometry (section
+<a href="#q-tcs">9.5</a>); otherwise cascade emitters such as Co-60, Cs-134, Y-88 and Eu-152 are flagged.
+Self-attenuation is corrected only by a <b>manual factor</b>. Results must be validated by the laboratory.</div>
 
 <h3 id="q-eff">9.1 Efficiency calibration</h3>
 <ol class="steps">
@@ -608,7 +640,10 @@ corrected only by a <b>manual factor</b>. Results must be validated by the labor
       Enter geometry and detector names.</li>
   <li>Click <b>Measure &amp; Fit</b>. Each line becomes a point: net area (with background-peak subtraction
       if a background spectrum is used in the CLI), efficiency, uncertainty, fitted value and residual.
-      Untick <b>Use</b> for doubtful points (e.g. TCS-affected lines) and press <b>Refit</b>.</li>
+      Untick <b>Use</b> for doubtful points and press <b>Refit</b>. Lines of cascade emitters (Ba-133, Y-88,
+      Co-60, Eu-152 …) lose counts by summing in close geometries. Exclude them, or keep them and use the TCS
+      correction of the activity calculation, which then corrects these calibration points as well (section
+      <a href="#q-tcs">9.5</a>).</li>
   <li>Check χ²/ν and the residual plot (points should scatter within their error bars), then <b>Save curve…</b>
       The curve (JSON) is stored in <code>%APPDATA%\SpectraMaster\efficiency\</code> and appears in the activity
       dialog.</li>
@@ -631,7 +666,10 @@ fit covariance (scaled by χ²/ν when &gt; 1) with the part of the certificate 
   <li>List the <b>nuclides of interest</b>, choose <i>key line</i> or <i>weighted mean of lines</i>, the
       <b>detection limit</b> method (Currie or ISO 11929) and, if needed, the <b>self-attenuation correction
       factor</b> (default 1.000).</li>
-  <li>Click <b>Calculate</b>. <b>Export CSV/Excel…</b> saves the table and the uncertainty budget.</li>
+  <li>Optional corrections: a <b>reagent blank</b> (9.3), a <b>reference peak</b> (9.4) and <b>true-coincidence
+      summing</b> (9.5). Fill in the <b>sample information</b> to get concentrations (9.6).</li>
+  <li>Click <b>Calculate</b>. The calculation runs in the background (the dialog shows <i>Calculating …</i>).
+      <b>Export CSV/Excel…</b> saves the table and the uncertainty budget.</li>
 </ol>
 <figure><img src="images/en/activity.png" alt="Activity"><figcaption>Activities of CHERN.S0 (Turku fallout,
 1986) with the QCY48 curve and peak-by-peak background subtraction.</figcaption></figure>
@@ -644,10 +682,73 @@ fit covariance (scaled by χ²/ν when &gt; 1) with the part of the certificate 
       ISO y*); otherwise <i>&lt; MDA</i>. A nuclide can be <i>detected</i> with an activity below its MDA
       (between L<sub>C</sub> and L<sub>D</sub>) — report it with its uncertainty.</td></tr>
   <tr><td>Budget</td><td>Relative components (k = 1): counting, efficiency, emission probability, quantity,
-      attenuation.</td></tr>
+      attenuation, and, when used, the reagent blank, the reference peak and the summing correction.</td></tr>
 </table>
+<p>If the sample spectrum was already background subtracted, stripped, normalized or smoothed, its channels are no
+longer Poisson counts. The results then carry a note that their uncertainties, decision thresholds and MDA are not
+valid. Analyse the measured spectrum with its background instead. A spectrum that was already subtracted is not
+subtracted again.</p>
 
-<h3 id="q-example">9.3 Worked example: QCY48CAL → CHERN (command line)</h3>
+<h3 id="q-blank">9.3 Reagent blank</h3>
+<p>A <b>reagent blank</b> is a blank sample prepared and counted like the samples, with the same reagents, container
+and geometry. Choose its spectrum in <b>Reagent blank</b>. It is analysed exactly like the sample, with the same curve,
+options and background, and its activity is subtracted line by line. The blank's uncertainty, including
+the part of its reference-peak correction it shares with the sample, is in the budget. A blank analysed with other
+options (attenuation, summing correction, reference peak, background) is reported in the notes. The session and the
+report record the blank file with its SHA-256 fingerprint.</p>
+
+<h3 id="q-ref">9.4 Reference peak correction</h3>
+<p>The live time corrects dead time but not every loss: random summing and pile-up remove counts from every peak.
+A <b>reference peak</b>, from a pulser or a fixed reference source counted with every sample, measures this loss.
+Each result is multiplied by K = expected rate / measured rate of that peak in the sample spectrum.</p>
+<ul>
+  <li>Enter the <b>peak energy</b> and its <b>expected rate</b> (counts per live second) with its uncertainty.
+      <b>Measure from a spectrum…</b> takes the rate from a low-rate reference measurement, and its date becomes
+      the rate date.</li>
+  <li>For a radioactive reference source, give its <b>half-life</b> in days so the expected rate is decay corrected.
+      Use 0 for a pulser.</li>
+  <li>If the peak is not found, the calculation is refused. The reagent blank, when given, is corrected the
+      same way.</li>
+</ul>
+
+<h3 id="q-tcs">9.5 True-coincidence summing correction</h3>
+<p>Nuclides that emit several gamma rays in cascade (Co-60, Cs-134, Bi-214, Y-88, Ba-133, Eu-152 …) lose counts from
+their peaks when two photons are detected together. Some lines also gain counts this way. The loss grows as the
+source gets closer to the detector. With <b>True-coincidence summing correction</b> enabled, each line of a cascade
+emitter is divided by its first-order coincidence summing factor (COI). The factor comes from gamma-gamma coincidence
+data and the efficiency curve.</p>
+<ul>
+  <li>The total efficiency is the peak efficiency divided by the <b>peak-to-total ratio</b>
+      PT(E) = min(1, a·(E / 1000 keV)<sup>b</sup>). PT depends on the detector <b>and</b> the geometry. The values
+      shown are assumptions; enter those of your detector, measured with single-line sources or taken from a
+      detector model. Their uncertainty (default 10 %) is propagated.</li>
+  <li>If the efficiency curve itself was measured with cascade emitters in the same geometry (for example a mixed
+      standard with Ba-133 and Y-88), its points already contain summing losses. They are corrected with the same
+      PT and the curve is refitted, so the summing is not counted twice. A curve in a model that cannot be refitted
+      is refused.</li>
+  <li>A line that the coincidence data do not describe is not corrected, and the note says why. A line whose
+      first-order factor is outside its validity gives no result. A summing-out loss above 10 % is noted, because the
+      first-order correction degrades in very close geometries.</li>
+  <li>Not included: X-ray and 511 keV summing, and angular correlation. The session records the coincidence table
+      with its SHA-256 fingerprint.</li>
+</ul>
+<p>Command line: <code>--tcs-pt A,B</code> (and <code>--tcs-pt-unc</code>), <code>--blank FILE</code>,
+<code>--ref-peak keV --ref-rate cps</code> (or <code>--ref-spectrum FILE</code>, <code>--ref-half-life s</code>).</p>
+
+<h3 id="q-conc">9.6 Sample information and concentrations</h3>
+<p>In <b>Sample information</b>, choose the <b>matrix</b> (soil / sediment, water, food, air filter, other) and the
+unit to report: Bq, Bq/kg, Bq/L or Bq/m³.</p>
+<ul>
+  <li><b>Bq/kg</b> needs the mass and its basis (dry or wet). <b>Bq/L</b> needs the volume.</li>
+  <li><b>Bq/m³</b> needs the air volume, either given directly or as flow rate × sampling duration. It also uses
+      the measured fraction of the filter and the collection efficiency. The collection efficiency is an assumption,
+      so state its source.</li>
+  <li>An empty field means <i>unknown</i>: it is never taken as zero or one. A missing value is listed instead of
+      a concentration.</li>
+  <li>Non-detects are shown as &lt; MDA, never as zero.</li>
+</ul>
+
+<h3 id="q-example">9.7 Worked example: QCY48CAL → CHERN (command line)</h3>
 <pre>smconvert effcal QCY48CAL.S0 -o qcy48.json --model two_branch --compare
 model: two-branch log-log, Ec = 583.2 keV, orders 3/2   chi2/dof = 0.35   u_sys = 1.00 %
 nuclide       keV        net        eps    u %        fit  resid %
@@ -664,6 +765,8 @@ Cs-134   604.7        683 ± 40   18.81 ± 1.3        18.81 ± 2.5  3.4     dete
 I-131    364.5        120 ± 36   2.323 ± 0.71       2.323 ± 1.4  3.12    detected
 Ru-103   497.1        5591 ± 90  138.5 ± 3.9        138.5 ± 7.8  3.99    detected
   Cs-134: true-coincidence summing not corrected</pre>
+<p>The last line appears because the summing correction was not requested. With <code>--tcs-pt A,B</code> the
+Cs-134 lines are corrected (section <a href="#q-tcs">9.5</a>).</p>
 <p>Without <code>--cert</code> the certificate is taken from the Aptec records in the <code>.S0</code> file;
 <code>--compare</code> lists the difference to Aptec's own stored efficiencies (here within ±6 %). A certificate
 CSV has the columns <code>nuclide,activity_bq,unc_percent,ref_date[,half_life_s,energy_kev,intensity_percent]</code>.</p>

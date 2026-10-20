@@ -1002,3 +1002,18 @@ Pre-registered in `docs/baseline/fit_window_protocol.md`, with the results there
   - Other long operations of the Aptec analysis window, the detector manager and file
     opening still run on the interface thread.
   - The user manuals still need the features of PR #17-#32. They follow in a separate change.
+
+## User manuals updated (2026-10-21, from the second external review)
+
+The Arabic and English manuals (`docs/tools/src/manual_*.html`, rebuilt into `docs/manual_*.html` and the PDFs) now
+describe:
+
+- the reagent blank, the reference peak correction and the true-coincidence summing correction (new sections 9.3-9.5,
+  replacing "TCS is not corrected");
+- sample information and concentrations in Bq/kg, Bq/L and Bq/m³ (9.6);
+- detector profiles, peak-shape calibration and analysis sessions (6.6);
+- the peak-fit changes (the HPGe width shape, the NaI log-quadratic continuum, the low-energy tail);
+- the format rules from PR #31.
+
+Still not documented: the remaining Release B dialogs (fit inspection and manual refit, review and the JSON report,
+batch analysis) beyond their menu entries.
