@@ -709,3 +709,34 @@ with Browse and Clear:
 - The export gets `blank_bq` and `blank_u_bq`.
 - The report shows the subtracted value under each concentration.
 - The session results keep the blank's name in `QuantResults.blank`.
+
+## Reference peak correction (2026-10-20, engine and CLI)
+
+This is the first link of Genie's peak-area correction chain. It handles random summing and
+pile-up losses that the live time does not correct.
+
+`ActivityOptions.reference_peak = {energy, rate, rate_rel_unc, half_life_s, ref_date}`:
+
+- The peak at `energy` (a pulser, or a fixed reference source) gives K = expected rate / measured
+  rate. A source's rate is decay-corrected.
+- K multiplies every activity, threshold and MDA.
+- u_rel(K) enters the budget as "reference peak" and the ISO 11929 w uncertainty.
+- A reference peak that is not found refuses the calculation.
+- `reference_rate(spectrum, energy)` measures a reference source's rate in a low-rate spectrum.
+
+CLI: `--ref-peak KEV --ref-rate CPS [--ref-rate-unc F] [--ref-spectrum FILE] [--ref-half-life S]`.
+
+Benchmark `reference_peak` (`docs/baseline/reference_peak_protocol.md`, `after_RP1`):
+
+- The correction factor is accurate to 0.06 % (HPGe) and 0.03 % (NaI), with losses of 0-10 %.
+- Uncorrected, the bias is -5.9 % / -7.7 %.
+- Coverage passes, and a missing reference peak is always refused.
+- The four pre-registered bias criteria **fail** (-1.0 % / -3.0 % against 1 %). Their limits are
+  unchanged.
+- The cause was found after the results: the criteria also measure the existing low-bias of weak
+  (s about 40) peak areas, -1.1 % on HPGe and -3.0 % on NaI. Two report-only metrics, `k_bias` and
+  `fit_bias`, were added post hoc to separate the two.
+- That weak-peak area bias is left for a later increment.
+- No criterion went from PASS to FAIL.
+
+The interface is not done yet.
