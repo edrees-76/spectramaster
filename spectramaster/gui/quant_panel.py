@@ -102,6 +102,7 @@ class ActivityDialog(QDialog):
         self.spectrum = spectrum
         self.background = None
         self.blank = None                              # reagent blank spectrum (None: no correction)
+        self._calc_pending = None                      # calculation running on a worker thread
         self.results: Optional[act.QuantResults] = None
         self.concentration: Optional[dict] = None      # activity.concentrations() of the results
         self.sample_info = None                        # lab.sample.SampleInfo used for it
@@ -251,7 +252,7 @@ class ActivityDialog(QDialog):
 
         row = QHBoxLayout()
         self.btn_calc = QPushButton(qtr("act_calc"))
-        self.btn_calc.clicked.connect(self.calculate)
+        self.btn_calc.clicked.connect(lambda: self.calculate(threaded=True))
         row.addWidget(self.btn_calc)
         self.btn_export = QPushButton(qtr("act_export"))
         self.btn_export.clicked.connect(self.export)
@@ -614,7 +615,8 @@ class ActivityDialog(QDialog):
         self.curve_status.setStyleSheet("color: %s;" % ("#2e7d32" if st == "validated" else "#e65100"))
 
     # ------------------------------------------------------------------ actions
-    def calculate(self) -> Optional[act.QuantResults]:
+    def _prepare(self):
+        """(curve, record, issues, options, curve path) of a calculation, or None (reported)."""
         if self.spectrum is None or not self.spectrum.energy_coeffs:
             QMessageBox.warning(self, qtr("act_title"), qtr("act_no_spectrum"))
             return None
@@ -628,23 +630,79 @@ class ActivityDialog(QDialog):
         except Exception as exc:
             self.message(qtr("act_failed", msg=f"{type(exc).__name__}: {exc}"))
             return None
+        return curve, rec, issues, opt, path
+
+    def _use_other_geometry(self, text: str, opt) -> bool:
+        """`text` is the geometry refusal of the engine: ask, and allow the mismatch on OK."""
+        reasons = text.split("): ", 1)[-1]
+        if not self.confirm_mismatch(reasons):
+            self.last_error = text
+            self.notes_label.setText(qtr("act_geo_refused", reasons=reasons))
+            self.notes_label.setStyleSheet("color: #c62828; font-weight: bold;")
+            return False
+        opt.allow_geometry_mismatch = True       # the engine records it in the result notes
+        return True
+
+    def calculate(self, threaded: bool = False) -> Optional[act.QuantResults]:
+        """Calculate the activities.  `threaded` (the Calculate button) runs the analysis of the
+        blank and the sample on a worker thread and returns None; the results are shown when it
+        finishes.  Otherwise the results are returned (or None when refused)."""
+        if self._calc_pending is not None:
+            return None
+        prep = self._prepare()
+        if prep is None:
+            return None
+        curve, _rec, _issues, opt, _path = prep
+        if threaded:
+            self._start_calculation(prep)
+            return None
         try:
             try:
-                self.results = self._compute(curve, opt)
+                res = self._compute(curve, opt)
             except ValueError as exc:
                 if not str(exc).startswith(GEOMETRY_REFUSED):
                     raise
-                reasons = str(exc).split("): ", 1)[-1]
-                if not self.confirm_mismatch(reasons):
-                    self.last_error = str(exc)
-                    self.notes_label.setText(qtr("act_geo_refused", reasons=reasons))
-                    self.notes_label.setStyleSheet("color: #c62828; font-weight: bold;")
+                if not self._use_other_geometry(str(exc), opt):
                     return None
-                opt.allow_geometry_mismatch = True       # the engine records it in the result notes
-                self.results = self._compute(curve, opt)
+                res = self._compute(curve, opt)
         except Exception as exc:
             self.message(qtr("act_failed", msg=f"{type(exc).__name__}: {exc}"))
             return None
+        return self._finish(prep, res)
+
+    @property
+    def busy(self) -> bool:
+        return self._calc_pending is not None
+
+    def _start_calculation(self, prep) -> None:
+        from .worker import start_call
+        curve, opt = prep[0], prep[3]
+        self._calc_pending = prep
+        self.btn_calc.setEnabled(False)
+        self.notes_label.setStyleSheet("")
+        self.notes_label.setText(qtr("act_busy"))
+        start_call(self, lambda: self._compute(curve, opt), self._calculation_done, self._calculation_failed)
+
+    def _calculation_done(self, res) -> None:
+        prep, self._calc_pending = self._calc_pending, None
+        self.btn_calc.setEnabled(True)
+        if prep is not None:
+            self._finish(prep, res)
+
+    def _calculation_failed(self, msg: str) -> None:
+        prep, self._calc_pending = self._calc_pending, None
+        self.btn_calc.setEnabled(True)
+        self.notes_label.setText("")
+        text = msg.split(": ", 1)[1] if msg.startswith("ValueError: ") else ""
+        if prep is not None and text.startswith(GEOMETRY_REFUSED):
+            if self._use_other_geometry(text, prep[3]):
+                self._start_calculation(prep)
+            return
+        self.message(qtr("act_failed", msg=msg))
+
+    def _finish(self, prep, res: act.QuantResults) -> act.QuantResults:
+        curve, rec, issues, opt, path = prep
+        self.results = res
         self.results.notes.extend(issues)
         self.curve, self.curve_record = curve, rec
         if self.settings is not None:

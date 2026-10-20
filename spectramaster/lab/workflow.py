@@ -142,6 +142,8 @@ def report_record(session, concentrations: Optional[dict] = None, spectrum=None)
         "calibrations": cal,
         "library": session.library_ref,
         "background": session.background_ref,
+        "blank": session.blank_ref,
+        "coincidence_table": session.coincidence_ref,
         "processing_settings": session.processing_settings,
         "statuses": statuses,
         "reportable": not any(s["level"] == "error" for s in statuses),
