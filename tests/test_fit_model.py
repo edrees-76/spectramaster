@@ -77,3 +77,22 @@ def test_log_continuum_curvature_from_the_wide_region():
     assert abs(flat.areas[0] / t.area - 1) > 0.01
     assert abs(wide.areas[0] / t.area - 1) < 0.3 * abs(flat.areas[0] / t.area - 1)
     assert wide.b2 > 0                       # exp + flat is convex in log
+
+
+def test_hpge_default_resolution_shape_from_the_peaks():
+    """docs/baseline/hpge_width_shape_protocol.md: the default HPGe model is x0.92 at 200 keV for
+    this detector; strong peaks across the spectrum correct its shape, a FWHM calibration is kept."""
+    from spectramaster.analysis.peaks import width_model
+    peaks = [TruePeak(e, 2e4) for e in (200.0, 450.0, 700.0, 1000.0, 1400.0, 1800.0)]
+    s = make_spectrum(HPGE, peaks, Continuum(300, 400, 10), 5).spectrum
+    y = np.asarray(s.counts, dtype=float)
+    f, src, _start = width_model(s, y)
+    assert src.startswith("default")
+    for e in (200.0, 700.0, 1400.0):
+        ch = int(round(HPGE.channel(e)))
+        # channel-integrated counts: the fitted width includes the bin, FWHM^2 + 8 ln2 / 12
+        eff = float(np.sqrt(HPGE.fwhm_ch(e) ** 2 + 8 * np.log(2) / 12))
+        assert f[ch] == pytest.approx(eff, rel=0.03)
+    s.fwhm_coeffs = [0.9, 0.0008]                                 # a calibration: left as it is
+    f2, src2, _ = width_model(s, y)
+    assert src2 == "fwhm calibration"
