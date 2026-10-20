@@ -148,3 +148,41 @@ def test_quantify_matches_aptec_sample_files():
             assert q.activity == pytest.approx(r.activity, rel=1e-4)
             n += 1
     assert n >= 10
+
+
+def test_quantify_review_fixes():
+    """External review (2026-10): total quantity, decay underflow, count-rate and mBq units."""
+    line = aa.LibraryLine("Cs-137", 661.66, 0.851, 9.49e8)
+    total = aa.QuantifySetup("Bq", use_quantity=True, use_total_quantity=True)
+    q = aa.quantify(2.0, None, None, line, 0.01, total, quantity=0.5, total_quantity=None)
+    assert q.activity is None and q.note == "total quantity is missing"
+    q = aa.quantify(2.0, None, None, line, 0.01, total, quantity=0.5, total_quantity=4.0)
+    assert q.activity == pytest.approx(2.0 / (0.01 * 0.851) / 0.5 * 4.0)
+    # activity date many half-lives after the count: no silent zero
+    short = aa.LibraryLine("X", 100.0, 1.0, 60.0)
+    t0 = datetime(2020, 1, 1)
+    u = aa.quantify(1.0, None, None, short, 0.1, aa.QuantifySetup("Bq", use_quantity=False),
+                    start_time=t0, activity_time=t0 + timedelta(days=2))
+    assert u.activity is None and "<" in u.flags and u.note == "decay correction underflow"
+    # count-rate units: the net count rate itself
+    c = aa.quantify(2.0, 4.0, 0.5, line, 0.01, aa.QuantifySetup("cps", use_quantity=False))
+    assert c.activity == pytest.approx(2.0) and c.mda == pytest.approx(0.5) and c.activity_err_pct == 4.0
+    m = aa.quantify(2.0, None, None, line, 0.01, aa.QuantifySetup("cpm", use_quantity=False))
+    assert m.activity == pytest.approx(120.0)
+    # mBq and MBq differ only by case
+    bq = aa.quantify(2.0, None, None, line, 0.01, aa.QuantifySetup("Bq", use_quantity=False)).activity
+    assert aa.quantify(2.0, None, None, line, 0.01, aa.QuantifySetup("mBq", use_quantity=False)).activity \
+        == pytest.approx(bq * 1e3)
+    assert aa.quantify(2.0, None, None, line, 0.01, aa.QuantifySetup("MBq", use_quantity=False)).activity \
+        == pytest.approx(bq * 1e-6)
+
+
+def test_non_finite_counts_rejected():
+    from spectramaster.analysis.aptec_roi import analyze_rois
+    y = np.full(200, 100.0)
+    y[50] = np.nan
+    with pytest.raises(ValueError, match="not numbers"):
+        analyze_rois(y, [(45, 55)], live_time=100.0)
+    y[50] = np.inf
+    with pytest.raises(ValueError, match="not numbers"):
+        aa.peak_search(y, live_time=100.0)

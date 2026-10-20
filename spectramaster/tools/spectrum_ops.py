@@ -243,9 +243,16 @@ def combine(active: Spectrum, compare: Spectrum) -> Spectrum:
 
 
 def strip(active: Spectrum, compare: Spectrum) -> Spectrum:
-    """Subtract the compare spectrum channel by channel (times and metadata of `active` kept)."""
+    """Subtract the compare spectrum channel by channel (times and metadata of `active` kept).
+
+    As Aptec, the counts are subtracted as they are: normalize the compare spectrum first
+    (live time ratio) when the live times differ; the result then records a warning."""
     _check_pair(active, compare)
     extra = {"stripped_with": _name(compare)}
+    la, lb = active.live_time, compare.live_time
+    if la and lb and abs(la - lb) > 1e-9 * la:
+        extra["strip_live_time_warning"] = (f"the live times differ ({la:g} s and {lb:g} s): "
+                                            "counts were subtracted without live-time scaling")
     if not same_calibration(active, compare):
         extra["strip_warning"] = "the energy calibrations differ: channels were subtracted as they are"
     return _result(active, _counts(active) - _counts(compare), "Stripped", poisson=False, extra_items=extra)

@@ -114,3 +114,9 @@ def test_combine_and_strip():
     with pytest.raises(ops.SpectrumMathError):
         ops.strip(a, _spec(n=32))
     assert "combine_warning" in ops.combine(a, _spec(energy_coeffs=[0.0, 0.7])).extra
+
+
+def test_strip_records_live_time_mismatch():
+    a, b = _spec(), _spec(live_time=200.0)
+    assert "strip_live_time_warning" in ops.strip(a, b).extra
+    assert "strip_live_time_warning" not in ops.strip(a, _spec()).extra

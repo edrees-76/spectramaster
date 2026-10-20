@@ -54,7 +54,7 @@ from typing import Callable, Optional, Sequence
 
 import numpy as np
 
-from .aptec_roi import AptecRoi, RoiProperties, analyze_rois
+from .aptec_roi import AptecRoi, RoiProperties, analyze_rois, check_finite
 
 __all__ = ["PeakSearchSetup", "peak_search", "LibraryLine", "read_aptec_library", "lines_from_library", "IdentifySetup", "identify",
            "Identification", "MIN_ROI_WIDTH", "SEARCH_SMOOTH"]
@@ -131,6 +131,7 @@ def peak_search(counts: Sequence[float], setup: Optional[PeakSearchSetup] = None
     setup = (setup or PeakSearchSetup()).validate()
     props = (props or RoiProperties()).validate()
     y = np.asarray(counts, dtype=float)
+    check_finite(y)
     rois = [r for r in _candidates(y) if r[1] - r[0] + 1 >= MIN_ROI_WIDTH]
     if setup.partial:
         rois = [r for r in rois if r[0] >= setup.start and r[1] <= setup.stop]
@@ -344,8 +345,14 @@ def quantify(net_cps: float, net_err_pct: Optional[float], mda_cps: Optional[flo
     quantity, multiplied by the total quantity and the W / X / Y constants as selected.  The MDA
     is the ROI MDA count rate converted with the same factor.  ``efficiency`` is the efficiency at
     the ROI centroid energy (as Aptec, see the module docstring)."""
-    from .aptec_calibration import activity_factor, is_emission_unit
+    from .aptec_calibration import activity_factor, count_rate_factor, is_emission_unit
     units = (setup.activity_units or "Bq").strip()
+    per_cps = count_rate_factor(units)
+    if per_cps is not None:               # cps / cpm: the net count rate itself (no efficiency, yield, decay)
+        act = net_cps / per_cps
+        mda = mda_cps / per_cps if mda_cps is not None else None
+        return QuantResult(act, net_err_pct, mda, 1.0 / per_cps, "?" if mda is not None and act < mda else "",
+                           note="count-rate units: net count rate, not an activity")
     per_bq = activity_factor(units)
     if per_bq is None:
         return QuantResult(None, None, None, None, note=f"unknown activity units {units!r}")
@@ -362,6 +369,9 @@ def quantify(net_cps: float, net_err_pct: Optional[float], mda_cps: Optional[flo
         if arg > 700:
             flags += ">"
             return QuantResult(None, None, None, None, flags=flags, note="decay correction overflow")
+        if arg < -700:                    # activity date far after the count: the factor underflows to 0
+            flags += "<"
+            return QuantResult(None, None, None, None, flags=flags, note="decay correction underflow")
         f *= math.exp(arg)
     if lam and setup.true_time_decay and true_time:
         lt = lam * true_time
@@ -374,7 +384,9 @@ def quantify(net_cps: float, net_err_pct: Optional[float], mda_cps: Optional[flo
         if not quantity:
             return QuantResult(None, None, None, None, note="sample quantity is missing")
         f /= quantity
-        if setup.use_total_quantity and total_quantity:
+        if setup.use_total_quantity:
+            if not total_quantity:
+                return QuantResult(None, None, None, None, note="total quantity is missing")
             f *= total_quantity
     for use, c in ((setup.use_w, w), (setup.use_x, x), (setup.use_y, y)):
         if use and c:

@@ -8,6 +8,7 @@ The compare spectrum is an overlay of the plot marked ``compare`` (Ctrl+Up / Ctr
 """
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from typing import Callable, Optional
 
@@ -112,7 +113,7 @@ class NormalizeDialog(QDialog):
             v = float(self.factor.text().strip().replace(",", "."))
         except ValueError:
             return None
-        return v if v != 0.0 and v == v and abs(v) != float("inf") else None
+        return v if v != 0.0 and math.isfinite(v) else None
 
     def _check(self) -> None:
         ok = self.value() is not None

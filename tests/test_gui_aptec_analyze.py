@@ -232,3 +232,19 @@ def test_multifit_dialog(window):
     s = d.setup()
     assert s.detector == "nai" and not s.fit_singlets and not s.width_fixed and s.background_fixed
     assert s.max_overlaps == 4 and s.k_sigma == pytest.approx(1.645)
+
+
+def test_engine_messages_translated():
+    from spectramaster.gui import i18n
+    from spectramaster.gui.aptec_analyze_strings import engine_text
+    old = i18n.language()
+    try:
+        i18n.set_language("ar")
+        assert engine_text("total quantity is missing") == "الكمية الكلية غير مُدخلة"
+        assert engine_text("unknown activity units 'xx'") == "وحدة نشاط غير معروفة 'xx'"
+        assert "3" in engine_text("the spectrum has 3 channels that are not numbers (first: 7)")
+        assert engine_text("something else") == "something else"
+        i18n.set_language("en")
+        assert engine_text("no live time") == "no live time"
+    finally:
+        i18n.set_language(old)

@@ -1,0 +1,16 @@
+# Pinned packages of the CI test run (.github/workflows/tests.yml), wheels only.
+# Versions of the development machine; update them together with requirements.txt.
+numpy==2.3.5
+scipy==1.16.3
+openpyxl==3.1.5
+et_xmlfile==2.0.0
+PySide6==6.11.1
+PySide6_Essentials==6.11.1
+PySide6_Addons==6.11.1
+shiboken6==6.11.1
+SandiaSpecUtils==0.0.11
+pytest==9.0.3
+iniconfig==2.3.0
+packaging==25.0
+pluggy==1.6.0
+Pygments==2.19.2
