@@ -823,9 +823,10 @@ def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit
         if len(hit) > 1 and sum(len(groups[i]) for i in hit) <= EDGE_MAX_COMPONENTS:
             merged = [cz for i in hit for cz in groups[i]]
             groups = groups[:hit[0]] + [merged] + groups[hit[-1] + 1:]
+    high_res = _high_resolution(spectrum, n, f) if shape_calibrated(spectrum) else (lambda c: False)
     for g in groups:
         peaks.extend(_fit_and_make(spectrum, y, model, [c for c, _ in g], start, min_sig, g, rec=report,
-                                   var=var, edges=edges, others=[c for c, _ in cands]))
+                                   var=var, edges=edges, others=[c for c, _ in cands], high_res=high_res))
     peaks.sort(key=lambda p: p.centroid)
     peaks = _dedupe(peaks, model, f0)
     if report is not None:
@@ -845,6 +846,10 @@ EDGE_REGION_FWHM = 6.0          # fit region extends this far on each side of an
 RESIDUAL_MIN_Z = 4.0             # residual excess (matched Gaussian) worth trying as a component
 RESIDUAL_ACCEPT_DCHI2 = 9.0      # chi2 decrease (scaled) needed to keep it
 RESIDUAL_MAX_ADDED = 2
+RESIDUAL_SEARCH = True           # residual search in every fit region (not only at Compton edges)
+RESIDUAL_END_MARGIN = 0.5        # FWHM; a residual near a region end widens the region instead
+RESIDUAL_WIDEN_CHI2R = 2.0       # poor fit: search on a region widened by RESIDUAL_WIDEN_FWHM
+RESIDUAL_WIDEN_FWHM = 1.5        # (a component cut by the region end is absorbed by a wider peak)
 EDGE_MAX_REL_FWHM = 0.02         # edge model only for high-resolution spectra (HPGe ~0.2 %, NaI ~7 %)
 EDGE_MAX_COMPONENTS = 10         # largest group formed by merging the groups around an edge
 EDGE_MAX_EXTRA_SIGMA_KEV = 10.0 # edge smearing beyond the resolution (electron momentum, geometry)
@@ -1094,17 +1099,44 @@ def peak_tail_of(spectrum) -> Optional[tuple[float, float]]:
 
 
 def set_peak_tail(spectrum, cal: Optional[dict]) -> None:
-    """Attach a shape calibration (:func:`shape_calibration`) to `spectrum`; None or eta = 0
-    removes it (Gaussian peaks)."""
+    """Attach a shape calibration (:func:`shape_calibration`) to `spectrum`.  eta = 0 records a
+    measured Gaussian shape (no tail term, but the shape is calibrated); None removes it."""
     extra = spectrum.extra
     if cal and float(cal.get("eta") or 0.0) > 0 and cal.get("tau"):
         extra["peak_tail"] = {"eta": float(cal["eta"]), "tau": float(cal["tau"])}
+        extra["peak_shape_calibrated"] = True
     else:
         extra.pop("peak_tail", None)
+        if cal and int(cal.get("n_peaks", TAIL_MIN_PEAKS) or 0) >= TAIL_MIN_PEAKS:
+            extra["peak_shape_calibrated"] = True
+        else:
+            extra.pop("peak_shape_calibrated", None)
+
+
+def shape_calibrated(spectrum) -> bool:
+    """Does the spectrum carry a measured peak-shape calibration (tailed or Gaussian)?  The
+    residual search needs one: without a shape model the residuals of an unmodelled tail look
+    like a satellite peak."""
+    extra = getattr(spectrum, "extra", None) or {}
+    return bool(extra.get("peak_shape_calibrated")) or peak_tail_of(spectrum) is not None
+
+
+def _high_resolution(spectrum, n: int, f) -> Callable[[float], bool]:
+    """Predicate on a channel: is the spectrum high resolution there (FWHM / E below
+    EDGE_MAX_REL_FWHM)?  Uncalibrated spectra: the detector guess decides."""
+    if spectrum.energy_coeffs:
+        e = _poly(spectrum.energy_coeffs, spectrum.first_channel + np.arange(n))
+        if np.all(np.diff(e) > 0):
+            def ok(c: float) -> bool:
+                i = int(min(max(round(c), 1), n - 2))
+                return e[i] > 0 and f[i] * (e[i + 1] - e[i - 1]) / 2.0 / e[i] <= EDGE_MAX_REL_FWHM
+            return ok
+    hpge = guess_detector(spectrum) == "HPGe"
+    return lambda c: hpge
 
 
 def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optional[FitReport] = None,
-                  var=None, edges=(), others=()) -> list[Peak]:
+                  var=None, edges=(), others=(), high_res: Callable[[float], bool] = lambda c: False) -> list[Peak]:
     n = len(y)
     fl, fr = model.at(cents[0]), model.at(cents[-1])
     lo = int(max(math.floor(cents[0] - 2.2 * fl), start - 1, 0))
@@ -1188,6 +1220,57 @@ def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optiona
                 # (a weak component very close to a big peak is usually peak tailing, not a doublet)
                 r = r2
                 retry = "accepted"
+    # residual search in every region (Genie-style): one component at a time at the most
+    # significant residual excess >= 1 FWHM from the fitted components; the region is widened
+    # when the excess lies near its end, and the component is kept only when the fit on that
+    # same region improves significantly
+    # high-resolution spectra only: in NaI the low-energy lines overlap over several FWHM and a
+    # residual split redistributes the shared area between them (efficiency points biased).
+    # Shape-calibrated spectra only (`high_res` is False otherwise): without a measured peak shape
+    # the residual of an unmodelled low-energy tail is taken for a satellite peak.
+    if RESIDUAL_SEARCH and edge is None and high_res(0.5 * (cents[0] + cents[-1])):
+        def clamp(lo2, hi2, left, right):
+            for o in others:          # stop short of candidates fitted in other regions
+                if o < left - 0.5 and o + 2.5 * model.at(o) > lo2:
+                    lo2 = min(lo, int(math.ceil(o + 2.5 * model.at(o))))
+                if o > right + 0.5 and o - 2.5 * model.at(o) < hi2:
+                    hi2 = max(hi, int(math.floor(o - 2.5 * model.at(o))))
+            return lo2, hi2
+
+        cur = [float(c) for c in r.centroids]
+        rs, slo, shi = r, lo, hi              # fit on which the residuals are searched
+        if r.chi2r > RESIDUAL_WIDEN_CHI2R:
+            w0, w1 = RESIDUAL_WIDEN_FWHM * model.at(cur[0]), RESIDUAL_WIDEN_FWHM * model.at(cur[-1])
+            wlo, whi = clamp(int(max(math.floor(lo - w0), start - 1, 0)), int(min(math.ceil(hi + w1), n - 1)),
+                             cur[0], cur[-1])
+            if (wlo, whi) != (lo, hi):
+                rw = _fit_group(y, model, cur, wlo, whi, free_width=free, step=True, var=var)
+                if rw is not None:
+                    rs, slo, shi = rw, wlo, whi
+        for _ in range(RESIDUAL_MAX_ADDED):
+            add = _residual_candidate(y, rs, model, var, end_margin=RESIDUAL_END_MARGIN)
+            if add is None:
+                break
+            fa = model.at(add)
+            lo2, hi2 = clamp(int(max(min(slo, math.floor(add - 2.2 * fa)), start - 1, 0)),
+                             int(min(max(shi, math.ceil(add + 2.2 * fa)), n - 1)),
+                             min(cur[0], add), max(cur[-1], add))
+            if not lo2 <= add <= hi2:
+                break
+            base = rs if (lo2, hi2) == (slo, shi) else _fit_group(y, model, cur, lo2, hi2, free_width=free,
+                                                                    step=True, var=var)
+            new = sorted(cur + [add])
+            rn = _fit_group(y, model, new, lo2, hi2, free_width=free, step=True, var=var)
+            if base is None or rn is None or (base.chi2 - rn.chi2) / max(rn.chi2r, 1.0) < RESIDUAL_ACCEPT_DCHI2:
+                break
+            # the proximity clause holds for the fitted positions too: a component that moves
+            # within 1 FWHM of another one is absorbing its shape (e.g. the low-energy tail of a
+            # real HPGe peak), not a peak
+            fc = sorted(float(c) for c in rn.centroids)
+            if any(b - a < model.at(0.5 * (a + b)) for a, b in zip(fc, fc[1:])):
+                break
+            r, cents, lo, hi = rn, new, lo2, hi2
+            rs, slo, shi, cur = rn, lo2, hi2, [float(c) for c in rn.centroids]
     out = []
     kept: dict = {}
     reasons: dict = {}
@@ -1234,9 +1317,10 @@ def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optiona
     return out
 
 
-def _residual_candidate(y, r, model, var=None) -> Optional[float]:
+def _residual_candidate(y, r, model, var=None, end_margin: float = 1.0) -> Optional[float]:
     """Channel of the most significant Gaussian-shaped excess in the residuals of fit `r`
-    (z > RESIDUAL_MIN_Z, at least 1 FWHM from the fitted components and the region ends)."""
+    (z > RESIDUAL_MIN_Z, at least 1 FWHM from the fitted components and `end_margin` FWHM from
+    the region ends)."""
     x = np.arange(r.lo, r.hi + 1, dtype=float)
     tot = r.bkg(x)
     for a_, c_, s_ in zip(r.amps, r.centroids, r.sigmas):
@@ -1247,7 +1331,8 @@ def _residual_candidate(y, r, model, var=None) -> Optional[float]:
     best, bz = None, RESIDUAL_MIN_Z
     for x0 in x:
         fw = model.at(x0)
-        if x0 - r.lo < fw or r.hi - x0 < fw or any(abs(x0 - c) < fw for c in r.centroids):
+        if (x0 - r.lo < end_margin * fw or r.hi - x0 < end_margin * fw
+                or any(abs(x0 - c) < fw for c in r.centroids)):
             continue
         g = np.exp(-0.5 * ((x - x0) / (fw * F2S)) ** 2)
         den = float(np.sum(g * g / v))

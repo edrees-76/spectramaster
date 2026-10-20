@@ -90,6 +90,10 @@ for det in ("HPGe", "NaI"):
     _c(f"{det}.tailed.false_per_spectrum", det, "tailed_shape_cal", "false_per_spectrum", "<=", 1.5,
        "Unmatched peaks per spectrum stay at the strong-peak level (baseline ~1).")
     _c(f"{det}.tailed.cov1", det, "tailed_shape_cal", "z_cov1", "report", None, "Reported only.")
+    if det == "HPGe":
+        _c("HPGe.tailed.false_increase", det, "tailed_shape_cal", "false_per_spectrum", "<=", 1.1,
+           "Residual search on top of the tail model (protocol amendment 3): unmatched peaks may "
+           "rise by at most 0.1 per spectrum over the baseline 1.0.")
     _c(f"{det}.shape_cal.gaussian_area_bias", det, "strong_shape_cal", "area_bias", "abs<=", 0.01,
        "A shape calibration measured on a detector without a tail must not bias Gaussian peaks "
        "(same limit as the strong-peak area criterion).")
@@ -124,6 +128,33 @@ for det in ("HPGe", "NaI"):
     _c(f"{det}.doublet.total_area_close", det, "doublets", "total_area_bias_le0.75fwhm", "abs<=", 0.03,
        "Unresolvable doublets need not be split, but the multiplet's total area must be conserved "
        "(sum of reported peaks within the multiplet window).")
+    # ---------------------------------------------------------------- satellites (residual search;
+    # pre-registered 2026-10-20 in docs/baseline/residual_search_protocol.md before evaluation)
+    _c(f"{det}.satellite.extra_per_spectrum", det, "satellites", "extra_per_spectrum", "<=", 0.05,
+       "The residual search must not split peaks: reported peaks in the multiplet window beyond "
+       "the matched ones.")
+    _c(f"{det}.satellite.main_area_bias", det, "satellites", "main_area_bias", "abs<=", 0.01,
+       "Adding a satellite component must not distort the strong (1e5 counts) peak's area.")
+    _c(f"{det}.satellite.sat_area_bias_ratio10", det, "satellites", "sat_area_bias_ratio10", "abs<=", 0.10,
+       "Satellites of 1e4 counts beside a 1e5-count peak: area within 10 % when found.")
+    _c(f"{det}.satellite.found_ratio100", det, "satellites", "found_ratio100", "report", None,
+       "A 1 % satellite may be below the statistical limit; reported only.")
+    # satellites beside tailed peaks, with the detector's tailed shape calibration (residual search
+    # on top of the tail model; pre-registered 2026-10-20, protocol amendment 3, before evaluation)
+    hp = det == "HPGe"
+    _c(f"{det}.satellite_tailed.extra_per_spectrum", det, "satellites_tailed", "extra_per_spectrum",
+       "<=" if hp else "report", 0.05 if hp else None,
+       "With the tail modelled, the residual search must not split tailed peaks.  NaI: no search "
+       "(low resolution), reported only.")
+    _c(f"{det}.satellite_tailed.main_area_bias", det, "satellites_tailed", "main_area_bias",
+       "abs<=" if hp else "report", 0.01 if hp else None,
+       "A satellite component must not take area from the tailed main peak.")
+    _c(f"{det}.satellite_tailed.sat_area_bias_ratio10", det, "satellites_tailed", "sat_area_bias_ratio10",
+       "abs<=" if hp else "report", 0.10 if hp else None,
+       "The satellite must not absorb the main peak's tail.")
+    _c(f"{det}.satellite_tailed.found_ratio_le30", det, "satellites_tailed", "found_ratio_le30",
+       ">=" if hp else "report", 0.90 if hp else None,
+       "Same limit as the Gaussian case: the tail model must not hide satellites.")
     _c(f"{det}.doublet.resolved_close", det, "doublets", "resolved_le0.75fwhm", "report", None,
        "Splitting peaks < 0.75 FWHM apart is reported only: claiming it automatically is not "
        "required and can be a sign of over-fitting.")
@@ -182,6 +213,13 @@ for det in ("HPGe", "NaI", "NaI_4096"):
 
 # NaI(Tl) on a 4096-channel MCA (0.75 keV/ch): same physics as the 1024-channel NaI case, so the
 # same limits apply (no relaxation for the finer binning).
+_c("HPGe.satellite.found_ratio_le30", "HPGe", "satellites", "found_ratio_le30", ">=", 0.90,
+   "A satellite >= 3 % of a 1e5-count peak at >= 1.25 FWHM is clearly significant in HPGe "
+   "(residual-search protocol, pre-registered before evaluation).")
+_c("NaI.satellite.found_ratio10", "NaI", "satellites", "found_ratio10", ">=", 0.90,
+   "NaI resolution ~7 %: only the 10 % satellite is required (residual-search protocol).")
+_c("NaI.satellite.found_ratio30", "NaI", "satellites", "found_ratio30", "report", None,
+   "3 % satellite in NaI: reported only.")
 _c("NaI_4096.strong.recall", "NaI_4096", "isolated_strong", "recall", ">=", 0.99,
    "Same limit as NaI.strong.recall.")
 _c("NaI_4096.strong.area_bias", "NaI_4096", "isolated_strong", "area_bias", "abs<=", 0.01,

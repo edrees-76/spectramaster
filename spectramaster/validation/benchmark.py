@@ -212,6 +212,41 @@ def cat_doublets(det, n_each) -> tuple[dict, Collector]:
     return out, c
 
 
+def cat_satellites(det, n_each, tail: bool = False, n_cal: int = 3) -> tuple[dict, Collector]:
+    """Strong peak + satellite, fitted with the detector's peak-shape calibration measured on
+    `n_cal` separate calibration spectra (the residual search needs a measured shape)."""
+    from ..analysis.peaks import set_peak_tail, shape_calibration
+    cal = shape_calibration([s.spectrum for s in scenarios.shape_calibration_spectra(det, n_cal, tail)])
+    c = Collector()
+    groups: dict[float, list] = defaultdict(list)
+    for syn in scenarios.satellites(det, n_each, tail=tail):
+        set_peak_tail(syn.spectrum, cal)
+        t0 = time.perf_counter()
+        peaks = find_peaks(syn.spectrum)
+        dt = time.perf_counter() - t0
+        m, _un = c.add(syn, peaks, dt)
+        main, sat = syn.truth
+        w0 = min(main.centroid, sat.centroid) - 2.0 * main.fwhm_ch
+        w1 = max(main.centroid, sat.centroid) + 2.0 * main.fwhm_ch
+        inside = [p for p in peaks if w0 <= p.centroid <= w1]
+        rec = {"found": 1 in m, "extra": max(len(inside) - len(m), 0)}
+        if 0 in m:
+            rec["main_rel"] = (peaks[m[0]].net_area - main.area) / main.area
+        if 1 in m:
+            rec["sat_rel"] = (peaks[m[1]].net_area - sat.area) / sat.area
+        groups[syn.meta["ratio"]].append(rec)
+    out: dict = {}
+    for r, recs in sorted(groups.items()):
+        out[f"found_ratio{r:g}"] = _frac(x["found"] for x in recs)
+    allr = [x for recs in groups.values() for x in recs]
+    out["found_ratio_le30"] = _frac(x["found"] for r, recs in groups.items() if r <= 30 for x in recs)
+    out["extra_per_spectrum"] = _mean(x["extra"] for x in allr)
+    out["main_area_bias"] = _mean(x["main_rel"] for x in allr if "main_rel" in x)
+    out["sat_area_bias_ratio10"] = _mean(x["sat_rel"] for x in groups.get(10.0, []) if "sat_rel" in x)
+    out.update(cal_eta=cal["eta"], cal_tau=cal["tau"], cal_peaks=cal["n_peaks"])
+    return out, c
+
+
 def cat_edge(det, n, extra_sigma_kev: float = 0.0) -> tuple[dict, Collector]:
     c = Collector()
     rows, spurious = [], 0
@@ -613,6 +648,8 @@ def run(quick: bool = False, refdata: Optional[str] = None, log=print) -> dict:
         r["isolated_weak"], c = cat_weak(det, q(80, 8)); times += c.times
         r["background_only"], c = cat_background(det, q(40, 4)); times += c.times
         r["doublets"], c = cat_doublets(det, q(8, 1)); times += c.times
+        r["satellites"], c = cat_satellites(det, q(8, 2)); times += c.times
+        r["satellites_tailed"], c = cat_satellites(det, q(8, 2), tail=True); times += c.times
         r["compton_edge"], c = cat_edge(det, q(48, 6)); times += c.times
         r["low_counts"], c = cat_low(det, q(80, 8)); times += c.times
         log(f"[{det.name}] identification ...")

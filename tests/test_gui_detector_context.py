@@ -402,6 +402,10 @@ def test_peak_shape_measured_in_the_registry_and_used_by_the_session(window, tmp
     assert peak_tail_of(spec) == (saved["eta"], saved["tau"])
     analyse(window)
     assert window.session.detector["peak_shape"]["eta"] == saved["eta"]      # snapshot in the session
-    # another detector without a shape: Gaussian peaks again
+    # a detector measured as Gaussian: no tail term, but the shape is calibrated (residual search)
+    from spectramaster.analysis.peaks import shape_calibrated
     assert ctl.context.choose(weak.id)
-    assert peak_tail_of(spec) is None and "peak_tail_source" not in spec.extra
+    assert peak_tail_of(spec) is None and shape_calibrated(spec)
+    # a detector never measured: Gaussian peaks, not calibrated
+    assert ctl.context.choose(other.id)
+    assert not shape_calibrated(spec) and "peak_tail_source" not in spec.extra
