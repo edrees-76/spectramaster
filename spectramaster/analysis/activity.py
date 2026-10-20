@@ -831,6 +831,9 @@ def concentrations(res: "QuantResults", sample, unit: str, quantity_rel_unc: flo
         return out
     label = unit
     notes = out["notes"]
+    if res.reference_factor is not None:
+        notes.append(f"reference peak correction K = {res.reference_factor:.4f} +- "
+                     f"{100 * res.reference_u_rel:.2f} % applied to every result")
     if unit == "Bq":
         q = 1.0
     elif unit == "Bq/kg":

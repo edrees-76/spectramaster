@@ -231,6 +231,7 @@ class ActivityDialog(QDialog):
         row.addStretch(1)
         form.addRow(qtr("act_method"), row)
         lay.addLayout(form)
+        self._build_reference_box(lay)
 
         self.sample_box = SampleSection(self, settings)
         lay.addWidget(self.sample_box)
@@ -376,6 +377,104 @@ class ActivityDialog(QDialog):
         self.blank_edit.setToolTip(qtr("act_blank_tip") if spectrum is None else (spectrum.source_path or ""))
         self.blank_edit.setCursorPosition(0)
 
+    # ------------------------------------------------------------------ reference peak
+    def _build_reference_box(self, lay) -> None:
+        """Reference peak correction (pulser or fixed reference source), activity.reference_correction."""
+        box = QGroupBox(qtr("act_ref_peak"))
+        box.setCheckable(True)
+        box.setChecked(False)
+        box.setToolTip(qtr("act_ref_peak_tip"))
+        fl = QFormLayout(box)
+        row = QHBoxLayout()
+        self.refpk_energy = QDoubleSpinBox()
+        self.refpk_energy.setRange(1.0, 20000.0)
+        self.refpk_energy.setDecimals(2)
+        self.refpk_energy.setSuffix(" keV")
+        row.addWidget(self.refpk_energy)
+        row.addWidget(QLabel(qtr("act_ref_rate")))
+        self.refpk_rate = QDoubleSpinBox()
+        self.refpk_rate.setRange(0.0, 1e7)
+        self.refpk_rate.setDecimals(4)
+        self.refpk_rate.setSuffix(" cps")
+        row.addWidget(self.refpk_rate)
+        row.addWidget(QLabel("±"))
+        self.refpk_unc = QDoubleSpinBox()
+        self.refpk_unc.setRange(0.0, 100.0)
+        self.refpk_unc.setDecimals(2)
+        self.refpk_unc.setSuffix(" %")
+        row.addWidget(self.refpk_unc)
+        b = QPushButton(qtr("act_ref_measure"))
+        b.setToolTip(qtr("act_ref_measure_tip"))
+        b.clicked.connect(self.browse_reference_spectrum)
+        row.addWidget(b)
+        row.addStretch(1)
+        fl.addRow(qtr("act_ref_energy"), row)
+        row = QHBoxLayout()
+        self.refpk_hl = QDoubleSpinBox()
+        self.refpk_hl.setRange(0.0, 1e12)
+        self.refpk_hl.setDecimals(4)
+        self.refpk_hl.setSpecialValueText(qtr("act_ref_pulser"))
+        self.refpk_hl.setMinimumWidth(self.refpk_hl.fontMetrics().horizontalAdvance(qtr("act_ref_pulser")) + 48)
+        self.refpk_hl.setToolTip(qtr("act_ref_hl_tip"))
+        row.addWidget(self.refpk_hl)
+        row.addWidget(QLabel(qtr("act_ref_rate_date")))
+        self.refpk_date = QDateTimeEdit()
+        self.refpk_date.setDisplayFormat("yyyy-MM-dd HH:mm")
+        self.refpk_date.setCalendarPopup(True)
+        self.refpk_date.setLayoutDirection(Qt.LeftToRight)
+        self.refpk_date.setDateTime(QDateTime.currentDateTime())
+        row.addWidget(self.refpk_date)
+        row.addStretch(1)
+        fl.addRow(qtr("act_ref_hl"), row)
+        self.refpk_hl.valueChanged.connect(lambda v: self.refpk_date.setEnabled(v > 0))
+        self.refpk_date.setEnabled(False)
+        self.refpk_box = box
+        lay.addWidget(box)
+        saved = str(self.settings.get("quant/reference_peak", "")) if self.settings is not None else ""
+        try:
+            e, r, u, hl = (float(v) for v in saved.split(",")[:4])
+            self.refpk_energy.setValue(e)
+            self.refpk_rate.setValue(r)
+            self.refpk_unc.setValue(u)
+            self.refpk_hl.setValue(hl)
+        except ValueError:
+            pass
+
+    def browse_reference_spectrum(self) -> None:
+        folder = self.settings.folder("open") if self.settings is not None else ""
+        path, _ = QFileDialog.getOpenFileName(self, qtr("act_ref_measure"), folder)
+        if path:
+            self.measure_reference(path)
+
+    def measure_reference(self, path) -> bool:
+        """Rate of the reference peak in a low-rate reference measurement (activity.reference_rate);
+        fills the rate, its uncertainty and the rate date (the measurement start)."""
+        from ..convert import read_spectra
+        try:
+            spectra, _f = read_spectra(Path(path))
+            s = spectra[0]
+            rate, u = act.reference_rate(s, self.refpk_energy.value())
+        except Exception as exc:
+            QMessageBox.warning(self, qtr("act_title"), qtr("act_failed", msg=str(exc)))
+            return False
+        self.refpk_rate.setValue(rate)
+        self.refpk_unc.setValue(100.0 * u / rate)
+        if s.start_time is not None:
+            self.refpk_date.setDateTime(QDateTime(s.start_time))
+        return True
+
+    def reference_peak(self) -> Optional[dict]:
+        """ActivityOptions.reference_peak from the box (None: not applied)."""
+        if not self.refpk_box.isChecked():
+            return None
+        if self.refpk_rate.value() <= 0:
+            raise ValueError(qtr("act_ref_no_rate"))
+        hl_days = self.refpk_hl.value()
+        return {"energy": self.refpk_energy.value(), "rate": self.refpk_rate.value(),
+                "rate_rel_unc": self.refpk_unc.value() / 100.0,
+                "half_life_s": hl_days * 86400.0 if hl_days > 0 else None,
+                "ref_date": self.refpk_date.dateTime().toPython() if hl_days > 0 else None}
+
     def _compute(self, curve, opt) -> act.QuantResults:
         """The sample's results; with a reagent blank, the blank is analysed first exactly like the
         sample (same curve, options and background) and subtracted line by line."""
@@ -395,7 +494,7 @@ class ActivityDialog(QDialog):
             quantity_unit=self.unit_combo.currentText(), quantity_rel_unc=self.qty_unc.value() / 100.0,
             attenuation=self.att_spin.value(), bkg_mode=self.bkg_mode.currentData(),
             mda_method=self.mda_combo.currentData(), geometry=self.sample_geometry(),
-            allow_geometry_mismatch=False)
+            allow_geometry_mismatch=False, reference_peak=self.reference_peak())
 
     def sample_geometry(self):
         """The sample geometry to check the calibration against (None = not given)."""
@@ -499,6 +598,8 @@ class ActivityDialog(QDialog):
         if self.settings is not None:
             self.settings.set("quant/curve", str(path))
             self.settings.set("quant/nuclides", ", ".join(opt.nuclides))
+            self.settings.set("quant/reference_peak", ",".join(f"{v:g}" for v in (
+                self.refpk_energy.value(), self.refpk_rate.value(), self.refpk_unc.value(), self.refpk_hl.value())))
         self._show(self.results)
         self.compute_concentrations()
         self.btn_export.setEnabled(True)
