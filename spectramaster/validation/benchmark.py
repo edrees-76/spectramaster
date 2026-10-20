@@ -164,6 +164,20 @@ def cat_weak(det, n) -> tuple[dict, Collector]:
     return out, c
 
 
+def cat_medium(det, n_each) -> tuple[dict, Collector]:
+    """Medium-signal isolated peaks (docs/baseline/medium_peaks_protocol.md)."""
+    c = run_peaks(scenarios.medium_peaks(det, n_each))
+    out = summarise_basic(c)
+    for s in scenarios.MEDIUM_SNR_LEVELS:
+        f = [r for r in c.rows if r.get("s") == s and r["found"]]
+        out[f"found_s{s:g}"] = _frac(r["found"] for r in c.rows if r.get("s") == s)
+        out[f"area_bias_s{s:g}"] = _mean(r["rel"] for r in f)
+        out[f"sd_s{s:g}"] = float(np.std([r["rel"] for r in f])) if f else None
+        out[f"cov1_s{s:g}"] = _zcov(f, 1)
+        out[f"cov2_s{s:g}"] = _zcov(f, 2)
+    return out, c
+
+
 def cat_background(det, n) -> tuple[dict, Collector]:
     c = run_peaks(scenarios.background_only(det, n))
     return {"spectra": c.spectra, "false_per_spectrum": c.false / max(c.spectra, 1),
@@ -736,6 +750,7 @@ def run(quick: bool = False, refdata: Optional[str] = None, log=print) -> dict:
         r["tailed_shape_cal"], c = cat_shape_calibrated(det, q(40, 6)); times += c.times
         r["strong_shape_cal"], c = cat_shape_calibrated(det, q(40, 6), tail=False); times += c.times
         r["isolated_weak"], c = cat_weak(det, q(80, 8)); times += c.times
+        r["medium_peaks"], c = cat_medium(det, q(40, 2)); times += c.times
         r["background_only"], c = cat_background(det, q(40, 4)); times += c.times
         r["doublets"], c = cat_doublets(det, q(8, 1)); times += c.times
         r["satellites"], c = cat_satellites(det, q(8, 2)); times += c.times

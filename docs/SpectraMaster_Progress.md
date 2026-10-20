@@ -740,3 +740,33 @@ Benchmark `reference_peak` (`docs/baseline/reference_peak_protocol.md`, `after_R
 - No criterion went from PASS to FAIL.
 
 The interface is not done yet.
+
+## Medium-signal peak areas: NaI continuum curvature (2026-10-20)
+
+The reference-peak benchmark showed that peaks of s about 20-40 are fitted low. A new
+pre-registered category `medium_peaks` (`docs/baseline/medium_peaks_protocol.md`) measures
+isolated peaks at s = 20, 40 and 80.
+
+The NaI cause: the log-linear continuum exp(b0 + b1 x) cannot follow the curvature of a real
+continuum over the wide NaI fit regions.
+
+The change is for log-linear fits only:
+
+- The continuum becomes exp(b0 + b1 x + b2 x^2).
+- b2 is measured on a region three times wider and then held fixed.
+- The wide fit is used only when its chi2 is consistent with the model; otherwise b2 = 0, as
+  before.
+
+Two earlier variants were rejected by the protocol's criteria; the protocol documents both:
+
+- b2 free in the fit raised the SD by 1.66 times.
+- An ungated wide fit broke the strong-peak coverage (`after_MP1`).
+
+Results (`after_MP0` -> `after_MP2`), NaI, s = 20 / 40 / 80:
+
+- Bias: -2.3 / -0.8 / -0.3 % -> -1.3 / +0.03 / +0.25 %.
+- SD ratio: 1.00-1.03.
+- No criterion went from PASS to FAIL; NaI.medium.area_bias_s20 went from FAIL to PASS.
+
+HPGe medium peaks remain 1.4-3 % low, with cov2 of 0.92. Three new HPGe criteria fail. The cause
+is probably the fixed model width of weak peaks; this is the next step.

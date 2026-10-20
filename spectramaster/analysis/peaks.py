@@ -451,17 +451,26 @@ BKG_LOGLINEAR = False            # default continuum shape when the model does n
 LOGLINEAR_DETECTORS = ("NaI", "LaBr3", "CZT")   # wide fit regions: continuum curvature matters
 POISSON_IRLS_ITER = 3            # model-weighted refits (Poisson likelihood) for raw counts
 POISSON_MODEL_FLOOR = 0.25       # counts/channel floor of the model in the weights
+LOGQUAD_WIDE = 2.0               # curvature measured on a region (1 + LOGQUAD_WIDE) times wider
+LOGQUAD_CHI2_SIGMA = 3.0         # the wide fit is used when chi2r <= 1 + 3 sqrt(2 / dof)
+LOGQUAD_MAX = 2.0                # bound of |b2| h^2 of the log-quadratic continuum (factor e^2 at the edges)
 
 
 def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_width=True,
                step=True, width_bounds=(0.7, 1.4), fix_centroids=None, var=None,
-               edge: Optional[tuple] = None, loglinear: Optional[bool] = None) -> Optional[_Fit]:
+               edge: Optional[tuple] = None, loglinear: Optional[bool] = None,
+               curvature: Optional[float] = None) -> Optional[_Fit]:
     """Gaussians (shared width scale) + linear background + erfc step, Poisson-weighted
     (or weighted by the explicit channel variance `var`).  For raw counts of scintillators
-    (``model.loglinear``, set by find_peaks) the continuum is log-linear, exp(b0 + b1 (x - xm)):
-    over their wide fit regions a straight line under a peak on a convex (falling) continuum
-    overestimates the background and biases weak areas low; the exponential has the same two
-    parameters.  HPGe fit regions are a few keV wide and keep the straight line.  Raw counts are fitted by Poisson
+    (``model.loglinear``, set by find_peaks) the continuum is log-quadratic,
+    exp(b0 + b1 (x - xm) + b2 (x - xm)^2): over their wide fit regions a straight line under a
+    peak on a convex (falling) continuum overestimates the background and biases weak areas low,
+    and a pure exponential cannot follow the curvature of a real continuum (exp + flat) either
+    (docs/baseline/medium_peaks_protocol.md).  Under the peak b2 is poorly determined and trades
+    with the area, so it is measured by a fit of the same group on a region (1 + LOGQUAD_WIDE)
+    times wider and then held fixed; |b2| h^2 <= LOGQUAD_MAX with h half that wide region, which
+    limits the effect of a neighbouring peak in the wide region to a factor e^(2/9) at the
+    edges of the fit region.  ``curvature`` holds b2 at a given value.  HPGe fit regions are a few keV wide and keep the straight line.  Raw counts are fitted by Poisson
     maximum likelihood (iteratively reweighted with the model, POISSON_IRLS_ITER).
 
     `edge` = (x0, xmin, xmax[, smax]) adds a continuum step E * erfc((x - xe) / (s_e sqrt 2)) / 2
@@ -495,13 +504,31 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
         sig_e0 = model.at(x0e) * F2S
         p += [max(yl - yr, 0.0), x0e, 1.5]
         off = 7
+    if loglinear is None:
+        loglinear = getattr(model, "loglinear", BKG_LOGLINEAR)
+    loglin = bool(loglinear) and var is None
+    iq = None                     # index of the log-continuum curvature b2
+    if loglin:
+        iq = off
+        p += [0.0]
+        off += 1
+        if curvature is None and LOGQUAD_WIDE > 0:
+            # the curvature is poorly determined under the peak: measure it on a wider region
+            ext = int(round(LOGQUAD_WIDE * 0.5 * (hi - lo)))
+            lo2, hi2 = max(lo - ext, 0), min(hi + ext, len(y) - 1)
+            rw = _fit_group(y, model, cents, lo2, hi2, free_width=free_width, step=step,
+                            width_bounds=width_bounds, fix_centroids=fix_centroids, var=var, edge=edge,
+                            loglinear=True, curvature=float("nan"))
+            # only from a wide fit the model describes (chi2 within LOGQUAD_CHI2_SIGMA of its
+            # expectation): another peak or an edge in the wider region falls back to b2 = 0
+            ok = rw is not None and rw.chi2r <= 1.0 + LOGQUAD_CHI2_SIGMA * math.sqrt(2.0 / max(rw.dof, 1))
+            curvature = rw.b2 if ok else 0.0
+        elif curvature is not None and math.isnan(curvature):
+            curvature = None           # the wide fit itself: free curvature
     for c in cents:
         i = min(max(int(round(c)) - lo, 0), len(d) - 1)
         p += [max(float(d[i]) - (b0 + b1 * (c - xm)), 1.0), float(c)]
     p = np.array(p, dtype=float)
-    if loglinear is None:
-        loglinear = getattr(model, "loglinear", BKG_LOGLINEAR)
-    loglin = bool(loglinear) and var is None
     if loglin:
         p[0], p[1] = math.log(max(b0, 0.5)), b1 / max(b0, 0.5)
     # linear pre-solve: background + amplitudes at the search centroids / model widths
@@ -539,6 +566,11 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
             lb[5] = ub[5] = p[5]
         p[5] = min(max(p[5], lb[5]), ub[5])
         lb[6], ub[6] = 1.0, max(float(edge[3]) if len(edge) > 3 else 6.0, 1.0)
+    if iq is not None:
+        hw = max(0.5 * (x[-1] - x[0]), 1.0)
+        lb[iq], ub[iq] = -LOGQUAD_MAX / hw ** 2, LOGQUAD_MAX / hw ** 2
+        if curvature is not None:
+            p[iq] = lb[iq] = ub[iq] = curvature
     for j, (c, f) in enumerate(zip(cents, base_f)):
         lb[off + 2 * j] = 0.0
         if fix_centroids is not None and fix_centroids[j]:
@@ -569,7 +601,7 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
         else:
             SH, DS = EX, -T * EX
         if loglin:
-            B = np.exp(np.clip(p[0] + p[1] * xs, -50.0, 50.0))
+            B = np.exp(np.clip(p[0] + p[1] * xs + p[iq] * xs * xs, -50.0, 50.0))
             m = B + a @ SH
         else:
             m = p[0] + p[1] * xs + a @ SH
@@ -606,6 +638,7 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
         if loglin:
             J[:, 0] = B
             J[:, 1] = B * xs
+            J[:, iq] = B * xs * xs
         return m, J
 
     def lm(p, w):
@@ -686,14 +719,17 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
         area_unc[j] = math.sqrt(max(float(gv @ cov @ gv), 0.0))
         cent_unc[j] = math.sqrt(max(float(cov[ia + 1, ia + 1]), 0.0))
     b0f, b1f, hst = p[0], p[1], p[3]
+    b2f = float(p[iq]) if iq is not None else 0.0
+    b2_free = iq is not None and not fixed[iq]
     loglin_f = loglin
     cents_f, amps_f, sig_f = cent.copy(), amp.copy(), sig.copy()
     edge_f = (float(p[4]), float(p[5]), float(p[6] * sig_e0)) if edge is not None else None
 
     def bkg(xx):
         xx = np.asarray(xx, dtype=float)
-        out = (np.exp(np.clip(b0f + b1f * (xx - xm), -50.0, 50.0)) if loglin_f
-               else b0f + b1f * (xx - xm))
+        u = xx - xm
+        out = (np.exp(np.clip(b0f + b1f * u + b2f * u * u, -50.0, 50.0)) if loglin_f
+               else b0f + b1f * u)
         for c, a, s in zip(cents_f, amps_f, sig_f):
             out = out + hst * a * 0.5 * erfc((xx - c) / (s * R2))
         if edge_f is not None:
@@ -709,14 +745,16 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
     fit.free_width, fit.dof, fit.width_bounds = bool(free_width), int(dof), tuple(width_bounds)
     fit.edge = edge_f              # (height, position, sigma) of the continuum step, or None
     fit.loglinear = bool(loglin)
+    fit.b2 = b2f
     fit.weights2 = w * w            # final fit weights 1/variance (model-based for raw counts)
 
     def cont_cols(xx):
         """Continuum columns of the fit (linear in their coefficients at the fitted shape)."""
         xx = np.asarray(xx, dtype=float)
         if loglin_f:
-            B = np.exp(np.clip(b0f + b1f * (xx - xm), -50.0, 50.0))
-            cols = [B, B * (xx - xm)]
+            u = xx - xm
+            B = np.exp(np.clip(b0f + b1f * u + b2f * u * u, -50.0, 50.0))
+            cols = [B, B * u] + ([B * u * u] if b2_free else [])
         else:
             cols = [np.ones_like(xx), xx - xm]
         if edge_f is not None:

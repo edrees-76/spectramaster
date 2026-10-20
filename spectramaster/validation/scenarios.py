@@ -70,6 +70,21 @@ def isolated_weak(det: DetectorSpec, n: int = 60) -> Iterator[SyntheticSpectrum]
                             meta={"category": "isolated_weak", "s": s})
 
 
+MEDIUM_SNR_LEVELS = (20.0, 40.0, 80.0)
+
+
+def medium_peaks(det: DetectorSpec, n_each: int = 40) -> Iterator[SyntheticSpectrum]:
+    """Isolated Gaussian peaks of medium signal (docs/baseline/medium_peaks_protocol.md):
+    the weak-peak energies at s = 20, 40 and 80 on the base continuum."""
+    cont = base_continuum(det)
+    cy = continuum_counts(det, cont)
+    for s in MEDIUM_SNR_LEVELS:
+        for i in range(n_each):
+            peaks = [TruePeak(e, area_for_snr(det, cy, e, s), tag=f"s={s:g}") for e in _energies(det, "weak")]
+            yield make_spectrum(det, peaks, cont, seed_of(det, f"medium_s{s:g}", i),
+                                meta={"category": "medium_peaks", "s": s})
+
+
 def background_only(det: DetectorSpec, n: int = 30) -> Iterator[SyntheticSpectrum]:
     for i in range(n):
         yield make_spectrum(det, [], base_continuum(det), seed_of(det, "background_only", i),

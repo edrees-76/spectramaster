@@ -304,6 +304,20 @@ for det in ("HPGe", "NaI"):
        "The same line without the blank correction (shows that the correction matters).")
     _c(f"{det}.blank.mn54_z_mean", det, "reagent_blank", "mn54_z_mean", "report", None, "Reported only.")
 
+# ------------------------------------------------- medium-signal peaks (pre-registered 2026-10-20,
+# docs/baseline/medium_peaks_protocol.md, before the fit change and before results of the category)
+for det in ("HPGe", "NaI"):
+    _c(f"{det}.medium.area_bias_s20", det, "medium_peaks", "area_bias_s20", "abs<=", 0.02,
+       "Isolated peaks at s = 20: SE about 0.4 %, a mean bias above 2 % is systematic.")
+    _c(f"{det}.medium.area_bias_s40", det, "medium_peaks", "area_bias_s40", "abs<=", 0.01,
+       "Isolated peaks at s = 40: SE about 0.3 %.")
+    _c(f"{det}.medium.area_bias_s80", det, "medium_peaks", "area_bias_s80", "abs<=", 0.01,
+       "Isolated peaks at s = 80: SE about 0.15 %.")
+    _c(f"{det}.medium.cov2", det, "medium_peaks", "z_cov2", "in", (0.93, 1.0),
+       "Binomial band for 600 peaks.")
+    _c(f"{det}.medium.sd_s40", det, "medium_peaks", "sd_s40", "report", None,
+       "Relative SD at s = 40 (precision cost of the continuum curvature term).")
+
 # ------------------------------------------------- reference peak (pre-registered 2026-10-20,
 # docs/baseline/reference_peak_protocol.md, before evaluation).  A pulser and a loss of 0-10 %
 # applied to every peak (random summing).
