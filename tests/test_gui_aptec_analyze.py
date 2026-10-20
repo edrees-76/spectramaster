@@ -248,3 +248,22 @@ def test_engine_messages_translated():
         assert engine_text("no live time") == "no live time"
     finally:
         i18n.set_language(old)
+
+
+def test_identify_brings_the_roi_table_forward(window):
+    """The ROI table is tabbed with the analysis results: after Identify it must be the visible
+    tab (otherwise the identification looks as if it had not run)."""
+    from PySide6.QtWidgets import QTabBar
+    plot = _show(window)
+    window.show()
+    window.act_analyze.trigger()
+    window.analysis_dock.show()
+    window.roi_dock.show()
+    window.analysis_dock.raise_()
+    QApplication.processEvents()
+    window.act_a_ident.trigger()
+    QApplication.processEvents()
+    assert any(getattr(r, "aptec_id", None) for r in plot.rois)
+    bars = [b for b in window.findChildren(QTabBar) if b.count() > 1]
+    titles = {b.tabText(b.currentIndex()) for b in bars}
+    assert window.roi_dock.windowTitle() in titles

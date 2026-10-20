@@ -504,14 +504,18 @@ class AptecAnalysis:
         return self._lib_cache[key]
 
     def _show_rois(self) -> None:
+        """Bring the ROI table forward: it is tabbed with the analysis results, where the
+        identification / quantification of the ROIs would otherwise stay out of sight."""
         dock = getattr(self.win, "roi_dock", None)
-        if dock is not None and dock.isHidden():
+        if dock is None:
+            return
+        if dock.isHidden():
             dock.show()
-            dock.raise_()
+        dock.raise_()
 
     def _refresh(self) -> None:
         plot = self.win.plot
-        plot.update()
+        plot.repaint()              # now: the ROI labels show the identified isotopes at once
         if hasattr(self.win, "roi_panel"):
             self.win.roi_panel.refresh()
 
