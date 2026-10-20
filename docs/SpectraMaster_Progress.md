@@ -770,3 +770,26 @@ Results (`after_MP0` -> `after_MP2`), NaI, s = 20 / 40 / 80:
 
 HPGe medium peaks remain 1.4-3 % low, with cov2 of 0.92. Three new HPGe criteria fail. The cause
 is probably the fixed model width of weak peaks; this is the next step.
+
+## HPGe resolution-model shape from the spectrum's own peaks (2026-10-20)
+
+Without a FWHM calibration, HPGe weak peaks were fitted with the width held at the default
+resolution sqrt(0.75 + 0.00185 E). For the benchmark detector that model is 8 % narrow at
+200 keV and 1.5 % wide at 1400 keV. The existing rescale only applies one median factor beyond
+8 %, so the areas followed the width error.
+
+When at least 3 strong isolated peaks span more than a quarter of the spectrum, the model of a
+non-scintillator without a FWHM calibration now becomes sqrt(k f^2 + d), fitted to their free
+widths. `docs/baseline/hpge_width_shape_protocol.md` was pre-registered.
+
+Results (`after_MP2` -> `after_HW1`), HPGe:
+
+- Medium peaks at s = 40: -1.4 % -> -0.2 %.
+- cov2: 0.92 -> 0.94.
+- Reference-peak bias: -1.0 % -> -0.3 %.
+- Four criteria went from FAIL to PASS, none from PASS to FAIL; 19 criteria fail.
+- s = 20 is still -2.05 %, against a limit of 2 %.
+- `HPGe.weak.area_bias_s7` (-5 %) is unchanged: there are no strong peaks to calibrate the shape.
+
+In the laboratory, a FWHM calibration (Setup > calibrations) gives the right shape directly, and
+it is used as it is.

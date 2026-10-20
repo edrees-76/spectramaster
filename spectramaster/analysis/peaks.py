@@ -790,9 +790,11 @@ def width_model(spectrum, y: np.ndarray, fwhm: Optional[float] = None, min_energ
         e = _poly(spectrum.energy_coeffs, spectrum.first_channel + np.arange(n))
         above = np.nonzero(e >= min_energy)[0]
         start = max(start, int(above[0]) if len(above) else n)
-    # refine the model with the strongest isolated peaks of this spectrum
+    # refine the model with the strongest isolated peaks of this spectrum; the shape too for a
+    # default (not calibrated) resolution of a high-resolution detector
     if src not in ("user",):
-        f = _rescale_model(y, f, start, var)
+        shape = src not in ("fwhm calibration",) and guess_detector(spectrum) not in LOGLINEAR_DETECTORS
+        f = _rescale_model(y, f, start, var, shape=shape)
     return f, src, start
 
 
@@ -930,15 +932,27 @@ def _expected_edges(spectrum, cands, n, f=None) -> list[tuple[float, float, floa
     return out
 
 
-def _width_ratios(y, f, start, var=None) -> list[float]:
-    """Fitted/model FWHM of up to 8 strong isolated peaks (free width x0.5..x2, not at bound)."""
+def _ratios(pts) -> list[float]:
+    """Fitted/model FWHM of the strong isolated peaks, when enough of them for the median rescale."""
+    ratios = [fw / f0 for _c, fw, f0, _sig in pts]
+    return ratios if (len(ratios) >= 2 or (len(ratios) == 1 and pts.n_cands <= 3)) else []
+
+
+class _Points(list):
+    n_cands = 0                # candidates considered (strongest 8)
+
+
+def _width_points(y, f, start, var=None) -> "_Points":
+    """(centroid, fitted FWHM, model FWHM, significance) of up to 8 strong isolated peaks
+    (free width x0.5..x2, not at a bound)."""
+    out = _Points()
     cands = _candidates(y, f, 12.0, start, var=var)
     if len(cands) < 1:
-        return []
+        return out
     cands = sorted(cands, key=lambda c: -c[1])[:8]
+    out.n_cands = len(cands)
     allc = sorted(c for c, _ in cands)
     m = _Model(f)
-    ratios = []
     for c, z in cands:
         fw = m.at(c)
         if any(0 < abs(o - c) < 4 * fw for o in allc):
@@ -947,13 +961,43 @@ def _width_ratios(y, f, start, var=None) -> list[float]:
         r = _fit_group(y, m, [c], lo, hi, free_width=True, step=True, width_bounds=(0.5, 2.0), var=var)
         if r is None or r.at_bound or r.chi2r > 20 or r.area_unc[0] <= 0 or r.areas[0] / r.area_unc[0] < 10:
             continue
-        ratios.append(r.fwhms[0] / fw)
-    return ratios if (len(ratios) >= 2 or (len(ratios) == 1 and len(cands) <= 3)) else []
+        out.append((float(r.centroids[0]), float(r.fwhms[0]), fw, float(r.areas[0] / r.area_unc[0])))
+    return out
 
 
-def _rescale_model(y, f, start, var=None):
-    """Scale FWHM model to the widths of strong isolated peaks (median ratio)."""
-    ratios = _width_ratios(y, f, start, var)
+SHAPE_MIN_PEAKS = 3            # strong isolated peaks needed to correct the shape of the model
+
+
+def _shape_rescale(f, pts, start):
+    """FWHM model f' = sqrt(k f^2 + d) fitted to the free widths of strong isolated peaks
+    (weights significance / FWHM^2), or None (docs/baseline/hpge_width_shape_protocol.md)."""
+    n = len(f)
+    if len(pts) < SHAPE_MIN_PEAKS or np.ptp([p[0] for p in pts]) <= n / 4:
+        return None
+    fw = np.array([p[1] for p in pts])
+    f0 = np.array([p[2] for p in pts])
+    wt = np.array([p[3] for p in pts]) / fw ** 2
+    A = np.vstack([f0 ** 2, np.ones_like(f0)]).T
+    k, d = np.linalg.lstsq(A * wt[:, None], fw ** 2 * wt, rcond=None)[0]
+    new = k * f ** 2 + d
+    if not k > 0 or not np.all(new[start:] > 0):
+        return None
+    g = np.sqrt(np.maximum(new, 1e-6))
+    ratio = g[start:] / f[start:]
+    if not np.all((ratio > 0.5) & (ratio < 2.0)):
+        return None
+    return np.where(new > 0, g, f)
+
+
+def _rescale_model(y, f, start, var=None, shape: bool = False):
+    """Scale FWHM model to the widths of strong isolated peaks (median ratio); with `shape`,
+    correct its energy dependence too when enough peaks span the spectrum."""
+    pts = _width_points(y, f, start, var)
+    if shape:
+        g = _shape_rescale(f, pts, start)
+        if g is not None:
+            return g
+    ratios = _ratios(pts)
     if ratios:
         k = float(np.clip(np.median(ratios), 0.5, 2.0))
         if abs(k - 1.0) > 0.08:
