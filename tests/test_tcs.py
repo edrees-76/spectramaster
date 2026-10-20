@@ -59,7 +59,7 @@ def test_activity_corrected_with_budget(cal_curve):
     assert r0.activity < 0.97 * A_CO60                            # biased low without the correction
     assert r.activity == pytest.approx(A_CO60, rel=0.01)
     for ln in r.lines:
-        assert ln.coi < 1.0 and ln.coi_rel_unc > 0
+        assert ln.coi_applied and ln.coi < 1.0 and ln.coi_rel_unc > 0
         assert ln.mda == pytest.approx(next(l0.mda for l0 in r0.lines if l0.energy == ln.energy) / ln.coi, rel=1e-9)
     assert r.budget["coincidence summing"] > 0
     assert "true-coincidence summing corrected" in r.note and "not corrected" not in r.note
@@ -71,7 +71,8 @@ def test_no_summing_left_alone(cal_curve):
     _pts, curve = cal_curve
     q = act.compute_activities(make_spectrum([(661.657, 1e5)]), curve,
                                act.ActivityOptions(nuclides=["Cs-137"], tcs={"peak_to_total": list(PT)}))
-    assert q.nuclides[0].lines[0].coi == 1.0 and "coincidence summing" not in q.nuclides[0].budget
+    ln = q.nuclides[0].lines[0]
+    assert not ln.coi_applied and ln.coi == pytest.approx(1.0) and "coincidence summing" not in q.nuclides[0].budget
     with pytest.raises(ValueError, match="peak-to-total"):
         act.compute_activities(make_spectrum([(661.657, 1e5)]), curve,
                                act.ActivityOptions(nuclides=["Cs-137"], tcs={"peak_to_total": [0, -0.6]}))

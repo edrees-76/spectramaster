@@ -158,6 +158,7 @@ class LineResult:
     int_rel_unc: float = 0.0     # library emission-probability uncertainty of this line (relative)
     coi: float = 1.0             # true-coincidence summing factor (observed / summing-free), divided out
     coi_rel_unc: float = 0.0
+    coi_applied: bool = False    # the line was corrected for true-coincidence summing
     blank_activity: Optional[float] = None  # reagent blank subtracted, Bq (parent) at the reference date
     blank_unc: float = 0.0                  # its counting standard uncertainty, Bq
     gross_activity: Optional[float] = None  # activity before the blank correction
@@ -571,6 +572,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                 c = coincidence.coi(ln_name, e, eps_peak, tcs_pt)
                 if c.found and c.factor > 0:
                     lr.coi = c.factor
+                    lr.coi_applied = True
                     lr.coi_rel_unc = c.summing_out * tcs_u / c.factor
                     w /= c.factor
             # blank (continuum) under the expected peak
@@ -661,11 +663,11 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     q = opt.quantity
     unit = _base_unit(opt.quantity_unit)
     for r in results:
-        corrected = [l for l in r.lines if l.coi != 1.0]
+        corrected = [l for l in r.lines if l.coi_applied]
         if corrected:
             k = r.key_line
             r.note = (r.note + "; true-coincidence summing corrected"
-                      + (f" (COI {k.coi:.4f} at {k.energy:g} keV)" if k is not None and k.coi != 1.0 else "")).strip("; ")
+                      + (f" (COI {k.coi:.4f} at {k.energy:g} keV)" if k is not None and k.coi_applied else "")).strip("; ")
         elif r.nuclide in TCS_NUCLIDES:
             r.note = (r.note + "; true-coincidence summing not corrected").strip("; ")
         if q and q > 0:
