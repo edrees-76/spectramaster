@@ -809,3 +809,34 @@ The activity dialog (Analyze > Activity...) has a checkable group "Reference pea
 - A reference peak missing from the sample (or from the reagent blank, which is corrected the
   same way) refuses the calculation with a message.
 - K and its uncertainty appear in the result notes and in the concentration notes of the report.
+
+## True-coincidence summing, increment 1: coincidence data (2026-10-20)
+
+This is the first step towards a true-coincidence summing (TCS) correction. No correction is
+applied yet; cascade emitters keep their "not corrected" note.
+
+The data come from SandiaDecay `sandia.decay.min.xml`. It is the same commit as the bundled data,
+but with the gamma-gamma coincidence tables, and it is kept outside the repository like the IAEA
+database. `build_coincidences.py` derives `analysis/data/coincidence_table.json` from it:
+
+- For 171 library nuclides and their included daughters with gamma cascades, each decay
+  transition gets its gammas (per decay) and the cascade probabilities P(j | i).
+- 182 physically impossible pairs of weak lines are dropped and counted. These have P > 1, or a
+  reverse probability I_i P(j|i) / I_j > 1.02, mostly Pa-233, Pa-234, Yb-169 and Ir-192.
+- The main laboratory nuclides are clean: Co-60, Cs-134, Ba-133, Bi-214, Pb-214, Tl-208, Y-88
+  and Eu-154.
+
+`analysis/coincidence.py` loads the table. `Transition.coincident[i, j]` is P(j | i) in either
+cascade order.
+
+Limits of the data:
+
+- Gamma-gamma only. There is no X-ray - gamma summing for EC nuclides such as Ba-133, and no
+  511 keV summing for Na-22.
+- No angular correlation.
+
+Tests check the main cascades against the source, that every probability is physical, that the
+intensities agree with the gamma library to 2 %, the provenance, and an optional byte-identical
+rebuild.
+
+The table is bundled with the executable and listed in the third-party notices.

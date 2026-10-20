@@ -13,6 +13,7 @@ ICO="$ROOT/spectramaster/gui/spectramaster.ico"
 COMMON=(--paths . --collect-all SpecUtils --collect-submodules spectramaster.formats --collect-submodules spectramaster.analysis --collect-submodules spectramaster.tools
         --exclude-module matplotlib --exclude-module tkinter
         --add-data "$ROOT/spectramaster/analysis/data/gamma_library.json;spectramaster/analysis/data"
+        --add-data "$ROOT/spectramaster/analysis/data/coincidence_table.json;spectramaster/analysis/data"
         --distpath build_exe/dist --workpath build_exe/work --specpath build_exe -y --onefile)
 
 python -m PyInstaller "${COMMON[@]}" --windowed --name SpectraMaster --icon "$ICO" \
