@@ -671,3 +671,29 @@ amendment 3):
 - The main-peak area changed by less than 0.1 %.
 - No criterion went from PASS to FAIL, and all uncalibrated results are identical.
 - There is no real-data evidence yet.
+
+## Reagent blank correction (2026-10-20, engine and CLI)
+
+This is the third link of Genie's peak-area correction chain; peak-by-peak background subtraction
+already existed.
+
+`compute_activities(..., blank=QuantResults)` subtracts, line by line, the activity of a blank
+sample prepared and counted like the samples:
+
+- The blank's value is decay-corrected to the sample reference date.
+- Its counting uncertainty is added both to the result and to the decision-threshold variance,
+  for Currie and for ISO 11929.
+- Efficiency, emission probability and attenuation stay relative to the net value.
+- A line with no peak in the blank is not corrected, and this is noted.
+
+CLI: `spectramaster activity SAMPLE --eff CURVE --bkg BKG --blank BLANK`.
+
+Benchmark `reagent_blank` (`docs/baseline/reagent_blank_protocol.md`, `after_RB1`), HPGe and NaI:
+
+- Activity bias -0.4 %.
+- 2-sigma coverage 0.97 / 0.975.
+- A reagent-only nuclide was declared detected in 2.5 % / 0 % of samples, against 100 % without
+  the blank.
+- No criterion went from PASS to FAIL.
+
+The interface comes next.

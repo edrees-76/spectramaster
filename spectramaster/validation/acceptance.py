@@ -287,6 +287,23 @@ for det in ("HPGe", "NaI"):
         _c(f"{det}.bkg_{mode}.recall", det, f"background_{mode}", "present_detected_fraction", "report", None,
            "Fraction of present lines declared detected (informational).")
 
+# ------------------------------------------------- reagent blank (pre-registered 2026-10-20,
+# docs/baseline/reagent_blank_protocol.md, before evaluation).  Sample, blank and laboratory
+# background; the blank carries a reagent contamination (Cs-137, Mn-54) that the sample shares.
+for det in ("HPGe", "NaI"):
+    _c(f"{det}.blank.bias", det, "reagent_blank", "bias", "abs<=", 0.03,
+       "After the blank correction the sample's own activity is recovered (same limit as the "
+       "measured-background net bias).")
+    _c(f"{det}.blank.cov1", det, "reagent_blank", "z_cov1", "in", (0.55, 0.81),
+       "The blank's counting uncertainty is included (binomial band for 120 lines).")
+    _c(f"{det}.blank.cov2", det, "reagent_blank", "z_cov2", "in", (0.89, 1.0), "Same for 2 sigma.")
+    _c(f"{det}.blank.false_detect", det, "reagent_blank", "false_detect", "<=", 0.125,
+       "A nuclide present only through the reagents is not declared detected after the correction "
+       "more often than k_alpha allows (5 %; 5 of 40 or fewer).")
+    _c(f"{det}.blank.uncorrected_detect", det, "reagent_blank", "uncorrected_detect", "report", None,
+       "The same line without the blank correction (shows that the correction matters).")
+    _c(f"{det}.blank.mn54_z_mean", det, "reagent_blank", "mn54_z_mean", "report", None, "Reported only.")
+
 # ------------------------------------------------- experimental efficiency (Release D, pre-registered D0)
 # Synthetic mixed-standard calibration spectra with a known true efficiency curve.  In each
 # realisation every nuclide's true activity differs from its certificate value by N(0, u_cert)
