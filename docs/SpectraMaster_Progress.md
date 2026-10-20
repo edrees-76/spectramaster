@@ -840,3 +840,40 @@ intensities agree with the gamma library to 2 %, the provenance, and an optional
 rebuild.
 
 The table is bundled with the executable and listed in the third-party notices.
+
+## True-coincidence summing, increment 2: correction engine and CLI (2026-10-20)
+
+`ActivityOptions.tcs = {"peak_to_total": [a, b], "pt_rel_unc": u}`; on the command line,
+`--tcs-pt A,B [--tcs-pt-unc %]`. Each line of a cascade emitter is divided by its first-order
+COI:
+
+- COI = 1 - sum_j P(j|i) eps_t(E_j), plus the summing-in of crossover pairs.
+- eps_p comes from the efficiency curve, clamped to its range.
+- eps_t = eps_p / PT. The peak-to-total ratio PT(E) = min(1, a (E/1000)^b) is a stated assumption
+  of the detector and geometry.
+- u_rel(COI) = summing-out x u / COI is a correlated "coincidence summing" budget component.
+- COI is exported per line. The "not corrected" note becomes "corrected (COI ...)", and the
+  assumptions are listed in the result notes.
+
+`docs/baseline/tcs_protocol.md` was pre-registered and validated against an independent
+event-by-event simulation (`validation/tcs_mc.py`). The simulation uses hand-coded ENSDF level
+schemes of Co-60, Cs-134 and Y-88 with the library's IAEA intensities, so it shares neither the
+formula nor the coincidence table.
+
+Results (`after_TC1`):
+
+- All pre-registered criteria pass. Far: max(|d| - 3 sigma) = -0.4 %. Marinelli-like: +0.2 %.
+  Co-60: 0.23 %. Crossover lines: within the limit.
+- The effect being corrected reaches 18 % for Cs-134 lines and a factor of 5 for Y-88 2734 keV.
+- The close geometry (report only) shows the limit of first order: Cs-134 multi-coincidence lines
+  are 7-9 % low and crossover lines 12-14 % high. Co-60 and Y-88 stay within 0.3 %.
+- No criterion went from PASS to FAIL.
+
+Not covered:
+
+- X-ray - gamma and 511 keV summing.
+- Angular correlation.
+- Higher orders.
+- A measured P/T. The P/T comes from the user.
+
+The interface comes next.

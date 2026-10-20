@@ -590,6 +590,42 @@ def cat_reference_peak(det: DetectorSpec, n: int) -> dict:
             "k_bias": _mean(k_err), "fit_bias": _mean(r["fit"] for r in fp)}
 
 
+TCS_GEOMETRIES = {"far": 0.005, "mid": 0.02, "close": 0.05}
+TCS_DECAYS = 20_000_000
+TCS_MIN_INTENSITY = 0.005
+
+
+def cat_tcs(det: DetectorSpec, n_decays: int = TCS_DECAYS) -> dict:
+    """True-coincidence summing correction against an event-by-event cascade simulation
+    (docs/baseline/tcs_protocol.md)."""
+    from ..analysis import coincidence as co
+    from . import tcs_mc
+    out: dict = {"decays": n_decays}
+    for geo, e1000 in TCS_GEOMETRIES.items():
+        ep = lambda e, e1000=e1000: tcs_mc.eps_peak(e, e1000)       # noqa: E731
+        rows = []
+        for nuc in tcs_mc.SCHEMES:
+            sch = tcs_mc.scheme(nuc)
+            mc = tcs_mc.simulate(nuc, e1000, n_decays, scenarios.seed_of(det, f"tcs/{nuc}/{e1000:g}", 0))
+            for e, inten in zip(sch.gammas, sch.intensity):
+                if inten < TCS_MIN_INTENSITY:
+                    continue
+                c_mc, s_mc = mc[float(e)]
+                c_f = co.coi(nuc, float(e), ep, tcs_mc.peak_to_total).factor
+                rows.append({"nuclide": nuc, "energy": float(e), "coi_mc": c_mc, "sigma": s_mc / c_mc,
+                             "coi": c_f, "d": c_f / c_mc - 1.0})
+        out[geo] = {"lines": {f"{r['nuclide']} {r['energy']:g}": {k: r[k] for k in ("coi", "coi_mc", "d", "sigma")}
+                              for r in rows},
+                    "max_excess": max(abs(r["d"]) - 3.0 * r["sigma"] for r in rows),
+                    "max_uncorrected": max(abs(r["coi_mc"] - 1.0) for r in rows),
+                    "co60_max_d": max(abs(r["d"]) for r in rows if r["nuclide"] == "Co-60"),
+                    "sum_in_max_excess": max(abs(r["d"]) - 3.0 * r["sigma"] for r in rows
+                                             if r["nuclide"] == "Cs-134" and round(r["energy"]) in (1168, 1365))}
+        for k in ("max_excess", "max_uncorrected", "co60_max_d", "sum_in_max_excess"):
+            out[f"{geo}_{k}"] = out[geo][k]          # flat keys for the acceptance criteria
+    return out
+
+
 # ------------------------------------------------------------- efficiency calibration (Release D)
 EFF_TCS = ("Co-60", "Y-88")
 EFF_OUTSIDE = (("Pb-210", 46.5), ("Tl-208", 2614.5))      # lines below / above a 59-1836 keV calibration
@@ -770,6 +806,9 @@ def run(quick: bool = False, refdata: Optional[str] = None, log=print) -> dict:
             r[f"background_{mode}"] = cat_measured_background(det, q(40, 3), mode)
         r["reagent_blank"] = cat_reagent_blank(det, q(40, 3))
         r["reference_peak"] = cat_reference_peak(det, q(40, 3))
+        if det.name == "HPGe":
+            log(f"[{det.name}] true-coincidence summing ...")
+            r["tcs"] = cat_tcs(det, TCS_DECAYS if q(1, 0) else 200_000)
         r["runtime"] = {"median_s": statistics.median(times), "max_s": max(times), "n": len(times),
                         "channels": det.n_channels}
         results["detectors"][det.name] = r

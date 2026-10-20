@@ -318,6 +318,21 @@ for det in ("HPGe", "NaI"):
     _c(f"{det}.medium.sd_s40", det, "medium_peaks", "sd_s40", "report", None,
        "Relative SD at s = 40 (precision cost of the continuum curvature term).")
 
+# ------------------------------------------------- true-coincidence summing (pre-registered 2026-10-20,
+# docs/baseline/tcs_protocol.md, before the implementation of the correction)
+_c("HPGe.tcs.far_max", "HPGe", "tcs", "far_max_excess", "<=", 0.005,
+   "Far geometry (eps_p(1 MeV) = 0.005): first order is near exact; max |d| - 3 sigma_MC.")
+_c("HPGe.tcs.mid_max", "HPGe", "tcs", "mid_max_excess", "<=", 0.01,
+   "Marinelli-like geometry (0.02): 1 % beyond the MC noise.")
+_c("HPGe.tcs.close_max", "HPGe", "tcs", "close_max_excess", "report", None,
+   "Close geometry (0.05): first order expected to degrade (joint probabilities).")
+_c("HPGe.tcs.mid_uncorrected", "HPGe", "tcs", "mid_max_uncorrected", "report", None,
+   "Size of the summing effect without correction at 0.02.")
+_c("HPGe.tcs.mid_co60", "HPGe", "tcs", "mid_co60_max_d", "<=", 0.005,
+   "Co-60 (single coincidence) at 0.02.")
+_c("HPGe.tcs.sum_in", "HPGe", "tcs", "mid_sum_in_max_excess", "<=", 0.02,
+   "Cs-134 crossover lines 1168 and 1365 keV (summing-in) at 0.02: |d| - 3 sigma <= 0.02.")
+
 # ------------------------------------------------- reference peak (pre-registered 2026-10-20,
 # docs/baseline/reference_peak_protocol.md, before evaluation).  A pulser and a loss of 0-10 %
 # applied to every peak (random summing).

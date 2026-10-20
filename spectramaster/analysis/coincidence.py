@@ -68,3 +68,53 @@ def transitions(nuclide: str) -> list[Transition]:
             after[int(i), int(j)] = float(p)
         out.append(Transition(float(rec["br"]), g[:, 0].copy(), g[:, 1].copy(), after, int(rec.get("dropped", 0))))
     return out
+
+
+# ------------------------------------------------------------------ correction (first order)
+SUM_TOL_KEV = 1.0          # a + b = i (summing-in) within this
+LINE_TOL_KEV = 1.0         # library line <-> table gamma
+
+
+def peak_to_total(energy, a: float, b: float):
+    """Peak-to-total model PT(E) = min(1, a (E / 1000 keV)^b) (user-supplied assumption)."""
+    return np.minimum(1.0, a * (np.maximum(np.asarray(energy, dtype=float), 1.0) / 1000.0) ** b)
+
+
+@dataclass
+class Coi:
+    factor: float = 1.0          # observed / summing-free counts of the line (divide the activity by it)
+    summing_out: float = 0.0     # sum_j P(j|i) eps_t(E_j)
+    summing_in: float = 0.0      # relative gain from crossover pairs
+    found: bool = False          # the line is in the table (a cascade member)
+
+
+def coi(nuclide: str, energy: float, eps_peak, pt) -> Coi:
+    """First-order coincidence summing correction of the line at `energy` keV
+    (docs/baseline/tcs_protocol.md):
+
+        COI = 1 - sum_j P(j|i) eps_t(E_j) + sum_(a,b) I_a P(b|a) eps_p(E_a) eps_p(E_b) / I_i
+
+    with eps_t = eps_p / PT, the pairs a above b with |E_a + E_b - E_i| <= SUM_TOL_KEV.  `eps_peak`
+    and `pt` are callables of energy (keV).  A line emitted by several transitions takes their
+    emission-weighted mean; a line of no cascade gives COI = 1 (found False)."""
+    num_out = num_in = wsum = 0.0
+    for t in transitions(nuclide):
+        i = t.index(energy, LINE_TOL_KEV)
+        if i is None or t.intensities[i] <= 0:
+            continue
+        ep = np.asarray(eps_peak(t.energies), dtype=float)
+        et = np.minimum(ep / np.asarray(pt(t.energies), dtype=float), 1.0)
+        out = float(t.coincident[i] @ et)
+        gain = 0.0
+        a_idx, b_idx = np.nonzero(t.after > 0)
+        for a, b in zip(a_idx, b_idx):
+            if abs(t.energies[a] + t.energies[b] - t.energies[i]) <= SUM_TOL_KEV:
+                gain += t.intensities[a] * t.after[a, b] * ep[a] * ep[b]
+        w = t.br * t.intensities[i]
+        num_out += w * out
+        num_in += t.br * gain / ep[i] if ep[i] > 0 else 0.0
+        wsum += w
+    if wsum <= 0:
+        return Coi()
+    so, si = num_out / wsum, num_in / wsum
+    return Coi(1.0 - so + si, so, si, True)
