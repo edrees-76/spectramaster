@@ -71,3 +71,16 @@ def test_rebuild_is_identical(tmp_path):
     out = tmp_path / "t.json"
     bc.build(Path(os.environ["SPECTRAMASTER_SANDIA_COINC"]), out)
     assert out.read_text(encoding="utf-8") == co.TABLE.read_text(encoding="utf-8")
+
+
+def test_build_refuses_any_other_source(tmp_path):
+    from spectramaster.analysis.data import build_coincidences as bc
+    wrong = tmp_path / "sandia.decay.min.xml"
+    wrong.write_text("<document/>", encoding="utf-8")
+    with pytest.raises(ValueError, match="SHA-256"):
+        bc.build(wrong, tmp_path / "t.json")
+    other = tmp_path / "other.xml"
+    other.write_text("<document/>", encoding="utf-8")
+    with pytest.raises(ValueError, match="expected"):
+        bc.build(other, tmp_path / "t.json")
+    assert not (tmp_path / "t.json").exists()

@@ -6,6 +6,9 @@ outside the repository, like the IAEA ndlab database; pass its path::
 
     python spectramaster/analysis/data/build_coincidences.py path/to/sandia.decay.min.xml
 
+The source is accepted only with its name and SHA-256 (SOURCE_SHA256, the file of SOURCE_COMMIT);
+the table is always written next to this script.
+
 Output, for every nuclide of ``gamma_library.json`` and its included daughters that has gamma
 cascades, one record per decay transition::
 
@@ -35,6 +38,8 @@ HERE = Path(__file__).resolve().parent
 LIBRARY = HERE / "gamma_library.json"
 OUT = HERE / "coincidence_table.json"
 SOURCE_COMMIT = "cd75314b56e12b80497531a1fbeed9c8e9968403"
+SOURCE_NAME = "sandia.decay.min.xml"
+SOURCE_SHA256 = "ef9dcdb7e598c999cebab3fdcbfc968c851d191ae0e7600b3fc019fb11a6fb06"
 MIN_GAMMA = 1.0e-5        # gammas per decay of the transition
 MIN_COINC = 1.0e-4        # P(j | i)
 REVERSE_TOL = 1.02        # I_i P(j|i) / I_j above this is impossible: the pair is dropped
@@ -52,11 +57,11 @@ def library_nuclides(path: Path = LIBRARY) -> list[str]:
     return sorted(names)
 
 
-def read_transitions(path: Path) -> dict[str, list[dict]]:
+def read_transitions(data: bytes) -> dict[str, list[dict]]:
     """{sandia parent symbol: [transition records]} with the raw gamma ids and coincidences."""
     ns = "{sandia.decay.xsd}"
     out: dict[str, list[dict]] = {}
-    for t in ET.parse(path).getroot().iter(ns + "t"):
+    for t in ET.fromstring(data).iter(ns + "t"):
         gammas = []
         for g in t.findall(ns + "g"):
             co = [(c.get("id"), float(c.get("i"))) for c in g.findall(ns + "c")]
@@ -86,8 +91,23 @@ def compact(tr: dict) -> dict:
     return rec
 
 
-def build(src: Path, out: Path = OUT) -> dict:
-    trans = read_transitions(src)
+def checked_source(path) -> tuple[bytes, str]:
+    """The source file's bytes and SHA-256, only for the exact SandiaDecay file of SOURCE_COMMIT
+    (a regular file named SOURCE_NAME with SOURCE_SHA256); anything else is refused."""
+    src = Path(path).resolve(strict=True)
+    if src.name != SOURCE_NAME or not src.is_file():
+        raise ValueError(f"expected the SandiaDecay file {SOURCE_NAME}, got {src.name}")
+    data = src.read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
+    if digest != SOURCE_SHA256:
+        raise ValueError(f"{SOURCE_NAME}: SHA-256 {digest} is not the one of commit {SOURCE_COMMIT}")
+    return data, digest
+
+
+def build(src, out: Path = OUT) -> dict:
+    """Build the table from the checked source; written to `out` (the bundled table by default)."""
+    data, digest = checked_source(src)
+    trans = read_transitions(data)
     table = {}
     for name in library_nuclides():
         recs = [compact(t) for t in trans.get(sandia_name(name), [])]
@@ -100,7 +120,7 @@ def build(src: Path, out: Path = OUT) -> dict:
                          "c = [[i, j, P(j emitted | i emitted)]], i above j in the cascade; "
                          "gamma-gamma only (no X-ray coincidences)",
            "source": {"file": "sandia.decay.min.xml", "project": "SandiaDecay https://github.com/sandialabs/SandiaDecay",
-                      "commit": SOURCE_COMMIT, "sha256": hashlib.sha256(src.read_bytes()).hexdigest(),
+                      "commit": SOURCE_COMMIT, "sha256": digest,
                       "license": "LGPL-2.1", "min_gamma": MIN_GAMMA, "min_coinc": MIN_COINC,
                       "reverse_tol": REVERSE_TOL},
            "nuclides": table}
@@ -110,11 +130,10 @@ def build(src: Path, out: Path = OUT) -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    ap.add_argument("source", type=Path, help="SandiaDecay sandia.decay.min.xml (with coincidences)")
-    ap.add_argument("--out", type=Path, default=OUT)
+    ap.add_argument("source", help=f"SandiaDecay {SOURCE_NAME} (with coincidences), commit {SOURCE_COMMIT}")
     a = ap.parse_args(argv)
-    doc = build(a.source, a.out)
-    print(f"{len(doc['nuclides'])} nuclides with gamma cascades -> {a.out}")
+    doc = build(a.source)
+    print(f"{len(doc['nuclides'])} nuclides with gamma cascades -> {OUT}")
     return 0
 
 
