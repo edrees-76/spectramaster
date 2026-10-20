@@ -74,6 +74,21 @@ EN = {
     "act_blank_tip": "Spectrum of a blank sample prepared and counted like the samples (same reagents, "
                      "container and geometry). It is analysed like the sample and its activity is "
                      "subtracted line by line.",
+    "act_ref_peak": "Reference peak correction (pulser or fixed reference source)",
+    "act_ref_peak_tip": "Corrects losses the live time does not (random summing, pile-up): every result is "
+                        "multiplied by K = expected rate / measured rate of the reference peak in the sample "
+                        "spectrum. The reagent blank, when given, is corrected the same way. The calculation "
+                        "is refused when the peak is not found.",
+    "act_ref_energy": "Peak energy:",
+    "act_ref_rate": "expected rate",
+    "act_ref_measure": "Measure from a spectrum...",
+    "act_ref_measure_tip": "Rate of the peak in a low-rate reference measurement of the fixed source; its date "
+                           "becomes the rate date.",
+    "act_ref_hl": "Half-life (days):",
+    "act_ref_pulser": "pulser (no decay)",
+    "act_ref_hl_tip": "Half-life of the reference source in days; 0 for a pulser.",
+    "act_ref_rate_date": "rate date",
+    "act_ref_no_rate": "the reference peak correction needs a positive expected rate",
     "act_bkg_peak": "peak by peak",
     "act_bkg_spectrum": "full spectrum",
     "act_clear": "Clear",
@@ -178,6 +193,19 @@ AR = {
     "act_blank": "العينة الفارغة:",
     "act_blank_tip": "طيف عينة فارغة حُضّرت وعُدّت مثل العينات (الكواشف والوعاء والهندسة نفسها). "
                      "تُحلَّل مثل العينة ويُطرح نشاطها خطًّا بخط.",
+    "act_ref_peak": "تصحيح القمة المرجعية (مولّد نبضات أو مصدر مرجعي ثابت)",
+    "act_ref_peak_tip": "يصحّح الفقد الذي لا يصحّحه الزمن الحي (الجمع العشوائي وتراكم النبضات): تُضرب كل "
+                        "النتائج في ⁦K⁩ = المعدل المتوقع ÷ المعدل المقيس للقمة المرجعية في طيف العينة. "
+                        "وتُصحَّح العينة الفارغة بالطريقة نفسها إن وُجدت. ويُرفض الحساب إن لم توجد القمة.",
+    "act_ref_energy": "طاقة القمة:",
+    "act_ref_rate": "المعدل المتوقع",
+    "act_ref_measure": "قياس من طيف...",
+    "act_ref_measure_tip": "معدل القمة في قياس مرجعي منخفض المعدل للمصدر الثابت؛ ويصبح تاريخه تاريخ المعدل.",
+    "act_ref_hl": "عمر النصف (أيام):",
+    "act_ref_pulser": "مولّد نبضات (بلا اضمحلال)",
+    "act_ref_hl_tip": "عمر النصف للمصدر المرجعي بالأيام؛ 0 لمولّد النبضات.",
+    "act_ref_rate_date": "تاريخ المعدل",
+    "act_ref_no_rate": "تصحيح القمة المرجعية يحتاج معدلًا متوقعًا موجبًا",
     "act_bkg_peak": "قمة بقمة",
     "act_bkg_spectrum": "الطيف كاملًا",
     "act_clear": "مسح",

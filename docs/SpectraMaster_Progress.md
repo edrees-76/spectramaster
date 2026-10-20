@@ -793,3 +793,19 @@ Results (`after_MP2` -> `after_HW1`), HPGe:
 
 In the laboratory, a FWHM calibration (Setup > calibrations) gives the right shape directly, and
 it is used as it is.
+
+## Reference peak correction in the interface (2026-10-20)
+
+The activity dialog (Analyze > Activity...) has a checkable group "Reference peak correction
+(pulser or fixed reference source)". It is off by default.
+
+- Fields: the peak energy, the expected rate in cps and its uncertainty in %.
+- Half-life in days; 0 means a pulser, with no decay. For a source, there is also the date of
+  the rate.
+- "Measure from a spectrum..." takes the rate, its uncertainty and its date from a low-rate
+  reference measurement (`activity.reference_rate`).
+- The values are remembered in the settings (`quant/reference_peak`). The group itself is not
+  remembered, so the correction is always switched on explicitly.
+- A reference peak missing from the sample (or from the reagent blank, which is corrected the
+  same way) refuses the calculation with a message.
+- K and its uncertainty appear in the result notes and in the concentration notes of the report.
