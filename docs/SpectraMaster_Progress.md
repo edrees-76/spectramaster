@@ -579,3 +579,23 @@ Not changed, by design: Aptec's ROI area uncertainty sqrt(G + B), Background Sub
 background lines above their MDA, channel-by-channel Strip -- these reproduce Aptec (the
 SpectraMaster engine has the full propagation).  NaI and true-coincidence summing remain the
 documented limitations.
+
+## ISO 11929: best estimate and coverage interval (2026-10-20)
+
+First item of the development proposals drawn from the published vendor documentation (Genie 2000
+Customization Tools manual, chapter 3, and its ISO 11929 help: Genie reports Bayesian best estimates
+with upper and lower bounds).  No vendor software was decompiled.
+
+- With the detection limits set to ISO 11929, each nuclide with a primary result now also gets
+  the best estimate of the non-negative true value, its standard uncertainty and the
+  probabilistically symmetric coverage interval (ISO 11929-1:2019; coverage probability
+  `ActivityOptions.coverage`, default 0.95), in Bq and in the specific unit
+  (`analysis.activity.iso11929_best_estimate`).  Computed in log space (`log_ndtr`,
+  `ndtri_exp`), so a strongly negative primary result stays finite.
+- Shown in a new column of the results table and in the printed report (concentrations), and
+  exported (CSV/XLSX columns `best_*`, `coverage_*`, metadata "Coverage probability").  Currie
+  results are unchanged and get no best estimate.  Stored sessions without the field read as 0.95.
+- Tests: the formulas against an independent direct evaluation (`scipy.stats.norm`, relative
+  1e-9 over y/u in [-8, 8]); the closed form at y = 0 (sqrt(2/pi) u, sqrt(1 - 2/pi) u); y >> u
+  gives y +- 1.96 u; integration through results, export, session round trip, concentrations
+  and the table (both languages).  This is a reporting formula, not a laboratory validation.

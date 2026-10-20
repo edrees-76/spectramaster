@@ -33,7 +33,7 @@ from .quant_strings import qtr
 from .sample_panel import ConcentrationView, SampleSection
 
 RES_COLS = ["res_col_nuclide", "res_col_lines", "res_col_net", "res_col_act", "res_col_spec", "res_col_mda",
-            "res_col_mda_spec", "res_col_decision", "res_col_note"]
+            "res_col_mda_spec", "res_col_decision", "res_col_best", "res_col_note"]
 UNITS = ["kg", "g", "L", "mL"]
 GEOMETRY_REFUSED = "the efficiency calibration belongs to another measurement geometry"
 LTR = "⁦{}⁩"
@@ -47,16 +47,28 @@ def _g(v, d=4) -> str:
     return f"{v:.{d}g}"
 
 
+def _best_text(r: act.NuclideResult, specific: bool) -> str:
+    """ISO 11929 best estimate ± u [coverage interval] (empty unless computed)."""
+    if specific:
+        v = (r.specific_best, r.specific_best_u, r.specific_low, r.specific_high)
+    else:
+        v = (r.best_estimate, r.best_u, r.coverage_low, r.coverage_high)
+    if v[0] is None:
+        return ""
+    return f"{_g(v[0], 3)} ± {_g(v[1], 2)} [{_g(v[2], 3)} – {_g(v[3], 3)}]"
+
+
 def quant_table(res: Optional[act.QuantResults], lang: Optional[str] = None) -> tuple[list[str], list[list[str]]]:
     """Translated header and text rows of the results (for tables, reports and printing)."""
     if res is None:
         return [], []
-    tr = (lambda k: i18n.tr_in(lang, "quant_" + k)) if lang else qtr
-    header = [tr(k) for k in RES_COLS]
+    tr = (lambda k, **kw: i18n.tr_in(lang, "quant_" + k, **kw)) if lang else qtr
+    header = [tr(k, p=f"{100 * res.options.coverage:g}") for k in RES_COLS]
     unit = next((r.unit for r in res.nuclides if r.unit), "")
     if unit:
         header[4] += f" [{unit}]"
         header[6] += f" [{unit}]"
+    header[8] += f" [{unit or 'Bq'}]"
     rows = []
     for r in res.nuclides:
         k = r.key_line
@@ -69,7 +81,8 @@ def quant_table(res: Optional[act.QuantResults], lang: Optional[str] = None) -> 
             a = f"< {_g(r.mda, 3)}" if r.mda else "-"
             s = f"< {_g(r.specific_mda, 3)}" if r.specific_mda else ""
             dec = tr("res_lt_mda")
-        rows.append([r.nuclide, r.lines_text, net, a, s, _g(r.mda, 3), _g(r.specific_mda, 3), dec, r.note])
+        rows.append([r.nuclide, r.lines_text, net, a, s, _g(r.mda, 3), _g(r.specific_mda, 3), dec,
+                     _best_text(r, bool(unit)), r.note])
     return header, rows
 
 
@@ -230,7 +243,7 @@ class ActivityDialog(QDialog):
 
         split = QSplitter(Qt.Vertical)
         self.table = QTableWidget(0, len(RES_COLS))
-        self.table.setHorizontalHeaderLabels([qtr(k) for k in RES_COLS])
+        self.table.setHorizontalHeaderLabels([qtr(k, p=95) for k in RES_COLS])
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.table.horizontalHeader().setStretchLastSection(True)
         self.table.setEditTriggers(QAbstractItemView.NoEditTriggers)

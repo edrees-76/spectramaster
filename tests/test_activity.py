@@ -446,3 +446,90 @@ def test_quantity_uncertainty_only_affects_specific_activity(cal_curve):
     assert r1.specific is None and r1.specific_u is None
     assert r2.specific == pytest.approx(r0.activity / 2.0)
     assert r2.specific_u == pytest.approx(math.hypot(r0.u / 2.0, 0.10 * r2.specific))
+
+
+# ------------------------------------------------------------------ ISO 11929 best estimate
+def _iso_direct(y, u, cov=0.95):
+    """Independent, direct (not log-space) evaluation of the ISO 11929-1 formulas."""
+    from scipy.stats import norm
+    g = 1.0 - cov
+    om = norm.cdf(y / u)
+    best = y + u * norm.pdf(y / u) / om
+    ub = math.sqrt(u * u - (best - y) * best)
+    return best, ub, y - norm.ppf(om * (1 - g / 2)) * u, y + norm.isf(om * g / 2) * u
+
+
+def test_iso11929_best_estimate_formula():
+    u = 2.5
+    for y in np.linspace(-8 * u, 8 * u, 33):
+        got = act.iso11929_best_estimate(float(y), u)
+        assert got == pytest.approx(_iso_direct(float(y), u), rel=1e-9, abs=1e-12)
+        best, ub, lo, hi = got
+        assert 0.0 <= lo < best < hi and 0.0 < ub <= u
+    # y = 0: closed form
+    best, ub, lo, hi = act.iso11929_best_estimate(0.0, 1.0)
+    assert best == pytest.approx(math.sqrt(2 / math.pi), rel=1e-12)
+    assert ub == pytest.approx(math.sqrt(1 - 2 / math.pi), rel=1e-12)
+    # y >> u: the usual symmetric interval y +- 1.96 u
+    best, ub, lo, hi = act.iso11929_best_estimate(100.0, 1.0)
+    assert (best, ub) == pytest.approx((100.0, 1.0), rel=1e-12)
+    assert (lo, hi) == pytest.approx((100 - 1.959964, 100 + 1.959964), abs=1e-6)
+    # other coverage probability, and a strongly negative primary result stays finite and >= 0
+    assert act.iso11929_best_estimate(1.0, 1.0, 0.90) == pytest.approx(_iso_direct(1.0, 1.0, 0.90), rel=1e-9)
+    best, ub, lo, hi = act.iso11929_best_estimate(-60.0, 1.0)
+    assert 0.0 <= lo < best < hi < 0.1
+    # unusable inputs
+    for y, uu in ((1.0, 0.0), (1.0, None), (None, 1.0), (float("nan"), 1.0), (1.0, float("inf"))):
+        assert act.iso11929_best_estimate(y, uu) is None
+    with pytest.raises(ValueError):
+        act.iso11929_best_estimate(1.0, 1.0, 1.0)
+
+
+def test_iso11929_best_estimate_in_results(cal_curve, tmp_path):
+    from spectramaster.lab.sample import SampleInfo
+    _pts, curve = cal_curve
+    s = make_spectrum(sample_peaks())
+    base = dict(nuclides=["Cs-137", "Co-60"], ref_date=SAMPLE_REF, quantity=0.5, quantity_unit="kg",
+                quantity_rel_unc=0.01)
+    iso = act.compute_activities(s, curve, act.ActivityOptions(**base, mda_method="iso11929"))
+    cs, co = iso.nuclides
+    assert (cs.best_estimate, cs.best_u, cs.coverage_low, cs.coverage_high) == pytest.approx(
+        act.iso11929_best_estimate(cs.activity, cs.u), rel=1e-12)
+    assert (cs.specific_best, cs.specific_best_u, cs.specific_low, cs.specific_high) == pytest.approx(
+        act.iso11929_best_estimate(cs.specific, cs.specific_u), rel=1e-12)
+    assert cs.coverage_low < cs.best_estimate < cs.coverage_high
+    assert co.activity is None and co.best_estimate is None        # no primary result, no best estimate
+    cur = act.compute_activities(s, curve, act.ActivityOptions(**base)).nuclides[0]
+    assert cur.best_estimate is None and cur.specific_best is None   # Currie: not computed
+    # export, round trip of a stored session, concentrations
+    text = act.export_results(tmp_path / "iso.csv", iso).read_text(encoding="utf-8-sig")
+    assert "best_specific" in text and "Coverage probability" in text
+    from spectramaster.lab.session import quant_to_dict
+    d = quant_to_dict(iso)
+    back = act.QuantResults.from_dict(d)
+    assert back.nuclides[0].specific_best == pytest.approx(cs.specific_best)
+    d["options"].pop("coverage")                         # sessions saved before this field existed
+    assert act.QuantResults.from_dict(d).options.coverage == 0.95
+    conc = act.concentrations(iso, SampleInfo(matrix_type="soil", mass_kg=0.5, mass_basis="dry"), "Bq/kg",
+                              quantity_rel_unc=0.01)
+    row = conc["rows"][0]
+    y = cs.activity / 0.5
+    assert (row["best"], row["best_u"]) == pytest.approx(act.iso11929_best_estimate(
+        y, math.hypot(cs.u / 0.5, 0.01 * y))[:2], rel=1e-12)
+    assert "ISO 11929" in row["best_text"] and "best" not in conc["rows"][1]
+
+
+def test_iso11929_column_in_table(qapp, cal_curve):
+    from spectramaster.gui import i18n
+    from spectramaster.gui.quant_panel import RES_COLS, quant_table
+    _pts, curve = cal_curve
+    s = make_spectrum(sample_peaks())
+    opt = act.ActivityOptions(nuclides=["Cs-137", "Co-60"], ref_date=SAMPLE_REF, quantity=0.5,
+                              quantity_unit="kg", mda_method="iso11929", coverage=0.90)
+    res = act.compute_activities(s, curve, opt)
+    j = RES_COLS.index("res_col_best")
+    for lang in ("en", "ar"):
+        header, rows = quant_table(res, lang)
+        assert "90" in header[j] and "Bq/kg" in header[j] and "{p}" not in header[j]
+        assert rows[0][j].count("±") == 1 and rows[1][j] == ""
+        assert rows[0][7] == i18n.tr_in(lang, "quant_res_detected")
