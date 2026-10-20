@@ -646,3 +646,28 @@ published Genie 2000 "Energy and Shape Calibration"; no vendor software was deco
 - The printed report lists the peak shape next to the FWHM calibration.
 - Not yet: batch analysis groups spectra by the file's detector label and has no link to the
   detector registry, so it fits Gaussian peaks, as before.
+
+## Residual search on top of the peak-shape calibration (2026-10-20)
+
+Genie-style residual search in every fit region (`analysis/peaks.py`, `RESIDUAL_SEARCH`):
+
+- One component is added at a time, at the most significant residual excess at least 1 FWHM
+  from the fitted components.
+- The component is kept when chi2 drops by more than 9.
+- The 1 FWHM proximity clause is also checked on the fitted positions.
+
+It runs only on high-resolution spectra **with a measured peak-shape calibration**
+(`shape_calibrated`; a Gaussian calibration, eta = 0, now counts too). Without a measured shape,
+the residual of an unmodelled tail looked like a satellite peak: in the first attempt the
+unmatched peaks rose from 0.98 to 6.45 per spectrum. Uncalibrated spectra are fitted exactly as
+before.
+
+Benchmark (`docs/baseline/after_R2`, protocol `docs/baseline/residual_search_protocol.md`,
+amendment 3):
+
+- HPGe satellites at 1.25-2 FWHM, at 3-10 % of the main peak, were all found (100 %), with and
+  without a tail.
+- No extra peaks were reported.
+- The main-peak area changed by less than 0.1 %.
+- No criterion went from PASS to FAIL, and all uncalibrated results are identical.
+- There is no real-data evidence yet.

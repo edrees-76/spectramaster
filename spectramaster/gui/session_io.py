@@ -790,7 +790,7 @@ class SessionController:
             return
         s = self.session_for(spec)
         shape = ((s.detector or {}).get("peak_shape") if s is not None else None) or None
-        if shape and shape.get("eta"):
+        if shape:                    # measured: tailed, or Gaussian (eta = 0)
             set_peak_tail(spec, shape)
             spec.extra["peak_tail_source"] = "detector " + str((s.detector or {}).get("id", ""))
         elif spec.extra.get("peak_tail_source"):

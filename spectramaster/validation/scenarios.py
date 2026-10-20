@@ -93,6 +93,30 @@ def doublets(det: DetectorSpec, n_each: int = 8) -> Iterator[SyntheticSpectrum]:
                 k += 1
 
 
+SATELLITE_SEPS = (1.25, 1.5, 2.0)
+SATELLITE_RATIOS = (10.0, 30.0, 100.0)
+
+
+def satellites(det: DetectorSpec, n_each: int = 8, tail: bool = False) -> Iterator[SyntheticSpectrum]:
+    """A strong peak (1e5 counts) with a weaker satellite 1.25-2 FWHM away, alternately on the
+    high and the low side (residual-search protocol, docs/baseline/residual_search_protocol.md).
+    `tail`: both peaks carry the low-energy tail of `shape_calibration_spectra(tail=True)`."""
+    e0 = 662.0
+    fw = float(det.fwhm_kev(e0))
+    cat = "satellites_tailed" if tail else "satellites"
+    sh = dict(tail_frac=0.04, tail_slope=1.5, step_frac=0.001) if tail else {}
+    k = 0
+    for d in SATELLITE_SEPS:
+        for r in SATELLITE_RATIOS:
+            for j in range(n_each):
+                side = 1.0 if j % 2 == 0 else -1.0
+                peaks = [TruePeak(e0, 1.0e5, tag="main", **sh),
+                         TruePeak(e0 + side * d * fw, 1.0e5 / r, tag="sat", **sh)]
+                yield make_spectrum(det, peaks, base_continuum(det), seed_of(det, cat, k),
+                                    meta={"category": cat, "sep_fwhm": d, "ratio": r, "side": side})
+                k += 1
+
+
 EDGE_OFFSETS = (None, -2.0, -1.0, 0.0, 1.0, 2.0)     # test-peak offset from the edge, FWHM units
 
 
