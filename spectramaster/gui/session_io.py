@@ -398,6 +398,13 @@ class SessionController:
             if bkg is not None and bkg.source_path and Path(bkg.source_path).is_file():
                 s.set_background(bkg.source_path, live_time=bkg.live_time,
                                  reason=f"measured background ({dialog.bkg_mode.currentData()} mode)")
+            blank = getattr(dialog, "blank", None)
+            if blank is not None and blank.source_path and Path(blank.source_path).is_file():
+                s.set_blank(blank.source_path, live_time=blank.live_time, reason="reagent blank of the activities")
+            elif blank is None and s.blank_ref is not None:
+                s.set_blank(None, reason="no reagent blank")
+            if dialog.results.options.tcs:
+                s.set_coincidence_table(reason="true-coincidence summing correction of the activities")
             res = s.results or {}
             s.set_results(res.get("peaks", []), res.get("nuclide_matches", []), quant_to_dict(dialog.results),
                           spectrum=dialog.spectrum)

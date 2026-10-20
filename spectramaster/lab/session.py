@@ -45,9 +45,13 @@ from .sample import SampleInfo
 
 FORMAT = "spectramaster-session"
 SCHEMA_VERSION = 1
-# Version of the numerical analysis engine (peak search, fitting, quantification).  It is
-# currently released together with the application; bump it whenever results can change.
-ENGINE_VERSION = __version__
+# Version of the numerical analysis engine (peak search, fitting, quantification), separate
+# from the application version: bump it whenever results can change, so that sessions computed
+# with an older engine are reported (``is_stale_against``).
+#   1.0.0  first release
+#   1.1.0  2026-10-20 second external review: ISO 11929 solver, blank and reference
+#          uncertainties, TCS safety, curvature fit windows, width-shape extrapolation
+ENGINE_VERSION = "1.1.0"
 
 
 class SessionSchemaError(ValueError):
@@ -117,6 +121,8 @@ class AnalysisSession:
     calibrations: list[dict] = field(default_factory=list)
     library_ref: Optional[dict] = None
     background_ref: Optional[dict] = None
+    blank_ref: Optional[dict] = None          # reagent blank spectrum of the activities
+    coincidence_ref: Optional[dict] = None    # coincidence table of a TCS correction
     processing_settings: dict = field(default_factory=dict)
     results: dict = field(default_factory=lambda: {"peaks": [], "nuclide_matches": [], "quant": None})
     status: dict = field(default_factory=lambda: {"results_stale": False, "stale_reasons": [],
@@ -318,6 +324,18 @@ class AnalysisSession:
                        reason: str = "") -> EditOperation:
         return self.edit("set_context", ["background_ref"],
                          _file_ref(path, live_time=live_time, scaling=scaling), reason)
+
+    def set_blank(self, path, live_time: Optional[float] = None, reason: str = "") -> EditOperation:
+        """Reference the reagent blank spectrum file (None: no blank correction)."""
+        ref = _file_ref(path, live_time=live_time) if path else None
+        return self.edit("set_context", ["blank_ref"], ref, reason)
+
+    def set_coincidence_table(self, path=None, reason: str = "") -> EditOperation:
+        """Reference the coincidence table of a TCS correction (default: the bundled one)."""
+        if path is None:
+            from ..analysis.coincidence import TABLE
+            path = TABLE
+        return self.edit("set_context", ["coincidence_ref"], _file_ref(path), reason)
 
     def undo(self) -> Optional[EditOperation]:
         op = self.history.undo(self)

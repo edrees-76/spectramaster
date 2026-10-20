@@ -980,3 +980,25 @@ Pre-registered in `docs/baseline/fit_window_protocol.md`, with the results there
 - No criterion went from PASS to FAIL, and 16 criteria fail.
   - `HPGe.tailed.false_increase` is now at its limit.
   - The NaI background-peak coverage is worse and is still open.
+
+## Session traceability and the activity calculation thread (2026-10-20, from the second external review)
+
+- The engine has its own version, `ENGINE_VERSION` = 1.1.0, separate from the application
+  version. Before, it was tied to the application version, which never changed. The benchmark
+  records it. A session computed with engine 1.0.0 is now reported as produced by an older
+  engine.
+- A session records the reagent blank file with its SHA-256 (`blank_ref`). When a TCS
+  correction is used, it also records the coincidence table with its SHA-256
+  (`coincidence_ref`). Both appear in the JSON report. Sessions saved before this still load.
+- The reference date of the reference-peak correction is restored from a saved session as a
+  date. Recalculating from restored options used to raise a `TypeError`.
+- The activity dialog's Calculate button analyses the blank and the sample on a worker thread.
+  The dialog shows "Calculating ..." and ignores a second click. A geometry mismatch is still
+  asked about before the calculation is repeated. `calculate()` without `threaded` stays
+  synchronous for scripts and tests.
+- `multiprocessing.freeze_support()` was already called in the frozen entry points
+  (`build_exe/*_entry.py`), so no change was needed.
+- Still open:
+  - Other long operations of the Aptec analysis window, the detector manager and file
+    opening still run on the interface thread.
+  - The user manuals still need the features of PR #17-#32. They follow in a separate change.

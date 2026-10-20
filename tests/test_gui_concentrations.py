@@ -204,3 +204,23 @@ def test_every_concentration_string_has_arabic():
     from spectramaster.gui import quant_strings as qs
     keys = [k for k in qs.EN if k.startswith("conc_")]
     assert keys and all(k in qs.AR for k in keys)
+
+
+def test_calculate_on_a_worker_thread(qapp, settings, spectrum, curve_path):
+    import time
+    from PySide6.QtWidgets import QApplication
+    ad = _dialog(settings, spectrum, curve_path)
+    expected = ad.calculate()
+    ad.results = None
+    assert ad.calculate(threaded=True) is None
+    assert ad.busy and not ad.btn_calc.isEnabled()
+    assert ad.calculate(threaded=True) is None             # a second click while busy does nothing
+    end = time.monotonic() + 60
+    while ad.busy and time.monotonic() < end:
+        QApplication.processEvents()
+        time.sleep(0.01)
+    QApplication.processEvents()
+    assert not ad.busy and ad.btn_calc.isEnabled()
+    got = {r.nuclide: r.activity for r in ad.results.nuclides}
+    assert got == {r.nuclide: r.activity for r in expected.nuclides}
+    assert ad.table.rowCount() == len(expected.nuclides)

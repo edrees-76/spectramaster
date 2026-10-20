@@ -307,6 +307,8 @@ class QuantResults:
         o = known(ActivityOptions, d.get("options"))
         if o.get("ref_date"):
             o["ref_date"] = when(o["ref_date"])
+        if isinstance(o.get("reference_peak"), dict) and isinstance(o["reference_peak"].get("ref_date"), str):
+            o["reference_peak"] = {**o["reference_peak"], "ref_date": when(o["reference_peak"]["ref_date"])}
         if isinstance(o.get("geometry"), dict):
             from ..lab.detector import MeasurementGeometry
             o["geometry"] = MeasurementGeometry.from_dict(o["geometry"])
@@ -775,6 +777,8 @@ def reference_correction(spectrum, peaks, ref: dict, t_live: float) -> tuple[flo
         raise ValueError(f"reference peak at {energy:g} keV not found: the reference peak correction "
                          "cannot be applied")
     hl, t_ref = ref.get("half_life_s"), ref.get("ref_date")
+    if isinstance(t_ref, str):                   # options restored from JSON
+        t_ref = datetime.fromisoformat(t_ref) if t_ref else None
     if hl and t_ref is not None and spectrum.start_time is not None:
         rate *= decay_factor(float(hl), (spectrum.start_time - t_ref).total_seconds())
     measured = float(p.net_area) / t_live
