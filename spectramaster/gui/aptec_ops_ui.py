@@ -113,7 +113,7 @@ class NormalizeDialog(QDialog):
             v = float(self.factor.text().strip().replace(",", "."))
         except ValueError:
             return None
-        return v if v != 0.0 and math.isfinite(v) else None
+        return v if math.isfinite(v) and abs(v) > 0.0 else None
 
     def _check(self) -> None:
         ok = self.value() is not None
