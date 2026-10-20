@@ -877,6 +877,12 @@ def concentrations(res: "QuantResults", sample, unit: str, quantity_rel_unc: flo
     if res.reference_factor is not None:
         notes.append(f"reference peak correction K = {res.reference_factor:.4f} +- "
                      f"{100 * res.reference_u_rel:.2f} % applied to every result")
+    tcs = getattr(res.options, "tcs", None)
+    if tcs and any(l.coi_applied for r in res.nuclides for l in r.lines):
+        a, b = tcs["peak_to_total"]
+        notes.append(f"true-coincidence summing corrected (first order, gamma-gamma) with an assumed "
+                     f"peak-to-total PT(E) = min(1, {a:g} (E/1000 keV)^{b:g}) +- "
+                     f"{100 * float(tcs.get('pt_rel_unc') or 0):g} %")
     if unit == "Bq":
         q = 1.0
     elif unit == "Bq/kg":

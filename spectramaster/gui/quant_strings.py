@@ -74,6 +74,17 @@ EN = {
     "act_blank_tip": "Spectrum of a blank sample prepared and counted like the samples (same reagents, "
                      "container and geometry). It is analysed like the sample and its activity is "
                      "subtracted line by line.",
+    "act_tcs": "True-coincidence summing correction (cascade emitters: Co-60, Cs-134, Bi-214 ...)",
+    "act_tcs_tip": "Divides each line of a cascade emitter by its first-order coincidence summing factor "
+                   "(COI), from the gamma-gamma coincidence data and the efficiency curve. The total "
+                   "efficiency is the peak efficiency / peak-to-total ratio PT(E) = min(1, a (E/1000 keV)^b), "
+                   "which depends on the detector AND the geometry: state the values of yours (measured "
+                   "with single-line sources, or from the detector model). Gamma-gamma only (no X-ray or "
+                   "511 keV summing), no angular correlation; first order underestimates COI in very close "
+                   "geometries.",
+    "act_tcs_pt": "Peak-to-total at 1 MeV, a:",
+    "act_tcs_exp": "slope b:",
+    "act_tcs_assumed": "assumed values - state those of your detector and geometry",
     "act_ref_peak": "Reference peak correction (pulser or fixed reference source)",
     "act_ref_peak_tip": "Corrects losses the live time does not (random summing, pile-up): every result is "
                         "multiplied by K = expected rate / measured rate of the reference peak in the sample "
@@ -193,6 +204,16 @@ AR = {
     "act_blank": "العينة الفارغة:",
     "act_blank_tip": "طيف عينة فارغة حُضّرت وعُدّت مثل العينات (الكواشف والوعاء والهندسة نفسها). "
                      "تُحلَّل مثل العينة ويُطرح نشاطها خطًّا بخط.",
+    "act_tcs": "تصحيح الجمع المتزامن الحقيقي (النويدات متتالية الإصدار: ⁦Co-60⁩، ⁦Cs-134⁩، ⁦Bi-214⁩ ...)",
+    "act_tcs_tip": "يقسم كل خط من خطوط النويدات متتالية الإصدار على معامل جمع التزامن من الدرجة الأولى "
+                   "(⁦COI⁩)، من بيانات تزامن غاما-غاما ومنحنى الكفاءة. الكفاءة الكلية = كفاءة القمة ÷ "
+                   "نسبة القمة إلى الكلي ⁦PT(E) = min(1, a (E/1000 keV)^b)⁩، وهي تعتمد على الكاشف "
+                   "والهندسة معًا: أدخل قيم كاشفك (مقيسة بمصادر أحادية الخط أو من نموذج الكاشف). "
+                   "تزامن غاما-غاما فقط (لا جمع مع الأشعة السينية أو 511 keV) ولا ارتباط زاوي؛ "
+                   "والدرجة الأولى تقلّل المعامل في الهندسات القريبة جدًا.",
+    "act_tcs_pt": "نسبة القمة إلى الكلي عند 1 MeV، ⁦a⁩:",
+    "act_tcs_exp": "الميل ⁦b⁩:",
+    "act_tcs_assumed": "قيم مفترضة - أدخل قيم كاشفك وهندستك",
     "act_ref_peak": "تصحيح القمة المرجعية (مولّد نبضات أو مصدر مرجعي ثابت)",
     "act_ref_peak_tip": "يصحّح الفقد الذي لا يصحّحه الزمن الحي (الجمع العشوائي وتراكم النبضات): تُضرب كل "
                         "النتائج في ⁦K⁩ = المعدل المتوقع ÷ المعدل المقيس للقمة المرجعية في طيف العينة. "

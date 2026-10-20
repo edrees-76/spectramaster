@@ -232,6 +232,7 @@ class ActivityDialog(QDialog):
         form.addRow(qtr("act_method"), row)
         lay.addLayout(form)
         self._build_reference_box(lay)
+        self._build_tcs_box(lay)
 
         self.sample_box = SampleSection(self, settings)
         lay.addWidget(self.sample_box)
@@ -440,6 +441,57 @@ class ActivityDialog(QDialog):
         except ValueError:
             pass
 
+    # ------------------------------------------------------------------ coincidence summing
+    TCS_DEFAULT = (0.24, -0.63, 10.0)     # example coaxial HPGe P/T model; the user states their own
+
+    def _build_tcs_box(self, lay) -> None:
+        """True-coincidence summing correction (activity options.tcs), off by default: the
+        peak-to-total model is an assumption of the detector and geometry the user states."""
+        box = QGroupBox(qtr("act_tcs"))
+        box.setCheckable(True)
+        box.setChecked(False)
+        box.setToolTip(qtr("act_tcs_tip"))
+        row = QHBoxLayout(box)
+        row.addWidget(QLabel(qtr("act_tcs_pt")))
+        self.tcs_a = QDoubleSpinBox()
+        self.tcs_a.setRange(0.001, 1.0)
+        self.tcs_a.setDecimals(3)
+        self.tcs_a.setSingleStep(0.01)
+        row.addWidget(self.tcs_a)
+        row.addWidget(QLabel(qtr("act_tcs_exp")))
+        self.tcs_b = QDoubleSpinBox()
+        self.tcs_b.setRange(-3.0, 0.0)
+        self.tcs_b.setDecimals(3)
+        self.tcs_b.setSingleStep(0.05)
+        row.addWidget(self.tcs_b)
+        row.addWidget(QLabel("±"))
+        self.tcs_u = QDoubleSpinBox()
+        self.tcs_u.setRange(0.0, 100.0)
+        self.tcs_u.setDecimals(1)
+        self.tcs_u.setSuffix(" %")
+        row.addWidget(self.tcs_u)
+        warn = QLabel(qtr("act_tcs_assumed"))
+        warn.setStyleSheet("color: #e65100;")
+        row.addWidget(warn)
+        row.addStretch(1)
+        self.tcs_box = box
+        lay.addWidget(box)
+        a, b, u = self.TCS_DEFAULT
+        saved = str(self.settings.get("quant/tcs", "")) if self.settings is not None else ""
+        try:
+            a, b, u = (float(v) for v in saved.split(",")[:3])
+        except ValueError:
+            pass
+        self.tcs_a.setValue(a)
+        self.tcs_b.setValue(b)
+        self.tcs_u.setValue(u)
+
+    def tcs(self) -> Optional[dict]:
+        """ActivityOptions.tcs from the box (None: not applied)."""
+        if not self.tcs_box.isChecked():
+            return None
+        return {"peak_to_total": [self.tcs_a.value(), self.tcs_b.value()], "pt_rel_unc": self.tcs_u.value() / 100.0}
+
     def browse_reference_spectrum(self) -> None:
         folder = self.settings.folder("open") if self.settings is not None else ""
         path, _ = QFileDialog.getOpenFileName(self, qtr("act_ref_measure"), folder)
@@ -494,7 +546,7 @@ class ActivityDialog(QDialog):
             quantity_unit=self.unit_combo.currentText(), quantity_rel_unc=self.qty_unc.value() / 100.0,
             attenuation=self.att_spin.value(), bkg_mode=self.bkg_mode.currentData(),
             mda_method=self.mda_combo.currentData(), geometry=self.sample_geometry(),
-            allow_geometry_mismatch=False, reference_peak=self.reference_peak())
+            allow_geometry_mismatch=False, reference_peak=self.reference_peak(), tcs=self.tcs())
 
     def sample_geometry(self):
         """The sample geometry to check the calibration against (None = not given)."""
@@ -600,6 +652,8 @@ class ActivityDialog(QDialog):
             self.settings.set("quant/nuclides", ", ".join(opt.nuclides))
             self.settings.set("quant/reference_peak", ",".join(f"{v:g}" for v in (
                 self.refpk_energy.value(), self.refpk_rate.value(), self.refpk_unc.value(), self.refpk_hl.value())))
+            self.settings.set("quant/tcs", ",".join(f"{v:g}" for v in (
+                self.tcs_a.value(), self.tcs_b.value(), self.tcs_u.value())))
         self._show(self.results)
         self.compute_concentrations()
         self.btn_export.setEnabled(True)
