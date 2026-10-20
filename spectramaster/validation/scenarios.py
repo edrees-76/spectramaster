@@ -314,6 +314,32 @@ def background_pairs(det: DetectorSpec, n: int, live_time: float = 3600.0) -> It
         yield smp, bkg, truth
 
 
+REF_PULSER_KEV = {"HPGe": 1950.0, "NaI": 2800.0}
+REF_PULSER_CPS = 50.0
+REF_LOSSES = (0.0, 0.05, 0.10)
+
+
+def reference_peak_spectra(det: DetectorSpec, n: int, live_time: float = 3600.0,
+                           with_pulser: bool = True) -> Iterator[tuple]:
+    """(spectrum, truth, loss) for the reference-peak protocol
+    (docs/baseline/reference_peak_protocol.md): Cs-137 and Co-60 (s ~ 40) plus a pulser of
+    REF_PULSER_CPS; a loss fraction (REF_LOSSES, cycled) removes counts from EVERY peak, the pulser
+    included (random summing).  truth[(nuclide, keV)] = true pre-loss counts."""
+    cont = base_continuum(det)
+    cy = continuum_counts(det, cont)
+    src = [("Cs-137", 661.657), ("Co-60", 1173.228), ("Co-60", 1332.492)]
+    areas = {k: area_for_snr(det, cy, k[1], 40.0) for k in src}
+    for i in range(n):
+        loss = REF_LOSSES[i % len(REF_LOSSES)]
+        keep = 1.0 - loss
+        peaks = [TruePeak(e, a * keep, tag=nm) for (nm, e), a in areas.items()]
+        if with_pulser:
+            peaks.append(TruePeak(REF_PULSER_KEV[det.name], REF_PULSER_CPS * live_time * keep, tag="pulser"))
+        syn = make_spectrum(det, peaks, cont, seed_of(det, "refpeak", i), live_time=live_time,
+                            meta={"category": "reference_peak", "loss": loss})
+        yield syn, dict(areas), loss
+
+
 BLANK_REAGENT = {"Cs-137": 661.657, "Mn-54": 834.848}     # reagent contamination, s ~ 15 each
 
 

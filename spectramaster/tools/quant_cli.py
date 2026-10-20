@@ -66,6 +66,23 @@ def cmd_effcal(args) -> int:
     return 0
 
 
+def _reference_peak(args) -> "dict | None":
+    """--ref-peak with --ref-rate (pulser / known rate) or --ref-spectrum (measured once)."""
+    if args.ref_peak is None:
+        return None
+    ref = {"energy": args.ref_peak, "rate_rel_unc": (args.ref_rate_unc or 0.0) / 100.0,
+           "half_life_s": args.ref_half_life}
+    if args.ref_spectrum:
+        rs = _read(args.ref_spectrum)
+        rate, u = act.reference_rate(rs, args.ref_peak)
+        ref.update(rate=rate, rate_rel_unc=u / rate, ref_date=rs.start_time)
+    elif args.ref_rate:
+        ref["rate"] = args.ref_rate
+    else:
+        raise ValueError("--ref-peak needs --ref-rate or --ref-spectrum")
+    return ref
+
+
 def cmd_activity(args) -> int:
     try:
         spec = _read(args.file)
@@ -75,7 +92,8 @@ def cmd_activity(args) -> int:
         opt = act.ActivityOptions(
             nuclides=nucl, method=args.method, ref_date=eff.parse_date(args.ref_date) if args.ref_date else None,
             quantity=args.mass, quantity_unit=args.unit, quantity_rel_unc=(args.mass_unc or 0.0) / 100.0,
-            attenuation=args.attenuation, bkg_mode=args.bkg_mode, mda_method=args.mda)
+            attenuation=args.attenuation, bkg_mode=args.bkg_mode, mda_method=args.mda,
+            reference_peak=_reference_peak(args))
         blank = None
         if args.blank:      # the reagent blank, analysed exactly like the sample
             blank = act.compute_activities(_read(args.blank), curve, opt, background=bkg)
@@ -179,6 +197,12 @@ def add_quant_commands(sub) -> None:
     p.add_argument("--eff", required=True, help="efficiency curve JSON (from 'effcal')")
     p.add_argument("--bkg", help="background spectrum")
     p.add_argument("--bkg-mode", choices=["peak", "spectrum"], default="peak")
+    p.add_argument("--ref-peak", type=float, help="reference peak correction: energy keV of a pulser "
+                                                   "or fixed reference source peak")
+    p.add_argument("--ref-rate", type=float, help="its expected rate, counts per live second")
+    p.add_argument("--ref-rate-unc", type=float, default=0.0, help="its relative uncertainty %%")
+    p.add_argument("--ref-spectrum", help="reference (low-rate) measurement giving the expected rate")
+    p.add_argument("--ref-half-life", type=float, help="half-life (s) of a reference source (decay correction)")
     p.add_argument("--blank", help="reagent blank spectrum (prepared and counted like the samples); "
                                    "its activities are subtracted line by line")
     p.add_argument("--mass", type=float, help="sample quantity")

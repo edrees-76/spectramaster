@@ -304,6 +304,28 @@ for det in ("HPGe", "NaI"):
        "The same line without the blank correction (shows that the correction matters).")
     _c(f"{det}.blank.mn54_z_mean", det, "reagent_blank", "mn54_z_mean", "report", None, "Reported only.")
 
+# ------------------------------------------------- reference peak (pre-registered 2026-10-20,
+# docs/baseline/reference_peak_protocol.md, before evaluation).  A pulser and a loss of 0-10 %
+# applied to every peak (random summing).
+for det in ("HPGe", "NaI"):
+    _c(f"{det}.ref.bias", det, "reference_peak", "bias", "abs<=", 0.01,
+       "The correction removes losses of 5-10 % to within 1 %.")
+    _c(f"{det}.ref.no_loss_bias", det, "reference_peak", "no_loss_bias", "abs<=", 0.01,
+       "Without losses the correction does not bias the activities.")
+    _c(f"{det}.ref.cov1", det, "reference_peak", "z_cov1", "in", (0.55, 0.81),
+       "The uncertainty includes the reference peak's (binomial band for 120 lines).")
+    _c(f"{det}.ref.cov2", det, "reference_peak", "z_cov2", "in", (0.89, 1.0), "Same for 2 sigma.")
+    _c(f"{det}.ref.uncorrected_bias", det, "reference_peak", "uncorrected_bias", "report", None,
+       "The same without the correction (shows that it matters).")
+    _c(f"{det}.ref.missing_refused", det, "reference_peak", "missing_refused", ">=", 1.0,
+       "A reference peak that is not in the spectrum refuses the calculation (never silently uncorrected).")
+    # Added AFTER the first results (after_RP1), report only, limits above unchanged: `bias` mixes
+    # the correction with the area bias of the small (s ~ 40) nuclide peaks; these separate them.
+    _c(f"{det}.ref.k_bias", det, "reference_peak", "k_bias", "report", None,
+       "Mean K (1 - L) - 1: the error of the correction factor alone (post hoc, report only).")
+    _c(f"{det}.ref.fit_bias", det, "reference_peak", "fit_bias", "report", None,
+       "Mean fitted / true pre-loss area of the nuclide peaks, loss removed (post hoc, report only).")
+
 # ------------------------------------------------- experimental efficiency (Release D, pre-registered D0)
 # Synthetic mixed-standard calibration spectra with a known true efficiency curve.  In each
 # realisation every nuclide's true activity differs from its certificate value by N(0, u_cert)

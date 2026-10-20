@@ -47,6 +47,15 @@ with standard uncertainty u = u(y), omega = Phi(y/u) and the coverage probabilit
 
 (k_x = Phi^-1(x); computed in log space so a strongly negative y stays finite).
 
+Reference peak correction (``options.reference_peak``: a pulser, or a fixed reference source
+of known rate), for losses the live time does not correct (random summing, pile-up)::
+
+    K = r_exp / r_meas,  r_meas = N_ref / t_live,  r_exp = rate exp(-lambda (t_start - t_ref))
+    u_rel(K)^2 = (u(N_ref) / N_ref)^2 + u_rel(rate)^2
+
+K multiplies w (every activity, threshold and MDA); u_rel(K) is a correlated relative component
+("reference peak" in the budget).  A reference peak that is not found refuses the calculation.
+
 Reagent blank (``blank=``, the results of a blank sample prepared and counted like the samples,
 analysed with the same curve, options and laboratory background), per line::
 
@@ -223,6 +232,9 @@ class ActivityOptions:
     min_intensity_pct: float = 1.0       # generic nuclides: lines used
     geometry: Optional[object] = None    # lab.detector.MeasurementGeometry of the sample
     allow_geometry_mismatch: bool = False    # use an incompatible calibration anyway (reported)
+    # reference peak correction: {"energy": keV, "rate": cps, "rate_rel_unc": fraction,
+    # "half_life_s": s or None (pulser), "ref_date": datetime of the rate or None}
+    reference_peak: Optional[dict] = None
 
 
 @dataclass
@@ -241,6 +253,8 @@ class QuantResults:
     nuclides: list[NuclideResult]
     notes: list[str] = field(default_factory=list)
     blank: str = ""                      # reagent blank sample (empty: no blank correction)
+    reference_factor: Optional[float] = None    # reference peak correction K (None: not applied)
+    reference_u_rel: float = 0.0
 
     def rows(self) -> list[dict]:
         return [result_row(r) for r in self.nuclides]
@@ -487,6 +501,10 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     if spectrum.start_time is None and opt.ref_date is not None:
         notes.append("acquisition start unknown: no decay correction")
     dt = (spectrum.start_time - ref).total_seconds() if (spectrum.start_time and ref) else 0.0
+    ref_k, ref_u = 1.0, 0.0
+    if opt.reference_peak:
+        ref_k, ref_u, note = reference_correction(spectrum, peaks, opt.reference_peak, t_live)
+        notes.append(note)
     blank_dt = 0.0          # seconds from the blank's reference date to the sample's
     if blank is not None:
         notes.extend(_blank_checks(blank, curve, opt))
@@ -523,7 +541,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             lr.in_range = curve.in_range(e)
             if not lr.in_range:
                 lr.note = "efficiency extrapolated"
-            w = att / (eff * inten * t_live * C * D) / b       # Bq (parent) per net count
+            w = ref_k * att / (eff * inten * t_live * C * D) / b       # Bq (parent) per net count
             # blank (continuum) under the expected peak
             cu = continuum_under(spectrum, e, fw_ch)
             if cu is None:
@@ -569,7 +587,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                     var0 += k_b ** 2 * bwin * (1.0 + cb[1] / (2.0 * cb[2]))
             sigma0 = math.sqrt(max(var0, 0.0))
             w_rel = math.sqrt(lr.eff_rel_unc ** 2 + opt.intensity_rel_unc ** 2 + lr.int_rel_unc ** 2
-                              + opt.attenuation_rel_unc ** 2)
+                              + opt.attenuation_rel_unc ** 2 + ref_u ** 2)
             if opt.mda_method == "iso11929":
                 ys, yd = iso11929_limits(sigma0, w / fwin, w_rel, opt.k_alpha, opt.k_beta)
                 lr.lc_counts, lr.ld_counts = ys / w * fwin, yd / w * fwin
@@ -598,7 +616,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             else:
                 lr.note = (lr.note + "; no peak").strip("; ")
             res.lines.append(lr)
-        _combine(res, opt)
+        _combine(res, opt, ref_u)
         results.append(res)
     # shared peaks
     shared: dict[str, set] = {}
@@ -640,7 +658,42 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                         start_time=spectrum.start_time, live_time=t_live, real_time=spectrum.real_time,
                         ref_date=ref, curve_name=curve.name or curve.geometry, curve_model=curve.describe(),
                         background=(background.source_path or background.sample_id) if background is not None else "",
-                        options=opt, nuclides=results, notes=notes, blank=blank_name)
+                        options=opt, nuclides=results, notes=notes, blank=blank_name,
+                        reference_factor=ref_k if opt.reference_peak else None, reference_u_rel=ref_u)
+
+
+def reference_rate(spectrum, energy: float, min_sig: float = 3.0) -> tuple[float, float]:
+    """(rate, standard uncertainty) in counts per live second of the peak at `energy` in a
+    reference (low-rate) measurement of a fixed reference source."""
+    from .peaks import find_peaks
+    if not spectrum.live_time:
+        raise ValueError("the reference spectrum has no live time")
+    p = match_peak(find_peaks(spectrum, min_sig=min_sig), energy)
+    if p is None:
+        raise ValueError(f"reference peak at {energy:g} keV not found in the reference spectrum")
+    t = float(spectrum.live_time)
+    return float(p.net_area) / t, float(p.net_area_unc) / t
+
+
+def reference_correction(spectrum, peaks, ref: dict, t_live: float) -> tuple[float, float, str]:
+    """(K, u_rel(K), note) of the reference peak correction (module docstring)."""
+    energy = float(ref["energy"])
+    rate = float(ref["rate"])
+    if rate <= 0:
+        raise ValueError("reference peak correction: the expected rate must be positive")
+    p = match_peak(peaks, energy)
+    if p is None:
+        raise ValueError(f"reference peak at {energy:g} keV not found: the reference peak correction "
+                         "cannot be applied")
+    hl, t_ref = ref.get("half_life_s"), ref.get("ref_date")
+    if hl and t_ref is not None and spectrum.start_time is not None:
+        rate *= decay_factor(float(hl), (spectrum.start_time - t_ref).total_seconds())
+    measured = float(p.net_area) / t_live
+    k = rate / measured
+    u = math.hypot(float(p.net_area_unc) / float(p.net_area), float(ref.get("rate_rel_unc") or 0.0))
+    note = (f"reference peak correction at {energy:g} keV: expected {rate:.5g} cps, measured {measured:.5g} cps, "
+            f"K = {k:.4f} +- {100 * u:.2f} %")
+    return k, u, note
 
 
 def _blank_line(blank: "QuantResults", nuclide: str, energy: float) -> Optional[LineResult]:
@@ -668,7 +721,7 @@ def _blank_checks(blank: "QuantResults", curve: EfficiencyCurve, opt: ActivityOp
     return out
 
 
-def _combine(res: NuclideResult, opt: ActivityOptions) -> None:
+def _combine(res: NuclideResult, opt: ActivityOptions, ref_u: float = 0.0) -> None:
     lines = [l for l in res.lines if l.mda > 0]
     if not lines:
         res.note = (res.note + "; no usable line").strip("; ")
@@ -725,6 +778,8 @@ def _combine(res: NuclideResult, opt: ActivityOptions) -> None:
     # Budget of the activity in Bq.  The mass/volume uncertainty does not belong here: it only
     # enters the specific activity (Bq/kg, Bq/L, ...), see compute_activities.
     comp = {"counting": uc, "efficiency": ue, "intensity": math.hypot(a_abs * ui, ul), "attenuation": a_abs * ua}
+    if ref_u:
+        comp["reference peak"] = a_abs * ref_u
     res.activity = a
     res.u = math.sqrt(sum(v * v for v in comp.values()))
     res.budget = {k: (100.0 * v / a_abs if a_abs else 0.0) for k, v in comp.items()}

@@ -530,6 +530,51 @@ def cat_reagent_blank(det: DetectorSpec, n: int, mode: str = "spectrum") -> dict
             "mn54_z_mean": _mean(r["z"] for r in mn if r["z"] is not None)}
 
 
+def cat_reference_peak(det: DetectorSpec, n: int) -> dict:
+    """Reference peak correction (docs/baseline/reference_peak_protocol.md)."""
+    from ..analysis.activity import ActivityOptions, compute_activities
+    curve = _flat_curve()
+    ref = {"energy": scenarios.REF_PULSER_KEV[det.name], "rate": scenarios.REF_PULSER_CPS, "rate_rel_unc": 0.0}
+    names = ["Cs-137", "Co-60"]
+    rows, k_err = [], []
+    for syn, truth, loss in scenarios.reference_peak_spectra(det, n):
+        q0 = compute_activities(syn.spectrum, curve, ActivityOptions(nuclides=names))
+        q = compute_activities(syn.spectrum, curve, ActivityOptions(nuclides=names, reference_peak=ref))
+        k_err.append(q.reference_factor * (1.0 - loss) - 1.0)       # K recovers 1/(1-L) exactly when 0
+        for r, r0 in zip(q.nuclides, q0.nuclides):
+            for ln, ln0 in zip(r.lines, r0.lines):
+                key = next((k for k in truth if k[0] == r.nuclide and abs(k[1] - ln.energy) < 1.0), None)
+                if key is None:
+                    continue
+                if not (ln.peak_found and ln0.net_area and ln.activity is not None):
+                    rows.append({"found": False, "loss": loss})
+                    continue
+                a_true = truth[key] * ln0.activity / ln0.net_area
+                u = abs(ln.activity) * math.hypot(ln.u_count_rel, q.reference_u_rel)
+                rows.append({"found": True, "loss": loss, "rel": ln.activity / a_true - 1.0,
+                             "fit": ln0.net_area / (truth[key] * (1.0 - loss)) - 1.0,
+                             "rel0": ln0.activity / a_true - 1.0, "z": (ln.activity - a_true) / u if u else None})
+    refused = []
+    for syn, _truth, _loss in scenarios.reference_peak_spectra(det, 3, with_pulser=False):
+        try:
+            compute_activities(syn.spectrum, curve, ActivityOptions(nuclides=names, reference_peak=ref))
+            refused.append(False)
+        except ValueError:
+            refused.append(True)
+    fp = [r for r in rows if r["found"]]
+    z = [r["z"] for r in fp if r["z"] is not None]
+    return {"n_lines": len(rows), "found_fraction": _frac(r["found"] for r in rows),
+            "bias": _mean(r["rel"] for r in fp),
+            "no_loss_bias": _mean(r["rel"] for r in fp if r["loss"] == 0.0),
+            "bias_by_loss": {f"{lv:g}": _mean(r["rel"] for r in fp if r["loss"] == lv) for lv in scenarios.REF_LOSSES},
+            "uncorrected_bias": _mean(r["rel0"] for r in fp),
+            "z_cov1": _frac(abs(x) <= 1 for x in z) if z else None,
+            "z_cov2": _frac(abs(x) <= 2 for x in z) if z else None,
+            "z_mean": _mean(z), "missing_refused": _mean(refused),
+            # added after the first results (report only): the two parts of `bias`
+            "k_bias": _mean(k_err), "fit_bias": _mean(r["fit"] for r in fp)}
+
+
 # ------------------------------------------------------------- efficiency calibration (Release D)
 EFF_TCS = ("Co-60", "Y-88")
 EFF_OUTSIDE = (("Pb-210", 46.5), ("Tl-208", 2614.5))      # lines below / above a 59-1836 keV calibration
@@ -708,6 +753,7 @@ def run(quick: bool = False, refdata: Optional[str] = None, log=print) -> dict:
         for mode in ("peak", "spectrum"):
             r[f"background_{mode}"] = cat_measured_background(det, q(40, 3), mode)
         r["reagent_blank"] = cat_reagent_blank(det, q(40, 3))
+        r["reference_peak"] = cat_reference_peak(det, q(40, 3))
         r["runtime"] = {"median_s": statistics.median(times), "max_s": max(times), "n": len(times),
                         "channels": det.n_channels}
         results["detectors"][det.name] = r
