@@ -744,7 +744,7 @@ def _line_int_unc(nuclide: str, energy: float) -> float:
 ROW_KEYS = ["nuclide", "lines", "net_area", "net_unc", "activity_bq", "u_bq", "specific", "specific_U2",
             "unit", "mda_bq", "mda_specific", "decision", "best_bq", "best_u_bq", "coverage_low_bq",
             "coverage_high_bq", "best_specific", "best_u_specific", "coverage_low_specific",
-            "coverage_high_specific", "budget", "note"]
+            "coverage_high_specific", "blank_bq", "blank_u_bq", "budget", "note"]
 
 
 def sampling_decay_factor(half_life_s: Optional[float], sampling_s: Optional[float]) -> float:
@@ -824,6 +824,9 @@ def concentrations(res: "QuantResults", sample, unit: str, quantity_rel_unc: flo
                 row.update(best=be[0], best_u=be[1], coverage_low=be[2], coverage_high=be[3])
                 row["best_text"] = (f"ISO 11929: {be[0]:.3g} +- {be[1]:.2g} (k=1), "
                                     f"{100 * res.options.coverage:g} % [{be[2]:.3g}, {be[3]:.3g}] {label}")
+        k = r.key_line
+        if k is not None and k.blank_activity is not None:
+            row["blank_text"] = f"reagent blank subtracted: {k.blank_activity:.3g} +- {k.blank_unc:.2g} Bq"
         out["rows"].append(row)
     return out
 
@@ -840,7 +843,9 @@ def result_row(r: NuclideResult) -> dict:
             "best_bq": r.best_estimate, "best_u_bq": r.best_u, "coverage_low_bq": r.coverage_low,
             "coverage_high_bq": r.coverage_high, "best_specific": r.specific_best,
             "best_u_specific": r.specific_best_u, "coverage_low_specific": r.specific_low,
-            "coverage_high_specific": r.specific_high, "budget": bud, "note": r.note}
+            "coverage_high_specific": r.specific_high,
+            "blank_bq": k.blank_activity if k else None, "blank_u_bq": k.blank_unc if k and k.blank_activity is not None
+            else None, "budget": bud, "note": r.note}
 
 
 def _fmt(v, digits=4) -> str:

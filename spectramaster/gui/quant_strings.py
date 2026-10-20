@@ -70,6 +70,10 @@ EN = {
     "act_curve": "Efficiency curve:",
     "act_background": "Background:",
     "act_bkg_none": "(none)",
+    "act_blank": "Reagent blank:",
+    "act_blank_tip": "Spectrum of a blank sample prepared and counted like the samples (same reagents, "
+                     "container and geometry). It is analysed like the sample and its activity is "
+                     "subtracted line by line.",
     "act_bkg_peak": "peak by peak",
     "act_bkg_spectrum": "full spectrum",
     "act_clear": "Clear",
@@ -96,6 +100,7 @@ EN = {
     "res_col_mda_spec": "MDA specific",
     "res_col_decision": "Decision",
     "res_col_best": "ISO 11929 best estimate ± u [{p} % interval]",
+    "res_col_blank": "Blank subtracted Bq ± u",
     "res_col_note": "Note",
     "res_detected": "detected",
     "res_lt_mda": "< MDA",
@@ -170,6 +175,9 @@ AR = {
     "act_curve": "منحنى الكفاءة:",
     "act_background": "الخلفية:",
     "act_bkg_none": "(بدون)",
+    "act_blank": "العينة الفارغة:",
+    "act_blank_tip": "طيف عينة فارغة حُضّرت وعُدّت مثل العينات (الكواشف والوعاء والهندسة نفسها). "
+                     "تُحلَّل مثل العينة ويُطرح نشاطها خطًّا بخط.",
     "act_bkg_peak": "قمة بقمة",
     "act_bkg_spectrum": "الطيف كاملًا",
     "act_clear": "مسح",
@@ -196,6 +204,7 @@ AR = {
     "res_col_mda_spec": "MDA النوعي",
     "res_col_decision": "القرار",
     "res_col_best": "أفضل تقدير ISO 11929 ± u ‏[فترة {p} %]",
+    "res_col_blank": "المطروح للعينة الفارغة Bq ± u",
     "res_col_note": "ملاحظة",
     "res_detected": "مكتشف",
     "res_lt_mda": "< MDA",

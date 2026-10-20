@@ -9,7 +9,8 @@ import pytest
 from spectramaster.analysis import activity as act
 from spectramaster.analysis import efficiency as eff
 from spectramaster.lab.session import quant_to_dict
-from test_activity import LIVE, SAMPLE_REF, START, cal_curve, lib_line, make_spectrum, true_eff  # noqa: F401
+from test_activity import (LIVE, SAMPLE_REF, START, cal_curve, gui_settings, lib_line, make_spectrum,  # noqa: F401
+                           qapp, true_eff)
 
 A_SAMPLE, A_BLANK = 50.0, 20.0
 
@@ -104,3 +105,39 @@ def test_cli_blank(cal_curve, tmp_path, capsys):
     assert "reagent blank subtracted" in text
     row = [ln for ln in text.splitlines() if ln.startswith("Cs-137")][0]
     assert f"{A_SAMPLE:.3g}"[:2] in row
+
+
+def test_activity_dialog_with_blank(cal_curve, qapp, gui_settings, tmp_path):
+    from PySide6.QtCore import QDateTime
+    from spectramaster.gui import i18n
+    from spectramaster.gui.quant_panel import RES_COLS, ActivityDialog, quant_table
+    from test_activity import write_spec
+    _pts, curve = cal_curve
+    path = tmp_path / "curves" / "c.json"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    curve.save(path)
+    blk = write_spec(make_spectrum([cs_counts(A_BLANK)], sid="blank"), tmp_path / "blank.json")
+    i18n.set_language("en")
+    try:
+        ad = ActivityDialog(None, make_spectrum([cs_counts(A_SAMPLE + A_BLANK)]), gui_settings)
+        ad.set_curve_path(path)
+        ad.nuc_edit.setText("Cs-137")
+        ad.ref_start.setChecked(False)
+        ad.ref_edit.setDateTime(QDateTime(SAMPLE_REF))
+        gross = ad.calculate().nuclides[0].activity
+        assert ad.load_blank(str(blk)) and "blank.json" in ad.blank_edit.text()
+        res = ad.calculate()
+        cs = res.nuclides[0]
+        assert cs.activity == pytest.approx(A_SAMPLE, rel=0.02) and cs.activity < gross
+        assert res.blank.endswith("blank.json")
+        header, rows = quant_table(res)
+        j = RES_COLS.index("res_col_blank")
+        assert len(header) == len(rows[0]) and rows[0][j].startswith(f"{A_BLANK:.3g}"[:2])
+        assert ad.table.item(0, j).text() == rows[0][j]
+        row = act.result_row(cs)
+        assert row["blank_bq"] == pytest.approx(cs.key_line.blank_activity)
+        ad.set_blank(None)
+        assert ad.calculate().nuclides[0].activity == pytest.approx(gross)
+        ad.close()
+    finally:
+        i18n.set_language("ar")

@@ -912,6 +912,8 @@ class Report:
             text = self.num(r.get("text") or "")
             if r.get("best_text"):
                 text += "<br/>" + self.num(r["best_text"])
+            if r.get("blank_text"):
+                text += "<br/>" + self.num(r["blank_text"])
             rows.append([f"<b>{esc(r.get('nuclide', ''))}</b>", text,
                          f'<span style="color:{colour};">{esc(dec)}</span>',
                          self.num(f"{factor:.4g}") if isinstance(factor, (int, float)) else ""])
