@@ -37,6 +37,16 @@ ISO 11929 (simple formulation, activity domain, w = 1/(eps I t C D F_att)):
     decision threshold  y* = k_{1-a} * w * sigma0
     detection limit     y# = y* + k_{1-b} * sqrt( w^2 (y#/w + sigma0^2) + y#^2 u_rel(w)^2 )  (iterated)
 
+With ISO 11929 the best estimate of the (non-negative) true value and the probabilistically
+symmetric coverage interval are also given (ISO 11929-1:2019), from the primary result y
+with standard uncertainty u = u(y), omega = Phi(y/u) and the coverage probability 1 - gamma::
+
+    y_hat    = y + u exp(-y^2 / (2 u^2)) / (omega sqrt(2 pi))
+    u(y_hat) = sqrt( u^2 - (y_hat - y) y_hat )
+    lower    = y - k_p u,  p = omega (1 - gamma/2)       upper = y + k_q u,  q = 1 - omega gamma/2
+
+(k_x = Phi^-1(x); computed in log space so a strongly negative y stays finite).
+
 A nuclide is "detected" when its activity exceeds the decision threshold (Currie L_C or
 ISO y*); otherwise "< MDA" is reported.  True-coincidence summing is NOT corrected
 (a note is attached to cascade emitters).
@@ -140,6 +150,16 @@ class NuclideResult:
     unit: str = ""
     half_life_s: Optional[float] = None
     note: str = ""
+    # ISO 11929 only (mda_method "iso11929"): best estimate, its standard uncertainty and the
+    # coverage interval (probability ActivityOptions.coverage), in Bq and in the specific unit
+    best_estimate: Optional[float] = None
+    best_u: Optional[float] = None
+    coverage_low: Optional[float] = None
+    coverage_high: Optional[float] = None
+    specific_best: Optional[float] = None
+    specific_best_u: Optional[float] = None
+    specific_low: Optional[float] = None
+    specific_high: Optional[float] = None
 
     @property
     def U(self) -> Optional[float]:
@@ -185,6 +205,7 @@ class ActivityOptions:
     mda_method: str = "currie"           # "currie" | "iso11929"
     k_alpha: float = K_DEFAULT
     k_beta: float = K_DEFAULT
+    coverage: float = 0.95               # ISO 11929 coverage interval probability 1 - gamma
     min_sig: float = 3.0
     min_intensity_pct: float = 1.0       # generic nuclides: lines used
     geometry: Optional[object] = None    # lab.detector.MeasurementGeometry of the sample
@@ -307,6 +328,30 @@ def iso11929_limits(sigma0: float, w: float, w_rel_unc: float, k_alpha: float = 
     if k_beta * w_rel_unc >= 1:
         yd = float("inf")
     return ys, yd
+
+
+def iso11929_best_estimate(y: Optional[float], u: Optional[float], coverage: float = 0.95
+                           ) -> Optional[tuple[float, float, float, float]]:
+    """(best estimate, its standard uncertainty, lower, upper) of a non-negative measurand from
+    the primary result `y` with standard uncertainty `u` (ISO 11929-1:2019, probabilistically
+    symmetric coverage interval of probability `coverage`).  None when y or u is unusable."""
+    if y is None or u is None or not (math.isfinite(y) and math.isfinite(u)) or u <= 0:
+        return None
+    if not 0.0 < coverage < 1.0:
+        raise ValueError(f"coverage probability must be between 0 and 1, not {coverage}")
+    from scipy.special import log_ndtr, ndtri_exp
+    gamma = 1.0 - coverage
+    x = y / u
+    log_omega = float(log_ndtr(x))                      # ln Phi(y/u), finite for strongly negative y
+    # phi(x) / Phi(x) without underflow
+    ratio = math.exp(-0.5 * x * x - 0.5 * math.log(2.0 * math.pi) - log_omega)
+    best = y + u * ratio
+    u_best = math.sqrt(max(u * u - (best - y) * best, 0.0))
+    k_p = float(ndtri_exp(log_omega + math.log1p(-gamma / 2.0)))
+    k_q = -float(ndtri_exp(log_omega + math.log(gamma / 2.0)))     # Phi^-1(1 - omega gamma / 2)
+    lower = max(y - k_p * u, 0.0)                       # >= 0 analytically; clip rounding only
+    upper = y + k_q * u
+    return best, u_best, lower, upper
 
 
 def nuclide_lines(name: str, curve: Optional[EfficiencyCurve] = None, min_intensity_pct: float = 1.0
@@ -537,6 +582,13 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                 # u(a/q)/(a/q) = sqrt(u_rel(a)^2 + u_rel(q)^2): quantity uncertainty added here only
                 r.specific_u = math.hypot((r.u or 0.0) / qb, abs(r.specific) * opt.quantity_rel_unc)
             r.specific_mda = r.mda / qb if r.mda else None
+        if opt.mda_method == "iso11929":
+            be = iso11929_best_estimate(r.activity, r.u, opt.coverage)
+            if be is not None:
+                r.best_estimate, r.best_u, r.coverage_low, r.coverage_high = be
+            be = iso11929_best_estimate(r.specific, r.specific_u, opt.coverage)
+            if be is not None:
+                r.specific_best, r.specific_best_u, r.specific_low, r.specific_high = be
     if background is not None:
         notes.append(f"background: {background.source_path or background.sample_id or '?'} "
                      f"({'peak-by-peak' if opt.bkg_mode == 'peak' else 'full spectrum'}, k = {k_b:.4g})")
@@ -621,7 +673,9 @@ def _line_int_unc(nuclide: str, energy: float) -> float:
 # ------------------------------------------------------------------ table / export
 
 ROW_KEYS = ["nuclide", "lines", "net_area", "net_unc", "activity_bq", "u_bq", "specific", "specific_U2",
-            "unit", "mda_bq", "mda_specific", "decision", "budget", "note"]
+            "unit", "mda_bq", "mda_specific", "decision", "best_bq", "best_u_bq", "coverage_low_bq",
+            "coverage_high_bq", "best_specific", "best_u_specific", "coverage_low_specific",
+            "coverage_high_specific", "budget", "note"]
 
 
 def sampling_decay_factor(half_life_s: Optional[float], sampling_s: Optional[float]) -> float:
@@ -693,6 +747,14 @@ def concentrations(res: "QuantResults", sample, unit: str, quantity_rel_unc: flo
         row["mda"] = r.mda * f / q if r.mda else None
         row["text"] = (f"{row['value']:.4g} +- {row['U']:.2g} (k=2) {label}" if row["value"] is not None
                        else (f"< {row['mda']:.3g} {label} (MDA)" if row["mda"] else "not determined"))
+        if res.options.mda_method == "iso11929" and r.activity is not None and r.u:
+            y = r.activity * f / q
+            uy = math.hypot(r.u * f / q, abs(y) * quantity_rel_unc)
+            be = iso11929_best_estimate(y, uy, res.options.coverage)
+            if be is not None:
+                row.update(best=be[0], best_u=be[1], coverage_low=be[2], coverage_high=be[3])
+                row["best_text"] = (f"ISO 11929: {be[0]:.3g} +- {be[1]:.2g} (k=1), "
+                                    f"{100 * res.options.coverage:g} % [{be[2]:.3g}, {be[3]:.3g}] {label}")
         out["rows"].append(row)
     return out
 
@@ -706,7 +768,10 @@ def result_row(r: NuclideResult) -> dict:
             "specific": r.specific if r.detected else None,
             "specific_U2": r.specific_U if r.detected else None, "unit": r.unit,
             "mda_bq": r.mda or None, "mda_specific": r.specific_mda, "decision": r.decision,
-            "budget": bud, "note": r.note}
+            "best_bq": r.best_estimate, "best_u_bq": r.best_u, "coverage_low_bq": r.coverage_low,
+            "coverage_high_bq": r.coverage_high, "best_specific": r.specific_best,
+            "best_u_specific": r.specific_best_u, "coverage_low_specific": r.specific_low,
+            "coverage_high_specific": r.specific_high, "budget": bud, "note": r.note}
 
 
 def _fmt(v, digits=4) -> str:
@@ -748,6 +813,7 @@ def export_results(path, res: QuantResults) -> Path:
             ("Efficiency curve", f"{res.curve_name} ({res.curve_model})"), ("Background", res.background),
             ("Quantity", f"{res.options.quantity or ''} {res.options.quantity_unit if res.options.quantity else ''}"),
             ("Method", res.options.method), ("Detection limit", res.options.mda_method),
+            ("Coverage probability", res.options.coverage if res.options.mda_method == "iso11929" else ""),
             ("Notes", "; ".join(res.notes))]
     header = ROW_KEYS
     rows = [[result_row(r)[k] for k in header] for r in res.nuclides]

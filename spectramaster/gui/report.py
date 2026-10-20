@@ -905,7 +905,10 @@ class Report:
             dec = self.t("quant_res_detected" if detected else "quant_res_lt_mda")
             colour = "#14822a" if detected else C_MUTED
             factor = r.get("factor")
-            rows.append([f"<b>{esc(r.get('nuclide', ''))}</b>", self.num(r.get("text") or ""),
+            text = self.num(r.get("text") or "")
+            if r.get("best_text"):
+                text += "<br/>" + self.num(r["best_text"])
+            rows.append([f"<b>{esc(r.get('nuclide', ''))}</b>", text,
                          f'<span style="color:{colour};">{esc(dec)}</span>',
                          self.num(f"{factor:.4g}") if isinstance(factor, (int, float)) else ""])
         return rows
