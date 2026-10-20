@@ -697,3 +697,15 @@ Benchmark `reagent_blank` (`docs/baseline/reagent_blank_protocol.md`, `after_RB1
 - No criterion went from PASS to FAIL.
 
 The interface comes next.
+
+## Reagent blank in the interface (2026-10-20)
+
+The activity dialog (Analyze > Activity...) has a "Reagent blank" row, under the background row,
+with Browse and Clear:
+
+- The blank spectrum is analysed exactly like the sample, with the same curve, options and
+  background, and is then subtracted line by line (`ActivityDialog._compute`).
+- The results table has a new column "Blank subtracted Bq ± u".
+- The export gets `blank_bq` and `blank_u_bq`.
+- The report shows the subtracted value under each concentration.
+- The session results keep the blank's name in `QuantResults.blank`.

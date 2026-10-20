@@ -33,7 +33,7 @@ from .quant_strings import qtr
 from .sample_panel import ConcentrationView, SampleSection
 
 RES_COLS = ["res_col_nuclide", "res_col_lines", "res_col_net", "res_col_act", "res_col_spec", "res_col_mda",
-            "res_col_mda_spec", "res_col_decision", "res_col_best", "res_col_note"]
+            "res_col_mda_spec", "res_col_decision", "res_col_best", "res_col_blank", "res_col_note"]
 UNITS = ["kg", "g", "L", "mL"]
 GEOMETRY_REFUSED = "the efficiency calibration belongs to another measurement geometry"
 LTR = "⁦{}⁩"
@@ -56,6 +56,14 @@ def _best_text(r: act.NuclideResult, specific: bool) -> str:
     if v[0] is None:
         return ""
     return f"{_g(v[0], 3)} ± {_g(v[1], 2)} [{_g(v[2], 3)} – {_g(v[3], 3)}]"
+
+
+def _blank_text(r: act.NuclideResult) -> str:
+    """Reagent blank subtracted from the key line, Bq ± counting u (empty: no blank correction)."""
+    k = r.key_line
+    if k is None or k.blank_activity is None:
+        return ""
+    return f"{_g(k.blank_activity, 3)} ± {_g(k.blank_unc, 2)}"
 
 
 def quant_table(res: Optional[act.QuantResults], lang: Optional[str] = None) -> tuple[list[str], list[list[str]]]:
@@ -82,7 +90,7 @@ def quant_table(res: Optional[act.QuantResults], lang: Optional[str] = None) -> 
             s = f"< {_g(r.specific_mda, 3)}" if r.specific_mda else ""
             dec = tr("res_lt_mda")
         rows.append([r.nuclide, r.lines_text, net, a, s, _g(r.mda, 3), _g(r.specific_mda, 3), dec,
-                     _best_text(r, bool(unit)), r.note])
+                     _best_text(r, bool(unit)), _blank_text(r), r.note])
     return header, rows
 
 
@@ -93,6 +101,7 @@ class ActivityDialog(QDialog):
         self.settings = settings
         self.spectrum = spectrum
         self.background = None
+        self.blank = None                              # reagent blank spectrum (None: no correction)
         self.results: Optional[act.QuantResults] = None
         self.concentration: Optional[dict] = None      # activity.concentrations() of the results
         self.sample_info = None                        # lab.sample.SampleInfo used for it
@@ -140,6 +149,21 @@ class ActivityDialog(QDialog):
         b.clicked.connect(lambda: self.set_background(None))
         row.addWidget(b)
         form.addRow(qtr("act_background"), row)
+
+        row = QHBoxLayout()
+        self.blank_edit = QLineEdit()
+        self.blank_edit.setReadOnly(True)
+        self.blank_edit.setLayoutDirection(Qt.LeftToRight)
+        self.blank_edit.setPlaceholderText(qtr("act_bkg_none"))
+        self.blank_edit.setToolTip(qtr("act_blank_tip"))
+        row.addWidget(self.blank_edit, 1)
+        b = QPushButton(qtr("eff_browse"))
+        b.clicked.connect(self.browse_blank)
+        row.addWidget(b)
+        b = QPushButton(qtr("act_clear"))
+        b.clicked.connect(lambda: self.set_blank(None))
+        row.addWidget(b)
+        form.addRow(qtr("act_blank"), row)
 
         row = QHBoxLayout()
         self.qty_spin = QDoubleSpinBox()
@@ -327,6 +351,39 @@ class ActivityDialog(QDialog):
         self.bkg_edit.setToolTip("" if spectrum is None else (spectrum.source_path or ""))
         self.bkg_edit.setCursorPosition(0)
 
+    def browse_blank(self) -> None:
+        folder = self.settings.folder("open") if self.settings is not None else ""
+        path, _ = QFileDialog.getOpenFileName(self, qtr("act_blank"), folder)
+        if path:
+            self.load_blank(path)
+
+    def load_blank(self, path) -> bool:
+        from ..convert import read_spectra
+        try:
+            spectra, _f = read_spectra(Path(path))
+        except Exception as exc:
+            QMessageBox.warning(self, qtr("act_title"), qtr("act_failed", msg=str(exc)))
+            return False
+        s = spectra[0]
+        s.source_path = s.source_path or str(path)
+        self.set_blank(s)
+        return True
+
+    def set_blank(self, spectrum) -> None:
+        self.blank = spectrum
+        self.blank_edit.setText("" if spectrum is None else (
+            i18n.bidi_path(spectrum.source_path) if spectrum.source_path else spectrum.sample_id))
+        self.blank_edit.setToolTip(qtr("act_blank_tip") if spectrum is None else (spectrum.source_path or ""))
+        self.blank_edit.setCursorPosition(0)
+
+    def _compute(self, curve, opt) -> act.QuantResults:
+        """The sample's results; with a reagent blank, the blank is analysed first exactly like the
+        sample (same curve, options and background) and subtracted line by line."""
+        blank = None
+        if self.blank is not None:
+            blank = act.compute_activities(self.blank, curve, opt, background=self.background)
+        return act.compute_activities(self.spectrum, curve, opt, background=self.background, blank=blank)
+
     def options(self) -> act.ActivityOptions:
         ref = None
         if not self.ref_start.isChecked():
@@ -422,7 +479,7 @@ class ActivityDialog(QDialog):
             return None
         try:
             try:
-                self.results = act.compute_activities(self.spectrum, curve, opt, background=self.background)
+                self.results = self._compute(curve, opt)
             except ValueError as exc:
                 if not str(exc).startswith(GEOMETRY_REFUSED):
                     raise
@@ -433,7 +490,7 @@ class ActivityDialog(QDialog):
                     self.notes_label.setStyleSheet("color: #c62828; font-weight: bold;")
                     return None
                 opt.allow_geometry_mismatch = True       # the engine records it in the result notes
-                self.results = act.compute_activities(self.spectrum, curve, opt, background=self.background)
+                self.results = self._compute(curve, opt)
         except Exception as exc:
             self.message(qtr("act_failed", msg=f"{type(exc).__name__}: {exc}"))
             return None
