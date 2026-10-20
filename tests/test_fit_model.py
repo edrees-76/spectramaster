@@ -61,3 +61,19 @@ def test_identical_background_cancels_exactly_with_the_fit_continuum(det):
     tol = 1e-6 if det is HPGE else 1e-3
     for p in pk:
         assert under[id(p)][0] == pytest.approx(p.net_area, rel=tol, abs=1e-6)
+
+
+def test_log_continuum_curvature_from_the_wide_region():
+    """NaI peak on exp + flat (docs/baseline/medium_peaks_protocol.md), noise-free expectation:
+    the pure exponential continuum misses the curvature; b2 measured on the wider region does not."""
+    syn = make_spectrum(NAI, [TruePeak(1173.0, 3000.0)], Continuum(1800.0, 400.0, 60.0), 1)
+    y = syn.expected
+    t = syn.truth[0]
+    m = _Model(np.array([float(NAI.fwhm_ch(NAI.energy(c))) for c in range(NAI.n_channels)]))
+    m.loglinear = True
+    lo, hi = int(t.centroid - 2.2 * t.fwhm_ch), int(t.centroid + 2.2 * t.fwhm_ch)
+    flat = _fit_group(y, m, [t.centroid], lo, hi, curvature=0.0)
+    wide = _fit_group(y, m, [t.centroid], lo, hi)
+    assert abs(flat.areas[0] / t.area - 1) > 0.01
+    assert abs(wide.areas[0] / t.area - 1) < 0.3 * abs(flat.areas[0] / t.area - 1)
+    assert wide.b2 > 0                       # exp + flat is convex in log
