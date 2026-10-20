@@ -599,3 +599,31 @@ with upper and lower bounds).  No vendor software was decompiled.
   1e-9 over y/u in [-8, 8]); the closed form at y = 0 (sqrt(2/pi) u, sqrt(1 - 2/pi) u); y >> u
   gives y +- 1.96 u; integration through results, export, session round trip, concentrations
   and the table (both languages).  This is a reporting formula, not a laboratory validation.
+
+## Peak-shape calibration: low-energy tail (2026-10-20, increment 1: engine)
+
+Real HPGe and NaI peaks have a low-energy tail. Fitted with pure Gaussians, the areas of the
+synthetic `tailed` peaks (4 % tail) were biased (-1.05 % HPGe, -1.42 % NaI), and their stated
+uncertainties did not cover the error (z within 2 sigma 0.78 / 0.03). The idea follows the
+published Genie 2000 "Energy and Shape Calibration"; no vendor software was decompiled.
+
+- `analysis.peaks.peak_shape`: a Gaussian plus a fraction eta of an exponentially modified
+  Gaussian tail (slope tau sigma), with the same area normalisation and an analytic Jacobian.
+  The tail is evaluated with `erfcx` (lazy scipy import), so it stays stable far from the peak.
+- `shape_calibration(spectra)` measures eta and tau on the strong isolated peaks of a detector's
+  calibration spectra (pooled). `set_peak_tail` attaches them to a spectrum
+  (`extra["peak_tail"]`, kept by background subtraction and re-binning). `find_peaks`, the
+  manual refit and the measured-background estimator use them.
+- **Without a shape calibration nothing changes.** Results are bit for bit those of the Gaussian
+  engine.
+- A first attempt estimated the tail in every spectrum. It was rejected: the same detector got
+  different tails, so G1300 area ratios were biased (0.025 > 0.02), and the raw and the
+  background-subtracted spectrum disagreed. See `docs/baseline/peak_tail_protocol.md`.
+- Evaluation (pre-registered criteria, `before_T1` / `after_T1`): no criterion went from PASS to
+  FAIL.
+  - HPGe tailed peaks with the calibration: area bias +0.14 %, z within 2 sigma 0.95.
+  - A tail-free detector gets eta = 0.
+  - **NaI tailed criteria fail** (-0.71 %, 0.57): the NaI tail is underestimated (eta 0.021
+    against 0.04). This is a known limitation.
+- Next: store the shape calibration per detector (calibration store), the interface, then the
+  Genie-style residual search on top of it (it splits tailed peaks without a tail model).

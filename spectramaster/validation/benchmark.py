@@ -138,6 +138,22 @@ def cat_isolated(det, n, tail=False) -> tuple[dict, Collector]:
     return summarise_basic(c), c
 
 
+def cat_shape_calibrated(det, n, tail: bool = True, n_cal: int = 3) -> tuple[dict, Collector]:
+    """Isolated strong peaks fitted with the detector's peak-shape calibration measured on
+    `n_cal` separate calibration spectra (with / without a low-energy tail in the truth)."""
+    from ..analysis.peaks import set_peak_tail, shape_calibration
+    cal = shape_calibration([s.spectrum for s in scenarios.shape_calibration_spectra(det, n_cal, tail)])
+
+    def gen():
+        for syn in scenarios.isolated_strong(det, n, tail=tail):
+            set_peak_tail(syn.spectrum, cal)
+            yield syn
+    c = run_peaks(gen())
+    out = summarise_basic(c)
+    out.update(cal_eta=cal["eta"], cal_u_eta=cal["u_eta"], cal_tau=cal["tau"], cal_peaks=cal["n_peaks"])
+    return out, c
+
+
 def cat_weak(det, n) -> tuple[dict, Collector]:
     c = run_peaks(scenarios.isolated_weak(det, n))
     out = summarise_basic(c)
@@ -592,6 +608,8 @@ def run(quick: bool = False, refdata: Optional[str] = None, log=print) -> dict:
         times = []
         r["isolated_strong"], c = cat_isolated(det, q(40, 6)); times += c.times
         r["tailed"], c = cat_isolated(det, q(40, 6), tail=True); times += c.times
+        r["tailed_shape_cal"], c = cat_shape_calibrated(det, q(40, 6)); times += c.times
+        r["strong_shape_cal"], c = cat_shape_calibrated(det, q(40, 6), tail=False); times += c.times
         r["isolated_weak"], c = cat_weak(det, q(80, 8)); times += c.times
         r["background_only"], c = cat_background(det, q(40, 4)); times += c.times
         r["doublets"], c = cat_doublets(det, q(8, 1)); times += c.times
