@@ -66,6 +66,21 @@ E0_LOGLOG = 1000.0
 # ------------------------------------------------------------------ decay helpers
 
 
+def check_measurement(spectrum, what: str = "spectrum") -> None:
+    """Refuse what a quantitative calculation cannot use: a live time that is missing, not finite
+    or not positive, a real time that is not finite or negative, and non-finite counts."""
+    lt = spectrum.live_time
+    if not lt:
+        raise ValueError(f"the {what} has no live time")
+    if not math.isfinite(lt) or lt < 0:
+        raise ValueError(f"the {what} has an invalid live time ({lt!r} s)")
+    rt = spectrum.real_time
+    if rt and (not math.isfinite(rt) or rt < 0):
+        raise ValueError(f"the {what} has an invalid real time ({rt!r} s)")
+    if not np.isfinite(np.asarray(spectrum.counts, dtype=float)).all():
+        raise ValueError(f"the {what} has counts that are not finite (NaN or infinity)")
+
+
 def decay_constant(half_life_s: Optional[float]) -> float:
     return LN2 / half_life_s if half_life_s and half_life_s > 0 else 0.0
 
@@ -396,8 +411,9 @@ def measure_efficiency(spectrum, cert: Sequence[CertLine], peaks=None,
     from .peaks import find_peaks
     if not spectrum.energy_coeffs:
         raise ValueError("the calibration spectrum has no energy calibration")
-    if not spectrum.live_time:
-        raise ValueError("the calibration spectrum has no live time")
+    check_measurement(spectrum, "calibration spectrum")
+    if background is not None:
+        check_measurement(background, "background spectrum")
     from .background import BackgroundFitter
     from .peaks import FitReport
     rep = None

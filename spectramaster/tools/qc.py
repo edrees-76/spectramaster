@@ -733,10 +733,14 @@ def _baseline_ids(track: QCTrack, ms: list[QCMeasurement]) -> set[str]:
 def _stats(vals: list[float]) -> tuple[Optional[float], Optional[float]]:
     if not vals:
         return None, None
-    mean = sum(vals) / len(vals)
+    mean = math.fsum(vals) / len(vals)
     if len(vals) < 2:
         return mean, None
-    sd = math.sqrt(sum((v - mean) ** 2 for v in vals) / (len(vals) - 1))
+    sd = math.sqrt(math.fsum((v - mean) ** 2 for v in vals) / (len(vals) - 1))
+    # a spread at the rounding level of the values is no spread: z-scores of identical
+    # readings would otherwise be rounding noise divided by rounding noise
+    if sd <= 1e-12 * max(abs(v) for v in vals):
+        sd = 0.0
     return mean, sd
 
 
