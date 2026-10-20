@@ -36,6 +36,7 @@ if [[ "${1:-}" != "--iss-only" ]]; then
             --exclude-module PIL --exclude-module lxml --exclude-module yaml
             --exclude-module charset_normalizer --exclude-module html5lib
             --add-data "$ROOT/spectramaster/analysis/data/gamma_library.json;spectramaster/analysis/data"
+            --add-data "$ROOT/spectramaster/analysis/data/coincidence_table.json;spectramaster/analysis/data"
             --distpath "$DIST" --workpath build_exe/work_onedir --specpath build_exe/onedir_spec
             -y --clean --onedir --noupx)
 
