@@ -47,6 +47,16 @@ with standard uncertainty u = u(y), omega = Phi(y/u) and the coverage probabilit
 
 (k_x = Phi^-1(x); computed in log space so a strongly negative y stays finite).
 
+Reagent blank (``blank=``, the results of a blank sample prepared and counted like the samples,
+analysed with the same curve, options and laboratory background), per line::
+
+    A      = A_gross - A_b exp(-lambda (t_ref - t_ref,blank))     (Bq, before dividing by the quantity)
+    u_count(A)^2 = u_count(A_gross)^2 + u_count(A_b')^2
+    sigma0^2    += (u_count(A_b') f_w / w)^2                       (the blank is part of the null hypothesis)
+
+Efficiency, emission probability and attenuation stay relative to the net value (the same curve,
+line and geometry: fully correlated).  A line without a peak in the blank is not corrected (noted).
+
 A nuclide is "detected" when its activity exceeds the decision threshold (Currie L_C or
 ISO y*); otherwise "< MDA" is reported.  True-coincidence summing is NOT corrected
 (a note is attached to cascade emitters).
@@ -128,6 +138,9 @@ class LineResult:
     peak_found: bool = False
     in_range: bool = True
     int_rel_unc: float = 0.0     # library emission-probability uncertainty of this line (relative)
+    blank_activity: Optional[float] = None  # reagent blank subtracted, Bq (parent) at the reference date
+    blank_unc: float = 0.0                  # its counting standard uncertainty, Bq
+    gross_activity: Optional[float] = None  # activity before the blank correction
     note: str = ""
 
 
@@ -227,6 +240,7 @@ class QuantResults:
     options: ActivityOptions
     nuclides: list[NuclideResult]
     notes: list[str] = field(default_factory=list)
+    blank: str = ""                      # reagent blank sample (empty: no blank correction)
 
     def rows(self) -> list[dict]:
         return [result_row(r) for r in self.nuclides]
@@ -260,7 +274,7 @@ class QuantResults:
         top = known(cls, d)
         top.update(start_time=when(d.get("start_time")), ref_date=when(d.get("ref_date")),
                    options=ActivityOptions(**o), nuclides=nucl, notes=list(d.get("notes") or []))
-        for k in ("sample", "source_path", "curve_name", "curve_model", "background"):
+        for k in ("sample", "source_path", "curve_name", "curve_model", "background", "blank"):
             top.setdefault(k, "")
         top.setdefault("live_time", 0.0)
         top.setdefault("real_time", None)
@@ -420,8 +434,10 @@ def calibration_checks(curve: EfficiencyCurve, opt: "ActivityOptions") -> list[s
 
 
 def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[ActivityOptions] = None,
-                       background=None, peaks=None, bkg_peaks=None) -> QuantResults:
-    """Activities / MDAs for ``options.nuclides`` in ``spectrum`` (see module docstring)."""
+                       background=None, peaks=None, bkg_peaks=None,
+                       blank: Optional["QuantResults"] = None) -> QuantResults:
+    """Activities / MDAs for ``options.nuclides`` in ``spectrum`` (see module docstring).
+    ``blank``: results of the reagent blank (:func:`compute_activities` on the blank sample)."""
     from .peaks import find_peaks, fwhm_model
     opt = options or ActivityOptions()
     if not spectrum.energy_coeffs:
@@ -471,6 +487,13 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     if spectrum.start_time is None and opt.ref_date is not None:
         notes.append("acquisition start unknown: no decay correction")
     dt = (spectrum.start_time - ref).total_seconds() if (spectrum.start_time and ref) else 0.0
+    blank_dt = 0.0          # seconds from the blank's reference date to the sample's
+    if blank is not None:
+        notes.extend(_blank_checks(blank, curve, opt))
+        if blank.ref_date is not None and ref is not None:
+            blank_dt = (ref - blank.ref_date).total_seconds()
+        elif blank.ref_date is not None or ref is not None:
+            notes.append("reagent blank: a reference date is unknown, no decay correction of the blank")
 
     used_peaks: dict[int, list[str]] = {}
     results = []
@@ -526,6 +549,17 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             if bnet is not None:
                 lr.bkg_peak = bnet[0]
                 var0 += max(bnet[0], 0.0) + bnet[1] ** 2
+            blank_counts = 0.0
+            if blank is not None:
+                bl = _blank_line(blank, name, e)
+                if bl is None:
+                    lr.note = (lr.note + "; not corrected for the blank (no peak in the blank)").strip("; ")
+                else:
+                    kd = decay_factor(hl, blank_dt)
+                    lr.blank_activity = bl.activity * kd
+                    lr.blank_unc = abs(bl.activity) * bl.u_count_rel * kd
+                    blank_counts = lr.blank_activity / w
+                    var0 += (lr.blank_unc * fwin / w) ** 2
             if bcounts is not None:
                 cb = continuum_under(spectrum, e, fw_ch, counts=bcounts)
                 if cb is not None:
@@ -554,6 +588,12 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                 used_peaks.setdefault(id(p), []).append(name)
                 lr.activity = nnet * w
                 lr.u_count_rel = unet / abs(nnet) if nnet else float("inf")
+                if lr.blank_activity is not None:
+                    lr.gross_activity = lr.activity
+                    nnet -= blank_counts
+                    unet = math.hypot(unet, lr.blank_unc / w)
+                    lr.activity = nnet * w
+                    lr.u_count_rel = unet / abs(nnet) if nnet else float("inf")
                 lr.detected = nnet > lr.lc_counts
             else:
                 lr.note = (lr.note + "; no peak").strip("; ")
@@ -592,11 +632,40 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     if background is not None:
         notes.append(f"background: {background.source_path or background.sample_id or '?'} "
                      f"({'peak-by-peak' if opt.bkg_mode == 'peak' else 'full spectrum'}, k = {k_b:.4g})")
+    blank_name = ""
+    if blank is not None:
+        blank_name = blank.source_path or blank.sample or "?"
+        notes.append(f"reagent blank subtracted: {blank_name}")
     return QuantResults(sample=spectrum.sample_id, source_path=spectrum.source_path,
                         start_time=spectrum.start_time, live_time=t_live, real_time=spectrum.real_time,
                         ref_date=ref, curve_name=curve.name or curve.geometry, curve_model=curve.describe(),
                         background=(background.source_path or background.sample_id) if background is not None else "",
-                        options=opt, nuclides=results, notes=notes)
+                        options=opt, nuclides=results, notes=notes, blank=blank_name)
+
+
+def _blank_line(blank: "QuantResults", nuclide: str, energy: float) -> Optional[LineResult]:
+    """The blank's result for this nuclide's line (a peak was found in the blank), or None."""
+    for r in blank.nuclides:
+        if r.nuclide != nuclide:
+            continue
+        for ln in r.lines:
+            if abs(ln.energy - energy) < 0.05 and ln.peak_found and ln.activity is not None:
+                return ln
+    return None
+
+
+def _blank_checks(blank: "QuantResults", curve: EfficiencyCurve, opt: ActivityOptions) -> list[str]:
+    """Warnings when the blank was not analysed like the sample."""
+    out = []
+    name = curve.name or curve.geometry
+    if blank.curve_name and name and blank.curve_name != name:
+        out.append(f"reagent blank analysed with another efficiency curve ({blank.curve_name})")
+    if blank.blank:
+        out.append("the reagent blank's results are themselves blank-corrected")
+    missing = [n for n in opt.nuclides if n.strip() and not any(r.nuclide == n.strip() for r in blank.nuclides)]
+    if missing:
+        out.append("not analysed in the reagent blank: " + ", ".join(missing))
+    return out
 
 
 def _combine(res: NuclideResult, opt: ActivityOptions) -> None:

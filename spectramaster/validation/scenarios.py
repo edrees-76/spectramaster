@@ -314,6 +314,42 @@ def background_pairs(det: DetectorSpec, n: int, live_time: float = 3600.0) -> It
         yield smp, bkg, truth
 
 
+BLANK_REAGENT = {"Cs-137": 661.657, "Mn-54": 834.848}     # reagent contamination, s ~ 15 each
+
+
+def blank_triples(det: DetectorSpec, n: int, live_time: float = 3600.0) -> Iterator[tuple]:
+    """(sample, blank, background, truth) for the reagent-blank protocol
+    (docs/baseline/reagent_blank_protocol.md).  The laboratory background is that of
+    `background_pairs`; the blank is the background rate plus a reagent contamination
+    (BLANK_REAGENT); the sample is the background rate plus the same contamination plus its own
+    Cs-137 and Co-60.  truth[(nuclide, keV)] = true sample-only net counts (0 for Mn-54)."""
+    lib = load_library()
+    cont = base_continuum(det)
+    cy = continuum_counts(det, cont)
+    bl = [(e, y * w) for nm, w in BKG_NUCLIDES.items() for e, y in _lines(nm, lib)]
+    bkg_peaks = _source_peaks(det, cy, bl, 40.0)
+    bkg_peaks.append(TruePeak(661.657, area_for_snr(det, cy, 661.657, 8.0), tag="Cs-137 contamination"))
+    reagent = [TruePeak(e, area_for_snr(det, cy, e, 15.0), tag=f"{nm} reagent") for nm, e in BLANK_REAGENT.items()]
+    src = [TruePeak(661.657, area_for_snr(det, cy, 661.657, 40.0), tag="Cs-137"),
+           TruePeak(1173.228, area_for_snr(det, cy, 1173.228, 40.0), tag="Co-60"),
+           TruePeak(1332.492, area_for_snr(det, cy, 1332.492, 40.0), tag="Co-60")]
+    k = BKG_TIME_RATIO
+    bcont = Continuum(exp_amp=cont.exp_amp * k, exp_scale_kev=cont.exp_scale_kev, flat=cont.flat * k)
+    truth = {("Cs-137", 661.657): src[0].area, ("Co-60", 1173.228): src[1].area,
+             ("Co-60", 1332.492): src[2].area, ("Mn-54", 834.848): 0.0}
+    for i in range(n):
+        smp = make_spectrum(det, bkg_peaks + reagent + src, cont, seed_of(det, "blank/sample", i),
+                            live_time=live_time, meta={"category": "reagent_blank"})
+        blk = make_spectrum(det, bkg_peaks + reagent, cont, seed_of(det, "blank/blank", i),
+                            live_time=live_time, meta={"category": "reagent_blank"})
+        blk.spectrum.sample_id = f"blank-{i}"
+        bkg = make_spectrum(det, [TruePeak(p.energy, p.area * k, tag=p.tag) for p in bkg_peaks], bcont,
+                            seed_of(det, "blank/background", i), live_time=live_time * k,
+                            meta={"category": "reagent_blank"})
+        bkg.spectrum.sample_id = f"background-{i}"
+        yield smp, blk, bkg, truth
+
+
 # ---------------------------------------------------------------------------- efficiency calibration
 EFF_STANDARD = ("Am-241", "Cd-109", "Co-57", "Ce-139", "Hg-203", "Sn-113", "Sr-85", "Cs-137", "Y-88", "Co-60")
 EFF_SCALE = {"HPGe": 0.05, "NaI": 0.15}          # absolute efficiency at 120 keV

@@ -486,6 +486,50 @@ def cat_measured_background(det: DetectorSpec, n: int, mode: str) -> dict:
             "absent_z_mean_when_found": _mean(r["net"] / r["unc"] for r in absent if r["found"] and r["unc"])}
 
 
+def cat_reagent_blank(det: DetectorSpec, n: int, mode: str = "spectrum") -> dict:
+    """Reagent blank correction (docs/baseline/reagent_blank_protocol.md)."""
+    from ..analysis.activity import ActivityOptions, compute_activities
+    curve = _flat_curve()
+    opt = ActivityOptions(nuclides=["Cs-137", "Co-60", "Mn-54"], bkg_mode=mode, min_intensity_pct=1.0)
+    pres, mn, mn_raw = [], [], []
+    for smp, blk, bkg, truth in scenarios.blank_triples(det, n):
+        qb = compute_activities(blk.spectrum, curve, opt, background=bkg.spectrum)
+        q0 = compute_activities(smp.spectrum, curve, opt, background=bkg.spectrum)
+        q = compute_activities(smp.spectrum, curve, opt, background=bkg.spectrum, blank=qb)
+        for r, r0 in zip(q.nuclides, q0.nuclides):
+            for ln, ln0 in zip(r.lines, r0.lines):
+                key = next((k for k in truth if k[0] == r.nuclide and abs(k[1] - ln.energy) < 1.0), None)
+                if key is None:
+                    continue
+                if key[0] == "Mn-54":
+                    mn_raw.append(bool(ln0.detected))
+                    z = (ln.activity / (abs(ln.activity) * ln.u_count_rel)
+                         if ln.activity and ln.peak_found and ln.u_count_rel not in (0.0, float("inf")) else None)
+                    mn.append({"detected": bool(ln.detected), "z": z})
+                    continue
+                if not (ln.peak_found and ln.activity is not None and ln0.net_area):
+                    pres.append({"found": False})
+                    continue
+                w = ln0.activity / ln0.net_area
+                a_true = truth[key] * w
+                u = abs(ln.activity) * ln.u_count_rel
+                pres.append({"found": True, "rel": ln.activity / a_true - 1.0,
+                             "z": (ln.activity - a_true) / u if u else None,
+                             "corrected": ln.blank_activity is not None})
+    fp = [r for r in pres if r["found"]]
+    z = [r["z"] for r in fp if r["z"] is not None]
+    return {"mode": mode, "n_present": len(pres), "n_mn54": len(mn),
+            "bias": _mean(r["rel"] for r in fp),
+            "z_cov1": _frac(abs(x) <= 1 for x in z) if z else None,
+            "z_cov2": _frac(abs(x) <= 2 for x in z) if z else None,
+            "z_mean": _mean(z),
+            "present_found_fraction": _frac(r["found"] for r in pres),
+            "cs137_blank_applied": _frac(r["corrected"] for r in fp),
+            "false_detect": _frac(r["detected"] for r in mn),
+            "uncorrected_detect": _frac(mn_raw),
+            "mn54_z_mean": _mean(r["z"] for r in mn if r["z"] is not None)}
+
+
 # ------------------------------------------------------------- efficiency calibration (Release D)
 EFF_TCS = ("Co-60", "Y-88")
 EFF_OUTSIDE = (("Pb-210", 46.5), ("Tl-208", 2614.5))      # lines below / above a 59-1836 keV calibration
@@ -663,6 +707,7 @@ def run(quick: bool = False, refdata: Optional[str] = None, log=print) -> dict:
         log(f"[{det.name}] measured background ...")
         for mode in ("peak", "spectrum"):
             r[f"background_{mode}"] = cat_measured_background(det, q(40, 3), mode)
+        r["reagent_blank"] = cat_reagent_blank(det, q(40, 3))
         r["runtime"] = {"median_s": statistics.median(times), "max_s": max(times), "n": len(times),
                         "channels": det.n_channels}
         results["detectors"][det.name] = r

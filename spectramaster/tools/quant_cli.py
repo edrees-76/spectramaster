@@ -76,7 +76,10 @@ def cmd_activity(args) -> int:
             nuclides=nucl, method=args.method, ref_date=eff.parse_date(args.ref_date) if args.ref_date else None,
             quantity=args.mass, quantity_unit=args.unit, quantity_rel_unc=(args.mass_unc or 0.0) / 100.0,
             attenuation=args.attenuation, bkg_mode=args.bkg_mode, mda_method=args.mda)
-        res = act.compute_activities(spec, curve, opt, background=bkg)
+        blank = None
+        if args.blank:      # the reagent blank, analysed exactly like the sample
+            blank = act.compute_activities(_read(args.blank), curve, opt, background=bkg)
+        res = act.compute_activities(spec, curve, opt, background=bkg, blank=blank)
     except (ValueError, KeyError, OSError, FormatError) as exc:
         _err(str(exc))
         return 1
@@ -176,6 +179,8 @@ def add_quant_commands(sub) -> None:
     p.add_argument("--eff", required=True, help="efficiency curve JSON (from 'effcal')")
     p.add_argument("--bkg", help="background spectrum")
     p.add_argument("--bkg-mode", choices=["peak", "spectrum"], default="peak")
+    p.add_argument("--blank", help="reagent blank spectrum (prepared and counted like the samples); "
+                                   "its activities are subtracted line by line")
     p.add_argument("--mass", type=float, help="sample quantity")
     p.add_argument("--unit", default="kg", help="kg, g, L, mL (default kg)")
     p.add_argument("--mass-unc", type=float, default=0.0, help="quantity uncertainty %%")
