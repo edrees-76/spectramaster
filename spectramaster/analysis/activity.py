@@ -53,7 +53,10 @@ first-order COI = 1 - sum_j P(j|i) eps_t(E_j) + summing-in of crossover pairs, w
 efficiency curve (energies clamped to its range) and eps_t = eps_p / PT,
 PT(E) = min(1, a (E/1000)^b) a stated assumption.  u_rel(COI) = summing-out x u / COI is a
 "coincidence summing" budget component (correlated between lines).  Gamma-gamma only, no angular
-correlation (docs/baseline/tcs_protocol.md).
+correlation (docs/baseline/tcs_protocol.md).  Coincident photons below the curve are left out, a
+line the coincidence table does not describe is not corrected (noted), a COI <= 0 gives no
+result, and a curve whose cascade-emitter points still carry their summing losses is first
+corrected with the same PT (efficiency.summing_free_curve) so the summing is not counted twice.
 
 Reference peak correction (``options.reference_peak``: a pulser, or a fixed reference source
 of known rate), for losses the live time does not correct (random summing, pile-up)::
@@ -99,9 +102,11 @@ import numpy as np
 
 from . import coincidence
 from .efficiency import (TCS_NUCLIDES, EfficiencyCurve, check_measurement, counting_decay_factor, decay_factor,
-                         match_peak)
+                         match_peak, summing_free_curve)
 
 K_DEFAULT = 1.645
+# beyond this summing-out loss the first-order correction degrades (tcs_protocol.md, close geometry)
+TCS_FIRST_ORDER_LIMIT = 0.10
 
 # Default definitions: reported nuclide -> list of (library nuclide, energy keV, factor b).
 # factor b = activity of the line's nuclide relative to the reported parent at equilibrium.
@@ -540,11 +545,17 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             raise ValueError("true-coincidence summing: the peak-to-total ratio must be positive")
         tcs_u = float(opt.tcs.get("pt_rel_unc") or 0.0)
         tcs_pt = lambda en: coincidence.peak_to_total(en, pa, pb)                    # noqa: E731
+        free = summing_free_curve(curve, tcs_pt, tcs_u)
+        if free is not curve:
+            notes.append(f"efficiency curve: {free.note.split('; ')[-1]} with the same peak-to-total, so the "
+                         "summing is not counted twice")
+            curve = free
         eps_peak = lambda en: np.clip(curve.efficiency(np.clip(np.asarray(en, dtype=float),     # noqa: E731
                                                                curve.e_min, curve.e_max)), 0.0, 1.0)
-        notes.append(f"true-coincidence summing corrected (first order, gamma-gamma, no angular correlation): "
-                     f"peak-to-total PT(E) = min(1, {pa:g} (E/1000 keV)^{pb:g}) +- {100 * tcs_u:g} % (assumed), "
-                     "efficiencies of the curve clamped to its range")
+        notes.append(f"true-coincidence summing corrected where the coincidence data describe the line (first "
+                     f"order, gamma-gamma, no angular correlation): peak-to-total PT(E) = min(1, {pa:g} "
+                     f"(E/1000 keV)^{pb:g}) +- {100 * tcs_u:g} % (assumed), efficiencies of the curve clamped "
+                     f"to its range, coincident photons below {coincidence.BELOW_CURVE * curve.e_min:.4g} keV left out")
     blank_dt = 0.0          # seconds from the blank's reference date to the sample's
     bl_uc = bl_ur = 0.0     # the blank's own reference peak correction: counting, expected rate
     if blank is not None:
@@ -588,12 +599,26 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                 lr.note = "efficiency extrapolated"
             w = ref_k * att / (eff * inten * t_live * C * D) / b       # Bq (parent) per net count
             if tcs_on:
-                c = coincidence.coi(ln_name, e, eps_peak, tcs_pt)
-                if c.found and c.factor > 0:
+                c = coincidence.coi(ln_name, e, eps_peak, tcs_pt, e_min=curve.e_min, intensity=inten)
+                if c.reason:
+                    lr.note = (lr.note + "; not corrected for summing: " + c.reason).strip("; ")
+                elif c.found and c.factor <= 0:
+                    lr.coi = c.factor
+                    lr.note = (lr.note + f"; true-coincidence summing correction outside its validity "
+                               f"(first-order COI = {c.factor:.3g}): no result for this line").strip("; ")
+                    res.lines.append(lr)
+                    continue
+                elif c.found:
                     lr.coi = c.factor
                     lr.coi_applied = True
                     lr.coi_rel_unc = c.summing_out * tcs_u / c.factor
                     w /= c.factor
+                    if c.summing_out > TCS_FIRST_ORDER_LIMIT:
+                        lr.note = (lr.note + f"; large summing loss ({100 * c.summing_out:.0f} %): the first-order "
+                                   "correction loses accuracy (higher orders neglected)").strip("; ")
+                    if c.ignored > 0.01:
+                        lr.note = (lr.note + f"; coincident photons below the efficiency curve left out "
+                                   f"({100 * c.ignored:.0f} % of decays)").strip("; ")
             # blank (continuum) under the expected peak
             cu = continuum_under(spectrum, e, fw_ch)
             if cu is None:

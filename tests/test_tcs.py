@@ -1,6 +1,8 @@
 """True-coincidence summing correction (docs/baseline/tcs_protocol.md)."""
 from __future__ import annotations
 
+import dataclasses
+
 import pytest
 
 from spectramaster.analysis import activity as act
@@ -25,6 +27,12 @@ def co60_spectrum(summing: bool):
             n *= 1.0 - true_eff(partner) / co.peak_to_total(partner, *PT)
         peaks.append((e, n))
     return make_spectrum(peaks)
+
+
+def summing_free(curve):
+    """The synthetic calibration has no summing losses: say so (else its Co-60/Y-88 points
+    would be corrected for summing before use)."""
+    return dataclasses.replace(curve, summing_corrected=True)
 
 
 def opts(**kw):
@@ -52,6 +60,7 @@ def test_crossover_gains_counts():
 
 def test_activity_corrected_with_budget(cal_curve):
     _pts, curve = cal_curve
+    curve = summing_free(curve)
     spec = co60_spectrum(summing=True)
     plain = act.compute_activities(spec, curve, opts())
     corr = act.compute_activities(spec, curve, opts(tcs={"peak_to_total": list(PT), "pt_rel_unc": 0.10}))
@@ -93,6 +102,7 @@ def test_cli_tcs(cal_curve, tmp_path, capsys):
     from spectramaster import cli
     from test_activity import write_spec
     _pts, curve = cal_curve
+    curve = summing_free(curve)
     out = tmp_path / "eff.json"
     curve.save(out)
     smp = write_spec(co60_spectrum(summing=True), tmp_path / "co60.json")
@@ -109,6 +119,7 @@ def test_activity_dialog_tcs(cal_curve, qapp, gui_settings, tmp_path):
     from spectramaster.gui.quant_panel import ActivityDialog
     from spectramaster.lab.sample import SampleInfo
     _pts, curve = cal_curve
+    curve = summing_free(curve)
     path = tmp_path / "curves" / "c.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     curve.save(path)

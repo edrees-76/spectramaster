@@ -85,24 +85,41 @@ class Coi:
     factor: float = 1.0          # observed / summing-free counts of the line (divide the activity by it)
     summing_out: float = 0.0     # sum_j P(j|i) eps_t(E_j)
     summing_in: float = 0.0      # relative gain from crossover pairs
-    found: bool = False          # the line is in the table (a cascade member)
+    found: bool = False          # the line is in the table (a cascade member) and the table describes it
+    ignored: float = 0.0         # sum_j P(j|i) of partners well below e_min (left out: eps = 0)
+    reason: str = ""             # why a cascade line is not corrected
 
 
-def coi(nuclide: str, energy: float, eps_peak, pt) -> Coi:
+INTENSITY_RANGE = (0.75, 1.33)   # table / library emission probability for the table to describe the line
+BELOW_CURVE = 0.8                # partners below BELOW_CURVE x e_min are left out (eps = 0)
+
+
+def coi(nuclide: str, energy: float, eps_peak, pt, e_min: float | None = None,
+        intensity: float | None = None) -> Coi:
     """First-order coincidence summing correction of the line at `energy` keV
     (docs/baseline/tcs_protocol.md):
 
-        COI = 1 - sum_j P(j|i) eps_t(E_j) + sum_(a,b) I_a P(b|a) eps_p(E_a) eps_p(E_b) / I_i
+        COI = 1 - sum_j P(j|i) eps_t(E_j) + sum_(a,b) I_a P(b|a) eps_p(E_a) eps_p(E_b) / (I_i eps_p(E_i))
 
     with eps_t = eps_p / PT, the pairs a above b with |E_a + E_b - E_i| <= SUM_TOL_KEV.  `eps_peak`
     and `pt` are callables of energy (keV).  A line emitted by several transitions takes their
-    emission-weighted mean; a line of no cascade gives COI = 1 (found False)."""
-    num_out = num_in = wsum = 0.0
+    emission-weighted mean; a line of no cascade gives COI = 1 (found False).
+
+    ``e_min``: partners well below it (under BELOW_CURVE x e_min: outside the efficiency
+    calibration, e.g. strongly converted transitions of a few tens of keV) get eps = 0 and are
+    reported in ``ignored``; the curve would otherwise lend them the efficiency of its lowest
+    point.  Partners just below e_min keep the clamped efficiency.  ``intensity``: the library
+    emission probability of the line (fraction).  When the table's (sum over transitions of
+    br I) is outside INTENSITY_RANGE times it, the table does not describe that line (a weak
+    neighbour within LINE_TOL_KEV, a dropped branch) and the line is not corrected."""
+    num_out = num_in = num_ign = wsum = 0.0
     for t in transitions(nuclide):
         i = t.index(energy, LINE_TOL_KEV)
         if i is None or t.intensities[i] <= 0:
             continue
         ep = np.asarray(eps_peak(t.energies), dtype=float)
+        low = np.zeros(len(t.energies), dtype=bool) if e_min is None else t.energies < BELOW_CURVE * e_min
+        ep = np.where(low, 0.0, ep)
         et = np.minimum(ep / np.asarray(pt(t.energies), dtype=float), 1.0)
         out = float(t.coincident[i] @ et)
         gain = 0.0
@@ -113,8 +130,14 @@ def coi(nuclide: str, energy: float, eps_peak, pt) -> Coi:
         w = t.br * t.intensities[i]
         num_out += w * out
         num_in += t.br * gain / ep[i] if ep[i] > 0 else 0.0
+        num_ign += w * float(t.coincident[i] @ low)
         wsum += w
     if wsum <= 0:
         return Coi()
+    if intensity is not None and intensity > 0:
+        r = wsum / intensity
+        if not INTENSITY_RANGE[0] <= r <= INTENSITY_RANGE[1]:
+            return Coi(reason=f"the coincidence data do not describe this line (emission probability "
+                              f"{100 * wsum:.3g} % in the table, {100 * intensity:.3g} % in the library)")
     so, si = num_out / wsum, num_in / wsum
-    return Coi(1.0 - so + si, so, si, True)
+    return Coi(1.0 - so + si, so, si, True, num_ign / wsum)

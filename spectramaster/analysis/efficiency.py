@@ -47,7 +47,7 @@ import json
 import math
 import os
 import struct
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Optional, Sequence
@@ -504,6 +504,8 @@ class EfficiencyCurve:
     source: str = ""
     note: str = ""
     knots: list = field(default_factory=list)              # spline_lnln: ln E of the knots
+    summing_corrected: bool = False  # cascade-emitter points free of true-coincidence summing
+    #                                  (corrected, or measured where summing is negligible)
 
     # --- evaluation
     def _design(self, e) -> np.ndarray:
@@ -685,6 +687,64 @@ def fit_efficiency(points: Sequence[EfficiencyPoint], model: str = "loglog", ord
         if hasattr(curve, k):
             setattr(curve, k, v)
     return curve
+
+
+def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0, iterations: int = 3
+                       ) -> EfficiencyCurve:
+    """The curve refitted with its cascade-emitter points corrected for true-coincidence summing.
+
+    A calibration measured in the sample's geometry gives apparent efficiencies for cascade
+    lines (Co-60, Y-88, Ba-133 ...): they lost counts by summing.  Correcting the sample for
+    summing with such a curve counts the summing twice.  Each such point is divided by its
+    first-order COI (analysis.coincidence) computed with the curve itself and the peak-to-total
+    `pt` (callable of keV), and the curve refitted with the same model; a few iterations make
+    the COI consistent with the corrected curve.  u(COI) = summing-out x pt_rel_unc / COI is
+    added to the point's counting component.  Returns the same object when there is nothing to
+    correct (``summing_corrected`` set, or no cascade point); raises ValueError for a model that
+    cannot be refitted or a COI outside its validity."""
+    from . import coincidence
+    if curve.summing_corrected:
+        return curve
+    cascade = [i for i, p in enumerate(curve.points)
+               if p.use and not p.manual and coincidence.has_cascades(p.nuclide)]
+    if not cascade:
+        return curve
+    if curve.model not in ("loglog", "two_branch"):
+        raise ValueError(f"the efficiency curve ({curve.describe()}) has cascade-emitter points that lose counts by "
+                         "true-coincidence summing and cannot be refitted here: the summing correction of the "
+                         "sample would count it twice; refit the calibration in SpectraMaster first")
+    kw = {"order": curve.order, "u_sys_rel": curve.u_common_rel}
+    if curve.model == "two_branch":
+        kw.update(order_high=curve.order_high, crossover=curve.e_ref)
+    meta = {k: getattr(curve, k) for k in ("geometry", "detector", "geometry_record", "validation_status",
+                                            "name", "source", "date")}
+    cur, factors = curve, {}
+    for _ in range(max(int(iterations), 1)):
+        def eps(e, c=cur):
+            return np.clip(c.efficiency(np.clip(np.asarray(e, dtype=float), c.e_min, c.e_max)), 0.0, 1.0)
+        pts = list(curve.points)
+        for i in cascade:
+            p = curve.points[i]
+            c = coincidence.coi(p.nuclide, p.energy, eps, pt, e_min=cur.e_min, intensity=p.intensity)
+            if not c.found:
+                continue
+            if c.factor <= 0:
+                raise ValueError(f"{p.nuclide} {p.energy:.1f} keV calibration point: true-coincidence summing "
+                                 f"correction outside its validity (COI = {c.factor:.3g})")
+            uc = math.hypot(p.u_count_rel, c.summing_out * pt_rel_unc / c.factor)
+            e_new = p.efficiency / c.factor
+            pts[i] = replace(p, efficiency=e_new, unc=e_new * math.hypot(uc, p.u_ref_rel), u_count_rel=uc,
+                             note=(p.note + f"; summing corrected, COI {c.factor:.4f}").strip("; "))
+            if abs(c.factor - 1.0) > 1e-4:
+                factors[(p.nuclide, round(p.energy, 1))] = c.factor
+        cur = fit_efficiency(pts, curve.model, **kw, **meta)
+        cur.selection = curve.selection
+    cur.summing_corrected = True
+    worst = min(factors.values()) if factors else 1.0
+    nucs = ", ".join(sorted({n for n, _e in factors}))
+    cur.note = (curve.note + f"; cascade-emitter calibration points ({nucs}) corrected for true-coincidence "
+                f"summing (lowest COI {worst:.4f})").strip("; ")
+    return cur
 
 
 OUTLIER_Z = 3.0                  # calibration points this far from the curve are listed for review
