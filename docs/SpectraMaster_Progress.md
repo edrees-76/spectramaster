@@ -965,3 +965,18 @@ never changes it silently. A round trip through every writable format checks eac
   channel contents are not Poisson counts (subtracted, stripped, normalized, smoothed), the
   activity results carry a note that their uncertainties, decision thresholds and MDA are not
   valid.
+
+## Fit windows and width-shape extrapolation (2026-10-20, from the second external review)
+
+Pre-registered in `docs/baseline/fit_window_protocol.md`, with the results there.
+
+- For scintillators, the wide region used to measure the continuum curvature now stops
+  2.5 FWHM short of neighbouring peaks. Before, in the NaI reference spectra, the region for the
+  Co-60 group contained Cs-137, the curvature was always rejected, and Co-60 was fitted 3-4.5 %
+  low. `NaI.ref.bias` went from -2.8 % to -0.7 %, and `NaI.ref.no_loss_bias` and
+  `NaI.bkg_peak.net_bias` now pass as well.
+- The HPGe width-shape correction is not extrapolated beyond the strong peaks used. Outside
+  them the width ratio stays at its end value.
+- No criterion went from PASS to FAIL, and 16 criteria fail.
+  - `HPGe.tailed.false_increase` is now at its limit.
+  - The NaI background-peak coverage is worse and is still open.

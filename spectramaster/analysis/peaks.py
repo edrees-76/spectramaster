@@ -36,7 +36,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass, field
-from typing import Callable, Optional
+from typing import Callable, Optional, Sequence
 
 import numpy as np
 
@@ -459,7 +459,7 @@ LOGQUAD_MAX = 2.0                # bound of |b2| h^2 of the log-quadratic contin
 def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_width=True,
                step=True, width_bounds=(0.7, 1.4), fix_centroids=None, var=None,
                edge: Optional[tuple] = None, loglinear: Optional[bool] = None,
-               curvature: Optional[float] = None) -> Optional[_Fit]:
+               curvature: Optional[float] = None, neighbours: Sequence[float] = ()) -> Optional[_Fit]:
     """Gaussians (shared width scale) + linear background + erfc step, Poisson-weighted
     (or weighted by the explicit channel variance `var`).  For raw counts of scintillators
     (``model.loglinear``, set by find_peaks) the continuum is log-quadratic,
@@ -470,7 +470,8 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
     with the area, so it is measured by a fit of the same group on a region (1 + LOGQUAD_WIDE)
     times wider and then held fixed; |b2| h^2 <= LOGQUAD_MAX with h half that wide region, which
     limits the effect of a neighbouring peak in the wide region to a factor e^(2/9) at the
-    edges of the fit region.  ``curvature`` holds b2 at a given value.  HPGe fit regions are a few keV wide and keep the straight line.  Raw counts are fitted by Poisson
+    edges of the fit region.  The wider region stops 2.5 FWHM short of the other search candidates
+    ``neighbours`` (docs/baseline/fit_window_protocol.md).  ``curvature`` holds b2 at a given value.  HPGe fit regions are a few keV wide and keep the straight line.  Raw counts are fitted by Poisson
     maximum likelihood (iteratively reweighted with the model, POISSON_IRLS_ITER).
 
     `edge` = (x0, xmin, xmax[, smax]) adds a continuum step E * erfc((x - xe) / (s_e sqrt 2)) / 2
@@ -516,6 +517,11 @@ def _fit_group(y, model: _Model, cents: list[float], lo: int, hi: int, free_widt
             # the curvature is poorly determined under the peak: measure it on a wider region
             ext = int(round(LOGQUAD_WIDE * 0.5 * (hi - lo)))
             lo2, hi2 = max(lo - ext, 0), min(hi + ext, len(y) - 1)
+            for o in neighbours:
+                if o < cents[0] - 0.5:
+                    lo2 = max(lo2, min(lo, int(math.ceil(o + 2.5 * model.at(o)))))
+                elif o > cents[-1] + 0.5:
+                    hi2 = min(hi2, max(hi, int(math.floor(o - 2.5 * model.at(o)))))
             rw = _fit_group(y, model, cents, lo2, hi2, free_width=free_width, step=step,
                             width_bounds=width_bounds, fix_centroids=fix_centroids, var=var, edge=edge,
                             loglinear=True, curvature=float("nan"))
@@ -983,10 +989,16 @@ def _shape_rescale(f, pts, start):
     if not k > 0 or not np.all(new[start:] > 0):
         return None
     g = np.sqrt(np.maximum(new, 1e-6))
+    # no extrapolation of the trend: outside the peaks used, g / f stays at its end value
+    # (docs/baseline/fit_window_protocol.md)
+    c_lo, c_hi = (int(round(v)) for v in (min(p[0] for p in pts), max(p[0] for p in pts)))
+    c_lo, c_hi = min(max(c_lo, 0), n - 1), min(max(c_hi, 0), n - 1)
+    ch = np.arange(n)
+    g = np.where(ch < c_lo, f * (g[c_lo] / f[c_lo]), np.where(ch > c_hi, f * (g[c_hi] / f[c_hi]), g))
     ratio = g[start:] / f[start:]
     if not np.all((ratio > 0.5) & (ratio < 2.0)):
         return None
-    return np.where(new > 0, g, f)
+    return g
 
 
 def _rescale_model(y, f, start, var=None, shape: bool = False):
@@ -1219,13 +1231,15 @@ def _high_resolution(spectrum, n: int, f) -> Callable[[float], bool]:
 
 def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optional[FitReport] = None,
                   var=None, edges=(), others=(), high_res: Callable[[float], bool] = lambda c: False) -> list[Peak]:
+    def fit(*a, **kw):                 # the curvature region stops at the other candidates
+        return _fit_group(*a, neighbours=others, **kw)
     n = len(y)
     fl, fr = model.at(cents[0]), model.at(cents[-1])
     lo = int(max(math.floor(cents[0] - 2.2 * fl), start - 1, 0))
     hi = int(min(math.ceil(cents[-1] + 2.2 * fr), n - 1))
     # free width only where the data constrain it (strong peaks); weak peaks use the model width
     free = sum(y[int(c)] for c in cents) > 200 and max(z for _c, z in zs) > 25 if zs else False
-    r = _fit_group(y, model, cents, lo, hi, free_width=free, step=True, var=var)
+    r = fit(y, model, cents, lo, hi, free_width=free, step=True, var=var)
     if r is None:
         return []
     # continuum step at an expected Compton edge inside the region.  The region is widened
@@ -1245,9 +1259,9 @@ def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optiona
             s_res = fe * F2S * kev_ch                         # resolution sigma at the edge, keV
             smax = math.sqrt(1.0 + (EDGE_MAX_EXTRA_SIGMA_KEV / max(s_res, 1e-9)) ** 2)
             ed = (xe, xe - 2.0 * fe, xe + 2.0 * fe, smax)
-            r0 = r if (lo2, hi2) == (lo, hi) else _fit_group(y, model, cents, lo2, hi2, free_width=free,
-                                                             step=True, var=var)
-            re = _fit_group(y, model, cents, lo2, hi2, free_width=free, step=True, var=var, edge=ed)
+            r0 = r if (lo2, hi2) == (lo, hi) else fit(y, model, cents, lo2, hi2, free_width=free,
+                                                       step=True, var=var)
+            re = fit(y, model, cents, lo2, hi2, free_width=free, step=True, var=var, edge=ed)
             if (r0 is not None and re is not None
                     and (r0.chi2 - re.chi2) / max(re.chi2r, 1.0) > EDGE_ACCEPT_DCHI2):
                 r, edge, lo, hi = re, ed, lo2, hi2
@@ -1262,7 +1276,7 @@ def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optiona
             if add is None:
                 break
             new = sorted([float(c) for c in r.centroids] + [add])
-            rn = _fit_group(y, model, new, lo, hi, free_width=free, step=True, var=var, edge=edge)
+            rn = fit(y, model, new, lo, hi, free_width=free, step=True, var=var, edge=edge)
             if rn is None or (r.chi2 - rn.chi2) / max(rn.chi2r, 1.0) < RESIDUAL_ACCEPT_DCHI2:
                 break
             rn.edge_source_kev = r.edge_source_kev
@@ -1291,7 +1305,7 @@ def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optiona
             starts.append([c0 - h, c0 + h])
         best = None
         for st in starts:
-            cand = _fit_group(y, model, st, lo, hi, free_width=free, step=True, var=var, edge=edge)
+            cand = fit(y, model, st, lo, hi, free_width=free, step=True, var=var, edge=edge)
             if cand is not None and (best is None or cand.chi2r < best.chi2r):
                 best = cand
         if best is not None:
@@ -1326,7 +1340,7 @@ def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optiona
             wlo, whi = clamp(int(max(math.floor(lo - w0), start - 1, 0)), int(min(math.ceil(hi + w1), n - 1)),
                              cur[0], cur[-1])
             if (wlo, whi) != (lo, hi):
-                rw = _fit_group(y, model, cur, wlo, whi, free_width=free, step=True, var=var)
+                rw = fit(y, model, cur, wlo, whi, free_width=free, step=True, var=var)
                 if rw is not None:
                     rs, slo, shi = rw, wlo, whi
         for _ in range(RESIDUAL_MAX_ADDED):
@@ -1339,10 +1353,10 @@ def _fit_and_make(spectrum, y, model, cents, start, min_sig, zs=(), rec: Optiona
                              min(cur[0], add), max(cur[-1], add))
             if not lo2 <= add <= hi2:
                 break
-            base = rs if (lo2, hi2) == (slo, shi) else _fit_group(y, model, cur, lo2, hi2, free_width=free,
-                                                                    step=True, var=var)
+            base = rs if (lo2, hi2) == (slo, shi) else fit(y, model, cur, lo2, hi2, free_width=free,
+                                                              step=True, var=var)
             new = sorted(cur + [add])
-            rn = _fit_group(y, model, new, lo2, hi2, free_width=free, step=True, var=var)
+            rn = fit(y, model, new, lo2, hi2, free_width=free, step=True, var=var)
             if base is None or rn is None or (base.chi2 - rn.chi2) / max(rn.chi2r, 1.0) < RESIDUAL_ACCEPT_DCHI2:
                 break
             # the proximity clause holds for the fitted positions too: a component that moves
