@@ -83,6 +83,14 @@ def _reference_peak(args) -> "dict | None":
     return ref
 
 
+def _tcs(args) -> "dict | None":
+    """--tcs-pt A,B: true-coincidence summing correction with PT(E) = min(1, A (E/1000 keV)^B)."""
+    if not args.tcs_pt:
+        return None
+    a, b = (float(v) for v in args.tcs_pt.split(","))
+    return {"peak_to_total": [a, b], "pt_rel_unc": (args.tcs_pt_unc or 0.0) / 100.0}
+
+
 def cmd_activity(args) -> int:
     try:
         spec = _read(args.file)
@@ -93,7 +101,7 @@ def cmd_activity(args) -> int:
             nuclides=nucl, method=args.method, ref_date=eff.parse_date(args.ref_date) if args.ref_date else None,
             quantity=args.mass, quantity_unit=args.unit, quantity_rel_unc=(args.mass_unc or 0.0) / 100.0,
             attenuation=args.attenuation, bkg_mode=args.bkg_mode, mda_method=args.mda,
-            reference_peak=_reference_peak(args))
+            reference_peak=_reference_peak(args), tcs=_tcs(args))
         blank = None
         if args.blank:      # the reagent blank, analysed exactly like the sample
             blank = act.compute_activities(_read(args.blank), curve, opt, background=bkg)
@@ -203,6 +211,10 @@ def add_quant_commands(sub) -> None:
     p.add_argument("--ref-rate-unc", type=float, default=0.0, help="its relative uncertainty %%")
     p.add_argument("--ref-spectrum", help="reference (low-rate) measurement giving the expected rate")
     p.add_argument("--ref-half-life", type=float, help="half-life (s) of a reference source (decay correction)")
+    p.add_argument("--tcs-pt", metavar="A,B",
+                   help="true-coincidence summing correction with the peak-to-total ratio "
+                        "PT(E) = min(1, A (E/1000 keV)^B) of this detector and geometry (an assumption)")
+    p.add_argument("--tcs-pt-unc", type=float, default=10.0, help="relative uncertainty of PT, %% (default 10)")
     p.add_argument("--blank", help="reagent blank spectrum (prepared and counted like the samples); "
                                    "its activities are subtracted line by line")
     p.add_argument("--mass", type=float, help="sample quantity")

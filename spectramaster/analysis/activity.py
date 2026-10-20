@@ -47,6 +47,14 @@ with standard uncertainty u = u(y), omega = Phi(y/u) and the coverage probabilit
 
 (k_x = Phi^-1(x); computed in log space so a strongly negative y stays finite).
 
+True-coincidence summing (``options.tcs = {"peak_to_total": [a, b], "pt_rel_unc": u}``): every
+line of a cascade emitter in the coincidence table (analysis.coincidence) is divided by its
+first-order COI = 1 - sum_j P(j|i) eps_t(E_j) + summing-in of crossover pairs, with eps_p from the
+efficiency curve (energies clamped to its range) and eps_t = eps_p / PT,
+PT(E) = min(1, a (E/1000)^b) a stated assumption.  u_rel(COI) = summing-out x u / COI is a
+"coincidence summing" budget component (correlated between lines).  Gamma-gamma only, no angular
+correlation (docs/baseline/tcs_protocol.md).
+
 Reference peak correction (``options.reference_peak``: a pulser, or a fixed reference source
 of known rate), for losses the live time does not correct (random summing, pile-up)::
 
@@ -81,6 +89,7 @@ from typing import Optional, Sequence, Union
 
 import numpy as np
 
+from . import coincidence
 from .efficiency import (TCS_NUCLIDES, EfficiencyCurve, counting_decay_factor, decay_factor, match_peak)
 
 K_DEFAULT = 1.645
@@ -147,6 +156,9 @@ class LineResult:
     peak_found: bool = False
     in_range: bool = True
     int_rel_unc: float = 0.0     # library emission-probability uncertainty of this line (relative)
+    coi: float = 1.0             # true-coincidence summing factor (observed / summing-free), divided out
+    coi_rel_unc: float = 0.0
+    coi_applied: bool = False    # the line was corrected for true-coincidence summing
     blank_activity: Optional[float] = None  # reagent blank subtracted, Bq (parent) at the reference date
     blank_unc: float = 0.0                  # its counting standard uncertainty, Bq
     gross_activity: Optional[float] = None  # activity before the blank correction
@@ -235,6 +247,8 @@ class ActivityOptions:
     # reference peak correction: {"energy": keV, "rate": cps, "rate_rel_unc": fraction,
     # "half_life_s": s or None (pulser), "ref_date": datetime of the rate or None}
     reference_peak: Optional[dict] = None
+    # true-coincidence summing: {"peak_to_total": [a, b], "pt_rel_unc": fraction}, PT(E) = min(1, a (E/1000)^b)
+    tcs: Optional[dict] = None
 
 
 @dataclass
@@ -505,6 +519,18 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     if opt.reference_peak:
         ref_k, ref_u, note = reference_correction(spectrum, peaks, opt.reference_peak, t_live)
         notes.append(note)
+    tcs_on = bool(opt.tcs)
+    if tcs_on:
+        pa, pb = (float(v) for v in opt.tcs["peak_to_total"])
+        if not pa > 0:
+            raise ValueError("true-coincidence summing: the peak-to-total ratio must be positive")
+        tcs_u = float(opt.tcs.get("pt_rel_unc") or 0.0)
+        tcs_pt = lambda en: coincidence.peak_to_total(en, pa, pb)                    # noqa: E731
+        eps_peak = lambda en: np.clip(curve.efficiency(np.clip(np.asarray(en, dtype=float),     # noqa: E731
+                                                               curve.e_min, curve.e_max)), 0.0, 1.0)
+        notes.append(f"true-coincidence summing corrected (first order, gamma-gamma, no angular correlation): "
+                     f"peak-to-total PT(E) = min(1, {pa:g} (E/1000 keV)^{pb:g}) +- {100 * tcs_u:g} % (assumed), "
+                     "efficiencies of the curve clamped to its range")
     blank_dt = 0.0          # seconds from the blank's reference date to the sample's
     if blank is not None:
         notes.extend(_blank_checks(blank, curve, opt))
@@ -542,6 +568,13 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             if not lr.in_range:
                 lr.note = "efficiency extrapolated"
             w = ref_k * att / (eff * inten * t_live * C * D) / b       # Bq (parent) per net count
+            if tcs_on:
+                c = coincidence.coi(ln_name, e, eps_peak, tcs_pt)
+                if c.found and c.factor > 0:
+                    lr.coi = c.factor
+                    lr.coi_applied = True
+                    lr.coi_rel_unc = c.summing_out * tcs_u / c.factor
+                    w /= c.factor
             # blank (continuum) under the expected peak
             cu = continuum_under(spectrum, e, fw_ch)
             if cu is None:
@@ -587,7 +620,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                     var0 += k_b ** 2 * bwin * (1.0 + cb[1] / (2.0 * cb[2]))
             sigma0 = math.sqrt(max(var0, 0.0))
             w_rel = math.sqrt(lr.eff_rel_unc ** 2 + opt.intensity_rel_unc ** 2 + lr.int_rel_unc ** 2
-                              + opt.attenuation_rel_unc ** 2 + ref_u ** 2)
+                              + opt.attenuation_rel_unc ** 2 + ref_u ** 2 + lr.coi_rel_unc ** 2)
             if opt.mda_method == "iso11929":
                 ys, yd = iso11929_limits(sigma0, w / fwin, w_rel, opt.k_alpha, opt.k_beta)
                 lr.lc_counts, lr.ld_counts = ys / w * fwin, yd / w * fwin
@@ -630,7 +663,12 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     q = opt.quantity
     unit = _base_unit(opt.quantity_unit)
     for r in results:
-        if r.nuclide in TCS_NUCLIDES:
+        corrected = [l for l in r.lines if l.coi_applied]
+        if corrected:
+            k = r.key_line
+            r.note = (r.note + "; true-coincidence summing corrected"
+                      + (f" (COI {k.coi:.4f} at {k.energy:g} keV)" if k is not None and k.coi_applied else "")).strip("; ")
+        elif r.nuclide in TCS_NUCLIDES:
             r.note = (r.note + "; true-coincidence summing not corrected").strip("; ")
         if q and q > 0:
             qb = q * UNIT_FACTORS.get((opt.quantity_unit or "").lower(), 1.0)
@@ -737,6 +775,7 @@ def _combine(res: NuclideResult, opt: ActivityOptions, ref_u: float = 0.0) -> No
             key = min(found or lines, key=lambda l: l.mda)
     res.key_energy = key.energy
     ui, ua, um = opt.intensity_rel_unc, opt.attenuation_rel_unc, opt.quantity_rel_unc
+    ut = 0.0
     if opt.method == "mean":
         cand = [l for l in lines if l.activity is not None and l.detected and l.net_area > 0]
         if not cand:
@@ -754,6 +793,7 @@ def _combine(res: NuclideResult, opt: ActivityOptions, ref_u: float = 0.0) -> No
         a = l.activity
         uc, ue = abs(a) * l.u_count_rel, abs(a) * l.eff_rel_unc
         ul = abs(a) * l.int_rel_unc
+        ut = abs(a) * l.coi_rel_unc
         res.detected = l.detected
     else:
         # weights from the uncorrelated part (counting + intensity, incl. each line's library
@@ -766,6 +806,7 @@ def _combine(res: NuclideResult, opt: ActivityOptions, ref_u: float = 0.0) -> No
         uc = math.sqrt(sum((w * l.activity * l.u_count_rel) ** 2 for w, l in zip(wts, cand))) / sw
         ul = math.sqrt(sum((w * l.activity * l.int_rel_unc) ** 2 for w, l in zip(wts, cand))) / sw
         ue = sum(w * abs(l.activity) * l.eff_rel_unc for w, l in zip(wts, cand)) / sw
+        ut = sum(w * abs(l.activity) * l.coi_rel_unc for w, l in zip(wts, cand)) / sw   # P/T: correlated
         # decision threshold of the combination
         s0 = [l.decision_threshold / opt.k_alpha for l in cand]
         res.decision_threshold = opt.k_alpha / math.sqrt(sum(1.0 / (s * s) for s in s0 if s > 0))
@@ -780,6 +821,8 @@ def _combine(res: NuclideResult, opt: ActivityOptions, ref_u: float = 0.0) -> No
     comp = {"counting": uc, "efficiency": ue, "intensity": math.hypot(a_abs * ui, ul), "attenuation": a_abs * ua}
     if ref_u:
         comp["reference peak"] = a_abs * ref_u
+    if ut:
+        comp["coincidence summing"] = ut
     res.activity = a
     res.u = math.sqrt(sum(v * v for v in comp.values()))
     res.budget = {k: (100.0 * v / a_abs if a_abs else 0.0) for k, v in comp.items()}
@@ -950,11 +993,12 @@ def export_results(path, res: QuantResults) -> Path:
     header = ROW_KEYS
     rows = [[result_row(r)[k] for k in header] for r in res.nuclides]
     lhead = ["nuclide", "line_nuclide", "energy_keV", "intensity_%", "factor", "net_area", "net_unc",
-             "bkg_peak", "continuum", "efficiency", "eff_rel_unc_%", "activity_Bq", "LC_counts", "LD_counts",
-             "decision_threshold_Bq", "MDA_Bq", "detected", "note"]
+             "bkg_peak", "continuum", "efficiency", "eff_rel_unc_%", "COI", "COI_rel_unc_%", "activity_Bq",
+             "LC_counts", "LD_counts", "decision_threshold_Bq", "MDA_Bq", "detected", "note"]
     lrows = [[r.nuclide, l.nuclide, round(l.energy, 3), 100 * l.intensity, l.factor, l.net_area, l.net_unc,
-              l.bkg_peak, l.continuum, l.efficiency, 100 * l.eff_rel_unc, l.activity, l.lc_counts, l.ld_counts,
-              l.decision_threshold, l.mda, l.detected, l.note] for r in res.nuclides for l in r.lines]
+              l.bkg_peak, l.continuum, l.efficiency, 100 * l.eff_rel_unc, l.coi, 100 * l.coi_rel_unc, l.activity,
+              l.lc_counts, l.ld_counts, l.decision_threshold, l.mda, l.detected, l.note]
+             for r in res.nuclides for l in r.lines]
     if path.suffix.lower() == ".xlsx":
         from openpyxl import Workbook
         from openpyxl.styles import Font
