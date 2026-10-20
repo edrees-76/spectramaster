@@ -661,6 +661,10 @@ class Report:
                       else esc(t("uncalibrated")), True))
         items.append((t("rep_fwhm_cal"), self.num(format_poly(s.fwhm_coeffs, lhs="FWHM"))
                       if s.fwhm_coeffs else none, True))
+        tail = (s.extra or {}).get("peak_tail")
+        if tail:
+            items.append((t("rep_peak_shape"), self.num(f"eta = {100 * float(tail['eta']):.2g} %, "
+                                                         f"tau = {float(tail['tau']):g} sigma"), True))
         if s.description.strip():
             items.append((t("info_description"), esc(s.description.strip()).replace("\n", "<br>"), True))
         return items

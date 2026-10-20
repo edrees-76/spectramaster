@@ -48,8 +48,19 @@ def profile_tooltip(p: DetectorProfile) -> str:
                    ("ed_length", p.crystal_length_mm), ("ed_note", p.note)):
         if v not in (None, ""):
             rows.append(f"{ctr(key)} {i18n.ltr(f'{v:g}' if isinstance(v, float) else v)}")
+    rows.append(peak_shape_text(p.peak_shape))
     rows.append(f"id {i18n.ltr(p.id)}")
     return "\n".join(rows)
+
+
+def peak_shape_text(shape: Optional[dict]) -> str:
+    """One line describing a detector's peak-shape calibration (translated)."""
+    if not shape:
+        return ctr("shape_none")
+    if not shape.get("eta"):
+        return ctr("shape_gaussian", n=shape.get("n_peaks") or 0)
+    return ctr("shape_tail", eta=i18n.ltr(f"{100 * float(shape['eta']):.2g} %"),
+               tau=i18n.ltr(f"{float(shape['tau']):g}"), n=shape.get("n_peaks") or 0)
 
 
 def fill_detector_combo(combo: QComboBox, registry: DetectorRegistry, select: Optional[str] = None,
@@ -154,7 +165,8 @@ class DetectorEditor(QDialog):
         if b is not None:
             kw.update(id=b.id, nominal_fwhm=b.nominal_fwhm, energy_calibration_ids=list(b.energy_calibration_ids),
                       fwhm_calibration_ids=list(b.fwhm_calibration_ids),
-                      efficiency_calibration_ids=list(b.efficiency_calibration_ids))
+                      efficiency_calibration_ids=list(b.efficiency_calibration_ids),
+                      peak_shape=dict(b.peak_shape))
         try:
             return DetectorProfile(**kw)
         except ValueError as exc:          # e.g. a dimension <= 0
@@ -195,7 +207,10 @@ class DetectorManagerDialog(QDialog):
         self.btn_edit.clicked.connect(lambda: self.edit_selected())
         self.btn_delete = QPushButton(ctr("mgr_delete"))
         self.btn_delete.clicked.connect(lambda: self.delete_selected())
-        for b in (self.btn_new, self.btn_edit, self.btn_delete):
+        self.btn_shape = QPushButton(ctr("mgr_shape"))
+        self.btn_shape.setToolTip(ctr("mgr_shape_tip"))
+        self.btn_shape.clicked.connect(lambda: self.measure_shape_selected())
+        for b in (self.btn_new, self.btn_edit, self.btn_delete, self.btn_shape):
             col.addWidget(b)
         col.addStretch(1)
         row.addLayout(col)
@@ -224,6 +239,12 @@ class DetectorManagerDialog(QDialog):
 
     def show_error(self, text: str) -> None:
         QMessageBox.warning(self, ctr("mgr_title"), text)
+
+    def ask_spectrum_files(self) -> list[str]:
+        """Calibration spectra of the selected detector (tests replace this)."""
+        from PySide6.QtWidgets import QFileDialog
+        files, _f = QFileDialog.getOpenFileNames(self, ctr("shape_pick_title"))
+        return list(files)
 
     # ------------------------------------------------------------ list
     def refresh_list(self, select: Optional[str] = None) -> None:
@@ -255,6 +276,7 @@ class DetectorManagerDialog(QDialog):
         has = self.selected_id() is not None
         self.btn_edit.setEnabled(has)
         self.btn_delete.setEnabled(has)
+        self.btn_shape.setEnabled(has)
 
     # ------------------------------------------------------------ commands
     def _save(self, p: DetectorProfile) -> Optional[str]:
@@ -276,6 +298,36 @@ class DetectorManagerDialog(QDialog):
             return None
         new = self.ask_profile(p)
         return self._save(new) if new is not None else None
+
+    def measure_shape_selected(self, files: Optional[list] = None) -> Optional[dict]:
+        """Measure the peak shape (low-energy tail) of the selected detector on calibration spectra
+        and, after confirmation, record it in its profile.  Returns the recorded shape."""
+        from pathlib import Path
+
+        from ..analysis.peaks import TAIL_MIN_PEAKS, shape_calibration
+        from ..convert import read_spectra
+        p = self.registry.get(self.selected_id())
+        if p is None:
+            return None
+        files = list(files) if files is not None else self.ask_spectrum_files()
+        if not files:
+            return None
+        spectra = []
+        try:
+            for f in files:
+                spectra.extend(read_spectra(f)[0])
+        except Exception as exc:
+            self.show_error(ctr("shape_err_read", msg=f"{type(exc).__name__}: {exc}"))
+            return None
+        cal = shape_calibration(spectra)
+        if cal["n_peaks"] < TAIL_MIN_PEAKS:
+            self.show_error(ctr("shape_err_peaks", n=cal["n_peaks"], need=TAIL_MIN_PEAKS))
+            return None
+        if not self.confirm(ctr("shape_title"),
+                            ctr("shape_confirm", name=i18n.ltr(p.name), result=peak_shape_text(cal))):
+            return None
+        p.set_peak_shape(cal, [Path(f).name for f in files])
+        return dict(p.peak_shape) if self._save(p) else None
 
     def delete_selected(self) -> bool:
         p = self.registry.get(self.selected_id())

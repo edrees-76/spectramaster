@@ -779,7 +779,26 @@ class SessionController:
         text = wtr("panel_file", name=i18n.bidi_path(self.path.name)) if self.path else wtr("panel_new")
         return wtr("panel_modified", text=text) if self.path is not None and self.is_dirty() else text
 
+    def sync_peak_shape(self) -> None:
+        """The displayed spectrum is fitted with the peak-shape calibration of the session's
+        detector (snapshot); a shape put there for a detector is removed when the spectrum no
+        longer belongs to a session with one.  Shapes from elsewhere (API) are left alone."""
+        from ..analysis.peaks import set_peak_tail
+        win = self.win
+        spec = win.current_spectrum() if hasattr(win, "current_spectrum") else None
+        if spec is None:
+            return
+        s = self.session_for(spec)
+        shape = ((s.detector or {}).get("peak_shape") if s is not None else None) or None
+        if shape and shape.get("eta"):
+            set_peak_tail(spec, shape)
+            spec.extra["peak_tail_source"] = "detector " + str((s.detector or {}).get("id", ""))
+        elif spec.extra.get("peak_tail_source"):
+            set_peak_tail(spec, None)
+            spec.extra.pop("peak_tail_source", None)
+
     def refresh(self) -> None:
+        self.sync_peak_shape()
         self.context.refresh()
         self.panel.show_statuses(self.statuses(), self.header_text(),
                                  wtr("panel_no_spectrum") if self.session is None else "")

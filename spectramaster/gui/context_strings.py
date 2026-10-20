@@ -39,6 +39,19 @@ EN = {
                        "copy of it; it will no longer be offered in the lists.",
     "mgr_problems": "Unreadable files in the folder (ignored): {files}",
     "mgr_err_save": "Cannot save the detector profile:\n{msg}",
+    "mgr_shape": "Peak Shape...",
+    "mgr_shape_tip": "Measure the low-energy tail of the selected detector's peaks on calibration spectra "
+                     "(strong isolated peaks); the analysis of its samples then uses it",
+    "shape_pick_title": "Calibration spectra of the detector (strong isolated peaks)",
+    "shape_title": "Peak-shape calibration",
+    "shape_confirm": "Peak shape measured for {name}:\n\n{result}\n\nRecord it in the detector profile? "
+                     "Sessions that use this detector from now on fit its peaks with this shape.",
+    "shape_none": "Peak shape: not measured (Gaussian peaks)",
+    "shape_gaussian": "Peak shape: Gaussian (no significant tail on {n} peaks)",
+    "shape_tail": "Peak shape: low-energy tail {eta}, slope {tau} sigma ({n} peaks)",
+    "shape_err_read": "Cannot read the spectra:\n{msg}",
+    "shape_err_peaks": "Only {n} strong isolated peak(s) were found; at least {need} are needed. "
+                       "Use calibration spectra with strong, well separated peaks.",
     "ed_title": "Detector Profile",
     "ed_name": "Name:",
     "ed_type": "Type:",
@@ -126,6 +139,19 @@ AR = {
                        "ولن يُعرض بعد الآن في القوائم.",
     "mgr_problems": "ملفات غير مقروءة في المجلد (تم تجاهلها): {files}",
     "mgr_err_save": "تعذّر حفظ ملف تعريف الكاشف:\n{msg}",
+    "mgr_shape": "شكل القمة...",
+    "mgr_shape_tip": "قياس ذيل الطاقة المنخفضة لقمم الكاشف المحدد من أطياف معايرة (قمم قوية معزولة)؛ "
+                     "يُستخدم بعدها في تحليل عيناته",
+    "shape_pick_title": "أطياف معايرة الكاشف (قمم قوية معزولة)",
+    "shape_title": "معايرة شكل القمة",
+    "shape_confirm": "شكل القمة المقاس للكاشف {name}:\n\n{result}\n\nهل يُسجَّل في ملف الكاشف؟ "
+                     "الجلسات التي تستخدم هذا الكاشف من الآن تلائم قممه بهذا الشكل.",
+    "shape_none": "شكل القمة: غير مقاس (قمم غاوسية)",
+    "shape_gaussian": "شكل القمة: غاوسي (لا ذيل معتبر في {n} قمة)",
+    "shape_tail": "شكل القمة: ذيل طاقة منخفضة {eta}، ميل {tau} سيغما ({n} قمة)",
+    "shape_err_read": "تعذّرت قراءة الأطياف:\n{msg}",
+    "shape_err_peaks": "وُجدت {n} قمة قوية معزولة فقط، والمطلوب {need} على الأقل. "
+                       "استخدم أطياف معايرة فيها قمم قوية ومتباعدة.",
     "ed_title": "ملف تعريف الكاشف",
     "ed_name": "الاسم:",
     "ed_type": "النوع:",

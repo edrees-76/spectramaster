@@ -336,3 +336,72 @@ def test_fwhm_status_is_translated():
     st = WorkflowStatus("outside_validated_scope", "warning", msg)
     assert status_text(st, "en") == ws.EN["msg_no_fwhm_cal"]
     assert status_text(st, "ar") == ws.AR["msg_no_fwhm_cal"]
+
+
+def _tailed_cal_file(folder, name, seed):
+    from spectramaster.convert import resolve_format, write_spectrum
+    from spectramaster.validation import scenarios
+    from spectramaster.validation.synthetic import HPGE, TruePeak, make_spectrum
+    peaks = [TruePeak(e, 1.0e5, tail_frac=0.04, tail_slope=1.5, step_frac=0.001)
+             for e in scenarios._energies(HPGE, "strong")]
+    s = make_spectrum(HPGE, peaks, scenarios.base_continuum(HPGE), seed).spectrum
+    folder.mkdir(parents=True, exist_ok=True)
+    p = folder / name
+    write_spectrum(s, p, resolve_format("aptec_s0"))
+    return str(p)
+
+
+def test_peak_shape_measured_in_the_registry_and_used_by_the_session(window, tmp_path):
+    from spectramaster.analysis.peaks import peak_tail_of
+    from spectramaster.gui.detector_picker import DetectorManagerDialog, peak_shape_text
+    reg = _registry()
+    ge = DetectorProfile(name="Ge-T", type="HPGe")
+    reg.save(ge)
+    dlg = DetectorManagerDialog(None, reg)
+    dlg.select(ge.id)
+    assert dlg.btn_shape.isEnabled()
+    files = [_tailed_cal_file(tmp_path / "cal", f"c{i}.s0", 960000 + i) for i in range(2)]
+    asked = []
+    dlg.confirm = lambda title, text: asked.append(text) or True
+    shape = dlg.measure_shape_selected(files)
+    assert shape and shape["eta"] > 0 and shape["sources"] == ["c0.s0", "c1.s0"] and shape["measured"]
+    assert asked and "Ge-T" in i18n.strip_bidi(asked[0])
+    saved = reg.get(ge.id).peak_shape
+    assert saved["eta"] == shape["eta"] and saved["tau"] == shape["tau"]
+    assert "tail" in peak_shape_text(saved)
+    # editing the profile keeps the shape
+    from spectramaster.gui.detector_picker import DetectorEditor
+    ed = DetectorEditor(None, reg.get(ge.id))
+    ed.edits["serial"].setText("SN 1")
+    assert ed.profile().peak_shape == saved
+    # a detector measured without a significant tail: recorded as Gaussian (eta = 0)
+    weak = DetectorProfile(name="Ge-W", type="HPGe")
+    reg.save(weak)
+    dlg.refresh_list(weak.id)
+    g = dlg.measure_shape_selected([str(spectrum_file(tmp_path / "w"))])
+    assert g["eta"] == 0.0 and g["n_peaks"] >= 2 and "Gaussian" in peak_shape_text(g)
+    # too few strong peaks: refused, nothing recorded
+    from spectramaster.convert import resolve_format, write_spectrum
+    from spectramaster.validation.synthetic import HPGE, Continuum, TruePeak, make_spectrum
+    one = make_spectrum(HPGE, [TruePeak(661.657, 2e4)], Continuum(300, 400, 10), 7).spectrum
+    p1 = tmp_path / "one.s0"
+    write_spectrum(one, p1, resolve_format("aptec_s0"))
+    other = DetectorProfile(name="Ge-1pk", type="HPGe")
+    reg.save(other)
+    dlg.refresh_list(other.id)
+    errs = []
+    dlg.show_error = errs.append
+    assert dlg.measure_shape_selected([str(p1)]) is None
+    assert errs and reg.get(other.id).peak_shape == {}
+    # the session with this detector fits the displayed spectrum with the shape
+    window.load_file(spectrum_file(tmp_path / "data"))
+    ctl = window.session_ctl
+    spec = window.current_spectrum()
+    assert peak_tail_of(spec) is None
+    assert ctl.context.choose(ge.id)
+    assert peak_tail_of(spec) == (saved["eta"], saved["tau"])
+    analyse(window)
+    assert window.session.detector["peak_shape"]["eta"] == saved["eta"]      # snapshot in the session
+    # another detector without a shape: Gaussian peaks again
+    assert ctl.context.choose(weak.id)
+    assert peak_tail_of(spec) is None and "peak_tail_source" not in spec.extra

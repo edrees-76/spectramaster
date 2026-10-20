@@ -627,3 +627,22 @@ published Genie 2000 "Energy and Shape Calibration"; no vendor software was deco
     against 0.04). This is a known limitation.
 - Next: store the shape calibration per detector (calibration store), the interface, then the
   Genie-style residual search on top of it (it splits tailed peaks without a tail model).
+
+## Peak-shape calibration, increment 2: per detector, used by the session (2026-10-20)
+
+- `DetectorProfile.peak_shape` holds the detector's peak-shape calibration: eta, u(eta), tau,
+  number of peaks, their energies, a note, the measurement time and the source file names.
+  It is stored with the profile in the detector registry, and old profile files read as "not
+  measured". `set_peak_shape` records a result. A result with eta = 0 is kept too, because it
+  documents that the peaks were measured to be Gaussian.
+- **Setup > Detector Profiles > Peak Shape...** measures the selected detector's shape on
+  calibration spectra (strong isolated peaks, pooled), shows the result and records it after
+  confirmation. It refuses with fewer than 2 qualifying peaks. Editing the profile keeps the
+  shape, and the profile tooltip shows it.
+- The session takes a snapshot of the detector, including its shape. When the displayed spectrum
+  belongs to a session whose detector has a tail, it is fitted with that shape: peak search,
+  manual refit and the measured background. Choosing another detector without one returns to
+  Gaussian peaks. As for every detector change, existing results are marked as requiring an update.
+- The printed report lists the peak shape next to the FWHM calibration.
+- Not yet: batch analysis groups spectra by the file's detector label and has no link to the
+  detector registry, so it fits Gaussian peaks, as before.

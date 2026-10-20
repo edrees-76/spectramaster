@@ -19,7 +19,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass, field
 from typing import Optional
 
-from .common import from_known, new_id, opt_float
+from .common import from_known, new_id, opt_float, utc_now
 
 DETECTOR_TYPES = ("HPGe", "NaI", "LaBr3", "CZT", "other")
 GEOMETRY_KINDS = ("marinelli", "point", "cylinder", "filter", "other")
@@ -41,6 +41,10 @@ class DetectorProfile:
     fwhm_calibration_ids: list[str] = field(default_factory=list)
     efficiency_calibration_ids: list[str] = field(default_factory=list)
     note: str = ""
+    # peak-shape calibration (low-energy tail, analysis.peaks.shape_calibration) measured on
+    # calibration spectra of this detector: {"eta", "u_eta", "tau", "n_peaks", "energies_kev",
+    # "note", "measured", "sources"}; empty = never measured (Gaussian peaks)
+    peak_shape: dict = field(default_factory=dict)
 
     def __post_init__(self):
         if self.type not in DETECTOR_TYPES:
@@ -54,6 +58,14 @@ class DetectorProfile:
         ids = getattr(self, f"{record.kind}_calibration_ids")
         if record.id not in ids:
             ids.append(record.id)
+
+    def set_peak_shape(self, cal: dict, sources=()) -> None:
+        """Record a peak-shape calibration (:func:`~spectramaster.analysis.peaks.shape_calibration`)
+        measured on the calibration spectra named in `sources`.  A result with eta = 0 is kept
+        too: it documents that the detector's peaks were measured to be Gaussian."""
+        keys = ("eta", "u_eta", "tau", "n_peaks", "energies_kev", "note")
+        self.peak_shape = {**{k: cal.get(k) for k in keys}, "measured": utc_now(),
+                           "sources": [str(s) for s in sources]}
 
     def to_dict(self) -> dict:
         return asdict(self)
