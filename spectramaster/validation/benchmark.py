@@ -565,8 +565,9 @@ def cat_reference_peak(det: DetectorSpec, n: int) -> dict:
     z = [r["z"] for r in fp if r["z"] is not None]
     return {"n_lines": len(rows), "found_fraction": _frac(r["found"] for r in rows),
             "bias": _mean(r["rel"] for r in fp),
-            "no_loss_bias": _mean(r["rel"] for r in fp if r["loss"] == 0.0),
-            "bias_by_loss": {f"{lv:g}": _mean(r["rel"] for r in fp if r["loss"] == lv) for lv in scenarios.REF_LOSSES},
+            "no_loss_bias": _mean(r["rel"] for r in fp if math.isclose(r["loss"], 0.0, abs_tol=1e-12)),
+            "bias_by_loss": {f"{lv:g}": _mean(r["rel"] for r in fp if math.isclose(r["loss"], lv, abs_tol=1e-12))
+                             for lv in scenarios.REF_LOSSES},
             "uncorrected_bias": _mean(r["rel0"] for r in fp),
             "z_cov1": _frac(abs(x) <= 1 for x in z) if z else None,
             "z_cov2": _frac(abs(x) <= 2 for x in z) if z else None,
