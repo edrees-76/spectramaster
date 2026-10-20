@@ -118,3 +118,28 @@ That is the documented limit of the pairwise (first-order) data.
 
 All other criteria are unchanged from `after_HW1`, with no PASS -> FAIL; 19 criteria fail, the
 same as before.
+
+## Errata and safety additions (2026-10-20, after the second external review)
+
+These do not change any criterion, limit or result above.
+
+- Formula transcription. The summing-in term above divides by I_i. The implementation divides
+  by I_i eps_p(E_i), which is correct: the gain of sum counts is relative to the line's own
+  counts. The `after_TC1` results come from the implementation. u_rel(COI) is implemented as
+  summing-out x u_PT / COI, the derivative with respect to PT. The |COI_i - 1| u_PT above was
+  a first-order paraphrase of it.
+- Partners more than 20 % below the efficiency curve's lowest energy now get eps = 0 and are
+  reported as left out. Before, they borrowed the curve's lowest value. For example, U-235 185.7 keV with its
+  converted 19.6 keV partner got COI 0.82 instead of about 0.98 in a close geometry.
+- A table line whose emission probability (sum of br I over transitions) is outside 0.75-1.33
+  times the library's is not corrected, and the reason is noted. For example, Ir-192 484.6 keV is
+  missing from the table, and a 0.002 % gamma at 485.3 keV gave it COI 0.71. This affects 31 of
+  911 matched lines, none of them the protocol's lines.
+- A line with first-order COI <= 0 gives no result, with a note. A summing-out above 10 % is
+  noted as degrading the first-order accuracy.
+- Double counting. An efficiency curve with cascade-emitter points (Co-60, Y-88, Ba-133 ...)
+  measured in the sample's geometry already contains their summing losses. When the correction
+  is on and the curve is not marked `summing_corrected`, those points are corrected with the
+  same P/T, and the curve is refitted before use (`efficiency.summing_free_curve`). In a test
+  with a Co-60 calibration, counting the summing twice gave +3.1 %. The corrected curve gives
+  0.0 %.

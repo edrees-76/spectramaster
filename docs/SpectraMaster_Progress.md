@@ -917,3 +917,23 @@ that concern the uncertainties and the input checks. Each one first got a test t
 
 The other review findings (true-coincidence summing safety, formats, fit windows, the interface
 thread, traceability) follow in separate changes.
+
+## True-coincidence summing safety (2026-10-20, from the second external review)
+
+Both external reviews found that the TCS correction could go wrong outside its tested range.
+Each case first got a test that failed (`tests/test_tcs_safety.py`).
+
+- Double counting. An efficiency curve measured in the sample's geometry with cascade emitters
+  already contains their summing losses. LN 881 is an example, with Ba-133 and Y-88. With the
+  correction on, such points are now corrected with the same P/T and the curve is refitted
+  (`efficiency.summing_free_curve`, `EfficiencyCurve.summing_corrected`). With a Co-60
+  calibration this went from +3.1 % to 0.0 %. A curve that cannot be refitted (an Aptec model)
+  is refused.
+- Coincident photons more than 20 % below the curve's lowest energy are left out (eps = 0),
+  instead of borrowing its lowest efficiency. U-235 185.7 keV went from COI 0.82 to about 0.98.
+- A line that the coincidence table does not describe is not corrected, and the reason is
+  noted. The test is an emission probability outside 0.75-1.33 times the library's. For example,
+  Ir-192 484.6 keV had been matched to a 0.002 % neighbour.
+- A first-order COI <= 0 gives no result for the line. A summing-out above 10 % is noted.
+- The protocol's summing-in formula is corrected to divide by I_i eps_p(E_i), the formula the
+  implementation already used (erratum in `tcs_protocol.md`).
