@@ -767,8 +767,13 @@ def cat_idb(folder: Path) -> dict:
         out[f"{k}_implausible_per_spectrum"] = agg["implausible"] / agg["n"] if agg["n"] else None
         out[f"{k}_implausible_per_spectrum_safeguards_library"] = (agg["implausible_sg"] / agg["n"]
                                                                    if agg["n"] else None)
-    out["most_frequent_implausible"] = dict(sorted(implaus_names.items(), key=lambda kv: -kv[1])[:15])
+    out["most_frequent_implausible"] = _top_counts(implaus_names, 15)
     return out
+
+
+def _top_counts(counts: dict, n: int) -> dict:
+    """The n largest entries, count descending, ties by name (independent of insertion order)."""
+    return dict(sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:n])
 
 
 # ------------------------------------------------------------------------------ driver

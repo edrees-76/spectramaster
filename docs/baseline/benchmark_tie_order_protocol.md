@@ -52,3 +52,33 @@ Outputs go to a new folder `docs/baseline/after_TO1/` (`baseline.*` of the `PYTH
 ## Results
 
 (appended after the run)
+
+Run 2026-10-21, engine 1.9.0 (unchanged). The text above the line is unchanged (SHA-256 of the
+pre-registered part still 712888703fbcefac8c479675e22914db7b6f5aa3944043b899061d7427878fcf). Outputs:
+`docs/baseline/after_TO1/` (`baseline.*`, `PYTHONHASHSEED=0` run).
+
+The comparison checks values and also the key order of every dictionary. The earlier "identical"
+comparisons used Python `==` on dictionaries, which ignores key order.
+
+| id | value | limit | result |
+|---|---|---|---|
+| TO.C1 seed 0 against seed 12345 | `most_frequent_implausible` identical, in the same order; 11 `identification/by_mixture/*/false_nuclides` dictionaries (NaI, NaI_4096) differ in key order only; the `HPGe.runtime` and `NaI.runtime` entries of `criteria` differ in value | identical except runtime fields | **FAIL as written** |
+| TO.C2 seed 0 against after_WP1 | `most_frequent_implausible` (expected); 8 `false_nuclides` dictionaries differ in key order only; the two runtime criteria entries differ in value | identical except runtime fields and `most_frequent_implausible` | **FAIL as written** |
+| TO.C3 `most_frequent_implausible` | 15 entries, counts identical, the 14 entries with count > 15 are the same set, order count then name | | PASS |
+| TO.C4 criteria totals | 154 PASS / 13 FAIL / 60 REPORT, no PASS -> FAIL | | PASS |
+| TO.C5 unit tests | `tests/test_benchmark_tie_order.py`, 3 passed | | PASS |
+| TO.C6 full suite | 1366 passed, 69 skipped; no existing test changed | | PASS |
+
+Reported: after the fix the 15th entry is "HPGe Fe-59" (count 15), and the three count-16 entries are
+in name order (Bi-211, Eu-154, Pa-234).
+
+**The two FAILs, recorded as they are.**
+
+* **A second set order.** `false_nuclides` and `missed` per mixture are filled by iterating Python
+  sets (`reported`, `present`), so their key order depends on the hash seed. The counts in them are
+  identical in all three runs. §2 said such an order is recorded, not fixed in this run. It is a
+  further finding.
+* **Runtime criteria.** §3 lists runtime fields by path but leaves out the `HPGe.runtime` and
+  `NaI.runtime` entries of `criteria`, which hold the same runtime medians. Their values differ
+  between runs, as runtimes do. This is an omission in the protocol's list, not an engine
+  difference. Their status is PASS in all three runs.
