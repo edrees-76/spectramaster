@@ -788,7 +788,7 @@ def width_model(spectrum, y: np.ndarray, fwhm: Optional[float] = None, min_energ
         f = np.full(n, float(fwhm))
         src = "user"
     else:
-        f, src = fwhm_model(spectrum, y)
+        f, src = checked_fwhm_model(spectrum, y, var)
         if src == "none":
             f = _estimate_fwhm_from_data(y)
             src = "data"
@@ -842,6 +842,8 @@ def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit
     f, src, start = width_model(spectrum, y, fwhm, min_energy, var)
     if report is not None:
         report.fwhm_source = src
+        if src.startswith(IMPLAUSIBLE_PREFIX):
+            report.notes.append(implausible_note(src))
     model = _Model(f)
     model.loglinear = loglinear_continuum(spectrum)
     cands = _candidates(y, f, min_sig * 0.8, start, var=var)
@@ -1021,6 +1023,35 @@ def _rescale_model(y, f, start, var=None, shape: bool = False):
         if abs(k - 1.0) > 0.08:
             return f * k
     return f
+
+
+IMPLAUSIBLE_MAX_RATIO = 2.0      # data / model width outside [1/r, r]: the model is not used
+IMPLAUSIBLE_PREFIX = "data (FWHM model implausible"
+
+
+def checked_fwhm_model(spectrum, y: np.ndarray, var=None) -> tuple[np.ndarray, str]:
+    """:func:`fwhm_model`, replaced by widths measured on the spectrum when it is implausible
+    (docs/baseline/fwhm_plausibility_protocol.md): fewer than half of the strong isolated peaks
+    give a usable free width under the model, and the widths measured without it differ from it
+    by more than IMPLAUSIBLE_MAX_RATIO."""
+    f, src = fwhm_model(spectrum, y)
+    if src == "none":
+        return f, src
+    start = _start_index(y, f)
+    pts = _width_points(y, f, start, var)
+    if pts.n_cands < 3 or 2 * len(pts) >= pts.n_cands:
+        return f, src
+    g = _estimate_fwhm_from_data(y)
+    k = float(np.median(g[start:] / f[start:])) if start < len(y) else 1.0
+    if 1.0 / IMPLAUSIBLE_MAX_RATIO <= k <= IMPLAUSIBLE_MAX_RATIO:
+        return f, src
+    return g, f"{IMPLAUSIBLE_PREFIX}: {src} x{k:.2f})"
+
+
+def implausible_note(src: str) -> str:
+    return (f"The {src.split(': ', 1)[1].rsplit(' x', 1)[0]} does not match the peak widths of this "
+            f"spectrum (measured / model {src.rsplit(' x', 1)[1].rstrip(')')}); widths measured on the "
+            "spectrum are used. Check the energy and FWHM calibration.")
 
 
 def _estimate_fwhm_from_data(y) -> np.ndarray:

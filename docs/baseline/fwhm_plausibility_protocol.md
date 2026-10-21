@@ -85,3 +85,62 @@ repository; only derived numbers are stored.
 ## Results
 
 (appended after the run)
+
+Run 2026-10-22, engine 1.10.0. The text above the line is unchanged (SHA-256 of the pre-registered
+part still 930609eda82544bd0edc6046093d583a519c755a8a0b9c36f8ebea79a9c34383). Outputs:
+`docs/baseline/after_FP1/`, which holds:
+* `fwhm_plausibility_results.json`: FP.C1–C4, plus the C4 cases run on `main` for comparison;
+* `baseline.*`;
+* `iaea2002_results.*`;
+* `crm_validation_results.*`.
+
+| id | value | limit | result |
+|---|---|---|---|
+| FP.C1 `maricsmall.chn` | replaced (x4.00); note in the `FitReport` and the activity notes; 76 peaks (`main`: 14) | >= 60 | PASS |
+| FP.C2 calibration | 17 lines on `.chn` and on `.spe`; gain 0.432866 against 0.432865 (+0.0001 %) | >= 15; 0.5 % | PASS |
+| FP.C3 IAEA `.Chn` | replaced in exactly the three files; peaks 76/79, 18/19, 25/24 of the `.spe` copy | | PASS |
+| FP.C4 synthetic | replacement as registered in all 10 cases; recall NaI k = 0.25 and k = 4: **0.958** against 1.000 at k = 1 | >= 0.98 | **FAIL** |
+| FP.C5 benchmark | **13 PASS -> FAIL**: 141 PASS / 26 FAIL / 60 REPORT | 154 / 13 / 60, identical | **FAIL** |
+| FP.C6 IAEA 2002 | **IA.C1 PASS -> FAIL** (18/20 -> 17/20 pairs with \|z\| <= 2.58); 20 ratios differ, by up to 0.3 % | statuses identical | **FAIL** |
+| FP.C7 CRM | criteria values identical | | PASS |
+| FP.C8 tests | new tests 11 passed; **5 existing tests fail** (below) | pass | **FAIL** |
+
+**The change as written is not shipped.** It finds the F1 defect, but it also replaces correct
+models.
+
+* **Where it goes wrong.** The trigger (fewer than half of the strong isolated peaks give a usable
+  free width) fires on spectra where the model is right but the strong isolated peaks are few,
+  weak or crowded:
+  * NaI background spectra;
+  * background-subtracted and blank-corrected NaI spectra;
+  * NaI doublets and satellites;
+  * IDB spectra.
+  The estimator without a model (`_estimate_fwhm_from_data`) is then wrong by more than x2. On the
+  synthetic NaI background spectra it gives about 0.35 of the true width.
+  * Diagnostic: 2 of 12 NaI background spectra replaced; IDB HPGe spectrum 3.spe replaced (x0.46).
+* **Benchmark PASS -> FAIL (13, all NaI):**
+  * `doublet.area_bias_wide` +0.003 -> -0.42;
+  * `satellite.extra_per_spectrum` 0 -> 0.22;
+  * `satellite.main_area_bias` -0.008 -> -0.046;
+  * `satellite.sat_area_bias_ratio10` -0.009 -> -0.15;
+  * `bkg_peak` and `bkg_spectrum`: net bias +0.009 -> -0.88, cov1 and cov2 -> 0;
+  * `blank`: bias -0.003 -> -1.05, cov1 and cov2 -> 0.
+
+  Values also change in IDB (all detector kinds), NaI drift, `satellite_tailed` and NaI_4096
+  identification.
+* **IAEA 2002.** The ratios of every test pair change slightly, through the background spectra. One
+  more Na-22 pair leaves |z| <= 2.58, so IA.C1 fails.
+* **Failing existing tests (not changed):**
+  * `test_efficiency_poisson::test_bias_per_line[NaI]` and `test_coverage[NaI]`: Cs-137 not found
+    with the background;
+  * `test_measured_background::test_unresolved_background_line_does_not_bias_a_sample_peak`;
+  * `test_public_spectra::test_idb_plutonium_is_identified_in_hpge_spectra`;
+  * `test_iaea2002_validation::test_marinelli_reproduces_the_recorded_ratios`.
+* **FP.C4.** NaI k = 4 misses the 2000 keV line in 5 of 20 spectra. On `main` all of them are found
+  (`main` recall: k = 0.25 0.78 with 4.7 false peaks per spectrum; k = 4 1.00).
+* **Another finding.** For `maricsmall.chn` the estimator without a model found no usable width
+  point and returned its fallback of 4 channels everywhere. That happens to be close to the true
+  width. The success on that file is partly luck.
+
+A narrower rule follows in an amendment protocol, written before its run. No limit above is
+changed.
