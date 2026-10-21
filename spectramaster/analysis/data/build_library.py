@@ -47,6 +47,18 @@ MIN_XRAY = 1.0            # % per decay, X-rays kept (K lines >= 10 keV, L lines
 MAX_LINES = 40
 EMIN, EMAX = 10.0, 3600.0
 AUTO_INCLUDE_HL = 600.0   # s: daughters shorter than this are folded into the parent
+# A Sandia line not paired with an IAEA line is the same transition (another energy evaluation,
+# an X-ray listed as a gamma, or a daughter isomer listing it again) when an IAEA line of the entry
+# lies within DUP_TOL_KEV with an intensity within DUP_RATIO of its own: it is dropped.
+DUP_TOL_KEV = 1.0
+DUP_RATIO = (0.5, 2.0)
+# IAEA intensities contradicted by two independent evaluations (SandiaDecay and LNHB/DDEP, agreeing
+# within 20 %, both more than a factor 2 from IAEA): (entry, keV) -> (%, uncertainty %, source).
+# The energy is kept; provenance.corrections records the replaced value.
+CORRECTIONS: dict[tuple[str, float], tuple[float, float, str]] = {
+    ("Ac-228", 674.75): (0.105, 0.010, "LNHB/DDEP Ac-228 LARA (SandiaDecay 0.109 %); confirmed by the "
+                                       "measured RGTh-1 spectra, docs/baseline/crm_validation_protocol.md"),
+}
 
 # name, category, explicit includes, note
 # Categories: calibration, natural, fission, activation, medical, industrial, cosmogenic, actinide.
@@ -524,6 +536,7 @@ def build(verbose=False):
     entry_names = set(names)
     library: dict = {}
     n_flags = 0
+    n_dup = 0
     seen = set()
     for name, cat, includes, note in SPECS:
         if name in seen:
@@ -549,8 +562,9 @@ def build(verbose=False):
             if rec is None:
                 continue
             have_iaea = True
+            before = list(i_lines)        # lines of the members before this one (not its own)
             for (e, i, k), (_e, _i, _k, u) in zip(iaea_own_lines(rec), iaea_own_lines_u(rec)):
-                if idx > 0 and any(abs(e - pe) < 0.5 and pk == k for pe, _, pk in i_lines):
+                if idx > 0 and any(abs(e - pe) < 0.5 and pk == k for pe, _, pk in before):
                     continue
                 i_lines.append((e, i * f, k))
                 i_lines_u.append((e, i * f, k, None if u is None else u * f))
@@ -591,6 +605,14 @@ def build(verbose=False):
             elif keep(e, i, k):
                 if have_iaea and (e < 40.0 or k == "x"):
                     continue   # low-energy Sandia-only lines (often conversion/L-shell artefacts): trust IAEA
+                dup = [(ie, ii) for ie, ii, _ik in i_lines
+                       if abs(ie - e) <= DUP_TOL_KEV and i > 0 and DUP_RATIO[0] <= ii / i <= DUP_RATIO[1]]
+                if have_iaea and dup:
+                    n_dup += 1
+                    if k == "g" and i * 100 >= 1.0:
+                        flags.append(f"{e:.3f} keV {i*100:.4g}%: Sandia line dropped, same transition as "
+                                     f"IAEA {dup[0][0]:.3f} keV {dup[0][1]*100:.4g}%")
+                    continue
                 final.append((e, i, k, "S"))
                 if have_iaea and k == "g" and i * 100 >= 1.0:
                     flags.append(f"{e:.3f} keV {i*100:.4g}%: Sandia only (no IAEA line)")
@@ -599,6 +621,16 @@ def build(verbose=False):
                 final.append((ie, ii, ik, "I"))
                 if ik == "g" and ii * 100 >= 1.0:
                     flags.append(f"{ie:.3f} keV {ii*100:.4g}%: IAEA only (no Sandia line)")
+        corrected = []
+        for (cname, cen), (val, cunc, why) in CORRECTIONS.items():
+            if cname != name:
+                continue
+            hit = [a for a, r in enumerate(final) if r[2] == "g" and abs(r[0] - cen) < 0.01]
+            assert len(hit) == 1, (name, cen)
+            e, i, k, src = final[hit[0]]
+            corrected.append(f"{e:.3f} keV: {i*100:.4g}% (IAEA) replaced by {val:g} +- {cunc:g}% ({why})")
+            final[hit[0]] = (e, val / 100.0, k, src)
+            unc_of[(round(e, 3), k)] = cunc / 100.0
         final.sort(key=lambda r: -r[1])
         # the K'beta2 line added by split_kbeta does not take the place of a gamma line
         n_kb2 = sum(1 for e, i, k, src in final if k == "x" and any(abs(e - v[1]) < 1e-3 for v in KBETA.values()))
@@ -645,6 +677,8 @@ def build(verbose=False):
         if note:
             entry["note"] = note
         entry["provenance"] = {"sandia": True, "iaea": have_iaea, "flags": flags}
+        if corrected:
+            entry["provenance"]["corrections"] = corrected
         library[name] = entry
         if verbose:
             print(f"{name:9s} {len(final):3d} lines  flags={len(flags)}  {hl_txt}")
@@ -668,7 +702,8 @@ def build(verbose=False):
     }
     OUT.write_text(json.dumps(doc, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"wrote {OUT} : {len(library)} nuclides, {sum(len(v['lines']) for v in library.values())} lines, "
-          f"{n_flags} provenance flags, {OUT.stat().st_size/1024:.0f} kB")
+          f"{n_flags} provenance flags, {n_dup} duplicated Sandia lines dropped, "
+          f"{OUT.stat().st_size/1024:.0f} kB")
 
 
 def main(argv=None):

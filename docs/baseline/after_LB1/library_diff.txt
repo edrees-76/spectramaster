@@ -1,0 +1,107 @@
+== Ac-228
+   - [674.75, 2.1, 'g', 'I', 0.7]
+   + [199.407, 0.315, 'g', 'I', 0.005]
+   corrections ['674.750 keV: 2.1% (IAEA) replaced by 0.105 +- 0.01% (LNHB/DDEP Ac-228 LARA (SandiaDecay 0.109 %); confirmed by the measured RGTh-1 spectra, docs/baseline/crm_validation_protocol.md)']
+== Am-243
+   - [57.3, 0.09, 'g', 'I']
+   - [228.18, 11.14, 'g', 'S']
+   + [57.294, 0.126, 'g', 'I']
+   + [228.183, 10.73, 'g', 'I', 0.09]
+   flag- 228.180 keV 11.14%: Sandia only (no IAEA line)
+== Ba-140
+   - [951.4, 0.6076, 'g', 'S']
+   + [34.72, 1.231, 'x', 'I', 0.0138]
+== Br-82
+   - [1072.9, 0.07506, 'g', 'S']
+== Ce-143
+   - [1102.89, 0.37, 'g', 'S']
+== Cf-252
+   - [154.5, 0.0005039, 'g', 'S']
+== Co-56
+   - [997.33, 0.129, 'g', 'S']
+   - [2373.7, 0.082, 'g', 'S']
+   - [2523.86, 0.068, 'g', 'S']
+   + [1198.888, 0.049, 'g', 'I', 0.005]
+== Co-57
+   - [692.03, 0.157, 'g', 'S']
+== Eu-156
+   - [2205.51, 0.98, 'g', 'S']
+   + [434.4, 0.209, 'g', 'I', 0.018]
+== Hf-175
+   - [432.7, 1.57, 'g', 'S']
+   flag- 432.700 keV 1.57%: Sandia only (no IAEA line)
+   flag+ 432.700 keV 1.57%: Sandia line dropped, same transition as IAEA 433.000 keV 1.44%
+== Hf-181
+   - [482.0, 99.34, 'g', 'S']
+   flag- 482.000 keV 99.34%: Sandia only (no IAEA line)
+   flag+ 482.000 keV 99.34%: Sandia line dropped, same transition as IAEA 482.180 keV 80.5%
+== Kr-87
+   - [976.49, 0.05654, 'g', 'S']
+== Kr-88
+   - [2548.0, 0.63, 'g', 'S']
+   + [2186.5, 0.29, 'g', 'I', 0.06]
+== La-140
+   - [951.4, 0.5276, 'g', 'S']
+== Np-237
+   - [94.66, 9.62, 'g', 'S']
+   - [98.44, 17.39, 'g', 'S']
+   - [111.3, 5.92, 'g', 'S']
+   + [106.12, 0.048, 'g', 'I', 0.001]
+   flag- 98.440 keV 17.39%: Sandia only (no IAEA line)
+   flag- 111.300 keV 5.92%: Sandia only (no IAEA line)
+   flag- 94.660 keV 9.62%: Sandia only (no IAEA line)
+   flag+ 111.300 keV 5.92%: Sandia line dropped, same transition as IAEA 111.228 keV 5.23%
+   flag+ 94.660 keV 9.62%: Sandia line dropped, same transition as IAEA 94.657 keV 9.1%
+   flag+ 98.440 keV 17.39%: Sandia line dropped, same transition as IAEA 98.439 keV 14.5%
+== Pa-234
+   - [1393.57, 2.06, 'g', 'S']
+   + [203.12, 1.29, 'g', 'I', 0.15]
+   flag- 824.200 keV 1.236%: Sandia only (no IAEA line)
+   flag- 1393.570 keV 2.06%: Sandia only (no IAEA line)
+   flag+ 1393.570 keV 2.06%: Sandia line dropped, same transition as IAEA 1393.900 keV 2.16%
+   flag+ 824.200 keV 1.236%: Sandia line dropped, same transition as IAEA 825.100 keV 1.98%
+== Pd-112
+   - [410.7, 0.1364, 'g', 'S']
+   - [718.4, 0.197, 'g', 'S']
+   - [2752.8, 0.1111, 'g', 'S']
+   + [946.92, 0.09986, 'g', 'I', 0.0188]
+   + [1063.49, 0.09986, 'g', 'I', 0.0106]
+   + [2051.5, 0.09869, 'g', 'I', 0.0141]
+== Ra-223
+   - [373.3, 0.05004, 'g', 'S']
+== Re-186
+   - [122.3, 0.603, 'g', 'S']
+== Sb-122
+   - [1257.26, 0.8, 'g', 'S']
+== Sb-124
+   - [335.8, 0.07468, 'g', 'S']
+   - [468.61, 0.05011, 'g', 'S']
+   - [976.23, 0.08362, 'g', 'S']
+   - [1325.0, 1.5, 'g', 'S']
+   - [1720.3, 0.09551, 'g', 'S']
+   flag- 1325.000 keV 1.5%: Sandia only (no IAEA line)
+   flag+ 1325.000 keV 1.5%: Sandia line dropped, same transition as IAEA 1325.504 keV 1.58%
+== Sb-126
+   - [278.6, 1.9, 'g', 'S']
+   - [620.2, 1.3, 'g', 'S']
+   - [639.7, 1.5, 'g', 'S']
+   - [989.3, 6.773, 'g', 'S']
+   flag- 639.700 keV 1.5%: Sandia only (no IAEA line)
+   flag- 620.200 keV 1.3%: Sandia only (no IAEA line)
+   flag- 989.300 keV 6.773%: Sandia only (no IAEA line)
+   flag- 278.600 keV 1.9%: Sandia only (no IAEA line)
+   flag+ 639.700 keV 1.5%: Sandia line dropped, same transition as IAEA 638.800 keV 0.9%
+   flag+ 620.200 keV 1.3%: Sandia line dropped, same transition as IAEA 619.900 keV 0.9%
+   flag+ 989.300 keV 6.773%: Sandia line dropped, same transition as IAEA 989.600 keV 6.8%
+   flag+ 278.600 keV 1.9%: Sandia line dropped, same transition as IAEA 278.200 keV 2.4%
+== Sr-82
+   + [12.649, 1.472, 'x', 'I', 0.015]
+== Ta-182
+   - [69.34, 1.57, 'g', 'S']
+   flag- 69.340 keV 1.57%: Sandia only (no IAEA line)
+   flag+ 69.340 keV 1.57%: Sandia line dropped, same transition as IAEA 69.271 keV 1.585%
+== Te-132
+   ~ [621.2, 1.628, 'g', 'S'] -> [621.2, 1.629, 'g', 'I', 0.206]
+   ~ [727.0, 2.238, 'g', 'S'] -> [727.0, 2.268, 'g', 'I', 0.618]
+   flag- 727.000 keV 2.238%: Sandia only (no IAEA line)
+   flag- 621.200 keV 1.628%: Sandia only (no IAEA line)
