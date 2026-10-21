@@ -60,6 +60,7 @@ LN2 = math.log(2.0)
 TCS_NUCLIDES = {"Co-60", "Cs-134", "Bi-214", "Tl-208", "Ac-228", "Eu-152", "Y-88", "Ba-133",
                 "Ra-226", "Th-232", "Th-228", "Ra-228", "Na-22", "Sb-125", "Eu-154", "Co-58"}
 TCS_NOTE = "cascade emitter: true-coincidence summing not corrected (biased in close geometries)"
+NOT_POISSON_POINT = "counts are not Poisson counts: the uncertainty is not valid"
 YEAR_S = 365.2422 * 86400.0
 E0_LOGLOG = 1000.0
 
@@ -403,26 +404,31 @@ def measure_efficiency(spectrum, cert: Sequence[CertLine], peaks=None,
                        background=None, min_sig: float = 3.0) -> list[EfficiencyPoint]:
     """Measured FEP efficiency points of the certified lines found in `spectrum`.
 
-    `background`: optional background spectrum, subtracted peak by peak (live-time
-    normalised) with the sample fit's own estimator (analysis.background.BackgroundFitter),
-    so blends are split identically in both spectra.  Lines without a matching peak are skipped.
-    Lines of different nuclides falling on the same peak are flagged and not used.
+    `background`: optional background spectrum.  The peaks are then searched and fitted on
+    S - kB (live-time normalised) with the variance S + k^2 B, the fit of compute_activities:
+    background lines the resolution does not separate from a calibration peak would otherwise
+    distort its shape (docs/baseline/efficiency_poisson_protocol.md).  Lines without a matching
+    peak are skipped.  Lines of different nuclides falling on the same peak are flagged and not used.
+    A spectrum whose contents are not Poisson counts (normalised, smoothed ...) gives points
+    carrying NOT_POISSON_POINT.
     """
+    from .background import net_spectrum, not_poisson_note
     from .peaks import find_peaks
     if not spectrum.energy_coeffs:
         raise ValueError("the calibration spectrum has no energy calibration")
     check_measurement(spectrum, "calibration spectrum")
+    bkg_note = ""
     if background is not None:
         check_measurement(background, "background spectrum")
-    from .background import BackgroundFitter
-    from .peaks import FitReport
-    rep = None
-    if peaks is None:
-        rep = FitReport() if background is not None else None
-        peaks = find_peaks(spectrum, min_sig=min_sig, report=rep)
-    bkg_under: dict = {}
-    if background is not None:
-        bkg_under = BackgroundFitter(spectrum, background).under_peaks(peaks, rep)
+        if peaks is not None:
+            raise ValueError("with a background spectrum the peaks are fitted on the background-subtracted "
+                             "spectrum: a peak list cannot be given")
+        net, var, _k = net_spectrum(spectrum, background)
+        peaks = find_peaks(net, min_sig=min_sig, variance=var)
+        bkg_note = "background subtracted before the fit (S - kB)"
+    elif peaks is None:
+        peaks = find_peaks(spectrum, min_sig=min_sig)
+    poisson_note = NOT_POISSON_POINT if not_poisson_note(spectrum) else ""
     t0 = spectrum.start_time
     owners: dict[int, list[CertLine]] = {}
     found = []
@@ -438,12 +444,7 @@ def measure_efficiency(spectrum, cert: Sequence[CertLine], peaks=None,
     for ln, p in found:
         others = {o.nuclide for o in owners[id(p)]} - {ln.nuclide}
         n, un = float(p.net_area), float(p.net_area_unc)
-        note = ""
-        if id(p) in bkg_under:
-            nb, ub = bkg_under[id(p)]
-            n -= nb
-            un = math.hypot(un, ub)
-            note = "background peak subtracted"
+        note = "; ".join(x for x in (bkg_note, poisson_note) if x)
         # sum of intensities of lines of the same nuclide on that peak (unresolved doublets)
         same = [o for o in owners[id(p)] if o.nuclide == ln.nuclide]
         if same and same[0] is not ln:
@@ -678,6 +679,9 @@ def fit_efficiency(points: Sequence[EfficiencyPoint], model: str = "loglog", ord
     curve.e_min, curve.e_max = float(e.min()), float(e.max())
     curve.points = list(points)
     curve.warnings = []
+    if any(NOT_POISSON_POINT in p.note for p in use):
+        curve.warnings.append("points measured on a spectrum whose contents are not Poisson counts: "
+                              "their uncertainties, and the curve's, are not valid")
     for p, r_pct, z in curve.residuals():
         if p.use and abs(z) > OUTLIER_Z:
             curve.warnings.append(f"{p.nuclide} {p.energy:.1f} keV: {r_pct:+.1f} % from the curve "

@@ -402,6 +402,7 @@ class FitReport:
     fwhm_source: str = ""
     groups: list = field(default_factory=list)
     tail: Optional[tuple] = None     # (eta, tau) of the low-energy tail used, None = Gaussian
+    notes: list = field(default_factory=list)   # about the whole search (contents not Poisson counts ...)
 
     def group_at(self, channel: float) -> Optional[FitGroup]:
         for g in self.groups:
@@ -832,6 +833,11 @@ def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit
         return []
     if var is None:
         y = np.maximum(y, 0.0)
+        if report is not None:
+            from .background import not_poisson_note
+            note = not_poisson_note(spectrum)
+            if note:
+                report.notes.append(note)
     f0 = spectrum.first_channel
     f, src, start = width_model(spectrum, y, fwhm, min_energy, var)
     if report is not None:
