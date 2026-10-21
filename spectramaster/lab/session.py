@@ -53,7 +53,9 @@ SCHEMA_VERSION = 1
 #          uncertainties, TCS safety, curvature fit windows, width-shape extrapolation
 #   1.2.0  2026-10-21 peak-mode background fitted on S - kB (PR #35, which did not bump it);
 #          gamma-line library: wrong, duplicated and lost lines (library_lines_protocol.md)
-ENGINE_VERSION = "1.2.0"
+#   1.3.0  2026-10-21 reference peak measured on the gross spectrum with a background; decision
+#          threshold with blank and reference peaks; manual peak edits used (combined_corrections_protocol.md)
+ENGINE_VERSION = "1.3.0"
 
 
 class SessionSchemaError(ValueError):
@@ -174,11 +176,12 @@ class AnalysisSession:
         return bool(r.get("peaks") or r.get("nuclide_matches") or r.get("quant"))
 
     def set_results(self, peaks=(), matches=(), quant=None, engine_version: str = ENGINE_VERSION,
-                    spectrum=None) -> None:
+                    spectrum=None, peaks_edited: bool = False) -> None:
         """Store freshly computed results (dataclass objects or already-plain dicts).
 
         Recomputation replaces the list positions recorded by earlier edits, so the undo
-        and redo stacks are sealed (the log itself is kept).
+        and redo stacks are sealed (the log itself is kept).  ``peaks_edited``: the peaks
+        carry manual edits (kept when only the activities are recomputed).
         """
         peaks = list(peaks)
         plain = peaks and not isinstance(peaks[0], dict)
@@ -188,7 +191,7 @@ class AnalysisSession:
                                 else copy.deepcopy(list(matches))),
             "quant": quant if quant is None or isinstance(quant, dict) else quant_to_dict(quant)}
         self.status = {"results_stale": False, "stale_reasons": [], "reviewed": False,
-                       "engine_version_at_results": engine_version}
+                       "engine_version_at_results": engine_version, "peaks_edited": bool(peaks_edited)}
         if spectrum is not None:      # lets later manual refits check they use the same counts
             from ..analysis.manual import counts_sha256
             self.processing_settings = {**(self.processing_settings or {}),

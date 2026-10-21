@@ -374,7 +374,9 @@ class SessionController:
         """The activity dialog computed `dialog.results` for the displayed spectrum: record its
         efficiency calibration, sample geometry, sample information and background, then the
         activities.  Staleness of the peaks / identification is kept (only a new analysis clears it)."""
-        s = self.session_for(dialog.spectrum)
+        used = getattr(dialog, "used_inputs", None) or {}      # snapshot taken when it started
+        spectrum = used.get("spectrum", dialog.spectrum)
+        s = self.session_for(spectrum)
         if s is None or dialog.results is None:
             return
         # reasons the peaks / identification already require an update (before the edits below)
@@ -394,11 +396,11 @@ class SessionController:
                 s.set_geometry(geo, reason="sample geometry of the activity calculation")
             if dialog.sample_info is not None:
                 s.set_sample(dialog.sample_info, reason="sample information of the activity calculation")
-            bkg = dialog.background
+            bkg = used.get("background", dialog.background)
             if bkg is not None and bkg.source_path and Path(bkg.source_path).is_file():
                 s.set_background(bkg.source_path, live_time=bkg.live_time,
                                  reason=f"measured background ({dialog.bkg_mode.currentData()} mode)")
-            blank = getattr(dialog, "blank", None)
+            blank = used.get("blank", getattr(dialog, "blank", None))
             if blank is not None and blank.source_path and Path(blank.source_path).is_file():
                 s.set_blank(blank.source_path, live_time=blank.live_time, reason="reagent blank of the activities")
             elif blank is None and s.blank_ref is not None:
@@ -407,7 +409,7 @@ class SessionController:
                 s.set_coincidence_table(reason="true-coincidence summing correction of the activities")
             res = s.results or {}
             s.set_results(res.get("peaks", []), res.get("nuclide_matches", []), quant_to_dict(dialog.results),
-                          spectrum=dialog.spectrum)
+                          spectrum=spectrum, peaks_edited=bool(s.status.get("peaks_edited")))
             for r in stale:                      # identification still requires an update
                 s.mark_stale(r)
         except Exception as exc:                 # the dialog's results are never blocked

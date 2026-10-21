@@ -506,6 +506,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     bkg_under: dict = {}
     fit_report = None
     from .background import BackgroundFitter, check_not_subtracted, compatibility, net_spectrum, not_poisson_note
+    given_peaks = peaks is not None
     if background is not None:
         check_not_subtracted(spectrum)
         check_measurement(background, "background spectrum")
@@ -528,6 +529,9 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             work_net, net_var, _k = net_spectrum(spectrum, background)
             fit_report = FitReport()
             peaks = find_peaks(work_net, min_sig=opt.min_sig, variance=net_var, report=fit_report)
+    if given_peaks and background is not None and bkg_peaks is None:
+        notes.append("the peak list given was not used: with a background spectrum the peaks are fitted on "
+                     "the background-subtracted spectrum")
     if not_poisson_note(spectrum):
         notes.append(not_poisson_note(spectrum))
     if peaks is None:
@@ -541,7 +545,10 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     dt = (spectrum.start_time - ref).total_seconds() if (spectrum.start_time and ref) else 0.0
     ref_k, ref_uc, ref_ur = 1.0, 0.0, 0.0
     if opt.reference_peak:
-        ref_k, ref_uc, ref_ur, note = reference_correction(spectrum, peaks, opt.reference_peak, t_live)
+        # measured on the gross spectrum, like its expected rate (reference_rate): a reference source
+        # or pulser also present in the background would vanish from S - kB
+        ref_peaks = find_peaks(spectrum, min_sig=opt.min_sig) if background is not None else peaks
+        ref_k, ref_uc, ref_ur, note = reference_correction(spectrum, ref_peaks, opt.reference_peak, t_live)
         notes.append(note)
     ref_u = math.hypot(ref_uc, ref_ur)
     tcs_on = bool(opt.tcs)
@@ -661,6 +668,11 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                     lr.blank_unc = (bl.u_count_bq or abs(bl.activity) * bl.u_count_rel) * kd
                     blank_counts = lr.blank_activity / w
                     var0 += (lr.blank_unc * fwin / w) ** 2
+                    # no net activity: the sample's gross activity is the blank's, whose reference peak
+                    # corrections (sample and blank) still vary (combined_corrections_protocol.md, R2)
+                    ab0 = lr.blank_activity
+                    u_ref0 = math.sqrt((ab0 * ref_uc) ** 2 + (ab0 * bl_uc) ** 2 + (ab0 * (ref_ur - bl_ur)) ** 2)
+                    var0 += (u_ref0 * fwin / w) ** 2
             if bcounts is not None:
                 cb = continuum_under(spectrum, e, fw_ch, counts=bcounts)
                 if cb is not None:

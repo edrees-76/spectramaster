@@ -37,6 +37,7 @@ EDIT_KINDS = ("add_peak", "remove_peak", "set_peak_field", "set_sample_field", "
 REASON_REQUIRED = ("remove_peak", "set_peak_field")
 STALE_KINDS = ("add_peak", "remove_peak", "set_peak_field", "set_sample_field", "set_setting",
                "set_context", "replace_peaks")
+PEAK_EDIT_KINDS = ("add_peak", "remove_peak", "set_peak_field", "replace_peaks")   # status["peaks_edited"]
 
 
 def current_user() -> str:
@@ -110,6 +111,8 @@ class EditOperation:
             _set(session, self.target, copy.deepcopy(self.after))
         if self.kind in STALE_KINDS:
             session.mark_stale(self.describe())
+        if self.kind in PEAK_EDIT_KINDS:
+            session.status["peaks_edited"] = True
 
     def revert(self, session) -> None:
         if self.kind == "add_peak":
