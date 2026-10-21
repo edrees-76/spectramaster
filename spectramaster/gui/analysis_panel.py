@@ -74,6 +74,21 @@ def peak_row(i: int, pk) -> list[tuple[str, Optional[float]]]:
     ]
 
 
+def peak_info_text(pk) -> str:
+    """One status-bar line about a found peak (MAESTRO Peak Info): position, width, net area,
+    significance and its assignment."""
+    pos = (f"{pk.energy:.2f} keV" if pk.energy is not None else tr("pk_channel", ch=f"{pk.centroid:.1f}"))
+    width = (f"{pk.fwhm_kev:.2f} keV" if pk.fwhm_kev else f"{pk.fwhm:.1f} ch")
+    text = tr("pk_info", pos=pos, fwhm=width, net=f"{pk.net_area:,.0f}", unc=f"{pk.net_area_unc:,.0f}",
+              sig=f"{pk.significance:.1f}")
+    if pk.nuclide:
+        line = f" {pk.line_energy:.2f} keV" if pk.line_energy is not None else ""
+        text += "  —  " + pk.nuclide + line + (f" ({pk.note})" if pk.note else "")
+    else:
+        text += "  —  " + tr("pk_unassigned")
+    return "⁦" + text + "⁩" if i18n.is_rtl() else text
+
+
 def expected_lines(m) -> list[float]:
     return sorted({float(e) for e, _ in m.matched} | {float(e) for e in m.missing})
 
@@ -355,6 +370,18 @@ class AnalysisPanel(QWidget):
         it = self.peak_table.item(row, 0)
         if it is not None:
             self._peak_double(it)
+
+    def select_peak(self, peak) -> None:
+        """Select (without activating) the table row of `peak` (keyboard peak indexing)."""
+        from PySide6.QtCore import QItemSelectionModel
+        i = next((k for k, p in enumerate(self.peaks) if p is peak), -1)
+        for row in range(self.peak_table.rowCount()):
+            if self._row_index(self.peak_table, row) == i:
+                idx = self.peak_table.model().index(row, 0)
+                self.peak_table.selectionModel().select(
+                    idx, QItemSelectionModel.ClearAndSelect | QItemSelectionModel.Rows)
+                self.peak_table.scrollTo(idx)
+                return
 
     def select_nuclide_row(self, r: int) -> None:
         from PySide6.QtCore import QItemSelectionModel
