@@ -528,13 +528,37 @@ class ActivityDialog(QDialog):
                 "half_life_s": hl_days * 86400.0 if hl_days > 0 else None,
                 "ref_date": self.refpk_date.dateTime().toPython() if hl_days > 0 else None}
 
-    def _compute(self, curve, opt) -> act.QuantResults:
+    def inputs(self) -> dict:
+        """Snapshot of what a calculation uses: spectrum, background, blank and, when the session of
+        the spectrum records manual peak edits, its (edited) peaks.  Taken when the calculation
+        starts; the worker computes from it and the session records it (not the dialog's state)."""
+        peaks = None
+        par = self.parent()
+        ctl = getattr(par, "session_ctl", None) if par is not None else None
+        s = ctl.session_for(self.spectrum) if ctl is not None else None
+        if s is not None and s.status.get("peaks_edited") and (s.results or {}).get("peaks"):
+            from dataclasses import fields
+            from ..analysis import Peak
+            names = {f.name for f in fields(Peak)}
+            peaks = [Peak(**{k: v for k, v in d.items() if k in names}) for d in s.results["peaks"]]
+        return {"spectrum": self.spectrum, "background": self.background, "blank": self.blank,
+                "peaks": peaks}
+
+    def _compute(self, curve, opt, inputs: Optional[dict] = None) -> act.QuantResults:
         """The sample's results; with a reagent blank, the blank is analysed first exactly like the
-        sample (same curve, options and background) and subtracted line by line."""
+        sample (same curve, options and background) and subtracted line by line.  `inputs`: the
+        snapshot of :meth:`inputs` (taken now when None).  Manual peak edits are used without a
+        background; with one, the peaks are refitted on S - kB and the engine notes it."""
+        inp = inputs if inputs is not None else self.inputs()
+        bkg = inp["background"]
         blank = None
-        if self.blank is not None:
-            blank = act.compute_activities(self.blank, curve, opt, background=self.background)
-        return act.compute_activities(self.spectrum, curve, opt, background=self.background, blank=blank)
+        if inp["blank"] is not None:
+            blank = act.compute_activities(inp["blank"], curve, opt, background=bkg)
+        res = act.compute_activities(inp["spectrum"], curve, opt, background=bkg, blank=blank,
+                                     peaks=inp["peaks"])
+        if inp["peaks"] is not None and bkg is None:
+            res.notes.append("the manually edited peaks of the session were used")
+        return res
 
     def options(self) -> act.ActivityOptions:
         ref = None
@@ -616,7 +640,8 @@ class ActivityDialog(QDialog):
 
     # ------------------------------------------------------------------ actions
     def _prepare(self):
-        """(curve, record, issues, options, curve path) of a calculation, or None (reported)."""
+        """(curve, record, issues, options, curve path, inputs snapshot) of a calculation, or None
+        (reported)."""
         if self.spectrum is None or not self.spectrum.energy_coeffs:
             QMessageBox.warning(self, qtr("act_title"), qtr("act_no_spectrum"))
             return None
@@ -630,7 +655,7 @@ class ActivityDialog(QDialog):
         except Exception as exc:
             self.message(qtr("act_failed", msg=f"{type(exc).__name__}: {exc}"))
             return None
-        return curve, rec, issues, opt, path
+        return curve, rec, issues, opt, path, self.inputs()
 
     def _use_other_geometry(self, text: str, opt) -> bool:
         """`text` is the geometry refusal of the engine: ask, and allow the mismatch on OK."""
@@ -652,19 +677,19 @@ class ActivityDialog(QDialog):
         prep = self._prepare()
         if prep is None:
             return None
-        curve, _rec, _issues, opt, _path = prep
+        curve, _rec, _issues, opt, _path, inputs = prep
         if threaded:
             self._start_calculation(prep)
             return None
         try:
             try:
-                res = self._compute(curve, opt)
+                res = self._compute(curve, opt, inputs)
             except ValueError as exc:
                 if not str(exc).startswith(GEOMETRY_REFUSED):
                     raise
                 if not self._use_other_geometry(str(exc), opt):
                     return None
-                res = self._compute(curve, opt)
+                res = self._compute(curve, opt, inputs)
         except Exception as exc:
             self.message(qtr("act_failed", msg=f"{type(exc).__name__}: {exc}"))
             return None
@@ -676,12 +701,13 @@ class ActivityDialog(QDialog):
 
     def _start_calculation(self, prep) -> None:
         from .worker import start_call
-        curve, opt = prep[0], prep[3]
+        curve, opt, inputs = prep[0], prep[3], prep[5]
         self._calc_pending = prep
         self.btn_calc.setEnabled(False)
         self.notes_label.setStyleSheet("")
         self.notes_label.setText(qtr("act_busy"))
-        start_call(self, lambda: self._compute(curve, opt), self._calculation_done, self._calculation_failed)
+        start_call(self, lambda: self._compute(curve, opt, inputs), self._calculation_done,
+                   self._calculation_failed)
 
     def _calculation_done(self, res) -> None:
         prep, self._calc_pending = self._calc_pending, None
@@ -701,8 +727,9 @@ class ActivityDialog(QDialog):
         self.message(qtr("act_failed", msg=msg))
 
     def _finish(self, prep, res: act.QuantResults) -> act.QuantResults:
-        curve, rec, issues, opt, path = prep
+        curve, rec, issues, opt, path, inputs = prep
         self.results = res
+        self.used_inputs = inputs          # what the results were computed from (session record)
         self.results.notes.extend(issues)
         self.curve, self.curve_record = curve, rec
         if self.settings is not None:
