@@ -7,6 +7,10 @@ the intensity balance (out - in, >= 0), a level decays by its gammas in proporti
 intensities.  Each photon independently deposits its full energy (eps_p), part of it
 (eps_t - eps_p) or nothing; an event counts in the peak of line i when it has no partial deposit
 and its full-energy deposits sum to E_i (0.5 keV).
+
+POSITRON_SCHEMES (docs/baseline/annihilation_summing_protocol.md) add the beta+ share of each
+level's feeding (ENSDF): a decay feeding the level by beta+ also emits two 511 keV photons, each
+deposited independently like a gamma.
 """
 from __future__ import annotations
 
@@ -28,6 +32,13 @@ SCHEMES = {
     "Y-88": ([0.0, 1836.087, 2734.141, 3584.8],
              [(850.6, 3, 2), (898.042, 2, 1), (1836.063, 1, 0), (2734.0, 2, 0)]),
 }
+# beta+ emitters: (levels, gammas, {level: beta+ share of its feeding}) - ENSDF, independent of the table
+POSITRON_SCHEMES = {
+    "Na-22": ([0.0, 1274.537], [(1274.537, 1, 0)], {1: 0.90326 / (0.90326 + 0.09618)}),
+    "Co-58": ([0.0, 810.7593, 1674.725], [(810.7593, 1, 0), (863.951, 2, 1), (1674.725, 2, 0)],
+              {1: 0.149 / (0.149 + 0.839)}),
+}
+ANNIHILATION_KEV = 511.0
 MAX_GAMMAS = 8            # longest cascade simulated (levels - 1 suffice)
 
 
@@ -48,10 +59,16 @@ class Scheme:
     intensity: np.ndarray       # library photons per decay
     feeding: np.ndarray         # per decay, normalised
     emission: np.ndarray        # photons per decay implied by the scheme
+    positron: np.ndarray = None   # beta+ share of each level's feeding (POSITRON_SCHEMES), else None
 
 
 def scheme(nuclide: str) -> Scheme:
-    levels, trans = SCHEMES[nuclide]
+    pos = None
+    if nuclide in POSITRON_SCHEMES:
+        levels, trans, share = POSITRON_SCHEMES[nuclide]
+        pos = np.array([share.get(k, 0.0) for k in range(len(levels))])
+    else:
+        levels, trans = SCHEMES[nuclide]
     lib = json.loads(LIB.read_text(encoding="utf-8"))["nuclides"][nuclide]["lines"]
     e = np.array([t[0] for t in trans])
     ini = np.array([t[1] for t in trans])
@@ -74,7 +91,7 @@ def scheme(nuclide: str) -> Scheme:
         emission[sel] = pop[k] * br
         for g, b in zip(sel, br):
             pop[fin[g]] += pop[k] * b
-    return Scheme(np.array(levels), e, ini, fin, inten, feed, emission)
+    return Scheme(np.array(levels), e, ini, fin, inten, feed, emission, pos)
 
 
 def simulate(nuclide: str, e1000: float, n: int, seed: int, pt=(0.24, -0.63), chunk: int = 1_000_000) -> dict:
@@ -98,6 +115,14 @@ def simulate(nuclide: str, e1000: float, n: int, seed: int, pt=(0.24, -0.63), ch
         level = rng.choice(nl, size=m, p=s.feeding)
         esum = np.zeros(m)
         partial = np.zeros(m, dtype=bool)
+        if s.positron is not None:
+            ep511 = float(eps_peak(ANNIHILATION_KEV, e1000))
+            et511 = min(ep511 / float(peak_to_total(ANNIHILATION_KEV, *pt)), 1.0)
+            beta = rng.random(m) < s.positron[level]
+            for _photon in range(2):
+                r = rng.random(m)
+                esum[beta & (r < ep511)] += ANNIHILATION_KEV
+                partial |= beta & (r >= ep511) & (r < et511)
         for _step in range(MAX_GAMMAS):
             alive = level > 0
             if not alive.any():

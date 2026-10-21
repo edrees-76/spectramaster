@@ -20,9 +20,18 @@ extract is bundled).
     python spectramaster/analysis/data/build_coincidences.py path/to/sandia.decay.min.xml
     # check: SPECTRAMASTER_SANDIA_COINC=path/to/sandia.decay.min.xml pytest tests/test_coincidence.py
 
-The coincidence table is gamma-gamma only. The source has no X-ray or annihilation coincidences,
-so X-ray - gamma summing (EC nuclides such as Ba-133) and 511 keV summing (Na-22) are not
-described. Nor is angular correlation.
+The source has no X-ray or annihilation coincidences, so X-ray - gamma summing (EC nuclides
+such as Ba-133) is not described. Nor is angular correlation. 511 keV summing of beta+ emitters
+is derived at build time (docs/baseline/annihilation_summing_protocol.md):
+
+- The level fed by each beta+ branch is reconstructed from the cascade (top level of each gamma)
+  and the branch endpoints (Q fitted to the EC and beta+ endpoints, 6 keV tolerance).
+- Each gamma gets P(beta+ in the same decay | gamma), stored as ``ann``.
+- Transitions where this fails (a beta+ branch matching no level, or a probability above 1) are
+  marked ``ann_unresolved`` and corrected for gamma-gamma summing only: As-74, Co-55, Ga-68,
+  Mn-52, Ni-57, Rb-81, Rb-82 and V-48.
+- Assumptions: every positron annihilates in the source, the two photons are independent at
+  first order, and conversion is neglected in the level flux.
 
     python spectramaster/analysis/data/build_library.py            # uses the cached IAEA extract
     python spectramaster/analysis/data/build_library.py --ndlab path/to/ndlab_db.s3db -v

@@ -63,7 +63,9 @@ SCHEMA_VERSION = 1
 #          (model_error_outlier_protocol.md)
 #   1.7.0  2026-10-21 signed primary result for lines without a search peak (window estimator),
 #          ISO 11929 best estimate for every nuclide, decision rule option (signed_primary_protocol.md)
-ENGINE_VERSION = "1.7.0"
+#   1.8.0  2026-10-21 511 keV annihilation summing of beta+ emitters in the true-coincidence correction
+#          (annihilation_summing_protocol.md)
+ENGINE_VERSION = "1.8.0"
 
 
 class SessionSchemaError(ValueError):

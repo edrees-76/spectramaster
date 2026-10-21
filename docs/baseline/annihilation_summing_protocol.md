@@ -101,3 +101,54 @@ its FAIL entries stay as they are.
 ## Results
 
 (appended after the run)
+
+Run 2026-10-21, engine 1.8.0. The text above the line is unchanged (SHA-256 of the pre-registered
+part still 71cd2a7d862a8b537697183380fc71498c775e71036bc5a3ff5d9fe115444264). Outputs:
+`docs/baseline/after_AN1/` (`annihilation_results.*`, `iaea2002_results.*`, `baseline.*`).
+
+| ID | Value | Limit | Result |
+|---|---|---|---|
+| AN.C1 | worst difference 2.4e-7 (all seven lines) | ≤ 0.002 | PASS |
+| AN.C2 | 0 differences in `g`, `c`, `br`, `dropped` over the 171 existing nuclides (3 added: Cu-62, Fe-52, Na-22) | identical | PASS |
+| AN.C3 | max \|d\| − 3σ: 0.005 → −0.0077 (Co-58), −0.0088 (Na-22); 0.02 → −0.0013 (Co-58), +0.0038 (Na-22) | ≤ 0.005 / ≤ 0.01 | PASS |
+| AN.C4 | difference 0 (COI 0.78308968) | ≤ 1e-12 | PASS |
+| AN.C5 | Marinelli Na-22: maritsmall 0.954, maritsmall60 0.939 (after_IA1: 0.803 / 0.790) | [0.90, 1.10] | PASS |
+| AN.C6 | max change of the other Marinelli pairs 4.8e-5 | ≤ 0.01 | PASS |
+| AN.C7 | pillbox Na-22: PITBIG 0.838, PITBIG60 0.839 (after_IA1: 0.661 / 0.662) | higher | PASS |
+| AN.C8 | 154 PASS / 13 FAIL / 60 REPORT, identical statuses, no PASS → FAIL | as registered | PASS |
+| AN.C9 | second run: 1339 passed, 69 skipped, 0 failed, no warning (first run: see below) | passes | PASS |
+
+Reported only (not criteria):
+
+* **Close geometry (e1000 = 0.05).** The first-order formula under-estimates COI against the
+  simulation: Na-22 1274.5 d = −0.083 (COI 0.563 vs 0.615), Co-58 810.8 d = −0.010. Two 511 keV
+  photons are treated as 2·ε_t instead of 1 − (1 − ε_t)²; at ε_t(511) ≈ 0.22 this matters. Not
+  changed here (not pre-registered); a candidate for a later protocol.
+* **IAEA 2002 criteria re-evaluated** with the new engine (report only; the IAEA protocol stays
+  as recorded in after_IA1): IA.C1 PASS (18/20), IA.C2 PASS (10/10), IA.C3 FAIL (5/10 pillbox
+  pairs), IA.C4.M PASS (0.963), IA.C4.P FAIL (0.863), IA.C5 PASS (rms z 1.52), IA.C6 PASS. That is
+  5 PASS / 2 FAIL, against 3 PASS / 4 FAIL before. The remaining pillbox shortfall is F3 (X-ray
+  summing), F4 (close-geometry curve) and F5 (self-attenuation), not this defect.
+* **Observation on the reconstruction rule.** Q is chosen to maximise the matched positron
+  intensity; EC branches enter only through the endpoint list and are not themselves required to
+  match a level. A transition with a single positron branch therefore always finds some Q that
+  matches it, so ``ann_unresolved`` is raised only with two or more positron branches (or
+  P > 1.001). The hand-made test (`test_reconstruction_on_a_hand_made_transition`) uses two
+  branches for that reason. For the nuclides checked in AN.C1 and AN.C3 the reconstructed levels
+  agree with ENSDF; for other single-branch β+ emitters the level is not independently checked.
+* Unresolved transitions (gamma–gamma summing only, note on the result): As-74, Co-55, Ga-68,
+  Mn-52, Ni-57, Rb-81, Rb-82, V-48.
+* **AN.C9, first run: 1 failed, 1338 passed, 69 skipped, 1 warning.**
+  * `test_tcs_fixes.py::test_bi207_lines_are_corrected` failed. Its hand-computed COI for
+    Bi-207 569.7 keV was gamma–gamma only. The engine was now lower by 2.37e-5, which is exactly
+    the 511 keV term of the Bi-207 β+ branch (P(β+ | 569.7) = 0.00077 in its transition). This is
+    an expected value of the defect itself, not listed in advance. The hand computation now adds
+    the `ann` term from the raw record.
+  * The warning was a NumPy deprecation in the new code: a 1-element array from a calibration
+    curve was converted to float. Fixed with `np.ravel(...)[0]`; values are unchanged.
+  * The suite was re-run after both fixes (result in the table).
+* Tests updated: `test_coincidence.py` "missing" set is now {Th-228, Ra-228};
+  `test_tcs_fixes.py` hand COI includes the 511 keV term;
+  `test_iaea2002_validation.py` reproduces after_AN1 (the after_IA1 record is still checked as a
+  record). New: `tests/test_annihilation_summing.py` (9 tests; the rebuild test runs only with
+  `SPECTRAMASTER_SANDIA_COINC`, and passed locally with it).

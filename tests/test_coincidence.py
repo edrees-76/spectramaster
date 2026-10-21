@@ -50,10 +50,11 @@ def test_intensities_agree_with_the_library():
 
 
 def test_cascade_emitters_are_covered():
-    """Every cascade emitter flagged by the engine has data, except those whose summing is not
-    gamma-gamma (Na-22: 511 keV annihilation) or comes from daughters (Th-228, Ra-228)."""
+    """Every cascade emitter flagged by the engine has data, except those whose summing comes from
+    daughters (Th-228, Ra-228).  Na-22 (511 keV annihilation only) is covered since
+    annihilation_summing_protocol.md."""
     missing = {n for n in TCS_NUCLIDES if not co.has_cascades(n)}
-    assert missing == {"Na-22", "Th-228", "Ra-228"}
+    assert missing == {"Th-228", "Ra-228"}
     assert not co.has_cascades("Cs-137") and co.transitions("Cs-137") == []
 
 
