@@ -234,6 +234,13 @@ def read_sanderson(path: Path) -> list[Spectrum]:
     if m:
         s.live_time = float(m.group(1))
         s.real_time = s.live_time
+        # channels 0 and 1 hold live and real time when channel 0 repeats LT= (EML TEST files,
+        # IAEA ASCII .dat output; docs/baseline/iaea_dat_detection_protocol.md)
+        c = s.counts
+        if c and c[0] == s.live_time:
+            s.real_time = max(float(c[1]) if len(c) > 1 else 0.0, s.live_time)
+            c[0:2] = [0] * min(2, len(c))
+            s.extra["time_channels"] = True
     st = _ST_RE.search(header)
     if st:
         try:

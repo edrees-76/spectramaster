@@ -1,0 +1,562 @@
+{
+ "C1": {
+  "spec512/x.dat": {
+   "format": "eml_sanderson",
+   "same": true
+  },
+  "spec512/x.xyz": {
+   "format": "eml_sanderson",
+   "same": true
+  },
+  "spec512/x": {
+   "format": "eml_sanderson",
+   "same": true
+  },
+  "synthetic_HPGe/x.dat": {
+   "format": "eml_sanderson",
+   "same": true
+  },
+  "synthetic_HPGe/x.xyz": {
+   "format": "eml_sanderson",
+   "same": true
+  },
+  "synthetic_HPGe/x": {
+   "format": "eml_sanderson",
+   "same": true
+  },
+  "synthetic_NaI/x.dat": {
+   "format": "eml_sanderson",
+   "same": true
+  },
+  "synthetic_NaI/x.xyz": {
+   "format": "eml_sanderson",
+   "same": true
+  },
+  "synthetic_NaI/x": {
+   "format": "eml_sanderson",
+   "same": true
+  },
+  "width8/x.dat": {
+   "format": "eml_sanderson",
+   "same": true
+  },
+  "width8/x.xyz": {
+   "format": "eml_sanderson",
+   "same": true
+  },
+  "width8/x": {
+   "format": "eml_sanderson",
+   "same": true
+  },
+  "width9/x.dat": {
+   "format": "iaea_ascii_dat",
+   "same": true
+  },
+  "width9/x.xyz": {
+   "format": "iaea_ascii_dat",
+   "same": true
+  },
+  "width9/x": {
+   "format": "iaea_ascii_dat",
+   "same": true
+  }
+ },
+ "C2a": {
+  "BKG.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "BKG2.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "CALIBR01.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "CALIBR02.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST01.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST02.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST03.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST04.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST05.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST06.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST07.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST08.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST09.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST10.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST11.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST12.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST13.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST14.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST15.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST16.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST17.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST18.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST19.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST20.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST21.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST22.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST23.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST24.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST25.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST26.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST27.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST28.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST29.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST30.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST31.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST32.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST33.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  },
+  "TEST34.DAT": {
+   "formats": [
+    "eml_sanderson",
+    "eml_sanderson"
+   ],
+   "same": true
+  }
+ },
+ "C2b": {
+  "BKG.DAT": {
+   "time_channels": false,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "BKG2.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "CALIBR01.DAT": {
+   "time_channels": false,
+   "ok": true,
+   "rt_before": null,
+   "rt_now": null
+  },
+  "CALIBR02.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 4000.0,
+   "rt_now": 4000.0
+  },
+  "TEST01.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST02.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST03.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST04.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST05.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST06.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST07.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST08.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST09.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST10.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST11.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST12.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST13.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST14.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST15.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST16.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST17.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST18.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST19.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST20.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST21.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST22.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST23.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST24.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST25.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST26.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST27.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST28.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST29.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST30.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST31.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST32.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 240000.0,
+   "rt_now": 240000.0
+  },
+  "TEST33.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 4000.0,
+   "rt_now": 4000.0
+  },
+  "TEST34.DAT": {
+   "time_channels": true,
+   "ok": true,
+   "rt_before": 10000.0,
+   "rt_now": 10000.0
+  }
+ }
+}
