@@ -302,10 +302,12 @@ def read_aptec_rois(data) -> list[tuple[int, int, int, int]]:
     import struct
     from pathlib import Path
     d = Path(data).read_bytes() if not isinstance(data, (bytes, bytearray)) else bytes(data)
-    if len(d) < 1024 or not d[:7].startswith(b"VERSION"):
+    if len(d) < 1024 or not d.startswith(b"VERSION6"):
         raise ValueError("not an Aptec Version 6.x spectrum file")
     i16 = lambda o: struct.unpack_from("<h", d, o)[0]          # noqa: E731
     n_eff, n_en, n_res, n_roi = i16(330), i16(618), i16(694), i16(782)
+    if min(n_eff, n_en, n_res, n_roi) < 0 or i16(790) <= 0:
+        raise ValueError("not a valid Aptec Version 6.x spectrum file (negative record counts or no channels)")
     o = 1024 + 130 * max(n_eff, 0) + 8 * max(n_en, 0) + 8 * max(n_res, 0)
     out = []
     for k in range(max(n_roi, 0)):

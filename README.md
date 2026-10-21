@@ -10,7 +10,7 @@ radiation measurement laboratories. Designed & developed by **Edrees F. Hery**.
 
 ## Features
 
-- **59 spectrum formats** (58 readable, 35 writable): ORTEC CHN/SPC, Canberra CNF (written natively,
+- **60 spectrum formats** (59 readable, 35 writable): ORTEC CHN/SPC, Canberra CNF (written natively,
   verified with Genie 2000), IAEA SPE, IEC 1455, N42-2006/2012, GADRAS PCF, Excel, JSON, all
   ORTEC DataMaster formats, Aptec MCA `.S0` (v3.0–v6.3) and every Aptec import format.
 - **DataMaster-compatible command line** (`-13 in.S0 -1 out.chn`) and GammaVision/MAESTRO

@@ -38,13 +38,26 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
-import SpecUtils as _SU
-
 from ..model import Spectrum
 from .base import FormatError, FormatSpec, register
 
-P = _SU.ParserType
-W = _SU.SaveSpectrumAsType
+try:        # the native library; without it only the pure-Python CHN and CNF code is registered
+    import SpecUtils as _SU
+except ImportError as _exc:
+    import logging
+    logging.getLogger(__name__).warning("SpecUtils not available (%s): only ORTEC CHN and Canberra CNF "
+                                        "are registered by this module", _exc)
+    _SU = None
+
+
+class _Missing:
+    """Stand-in for SpecUtils' enums when the library is missing (every member is None)."""
+    def __getattr__(self, name):
+        return None
+
+
+P = _SU.ParserType if _SU is not None else _Missing()
+W = _SU.SaveSpectrumAsType if _SU is not None else _Missing()
 
 
 # --------------------------------------------------------------------- helpers
@@ -577,6 +590,8 @@ def _cnf_native(b: bytes) -> Spectrum:
 
 def _cnf_read(path: Path) -> list[Spectrum]:
     try:
+        if _SU is None:
+            raise FormatError("SpecUtils not available")
         spectra = _read_with(path, P.Cnf)
     except FormatError:
         try:
@@ -897,8 +912,13 @@ def _lis_sniff(path, head):
 
 
 # --------------------------------------------------------------- registry
+_PURE = {_chn_read, _chn_write, _cnf_read, _cnf_write}      # need no SpecUtils
+
+
 def _reg(code, key, name, exts, parser=None, kind=None, sniffer=None, notes="", reader=None,
          writer=None, aliases=()):
+    if _SU is None and not (reader in _PURE and writer in _PURE | {None}):
+        return
     register(FormatSpec(
         code=code, key=key, name=name, extensions=list(exts),
         reader=reader or (_reader(parser) if parser is not None else None),

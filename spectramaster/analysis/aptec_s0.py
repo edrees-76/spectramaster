@@ -196,12 +196,14 @@ def _setup(d: bytes, o: int) -> AnalysisSetup:
 def read_s0(data) -> S0File:
     """Parse an Aptec Version 6.x ``.S0`` file (path or bytes)."""
     d = Path(data).read_bytes() if not isinstance(data, (bytes, bytearray)) else bytes(data)
-    if len(d) < 1024 or not d[:7].startswith(b"VERSION"):
+    if len(d) < 1024 or not d.startswith(b"VERSION6"):
         raise ValueError("not an Aptec Version 6.x spectrum file")
     i16 = lambda o: struct.unpack_from("<h", d, o)[0]          # noqa: E731
     f32 = lambda o: struct.unpack_from("<f", d, o)[0]          # noqa: E731
-    n_eff, n_en, n_res, n_roi = (max(i16(k), 0) for k in (330, 618, 694, 782))
-    n_ch, job = max(i16(790), 0), max(i16(784), 0)
+    n_eff, n_en, n_res, n_roi = (i16(k) for k in (330, 618, 694, 782))
+    n_ch, job = i16(790), max(i16(784), 0)
+    if min(n_eff, n_en, n_res, n_roi) < 0 or n_ch <= 0:
+        raise ValueError("not a valid Aptec Version 6.x spectrum file (negative record counts or no channels)")
     roi_o = 1024 + 130 * n_eff + 8 * n_en + 8 * n_res
     data_o = roi_o + 256 * n_roi
     if data_o + 4 * n_ch > len(d):

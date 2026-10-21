@@ -7,6 +7,7 @@ from spectramaster.convert import ASCII_ONLY_TEXT, read_spectra, write_spectrum
 from spectramaster.formats import load_all, writable_formats
 from spectramaster.model import Spectrum
 
+ASCII_WARNING = "stores only ASCII text"     # format names may contain "ASCII" too
 AR_ID, AR_DESC = "عينة شاي", "وصف عربي للعينة"
 EN_ID, EN_DESC = "TEA 12", "Black tea sample"
 
@@ -34,15 +35,15 @@ def test_ascii_only_set_matches_behaviour(tmp_path, fmt):
     """A format keeping ASCII text but losing Arabic must be in ASCII_ONLY_TEXT (and warn)."""
     w_en, en = _roundtrip(tmp_path, fmt, EN_ID, EN_DESC, "en")
     w_ar, ar = _roundtrip(tmp_path, fmt, AR_ID, AR_DESC, "ar")
-    assert not any("ASCII" in w for w in w_en)
+    assert not any(ASCII_WARNING in w for w in w_en)
     keeps = [x for x, y in ((EN_ID, AR_ID), (EN_DESC, AR_DESC)) if x.lower() in en.lower()]
     loses = [x for x, y in ((EN_ID, AR_ID), (EN_DESC, AR_DESC)) if x.lower() in en.lower() and y not in ar]
     if loses:
         assert fmt.key in ASCII_ONLY_TEXT, f"{fmt.key} loses Arabic {loses}"
-        assert any("ASCII" in w for w in w_ar)
+        assert any(ASCII_WARNING in w for w in w_ar)
     elif keeps:
         assert fmt.key not in ASCII_ONLY_TEXT
-        assert not any("ASCII" in w for w in w_ar)
+        assert not any(ASCII_WARNING in w for w in w_ar)
 
 
 def test_cli_prints_text_warning(tmp_path, capsys):
