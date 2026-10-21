@@ -9,6 +9,12 @@ i above j.  The reverse probability is P(i | j) = I_i P(j | i) / I_j.
 Limits of the data: gamma-gamma only (no X-ray or annihilation coincidences, so X-ray - gamma
 summing of EC nuclides and 511 keV summing of positron emitters are not described), no angular
 correlation, and a few physically impossible pairs of the source were dropped (``dropped``).
+
+Short-lived daughters that the gamma library folds into their parent (``includes`` and
+``include_factors`` of ``data/gamma_library.json``: Bi-207 -> Pb-207m, Ce-144 -> Pr-144 ...) are
+separate nuclides of the table; :func:`transitions` adds their transitions to the parent's,
+weighted by the include factor (docs/baseline/tcs_fixes_protocol.md).  Gammas of the parent's
+decay and of the daughter's decay are not coincident.
 """
 from __future__ import annotations
 
@@ -20,6 +26,7 @@ from pathlib import Path
 import numpy as np
 
 TABLE = Path(__file__).resolve().parent / "data" / "coincidence_table.json"
+LIBRARY = Path(__file__).resolve().parent / "data" / "gamma_library.json"
 
 
 @dataclass
@@ -49,24 +56,41 @@ def _table() -> dict:
     return json.loads(TABLE.read_text(encoding="utf-8"))
 
 
+@lru_cache(maxsize=1)
+def _daughters() -> dict:
+    """{parent: [(daughter, include factor)]} of the bundled library, daughters in the table only."""
+    nucs = json.loads(LIBRARY.read_text(encoding="utf-8"))["nuclides"]
+    table = _table()["nuclides"]
+    out = {}
+    for name, e in nucs.items():
+        inc = [(d, float(f)) for d, f in zip(e.get("includes", []), e.get("include_factors", []))
+               if d in table and float(f) > 0 and d != name]
+        if inc:
+            out[name] = inc
+    return out
+
+
 def source() -> dict:
     """Provenance of the bundled table (file, commit, SHA-256, license, thresholds)."""
     return dict(_table()["source"])
 
 
 def has_cascades(nuclide: str) -> bool:
-    return nuclide in _table()["nuclides"]
+    return nuclide in _table()["nuclides"] or nuclide in _daughters()
 
 
 def transitions(nuclide: str) -> list[Transition]:
-    """The nuclide's decay transitions that have gamma cascades ([] when it has none)."""
+    """The nuclide's decay transitions that have gamma cascades, with those of the short-lived
+    daughters the library folds into it (branching x include factor); [] when it has none."""
     out = []
-    for rec in _table()["nuclides"].get(nuclide, []):
-        g = np.array(rec["g"], dtype=float).reshape(-1, 2)
-        after = np.zeros((len(g), len(g)))
-        for i, j, p in rec["c"]:
-            after[int(i), int(j)] = float(p)
-        out.append(Transition(float(rec["br"]), g[:, 0].copy(), g[:, 1].copy(), after, int(rec.get("dropped", 0))))
+    for name, f in [(nuclide, 1.0)] + _daughters().get(nuclide, []):
+        for rec in _table()["nuclides"].get(name, []):
+            g = np.array(rec["g"], dtype=float).reshape(-1, 2)
+            after = np.zeros((len(g), len(g)))
+            for i, j, p in rec["c"]:
+                after[int(i), int(j)] = float(p)
+            out.append(Transition(f * float(rec["br"]), g[:, 0].copy(), g[:, 1].copy(), after,
+                                  int(rec.get("dropped", 0))))
     return out
 
 

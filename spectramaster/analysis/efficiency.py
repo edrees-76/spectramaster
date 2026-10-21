@@ -689,22 +689,34 @@ def fit_efficiency(points: Sequence[EfficiencyPoint], model: str = "loglog", ord
     return curve
 
 
-def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0, iterations: int = 3
-                       ) -> EfficiencyCurve:
+TCS_REFIT_TOL = 1e-7             # relative change of the corrected cascade points: converged
+TCS_REFIT_MAX_ITER = 200
+
+
+def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0,
+                       iterations: int = TCS_REFIT_MAX_ITER, declared_free: bool = False) -> EfficiencyCurve:
     """The curve refitted with its cascade-emitter points corrected for true-coincidence summing.
 
     A calibration measured in the sample's geometry gives apparent efficiencies for cascade
     lines (Co-60, Y-88, Ba-133 ...): they lost counts by summing.  Correcting the sample for
     summing with such a curve counts the summing twice.  Each such point is divided by its
     first-order COI (analysis.coincidence) computed with the curve itself and the peak-to-total
-    `pt` (callable of keV), and the curve refitted with the same model; a few iterations make
-    the COI consistent with the corrected curve.  u(COI) = summing-out x pt_rel_unc / COI is
-    added to the point's counting component.  Returns the same object when there is nothing to
-    correct (``summing_corrected`` set, or no cascade point); raises ValueError for a model that
-    cannot be refitted or a COI outside its validity."""
+    `pt` (callable of keV), and the curve refitted with the same model, until the corrected points
+    change by less than TCS_REFIT_TOL (at most `iterations` refits; otherwise refused as not
+    converged).  u(COI) = summing-out x pt_rel_unc / COI is added to the point's counting
+    component.  Returns the same object when there is nothing to correct (``summing_corrected``
+    set, the user declares the curve free of summing with `declared_free`, or no cascade point).
+    Raises ValueError for a curve without calibration points (whether it contains summing losses
+    is unknown), a model that cannot be refitted, a cascade point the correction cannot treat, or
+    no convergence (docs/baseline/tcs_fixes_protocol.md)."""
     from . import coincidence
-    if curve.summing_corrected:
+    if curve.summing_corrected or declared_free:
         return curve
+    if not any(p.use for p in curve.points):
+        raise ValueError(f"the efficiency curve ({curve.describe()}) has no calibration points: whether its "
+                         "efficiencies contain true-coincidence summing losses is unknown, and the summing "
+                         "correction of the sample could count them twice; refit the calibration in SpectraMaster, "
+                         "or declare the curve free of summing")
     cascade = [i for i, p in enumerate(curve.points)
                if p.use and not p.manual and coincidence.has_cascades(p.nuclide)]
     if not cascade:
@@ -718,14 +730,18 @@ def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0, iter
         kw.update(order_high=curve.order_high, crossover=curve.e_ref)
     meta = {k: getattr(curve, k) for k in ("geometry", "detector", "geometry_record", "validation_status",
                                             "name", "source", "date")}
-    cur, factors = curve, {}
-    for _ in range(max(int(iterations), 1)):
+    cur, factors, prev, n_iter = curve, {}, None, 0
+    for n_iter in range(1, max(int(iterations), 1) + 1):
         def eps(e, c=cur):
             return np.clip(c.efficiency(np.clip(np.asarray(e, dtype=float), c.e_min, c.e_max)), 0.0, 1.0)
         pts = list(curve.points)
+        bad = []
         for i in cascade:
             p = curve.points[i]
             c = coincidence.coi(p.nuclide, p.energy, eps, pt, e_min=cur.e_min, intensity=p.intensity)
+            if c.reason:
+                bad.append(f"{p.nuclide} {p.energy:.1f} keV ({c.reason})")
+                continue
             if not c.found:
                 continue
             if c.factor <= 0:
@@ -737,13 +753,26 @@ def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0, iter
                              note=(p.note + f"; summing corrected, COI {c.factor:.4f}").strip("; "))
             if abs(c.factor - 1.0) > 1e-4:
                 factors[(p.nuclide, round(p.energy, 1))] = c.factor
+        if bad:
+            raise ValueError("calibration points of cascade emitters that the true-coincidence summing correction "
+                             "cannot treat: " + "; ".join(bad) + ". Exclude them from the calibration, or the "
+                             "summing correction of the sample would count their losses twice")
+        now = np.array([pts[i].efficiency for i in cascade])
         cur = fit_efficiency(pts, curve.model, **kw, **meta)
         cur.selection = curve.selection
+        if prev is not None and float(np.max(np.abs(now / prev - 1.0))) < TCS_REFIT_TOL:
+            break
+        prev = now
+    else:
+        raise ValueError(f"the true-coincidence summing correction of the calibration points did not converge in "
+                         f"{n_iter} refits (summing too strong for a first-order correction?)")
     cur.summing_corrected = True
     worst = min(factors.values()) if factors else 1.0
     nucs = ", ".join(sorted({n for n, _e in factors}))
-    cur.note = (curve.note + f"; cascade-emitter calibration points ({nucs}) corrected for true-coincidence "
-                f"summing (lowest COI {worst:.4f})").strip("; ")
+    what = (f"cascade-emitter calibration points ({nucs}) corrected for true-coincidence summing (lowest COI "
+            f"{worst:.4f}, {n_iter} refits)" if factors else
+            "cascade-emitter calibration points checked for true-coincidence summing: no factor differs from 1")
+    cur.note = (curve.note + "; " + what).strip("; ")
     return cur
 
 
