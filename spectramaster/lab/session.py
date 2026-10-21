@@ -244,7 +244,8 @@ class AnalysisSession:
     def refit_region(self, spectrum, lo: int, hi: int, centroids, reason: str = "", **options):
         """Refit channels lo..hi with peaks at `centroids` and replace the stored peaks of that
         region (undoable).  Identification and activity are marked as requiring an update.
-        Returns (EditOperation, RegionFit)."""
+        A ``variance=`` option (net spectrum) is passed to the fit; the edit records its SHA-256,
+        not the array.  Returns (EditOperation, RegionFit)."""
         from ..analysis.manual import refit_region
         self._check_counts(spectrum)
         rf = refit_region(spectrum, lo, hi, centroids, **options)
@@ -262,8 +263,13 @@ class AnalysisSession:
         from ..analysis.manual import region_around
         from ..analysis.peaks import width_model
         import numpy as np
-        y = np.maximum(np.asarray(spectrum.counts, dtype=float), 0.0)
-        f, _src, _ = width_model(spectrum, y)
+        var = options.get("variance")
+        y = np.asarray(spectrum.counts, dtype=float)
+        if var is None:
+            y = np.maximum(y, 0.0)
+        else:
+            var = np.maximum(np.asarray(var, dtype=float), 0.0)
+        f, _src, _ = width_model(spectrum, y, var=var)
         i = int(min(max(round(channel - spectrum.first_channel), 0), len(y) - 1))
         lo, hi, others = region_around(self.results["peaks"], float(channel), float(f[i]))
         return self.refit_region(spectrum, lo, hi, others + [float(channel)],
