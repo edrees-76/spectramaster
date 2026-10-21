@@ -45,3 +45,19 @@ Outputs go to a new folder `docs/baseline/after_TO2/` (`baseline.*` of the `PYTH
 ## Results
 
 (appended after the run)
+
+Run 2026-10-22, engine 1.9.0 (unchanged). The text above the line is unchanged (SHA-256 of the
+pre-registered part still 12f6e719dda1d9e69baa71dfbd15b743e35b700dcbcbf2836dbb3cd07a59f480). Outputs:
+`docs/baseline/after_TO2/` (`baseline.*`, `PYTHONHASHSEED=0` run).
+
+| id | value | limit | result |
+|---|---|---|---|
+| TA.C1 seed 0 against seed 12345 | 0 differences, key order included | identical except runtime fields | PASS |
+| TA.C2 seed 0 against after_TO1 | 0 value differences; 13 key-order differences, all in `false_nuclides` (12) or `missed` (1); every such dictionary is in name order | | PASS |
+| TA.C3 criteria totals | 154 PASS / 13 FAIL / 60 REPORT, no PASS -> FAIL | | PASS |
+| TA.C4 unit test | `test_by_name_orders_keys_and_keeps_counts` passed (4 tests in `tests/test_benchmark_tie_order.py`) | | PASS |
+| TA.C5 full suite | 1367 passed, 69 skipped; no existing test changed | | PASS |
+
+**What ships.** With the same code and data, the benchmark report no longer depends on the Python hash
+seed. Only the runtime fields change from run to run. Later protocols can compare benchmark outputs
+for exact identity, key order included.

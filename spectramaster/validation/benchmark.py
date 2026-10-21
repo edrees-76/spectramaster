@@ -361,7 +361,7 @@ def cat_identification(det, n_seeds) -> dict:
             "recall_by_drift": {f"{d * 100:g}%": v["tp"] / max(v["n"], 1) for d, v in sorted(by_drift.items())},
             "false_by_drift": {f"{d * 100:g}%": v["fp"] / max(v["spectra"], 1) for d, v in sorted(by_drift.items())},
             "by_mixture": {k: {"recall": v["tp"] / max(v["n"], 1), "false_per_spectrum": v["fp"] / max(v["spectra"], 1),
-                               "false_nuclides": dict(v["false"]), "missed": dict(v["missed"])}
+                               "false_nuclides": _by_name(v["false"]), "missed": _by_name(v["missed"])}
                            for k, v in by_mix.items()},
             "false_per_spectrum_environmental_library": env["fp"] / max(env["spectra"], 1),
             "recall_environmental_library": env["tp"] / max(env["n"], 1),
@@ -769,6 +769,11 @@ def cat_idb(folder: Path) -> dict:
                                                                    if agg["n"] else None)
     out["most_frequent_implausible"] = _top_counts(implaus_names, 15)
     return out
+
+
+def _by_name(counts: dict) -> dict:
+    """Keys in name order (the counts are filled from sets, whose order depends on the hash seed)."""
+    return dict(sorted(counts.items()))
 
 
 def _top_counts(counts: dict, n: int) -> dict:

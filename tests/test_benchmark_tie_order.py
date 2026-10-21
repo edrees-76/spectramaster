@@ -1,5 +1,5 @@
 """Deterministic tie order in the benchmark (docs/baseline/benchmark_tie_order_protocol.md)."""
-from spectramaster.validation.benchmark import _top_counts
+from spectramaster.validation.benchmark import _by_name, _top_counts
 
 
 def test_ties_are_ordered_by_name():
@@ -16,3 +16,9 @@ def test_order_does_not_depend_on_insertion_order():
 def test_n_larger_than_the_dictionary():
     assert _top_counts({"x": 1, "y": 1}, 15) == {"x": 1, "y": 1}
     assert _top_counts({}, 15) == {}
+
+
+def test_by_name_orders_keys_and_keeps_counts():
+    a = _by_name({"Y-88": 2, "Al-26": 1, "Sb-124": 3})
+    b = _by_name({"Sb-124": 3, "Y-88": 2, "Al-26": 1})
+    assert list(a.items()) == list(b.items()) == [("Al-26", 1), ("Sb-124", 3), ("Y-88", 2)]
