@@ -88,7 +88,10 @@ def _tcs(args) -> "dict | None":
     if not args.tcs_pt:
         return None
     a, b = (float(v) for v in args.tcs_pt.split(","))
-    return {"peak_to_total": [a, b], "pt_rel_unc": (args.tcs_pt_unc or 0.0) / 100.0}
+    out = {"peak_to_total": [a, b], "pt_rel_unc": (args.tcs_pt_unc or 0.0) / 100.0}
+    if getattr(args, "tcs_curve_summing_free", False):
+        out["curve_summing_free"] = True
+    return out
 
 
 def cmd_activity(args) -> int:
@@ -215,6 +218,9 @@ def add_quant_commands(sub) -> None:
                    help="true-coincidence summing correction with the peak-to-total ratio "
                         "PT(E) = min(1, A (E/1000 keV)^B) of this detector and geometry (an assumption)")
     p.add_argument("--tcs-pt-unc", type=float, default=10.0, help="relative uncertainty of PT, %% (default 10)")
+    p.add_argument("--tcs-curve-summing-free", action="store_true",
+                   help="declare the efficiency curve free of true-coincidence summing (needed for a curve "
+                        "without calibration points; not checked)")
     p.add_argument("--blank", help="reagent blank spectrum (prepared and counted like the samples); "
                                    "its activities are subtracted line by line")
     p.add_argument("--mass", type=float, help="sample quantity")

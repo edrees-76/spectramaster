@@ -55,7 +55,9 @@ SCHEMA_VERSION = 1
 #          gamma-line library: wrong, duplicated and lost lines (library_lines_protocol.md)
 #   1.3.0  2026-10-21 reference peak measured on the gross spectrum with a background; decision
 #          threshold with blank and reference peaks; manual peak edits used (combined_corrections_protocol.md)
-ENGINE_VERSION = "1.3.0"
+#   1.4.0  2026-10-21 summing correction: daughter cascades, unestimable partners, calibration refit to
+#          convergence, curves without points refused (tcs_fixes_protocol.md)
+ENGINE_VERSION = "1.4.0"
 
 
 class SessionSchemaError(ValueError):

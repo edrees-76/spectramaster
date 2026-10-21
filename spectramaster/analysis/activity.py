@@ -558,7 +558,9 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             raise ValueError("true-coincidence summing: the peak-to-total ratio must be positive")
         tcs_u = float(opt.tcs.get("pt_rel_unc") or 0.0)
         tcs_pt = lambda en: coincidence.peak_to_total(en, pa, pb)                    # noqa: E731
-        free = summing_free_curve(curve, tcs_pt, tcs_u)
+        free = summing_free_curve(curve, tcs_pt, tcs_u, declared_free=bool(opt.tcs.get("curve_summing_free")))
+        if opt.tcs.get("curve_summing_free") and not curve.summing_corrected:
+            notes.append("efficiency curve declared free of true-coincidence summing by the user (not checked)")
         if free is not curve:
             notes.append(f"efficiency curve: {free.note.split('; ')[-1]} with the same peak-to-total, so the "
                          "summing is not counted twice")
