@@ -51,7 +51,9 @@ SCHEMA_VERSION = 1
 #   1.0.0  first release
 #   1.1.0  2026-10-20 second external review: ISO 11929 solver, blank and reference
 #          uncertainties, TCS safety, curvature fit windows, width-shape extrapolation
-ENGINE_VERSION = "1.1.0"
+#   1.2.0  2026-10-21 peak-mode background fitted on S - kB (PR #35, which did not bump it);
+#          gamma-line library: wrong, duplicated and lost lines (library_lines_protocol.md)
+ENGINE_VERSION = "1.2.0"
 
 
 class SessionSchemaError(ValueError):

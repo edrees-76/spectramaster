@@ -45,7 +45,7 @@ described. Nor is angular correlation.
   line), at most 40 strongest lines per nuclide.
 * Values: IAEA ENSDF (`src` = "I") whenever the line exists there, SandiaDecay otherwise ("S").
   `provenance.flags` lists every line ≥ 1 % where the two sources differ by > 0.1 keV or > 5 %
-  relative intensity, or where a line exists in only one source (232 flags in 66 nuclides, e.g.
+  relative intensity, or where a line exists in only one source (229 flags since 2026-10-21, e.g.
   Th-234 63.3 keV: IAEA 3.7 % vs Sandia 4.85 %; Lu-177m, Ho-166m, W-187, Tb-160).
 
 ## Emission-probability uncertainties (added 2026-10-15)
@@ -59,8 +59,8 @@ none for SandiaDecay-only lines or where ENSDF states none). Energies and intens
 Independent cross-check: LNHB/DDEP recommended data (Laboratoire National Henri Becquerel, LARA
 files `https://www.lnhb.fr/nuclides/<nuclide>.lara.txt`, downloaded 2026-10-15 for 126 of the 200
 library nuclides; kept outside the repository in `D:/SpectraMaster_public_data/lnhb_lara`, not
-bundled). `python -m spectramaster.validation.ddep_check`: 363 single gamma lines >= 1 % of 81
-nuclides, 94.8 % agree within 2 combined standard uncertainties and 97.2 % within 3. Largest
+bundled). `python -m spectramaster.validation.ddep_check`: 364 single gamma lines >= 1 % of 81
+nuclides, 94.8 % agree within 2 combined standard uncertainties and 97.3 % within 3 (363 lines and 97.2 % before 2026-10-21). Largest
 differences: Cu-67 (DDEP 2026 re-evaluation, about 10 %), Ra-223 (about 10 %), Nd-147, Ho-166m,
 Np-239; Mn-54/Co-60/Sc-46 appear only because the library rounds intensities to 4 significant
 digits. The IAEA LiveChart API was not used: it answers automated requests with a browser
@@ -77,3 +77,35 @@ Effect (measured before/after): Eu-155 reported in 12 -> 2 of the 20 longest lab
 no longer among the frequent implausible IAEA IDB identifications (53 -> below the top 15); IDB
 HPGe implausible 8.82 -> 8.15 per spectrum; U-235 / Pu-239 recall and all synthetic criteria
 unchanged; informational NaI false identifications with the environmental library 0.29 -> 0.375.
+
+## Wrong, duplicated and lost lines (added 2026-10-21)
+
+Found by the certified-reference-material check (`docs/baseline/crm_validation_protocol.md`, D1).
+Protocol and results: `docs/baseline/library_lines_protocol.md`; line-by-line diff:
+`docs/baseline/after_LB1/library_diff.txt`. `build_library.py` changes:
+
+* **Lost IAEA lines.** A daughter's IAEA line was compared with every line added before it,
+  including the daughter's own, and dropped when within 0.5 keV of one. It is now compared only with
+  the members before it. Eight lines are restored from IAEA, for example Np-239 228.183 keV (Am-243)
+  and I-132 727.0 / 621.2 keV (Te-132). Before, most of them held the Sandia value.
+* **Duplicated lines** (`DUP_TOL_KEV`, `DUP_RATIO`). A Sandia line not paired with an IAEA line is
+  dropped when an IAEA line of the entry, gamma or X-ray, lies within 1.0 keV with 0.5-2 times its
+  intensity. This removes 42 lines, for example:
+  * Hf-181 482.0 keV (99.3 %, listed again under Ta-181m; the library held about 180 % at 482 keV);
+  * Np-237 94.66 / 98.44 / 111.3 keV (X-rays listed as gammas);
+  * Ta-182 69.34 keV;
+  * Sb-124 1325.0 keV;
+  * Pa-234 1393.57 keV;
+  * Sb-126 278.6 / 989.3 keV.
+
+  Known misclassification: Pa-234 824.2 keV is a separate line (DDEP lists 824.2 and 825.1 keV). It
+  was outside the 40-line cap before and after, so the library content does not change.
+* **Correction table** (`CORRECTIONS`). It holds IAEA values contradicted by both SandiaDecay and
+  DDEP. Only Ac-228 674.75 keV is in it: 2.1 % becomes 0.105 % +- 0.010 % (DDEP), which the measured
+  RGTh-1 spectra confirm. At 0.105 % the line falls below the 40-line cap, so it is no longer in the
+  library. The record in `provenance.corrections` stays.
+* `ddep_check` also lists gross ratio differences against the nearest DDEP gamma within 0.5 keV, and
+  lines with no DDEP line within 0.5 keV. That second list is the blind spot of the 0.1 keV match.
+  Remaining entries: Yb-169 63.01 keV (IAEA and Sandia, not in DDEP) and four Sb-127 lines (IAEA
+  energies 0.6-1.1 keV above DDEP). Both are unresolved and unchanged. The gross list skips a line
+  when |z| <= 3, so it would not have caught the Ac-228 line, whose ENSDF uncertainty is 0.7 %.
