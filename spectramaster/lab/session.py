@@ -59,7 +59,9 @@ SCHEMA_VERSION = 1
 #          convergence, curves without points refused (tcs_fixes_protocol.md)
 #   1.5.0  2026-10-21 efficiency points with a background fitted on S - kB; non-Poisson
 #          spectra reported (efficiency_poisson_protocol.md)
-ENGINE_VERSION = "1.5.0"
+#   1.6.0  2026-10-21 efficiency model error: outliers limited at 3 x the curve's scatter
+#          (model_error_outlier_protocol.md)
+ENGINE_VERSION = "1.6.0"
 
 
 class SessionSchemaError(ValueError):
