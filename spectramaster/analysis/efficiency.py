@@ -674,8 +674,9 @@ def fit_efficiency(points: Sequence[EfficiencyPoint], model: str = "loglog", ord
     curve.u_common_rel = u_common
     curve.cov_method = "gls"
     curve.selection = selection
+    capped: list = []
     curve.u_model_rel = model_error(points, model, order, order_high, float(crossover) if model == "two_branch"
-                                    else 200.0)
+                                    else 200.0, capped=capped)
     curve.e_min, curve.e_max = float(e.min()), float(e.max())
     curve.points = list(points)
     curve.warnings = []
@@ -686,6 +687,10 @@ def fit_efficiency(points: Sequence[EfficiencyPoint], model: str = "loglog", ord
         if p.use and abs(z) > OUTLIER_Z:
             curve.warnings.append(f"{p.nuclide} {p.energy:.1f} keV: {r_pct:+.1f} % from the curve "
                                   f"({z:+.1f} sigma) - check interferences, summing and the peak fit")
+    for p in capped:
+        curve.warnings.append(p if isinstance(p, str) else
+                              f"{p.nuclide} {p.energy:.1f} keV: leave-one-out prediction error beyond "
+                              f"{OUTLIER_Z:g} x the curve's scatter, limited in the model error")
     curve.date = meta.pop("date", "") or datetime.now().strftime("%Y-%m-%d %H:%M")
     for k, v in meta.items():
         if hasattr(curve, k):
@@ -781,6 +786,8 @@ def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0,
 
 
 OUTLIER_Z = 3.0                  # calibration points this far from the curve are listed for review
+MODEL_ERROR_TOL = 1e-12          # model_error fixed point: change of u_model (relative units)
+MODEL_ERROR_MAX_ITER = 200
 LOO_ORDERS = {"loglog": [(o, None) for o in (1, 2, 3, 4)],
               "two_branch": [(lo, hi) for lo in (1, 2, 3) for hi in (1, 2, 3)]}
 
@@ -842,16 +849,42 @@ def _loo_residuals(points, model, order, order_high, crossover):
 
 
 def model_error(points: Sequence[EfficiencyPoint], model: str, order: int, order_high: Optional[int] = 2,
-                crossover: float = 200.0) -> float:
+                crossover: float = 200.0, capped: Optional[list] = None) -> float:
     """Relative interpolation (model) error: the part of the leave-one-out prediction errors
     not explained by the point uncertainties and the prediction uncertainty,
     u_model^2 = max(0, mean(r_i^2 - s_i^2 - v_i)).  Added to the curve uncertainty; 0 when the
-    points do not allow leaving one out."""
+    points do not allow leaving one out.
+
+    Each r_i^2 is limited to Z^2 (s_i^2 + v_i + u_model^2), Z = OUTLIER_Z, iterated from the plain
+    value to a fixed point, so an outlier's own term no longer sets the error of the whole curve,
+    while scatter shared by many points is kept (docs/baseline/model_error_outlier_protocol.md, D2).
+    The outlier still enters the leave-one-out fits of the other points, so with few points its
+    influence is not bounded.  Without a point beyond the limit the plain value is returned unchanged.  The limited points are appended
+    to `capped`; a "no convergence" note is appended as a string."""
     res = _loo_residuals(points, model, order, order_high, crossover)
     if not res:
         return 0.0
     ex = float(np.mean([r * r - s * s - v for r, s, v in res]))
-    return math.sqrt(ex) if ex > 0 else 0.0
+    plain = math.sqrt(ex) if ex > 0 else 0.0
+    r2 = np.array([r * r for r, _s, _v in res])
+    base = np.array([s * s + v for _r, s, v in res])
+    u2 = plain * plain
+    if not np.any(r2 > OUTLIER_Z ** 2 * (base + u2)):
+        return plain
+    for _ in range(MODEL_ERROR_MAX_ITER):
+        new = max(float(np.mean(np.minimum(r2, OUTLIER_Z ** 2 * (base + u2)) - base)), 0.0)
+        done = abs(math.sqrt(new) - math.sqrt(u2)) <= MODEL_ERROR_TOL
+        u2 = new
+        if done:
+            break
+    else:
+        if capped is not None:
+            capped.append("model error: the outlier limit did not converge, plain value kept")
+        return plain
+    if capped is not None:
+        use = [p for p in points if p.use and p.efficiency > 0 and p.energy > 0]
+        capped.extend(p for p, a, b in zip(use, r2, base) if a > OUTLIER_Z ** 2 * (b + u2))
+    return math.sqrt(u2)
 
 
 def select_orders(points: Sequence[EfficiencyPoint], model: str, crossover: Optional[float] = None,
