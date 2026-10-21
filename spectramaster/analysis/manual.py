@@ -49,16 +49,36 @@ def counts_sha256(spectrum) -> str:
 
 def refit_region(spectrum, lo: int, hi: int, centroids: Sequence[float],
                  width: Union[str, float] = "free", step: bool = True,
-                 fix_centroids: Optional[Sequence[bool]] = None, min_sig: float = 3.0) -> RegionFit:
+                 fix_centroids: Optional[Sequence[bool]] = None, min_sig: float = 3.0,
+                 variance=None) -> RegionFit:
     """Fit absolute channels ``lo..hi`` with peaks starting at ``centroids`` (absolute channels).
 
     `min_sig` only labels weak components ("below decision threshold" in ``Peak.note``); they
-    are still returned.
+    are still returned.  `variance`: per-channel variance of the counts when they are not raw
+    Poisson counts (a background-subtracted spectrum: S + k^2 B), as in ``find_peaks``: the counts
+    are then used as they are (negative channels kept) and every weight and uncertainty uses it.
+    Without it, a spectrum that is not Poisson or has negative channels is fitted with clipped
+    counts and Poisson weights, and the peaks say that their uncertainties are not valid
+    (docs/baseline/manual_fit_variance_protocol.md).
     """
-    y = np.maximum(np.asarray(spectrum.counts, dtype=float), 0.0)
+    y = np.asarray(spectrum.counts, dtype=float)
     n = len(y)
+    var = None
+    if variance is not None:
+        var = np.asarray(variance, dtype=float)
+        if var.shape != y.shape or not np.isfinite(var).all():
+            raise ValueError("variance must have one finite value per channel")
+        var = np.maximum(var, 0.0)
     f0 = spectrum.first_channel
     lo_i, hi_i = int(max(min(lo, hi) - f0, 0)), int(min(max(lo, hi) - f0, n - 1))
+    invalid = None
+    if var is None:
+        from .background import not_poisson_note
+        n_neg = int((y[lo_i:hi_i + 1] < 0).sum())
+        if not_poisson_note(spectrum) or n_neg:
+            invalid = (f"channel contents are not Poisson counts and no variance was given: uncertainties "
+                       f"not valid; {n_neg} negative channel(s) of the region set to zero")
+        y = np.maximum(y, 0.0)
     cents = sorted(float(c) - f0 for c in centroids)
     if not cents:
         raise ValueError("at least one peak position is required")
@@ -69,7 +89,7 @@ def refit_region(spectrum, lo: int, hi: int, centroids: Sequence[float],
     fix = list(fix_centroids) if fix_centroids is not None else [False] * len(cents)
     if len(fix) != len(cents):
         raise ValueError("fix_centroids must have one entry per peak")
-    f, src, _start = width_model(spectrum, y)
+    f, src, _start = width_model(spectrum, y, var=var)
     from .peaks import loglinear_continuum
     if width == "free":
         model, free, bounds = _Model(f), True, WIDTH_BOUNDS_FREE
@@ -83,11 +103,16 @@ def refit_region(spectrum, lo: int, hi: int, centroids: Sequence[float],
     options = {"lo": int(lo_i + f0), "hi": int(hi_i + f0), "centroids": [c + f0 for c in cents],
                "width": width, "step": bool(step), "fix_centroids": fix, "fwhm_model": src,
                "counts_sha256": counts_sha256(spectrum)}
+    if var is not None:
+        options["variance"] = "explicit"
+        options["variance_sha256"] = hashlib.sha256(np.ascontiguousarray(var).tobytes()).hexdigest()
+    if invalid:
+        options["not_poisson"] = invalid
     model.loglinear = loglinear_continuum(spectrum)       # same continuum shape as find_peaks
     from .peaks import peak_tail_of
     model.tail = peak_tail_of(spectrum)                   # and the same peak-shape calibration
     r = _fit_group(y, model, cents, lo_i, hi_i, free_width=free, step=step, width_bounds=bounds,
-                   fix_centroids=fix)
+                   fix_centroids=fix, var=var)
     if r is None:
         return RegionFit([], None, options)
     peaks = []
@@ -101,11 +126,16 @@ def refit_region(spectrum, lo: int, hi: int, centroids: Sequence[float],
         gross = float(y[roi_l:roi_r + 1].sum())
         bkg = float(np.maximum(r.bkg(xr), 0).sum())
         # same Poisson floor as the automatic search, so manual and automatic areas compare
-        unc = max(unc, math.sqrt(max(area, 0) + 2.0 * bkg) * 0.7)
+        if var is None:
+            unc = max(unc, math.sqrt(max(area, 0) + 2.0 * bkg) * 0.7)
+        else:
+            v_roi = float(var[roi_l:roi_r + 1].sum())
+            unc = max(unc, math.sqrt(max(2.0 * v_roi - max(area, 0.0), v_roi)) * 0.7, 1.0)
         sig = area / unc
         p = _make_peak(spectrum, c, float(r.cent_unc[j]), fw, area, unc, gross, bkg, roi_l, roi_r, sig,
                        len(r.centroids))
-        p.note = MANUAL_NOTE + ("; below decision threshold" if sig < min_sig else "")
+        p.note = (MANUAL_NOTE + ("; below decision threshold" if sig < min_sig else "")
+                  + (f"; {invalid}" if invalid else ""))
         peaks.append(p)
         kept[j] = True
         if sig < min_sig:
