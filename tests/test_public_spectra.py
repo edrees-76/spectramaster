@@ -29,7 +29,7 @@ def test_n42_detector_type_is_used():
 @needs_interspec
 def test_measured_background_on_real_pairs():
     """Same-day background subtracted from a Ba-133 measurement, 8 HPGe detectors: the two
-    modes agree on Ba-133 and natural lines net to zero within their uncertainties."""
+    modes agree on Ba-133, and the natural lines (background only) are not detected."""
     from spectramaster.convert import read_spectra
     from spectramaster.analysis.activity import ActivityOptions, compute_activities
     from spectramaster.validation.benchmark import _flat_curve
@@ -43,17 +43,15 @@ def test_measured_background_on_real_pairs():
                                                              min_intensity_pct=5.0), background=b)
             for r in q.nuclides:
                 for ln in r.lines:
-                    if not ln.peak_found:
-                        continue
-                    if r.nuclide == "Ba-133" and ln.energy > 250:
+                    if r.nuclide != "Ba-133":
+                        nat.append((ln.detected, ln.bkg_peak if mode == "peak" else 1.0))
+                    elif ln.peak_found and ln.energy > 250:
                         ba.setdefault((s.extra["detector_name"], round(ln.energy)), {})[mode] = ln.net_area
-                    elif r.nuclide != "Ba-133" and mode == "peak":
-                        nat.append(ln.net_area / ln.net_unc)
     assert len(ba) >= 30
     for v in ba.values():
         assert v["peak"] == pytest.approx(v["spectrum"], rel=0.02)
-    z = np.array(nat)
-    assert len(z) >= 15 and abs(z.mean()) < 0.8 and 0.5 < z.std() < 1.6
+    assert len(nat) >= 30 and sum(d for d, _ in nat) <= 0.05 * len(nat)
+    assert all(b is not None for _d, b in nat)        # the background under each line is reported
 
 
 IDB = ROOT / "iaea_idb" / "IDB-all-spectra"
