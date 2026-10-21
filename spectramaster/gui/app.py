@@ -1087,6 +1087,11 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         if token != self._ana_token:
             return
         self.analysis_panel.set_results(peaks, matches, identified, getattr(self, "_ana_application", None))
+        from ..analysis.background import not_poisson_note
+        if not_poisson_note(self.current_spectrum()):
+            banner = self.analysis_panel.banner
+            prev = "" if banner.isHidden() else banner.text() + "\n\n"
+            self.analysis_panel.show_message(prev + tr("ana_not_poisson"))
         self.plot.set_peaks(peaks)
         self.plot.set_highlight(None)
         if self.analysis_dock.isHidden():

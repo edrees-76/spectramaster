@@ -310,6 +310,7 @@ def _peak_rows(peaks, with_id=False):
 
 def cmd_peaks(args) -> int:
     from .analysis import find_peaks
+    from .analysis.background import not_poisson_note
     status = 0
     for path, title, s in _analysis_targets(args):
         if s is None:
@@ -320,6 +321,9 @@ def cmd_peaks(args) -> int:
         print("=" * min(len(title), 100))
         if not s.energy_coeffs:
             print("  (spectrum is not energy calibrated: energies not available)")
+        note = not_poisson_note(s)
+        if note:
+            _err(f"warning: {title}: {note}")
         print(f"  {len(peaks)} peak(s), significance >= {args.min_sig:g}")
         _print_table(_peak_rows(peaks), ("#", "Channel", "keV", "FWHM keV", "Net", "Unc %", "cps", "Sig", "Note"))
         print()

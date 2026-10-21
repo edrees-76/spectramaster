@@ -57,7 +57,9 @@ SCHEMA_VERSION = 1
 #          threshold with blank and reference peaks; manual peak edits used (combined_corrections_protocol.md)
 #   1.4.0  2026-10-21 summing correction: daughter cascades, unestimable partners, calibration refit to
 #          convergence, curves without points refused (tcs_fixes_protocol.md)
-ENGINE_VERSION = "1.4.0"
+#   1.5.0  2026-10-21 efficiency points with a background fitted on S - kB; non-Poisson
+#          spectra reported (efficiency_poisson_protocol.md)
+ENGINE_VERSION = "1.5.0"
 
 
 class SessionSchemaError(ValueError):
