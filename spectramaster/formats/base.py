@@ -99,7 +99,7 @@ def get_format(key_or_code) -> FormatSpec:
 
 
 # When several content tests match, the more specific format wins over the more general one.
-CONTENT_PREFERENCE = (("chandata_csv", "ascii2"), ("iaea_ascii_dat", "eml_sanderson"),
+CONTENT_PREFERENCE = (("chandata_csv", "ascii2"), ("eml_sanderson", "iaea_ascii_dat"),
                       ("wallac_ascii", "ascii1"), ("laval_ascii", "ascii1"))
 
 

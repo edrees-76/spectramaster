@@ -75,3 +75,43 @@ Outputs go to a new folder `docs/baseline/after_ID1/`.
 ## Results
 
 (appended after the run)
+
+Run 2026-10-22, engine 1.9.0 (unchanged). The text above the line is unchanged (SHA-256 of the
+pre-registered part still 49bd9dda354f5e731f7e09ac3abd9d097b0a93c31f948e212db9fcf6efade284).
+Outputs in `docs/baseline/after_ID1/`:
+* `iaea_dat_detection_results.json`: ID.C1 and ID.C2. Per-file flags and real times only; no EML
+  counts are stored.
+* `baseline.*`;
+* `any_extension_collection.json`.
+
+| id | value | limit | result |
+|---|---|---|---|
+| ID.C1 round trip of our output | 15 cases (5 spectra x 3 names), 0 differences from `read_iaea_dat` | 0 | PASS |
+| ID.C2a EML files, own name and `.xyz` | 38 files, all `eml_sanderson` under both names, 0 differences | 0 | PASS |
+| ID.C2b EML files against `main` | 38 files, 0 failures; 36 with time channels (channels 0 and 1 now 0); real time unchanged in all 38 (channel 1 is 0 or equal to the live time) | as registered | PASS |
+| ID.C3 benchmark against after_TO2 | 0 differences, key order included (runtime fields excepted); 154 PASS / 13 FAIL / 60 REPORT | | PASS |
+| ID.C4 new unit tests | `tests/test_iaea_dat_detection.py`, 11 passed | | PASS |
+| ID.C5 full suite | 1378 passed, 69 skipped; no existing test changed | | PASS |
+
+Reported:
+* **ID.C1 detected formats.** Field widths 7 and 8 (512-channel, HPGe, NaI and >= 1e6 spectra)
+  are detected as `eml_sanderson` under all three names. Width 9 (>= 1e7) is detected as
+  `iaea_ascii_dat`, because its rows are 90 characters, wider than the 70 or 80 the Sanderson test
+  accepts. All cases read identically to `read_iaea_dat`.
+* **36 EML files with time channels**, as expected. BKG.DAT (channel 0 = 0) and CALIBR01.DAT (no
+  `LT=`) are read as before.
+* **Unit-test check.** The touching-fields test fails with the old content preference, as intended:
+  the split reader would shift the channels.
+* **`any_extension` harness against after_AX1.** One row of 319 changes: `write:iaea_ascii_dat`.
+  * Before: the sum was 48191 under its own name and 47990 under the other names (live time 100
+    and real time 101 were counted as counts).
+  * Now: 47990 under all names, read as `eml_sanderson`.
+  * The negative list gains only the result files added to `docs/` since after_AX1; none is
+    recognised.
+
+**What ships.**
+* Our IAEA ASCII `.dat` output reads with its live time, real time and counts under any name. Its
+  first two channels are no longer counted as counts.
+* An EML layout file is read by the same fixed-width reader whatever its name.
+* The format label of our output is still "EML/Sanderson", because the content of the two is
+  identical. This is documented here, not hidden.
