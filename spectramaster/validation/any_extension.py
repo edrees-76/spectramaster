@@ -1,10 +1,12 @@
 """Reading spectrum files with any extension: criteria AX.C1-AX.C4.
 
-    python -m spectramaster.validation.any_extension [--src CODE_ROOT] [--before before.json] [--out DIR]
+    python -m spectramaster.validation.any_extension [--before before.json] [--out DIR]
 
-Protocol and limits: ``docs/baseline/any_extension_protocol.md``.  ``--src`` runs the collection
-with another copy of the code (the "before" export of origin/main); the collection then runs in
-a child process with that root first on ``sys.path``.
+Protocol and limits: ``docs/baseline/any_extension_protocol.md``.  To collect with another copy of
+the code (the "before" export of origin/main), run this file directly with that copy first on the
+path::
+
+    PYTHONPATH=<export> python spectramaster/validation/any_extension.py --out DIR
 """
 from __future__ import annotations
 
@@ -12,7 +14,6 @@ import argparse
 import csv
 import json
 import shutil
-import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -97,16 +98,6 @@ def collect() -> dict:
         shutil.rmtree(tmp, ignore_errors=True)
 
 
-def collect_with(src: Path) -> dict:
-    with tempfile.TemporaryDirectory() as td:
-        out = Path(td) / "c.json"
-        code = ("import sys, json, runpy; sys.path.insert(0, sys.argv[1]); "
-                "m = runpy.run_path(sys.argv[2]); "
-                "json.dump(m['collect'](), open(sys.argv[3], 'w', encoding='utf-8'))")
-        subprocess.run([sys.executable, "-c", code, str(src), __file__, str(out)], check=True, cwd=td)
-        return json.loads(out.read_text(encoding="utf-8"))
-
-
 def evaluate(before: dict, after: dict) -> dict:
     b = {r["file"]: r for r in before["rows"]}
     a = {r["file"]: r for r in after["rows"]}
@@ -170,11 +161,10 @@ def report(ev: dict) -> str:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument("--src", type=Path, default=None, help="code root to collect with (default: this code)")
     ap.add_argument("--before", type=Path, default=None, help="collection of the code before the change")
     ap.add_argument("--out", type=Path, default=None)
     a = ap.parse_args(argv)
-    data = collect_with(a.src) if a.src else collect()
+    data = collect()
     if a.out:
         a.out.mkdir(parents=True, exist_ok=True)
     if a.before is None:

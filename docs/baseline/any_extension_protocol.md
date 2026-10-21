@@ -154,3 +154,10 @@ Reported only:
 * The "cannot recognise" error now says the input format can be chosen by hand. The GUI shows
   the content note in the status bar after opening; `spectramaster info` prints it as a
   "Note" row.
+
+**Addendum (after the PR was opened).** SonarCloud failed the PR's security rating:
+`collect_with()` passed the `--src` path to a child process (rule pythonsecurity:S8705). The
+harness no longer starts a process and has no `--src`. The "before" collection is now made by
+running the file with `PYTHONPATH` set to the export. Re-collected that way, the 319 file rows are
+identical to the recorded `any_extension_before.json`. The negative list differs only by the two
+result files added to `docs/` after the first collection. No result above changes.
