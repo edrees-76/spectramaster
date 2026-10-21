@@ -695,6 +695,8 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                     if c.ignored > 0.01:
                         lr.note = (lr.note + f"; coincident photons below the efficiency curve left out "
                                    f"({100 * c.ignored:.0f} % of decays)").strip("; ")
+                    if c.note:
+                        lr.note = (lr.note + "; " + c.note).strip("; ")
             # blank (continuum) under the expected peak
             cu = continuum_under(spectrum, e, fw_ch)
             if cu is None:

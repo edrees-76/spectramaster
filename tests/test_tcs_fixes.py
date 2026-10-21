@@ -25,7 +25,8 @@ pt = tcs_mc.peak_to_total
 
 # ------------------------------------------------------------------ TF.C1 Bi-207
 def _hand_coi(energy):
-    """Summing-out of `energy` from the raw table records of Bi-207 and Pb-207m, weighted by hand."""
+    """Summing-out of `energy` from the raw table records of Bi-207 and Pb-207m, weighted by hand
+    (gamma-gamma and, since annihilation_summing_protocol.md, 511 keV annihilation)."""
     tab = json.loads(co.TABLE.read_text(encoding="utf-8"))["nuclides"]
     lib = json.loads(co.LIBRARY.read_text(encoding="utf-8"))["nuclides"]["Bi-207"]
     f = dict(zip(lib["includes"], lib["include_factors"]))
@@ -43,6 +44,8 @@ def _hand_coi(energy):
             for j in range(len(g)):
                 pj = p.get((k, j), 0.0) + (g[j, 1] * p.get((j, k), 0.0) / g[k, 1] if g[k, 1] > 0 else 0.0)
                 out += pj * min(float(ep(g[j, 0])) / float(pt(g[j, 0])), 1.0)
+            ann = dict((int(i), float(v)) for i, v in rec.get("ann", []))      # 511 keV pair (Bi-207 beta+)
+            out += ann.get(k, 0.0) * 2.0 * min(float(ep(511.0)) / float(pt(511.0)), 1.0)
             wk = w * float(rec["br"]) * g[k, 1]
             num += wk * out
             wsum += wk

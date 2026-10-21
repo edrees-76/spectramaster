@@ -58,7 +58,8 @@ def library_nuclides(path: Path = LIBRARY) -> list[str]:
 
 
 def read_transitions(data: bytes) -> dict[str, list[dict]]:
-    """{sandia parent symbol: [transition records]} with the raw gamma ids and coincidences."""
+    """{sandia parent symbol: [transition records]} with the raw gamma ids and coincidences, and
+    the EC / beta+ branches (endpoint keV, intensity per decay of the transition)."""
     ns = "{sandia.decay.xsd}"
     out: dict[str, list[dict]] = {}
     for t in ET.fromstring(data).iter(ns + "t"):
@@ -67,12 +68,88 @@ def read_transitions(data: bytes) -> dict[str, list[dict]]:
             co = [(c.get("id"), float(c.get("i"))) for c in g.findall(ns + "c")]
             gammas.append({"e": float(g.get("e")), "i": float(g.get("i")), "id": g.get("id"), "c": co})
         if gammas:
-            out.setdefault(t.get("p"), []).append({"br": float(t.get("br", "1")), "g": gammas})
+            out.setdefault(t.get("p"), []).append({
+                "br": float(t.get("br", "1")), "g": gammas,
+                "ec": [(float(x.get("e")), float(x.get("i"))) for x in t.findall(ns + "ec")],
+                "p": [(float(x.get("e")), float(x.get("i"))) for x in t.findall(ns + "p")]})
     return out
 
 
+# ------------------------------------------------------------------ annihilation (beta+) coincidences
+# docs/baseline/annihilation_summing_protocol.md: the source gives no level of the EC / beta+ branches;
+# it is reconstructed from the cascade (top level of each gamma), Q from the branch endpoints.
+ME2_KEV = 1021.998        # 2 m_e c^2: beta+ endpoint = Q - 2 m_e c^2 - level
+ANN_LEVEL_TOL = 6.0       # keV, branch level <-> cascade level (one source endpoint is off by 5 keV)
+ANN_MIN = 1.0e-4          # P(beta+ | gamma) below this is not tabulated
+ANN_MAX = 1.001           # above: the reconstruction does not describe the transition
+
+
+def gamma_tops(gammas: list[dict]) -> list[float | None]:
+    """Top level of each gamma: its energy plus the highest top among the gammas following it
+    (a gamma followed by none ends on the ground state); None inside an inconsistent loop."""
+    by_id = {g["id"]: k for k, g in enumerate(gammas) if g["id"] is not None}
+    succ = [[by_id[c] for c, p in g["c"] if c in by_id and p > 0] for g in gammas]
+    top: list[float | None] = [None] * len(gammas)
+    for _ in range(len(gammas) + 1):
+        for i, g in enumerate(gammas):
+            if top[i] is None and all(top[j] is not None for j in succ[i]):
+                top[i] = g["e"] + max((top[j] for j in succ[i]), default=0.0)
+    return top
+
+
+def annihilation(tr: dict) -> tuple[dict[int, float], bool]:
+    """({raw gamma index: P(beta+ | gamma)}, resolved) of one transition.  Unresolved when a beta+
+    branch matches no level or a probability exceeds ANN_MAX; then nothing is returned."""
+    pos = [(e, i) for e, i in tr.get("p", []) if i > 0]
+    if not pos:
+        return {}, True
+    gammas = tr["g"]
+    top = gamma_tops(gammas)
+    levels = sorted({0.0} | {t for t in top if t is not None})
+    ec = [(e, i) for e, i in tr.get("ec", []) if i > 0]
+
+    def implied(q):
+        return [(q - e, i) for e, i in ec] + [(q - ME2_KEV - e, i) for e, i in pos]
+
+    def near(x):
+        best = min(levels, key=lambda lv: abs(x - lv))
+        return best if abs(x - best) <= ANN_LEVEL_TOL else None
+
+    cands = sorted({e + lv for e, _ in ec for lv in levels} | {e + ME2_KEV + lv for e, _ in pos for lv in levels})
+    q = max(cands, key=lambda c: (sum(i for x, i in implied(c) if near(x) is not None), -c))
+    feed: dict[float, float] = {}
+    for e, i in pos:
+        lv = near(q - ME2_KEV - e)
+        if lv is None:
+            return {}, False
+        feed[lv] = feed.get(lv, 0.0) + i
+    by_id = {g["id"]: k for k, g in enumerate(gammas) if g["id"] is not None}
+    after = [{by_id[c]: p for c, p in g["c"] if c in by_id} for g in gammas]
+    leaving = {lv: [m for m, t in enumerate(top) if t is not None and abs(t - lv) <= 1e-6] for lv in feed}
+    out = {}
+    for k, g in enumerate(gammas):
+        if g["i"] <= 0:
+            continue
+        s = 0.0
+        for lv, f in feed.items():
+            flux = sum(gammas[m]["i"] for m in leaving[lv])
+            if flux <= 0:
+                continue
+            for m in leaving[lv]:
+                s += f * gammas[m]["i"] / flux * (1.0 if m == k else after[m].get(k, 0.0))
+        p = s / g["i"]
+        if p > ANN_MAX:
+            return {}, False
+        if p >= ANN_MIN:
+            out[k] = min(p, 1.0)
+    return out, True
+
+
 def compact(tr: dict) -> dict:
-    """Keep gammas >= MIN_GAMMA, re-index, resolve coincidence ids (within the transition)."""
+    """Keep gammas >= MIN_GAMMA, re-index, resolve coincidence ids (within the transition); add the
+    annihilation entries ``ann`` = [[i, P(beta+ | i)]] or ``ann_unresolved``."""
+    ann, resolved = annihilation(tr)
+    ann_keep = {id(tr["g"][k]): p for k, p in ann.items()}
     keep = [g for g in tr["g"] if g["i"] >= MIN_GAMMA]
     by_id = {g["id"]: k for k, g in enumerate(keep) if g["id"] is not None}
     pairs, dropped = [], 0
@@ -88,6 +165,11 @@ def compact(tr: dict) -> dict:
     rec = {"br": tr["br"], "g": [[round(g["e"], 4), float(f"{g['i']:.6g}")] for g in keep], "c": pairs}
     if dropped:
         rec["dropped"] = dropped
+    a = [[k, round(ann_keep[id(g)], 6)] for k, g in enumerate(keep) if id(g) in ann_keep]
+    if a:
+        rec["ann"] = a
+    if not resolved:
+        rec["ann_unresolved"] = True
     return rec
 
 
@@ -111,18 +193,20 @@ def build(src, out: Path = OUT) -> dict:
     table = {}
     for name in library_nuclides():
         recs = [compact(t) for t in trans.get(sandia_name(name), [])]
-        recs = [r for r in recs if r["c"]]
+        recs = [r for r in recs if r["c"] or r.get("ann") or r.get("ann_unresolved")]
         if recs:
             table[name] = recs
     doc = {"format": 1,
-           "description": "Gamma-gamma coincidence probabilities for true-coincidence summing corrections",
+           "description": ("Gamma-gamma and annihilation coincidence probabilities for true-coincidence "
+                           "summing corrections"),
            "convention": "per transition: br, g = [[keV, gammas per decay of the transition]], "
                          "c = [[i, j, P(j emitted | i emitted)]], i above j in the cascade; "
-                         "gamma-gamma only (no X-ray coincidences)",
+                         "ann = [[i, P(beta+ in the same decay | i emitted)]] (two 511 keV photons per "
+                         "beta+), ann_unresolved = beta+ feeding not reconstructed; no X-ray coincidences",
            "source": {"file": "sandia.decay.min.xml", "project": "SandiaDecay https://github.com/sandialabs/SandiaDecay",
                       "commit": SOURCE_COMMIT, "sha256": digest,
                       "license": "LGPL-2.1", "min_gamma": MIN_GAMMA, "min_coinc": MIN_COINC,
-                      "reverse_tol": REVERSE_TOL},
+                      "reverse_tol": REVERSE_TOL, "ann_level_tol_kev": ANN_LEVEL_TOL, "ann_min": ANN_MIN},
            "nuclides": table}
     out.write_text(json.dumps(doc, indent=0, separators=(",", ":"), ensure_ascii=False) + "\n", encoding="utf-8")
     return doc
