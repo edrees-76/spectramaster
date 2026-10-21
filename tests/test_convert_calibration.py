@@ -28,7 +28,10 @@ def test_refit_keeps_energies_close(tmp_path, key):
 
 def test_no_warning_when_format_holds_calibration(tmp_path):
     fmt = resolve_format("iaea_spe")
-    assert write_spectrum(_spectrum(), tmp_path / "x.spe", fmt) == []
+    warnings = write_spectrum(_spectrum(), tmp_path / "x.spe", fmt)
+    assert not any("calibration terms" in w for w in warnings)
+    # the read-back check reports the single-precision storage of the coefficients (a few eV)
+    assert all("energies changed by up to 0.00" in w for w in warnings), warnings
 
 
 def test_quadratic_untouched(tmp_path):

@@ -33,6 +33,8 @@ def read_spectra(path: Path, fmt: Optional[FormatSpec] = None) -> tuple[list[Spe
 # spectrum is ~6 keV at the top end), so we refit before handing over.
 MAX_CAL_TERMS = {
     "ortec_chn": 3,
+    "iec1455": 4,
+    "chandata_csv": 3,
     "ortec_spc": 3,
     "spc_float": 3,
     "ci_s100": 3,
@@ -93,12 +95,15 @@ DATE_REQUIRED = {
 _ARABIC_DIGITS = {**{0x0660 + i: str(i) for i in range(10)}, **{0x06F0 + i: str(i) for i in range(10)}}
 
 
+TEXT_ATTRS = {"sample ID": "sample_id", "description": "description", "detector": "detector"}
+
+
 def _text_fields(spec: Spectrum):
-    return (("sample ID", spec.sample_id), ("description", spec.description))
+    return tuple((name, getattr(spec, attr)) for name, attr in TEXT_ATTRS.items())
 
 
-def text_warning(spec: Spectrum, fmt: FormatSpec) -> Optional[str]:
-    """Warning if `fmt` cannot store the non-ASCII text of `spec`, else None."""
+def _lost_text_fields(spec: Spectrum, fmt: FormatSpec) -> list[str]:
+    """Text fields of `spec` with characters `fmt` cannot hold (by its code page)."""
     if fmt.key in CP1256_TEXT:
         def lost(v):
             try:
@@ -106,16 +111,20 @@ def text_warning(spec: Spectrum, fmt: FormatSpec) -> Optional[str]:
                 return False
             except UnicodeEncodeError:
                 return True
-        fields = [name for name, value in _text_fields(spec) if value and lost(value)]
-        if not fields:
-            return None
-        return (f"{fmt.name} stores text in the Arabic code page (cp1256): characters it cannot hold "
-                f"in the {' and '.join(fields)} are lost")
-    if fmt.key not in ASCII_ONLY_TEXT:
-        return None
-    fields = [name for name, value in _text_fields(spec) if value and not value.isascii()]
+        return [name for name, value in _text_fields(spec) if value and lost(value)]
+    if fmt.key in ASCII_ONLY_TEXT:
+        return [name for name, value in _text_fields(spec) if value and not value.isascii()]
+    return []
+
+
+def text_warning(spec: Spectrum, fmt: FormatSpec) -> Optional[str]:
+    """Warning if `fmt` cannot store the non-ASCII text of `spec`, else None."""
+    fields = _lost_text_fields(spec, fmt)
     if not fields:
         return None
+    if fmt.key in CP1256_TEXT:
+        return (f"{fmt.name} stores text in the Arabic code page (cp1256): characters it cannot hold "
+                f"in the {' and '.join(fields)} are lost")
     return (f"{fmt.name} stores only ASCII text: non-ASCII (e.g. Arabic) characters in the "
             f"{' and '.join(fields)} are lost")
 
@@ -148,8 +157,8 @@ def _fit_for_format(spec: Spectrum, fmt: FormatSpec, warnings: list[str]) -> Spe
     if fmt.key in CP1256_TEXT | ASCII_ONLY_TEXT:
         fields = [name for name, value in _text_fields(spec) if value and value != value.translate(_ARABIC_DIGITS)]
         if fields:
-            changes["sample_id"] = spec.sample_id.translate(_ARABIC_DIGITS)
-            changes["description"] = spec.description.translate(_ARABIC_DIGITS)
+            for attr in TEXT_ATTRS.values():
+                changes[attr] = getattr(spec, attr).translate(_ARABIC_DIGITS)
             warnings.append(f"{fmt.name} cannot store Arabic-Indic digits: written as 0-9 in the "
                             f"{' and '.join(fields)}")
     return replace(spec, **changes)
@@ -190,7 +199,97 @@ def write_spectrum(spec: Spectrum, path: Path, fmt: FormatSpec) -> list[str]:
         warnings.append(tw)
     Path(path).parent.mkdir(parents=True, exist_ok=True)
     fmt.writer(spec, Path(path))
+    warnings.extend(read_back_differences(spec, Path(path), fmt))
     return warnings
+
+
+def read_back_differences(spec: Spectrum, path: Path, fmt: FormatSpec) -> list[str]:
+    """Differences between `spec` (as meant to be written: after the reported rounding, refit and
+    digit changes) and the file read back with the same format, other than those already reported
+    (docs/baseline/format_fidelity_check_protocol.md).  Never raises."""
+    import numpy as np
+    from numpy.polynomial import polynomial as P
+
+    tag = f"{fmt.name} (checked by reading the file back)"
+    if not fmt.can_read:
+        return [f"{fmt.name}: the written file cannot be read back here, so it could not be checked"]
+    try:
+        back = fmt.reader(Path(path))[0]
+    except Exception as exc:
+        return [f"{fmt.name}: the written file could not be read back to check it ({type(exc).__name__}: {exc})"]
+    out = []
+    want = np.asarray([float(c) for c in spec.counts])
+    if fmt.key in INTEGER_COUNTS:
+        want = np.round(want)
+    got = np.asarray([float(c) for c in back.counts])
+    f0, g0 = int(spec.first_channel or 0), int(back.first_channel or 0)
+    if len(got) != len(want):
+        out.append(f"{tag}: {len(want)} channels written, {len(got)} read back")
+    if g0 != f0:
+        out.append(f"{tag}: first channel {f0} written as {g0}")
+
+    def bad_of(shift):
+        """Written element i <-> read element i + shift: (i0, i1, mismatch mask) over the overlap."""
+        i0, i1 = max(0, -shift), min(len(want), len(got) - shift)
+        if i1 <= i0:
+            return i0, i1, None
+        a, b = want[i0:i1], got[i0 + shift:i1 + shift]
+        whole = np.abs(a - np.round(a)) < 1e-12
+        return i0, i1, np.where(whole, a != b, np.abs(a - b) > 1e-6 * np.maximum(np.abs(a), 1.0))
+
+    # the same absolute channel, or the same position (an offset the format dropped)
+    tries = [(s,) + bad_of(s) for s in dict.fromkeys((f0 - g0, 0))]
+    tries = [r for r in tries if r[3] is not None]
+    if not tries:
+        out.append(f"{tag}: the channels read back do not overlap the channels written")
+        return out
+    shift, i0, i1, bad = min(tries, key=lambda r: (int(r[3].sum()), -(r[2] - r[1])))
+    if bad.any():
+        k = np.nonzero(bad)[0]
+        a, b = want[i0:i1], got[i0 + shift:i1 + shift]
+        out.append(f"{tag}: counts changed in {len(k)} channels (first at channel {f0 + i0 + int(k[0])}, "
+                   f"largest change {float(np.max(np.abs(a - b))):.6g} counts)")
+    coeffs = [float(c) for c in spec.energy_coeffs]
+    if any(coeffs):
+        if not any(back.energy_coeffs):
+            out.append(f"{tag}: energy calibration not stored")
+        else:
+            i = np.arange(i0, i1, dtype=float)
+            d = np.abs(P.polyval(f0 + i, coeffs) - P.polyval(g0 + shift + i, [float(c) for c in back.energy_coeffs]))
+            if float(d.max()) > 0.001:
+                out.append(f"{tag}: energies changed by up to {float(d.max()):.4g} keV")
+    for name in ("live_time", "real_time"):
+        w, g = getattr(spec, name), getattr(back, name)
+        label = name.replace("_", " ")
+        if w is None:
+            continue
+        if g is None or (w and not g):
+            out.append(f"{tag}: {label} not stored")
+        elif abs(float(g) - float(w)) > 1e-6 * max(abs(float(w)), 1e-9):
+            out.append(f"{tag}: {label} {float(w):.6g} s written as {float(g):.6g} s")
+    ws, gs = spec.start_time, back.start_time
+    if ws is not None and gs is None:
+        out.append(f"{tag}: start time {ws:%Y-%m-%d %H:%M:%S} reads back as unknown")
+    elif ws is not None and abs((gs.replace(tzinfo=None) - ws.replace(tzinfo=None)).total_seconds()) >= 1.0:
+        out.append(f"{tag}: start time {ws:%Y-%m-%d %H:%M:%S} reads back as {gs:%Y-%m-%d %H:%M:%S}")
+    elif ws is None and gs is not None and fmt.key not in DATE_REQUIRED:
+        out.append(f"{tag}: the unknown start time reads back as {gs:%Y-%m-%d %H:%M:%S}")
+    lost = set(_lost_text_fields(spec, fmt))
+    for name, attr in TEXT_ATTRS.items():
+        w, g = (getattr(spec, attr) or "").strip(), (getattr(back, attr) or "").strip()
+        if w and w != g and name not in lost:
+            out.append(f"{tag}: {name} {w!r} reads back as {g!r}")
+    fw = [float(c) for c in spec.fwhm_coeffs]
+    if any(fw):
+        gf = [float(c) for c in back.fwhm_coeffs]
+        if not any(gf):
+            out.append(f"{tag}: resolution (FWHM) calibration not stored")
+        else:
+            n = max(len(fw), len(gf))
+            a, b = np.pad(fw, (0, n - len(fw))), np.pad(gf, (0, n - len(gf)))
+            if np.any(np.abs(a - b) > 1e-9 * np.maximum(np.abs(a), 1e-300)):
+                out.append(f"{tag}: resolution (FWHM) calibration changed")
+    return out
 
 
 def output_name(input_path: Path, out_fmt: FormatSpec, index: Optional[int] = None) -> str:
