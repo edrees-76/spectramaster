@@ -33,7 +33,8 @@ from .quant_strings import qtr
 from .sample_panel import ConcentrationView, SampleSection
 
 RES_COLS = ["res_col_nuclide", "res_col_lines", "res_col_net", "res_col_act", "res_col_spec", "res_col_mda",
-            "res_col_mda_spec", "res_col_decision", "res_col_best", "res_col_blank", "res_col_note"]
+            "res_col_mda_spec", "res_col_decision", "res_col_best", "res_col_blank", "res_col_primary",
+            "res_col_note"]
 UNITS = ["kg", "g", "L", "mL"]
 GEOMETRY_REFUSED = "the efficiency calibration belongs to another measurement geometry"
 LTR = "⁦{}⁩"
@@ -66,6 +67,14 @@ def _blank_text(r: act.NuclideResult) -> str:
     return f"{_g(k.blank_activity, 3)} ± {_g(k.blank_unc, 2)}"
 
 
+def _primary_text(r: act.NuclideResult, tr) -> str:
+    """Signed primary result Bq ± u of a nuclide not detected (empty when detected or none)."""
+    if r.detected or r.primary is None or r.primary_u is None:
+        return ""
+    text = f"{_g(r.primary, 3)} ± {_g(r.primary_u, 2)}"
+    return text + " " + tr("res_interfered") if r.primary_method == "interfered" else text
+
+
 def quant_table(res: Optional[act.QuantResults], lang: Optional[str] = None) -> tuple[list[str], list[list[str]]]:
     """Translated header and text rows of the results (for tables, reports and printing)."""
     if res is None:
@@ -90,7 +99,7 @@ def quant_table(res: Optional[act.QuantResults], lang: Optional[str] = None) -> 
             s = f"< {_g(r.specific_mda, 3)}" if r.specific_mda else ""
             dec = tr("res_lt_mda")
         rows.append([r.nuclide, r.lines_text, net, a, s, _g(r.mda, 3), _g(r.specific_mda, 3), dec,
-                     _best_text(r, bool(unit)), _blank_text(r), r.note])
+                     _best_text(r, bool(unit)), _blank_text(r), _primary_text(r, tr), r.note])
     return header, rows
 
 
@@ -223,6 +232,12 @@ class ActivityDialog(QDialog):
         self.mda_combo.addItem(qtr("act_mda_currie"), "currie")
         self.mda_combo.addItem(qtr("act_mda_iso"), "iso11929")
         row.addWidget(self.mda_combo)
+        row.addWidget(QLabel(qtr("act_decision")))
+        self.decision_combo = QComboBox()
+        self.decision_combo.addItem(qtr("act_decision_search"), "search")
+        self.decision_combo.addItem(qtr("act_decision_iso"), "iso11929")
+        self.decision_combo.setToolTip(qtr("act_decision_tip"))
+        row.addWidget(self.decision_combo)
         row.addWidget(QLabel(qtr("act_atten")))
         self.att_spin = QDoubleSpinBox()
         self.att_spin.setRange(0.1, 10)
@@ -570,7 +585,8 @@ class ActivityDialog(QDialog):
             method=self.method_combo.currentData(), ref_date=ref, quantity=q if q > 0 else None,
             quantity_unit=self.unit_combo.currentText(), quantity_rel_unc=self.qty_unc.value() / 100.0,
             attenuation=self.att_spin.value(), bkg_mode=self.bkg_mode.currentData(),
-            mda_method=self.mda_combo.currentData(), geometry=self.sample_geometry(),
+            mda_method=self.mda_combo.currentData(), decision=self.decision_combo.currentData(),
+            geometry=self.sample_geometry(),
             allow_geometry_mismatch=False, reference_peak=self.reference_peak(), tcs=self.tcs())
 
     def sample_geometry(self):

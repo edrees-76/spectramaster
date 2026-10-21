@@ -104,7 +104,7 @@ def cmd_activity(args) -> int:
             nuclides=nucl, method=args.method, ref_date=eff.parse_date(args.ref_date) if args.ref_date else None,
             quantity=args.mass, quantity_unit=args.unit, quantity_rel_unc=(args.mass_unc or 0.0) / 100.0,
             attenuation=args.attenuation, bkg_mode=args.bkg_mode, mda_method=args.mda,
-            reference_peak=_reference_peak(args), tcs=_tcs(args))
+            decision=args.decision, reference_peak=_reference_peak(args), tcs=_tcs(args))
         blank = None
         if args.blank:      # the reagent blank, analysed exactly like the sample
             blank = act.compute_activities(_read(args.blank), curve, opt, background=bkg)
@@ -230,6 +230,9 @@ def add_quant_commands(sub) -> None:
     p.add_argument("--nuclides", help="comma separated, default " + ",".join(act.DEFAULT_NUCLIDES))
     p.add_argument("--method", choices=["key", "mean"], default="key", help="key line or weighted mean")
     p.add_argument("--mda", choices=["currie", "iso11929"], default="currie")
+    p.add_argument("--decision", choices=["search", "iso11929"], default="search",
+                   help="detected: a search peak above the decision threshold (default), or also a window "
+                        "result above it (ISO 11929, about 5 %% false detections per line)")
     p.add_argument("--attenuation", type=float, default=1.0, help="self-attenuation correction factor")
     p.add_argument("-o", "--out", help="write results .csv or .xlsx")
     p.set_defaults(func=cmd_activity)
