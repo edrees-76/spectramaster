@@ -633,12 +633,10 @@ class ReportBatchDialog(QDialog):
             self.add_files([Path(p) for p in paths])
 
     def _add_folder(self) -> None:
-        from ..formats import readable_formats
-        from .dialogs import scan_folder
+        from .dialogs import scan_spectrum_files
         d = QFileDialog.getExistingDirectory(self, tr("fd_choose_folder"), self.settings.folder("folder_in"))
         if d:
-            exts = {e.lower() for f in readable_formats() for e in f.extensions} or None
-            self.add_files(scan_folder(Path(d), True, exts))
+            self.add_files(scan_spectrum_files(Path(d), True))
 
     def _browse_out(self) -> None:
         d = QFileDialog.getExistingDirectory(self, tr("fd_choose_folder"),

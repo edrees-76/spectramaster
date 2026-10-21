@@ -309,7 +309,11 @@ def write_jcac(spec: Spectrum, path: Path) -> None:
 
 
 def sniff_jcac(path: Path, head: bytes) -> bool:
-    if path.suffix.lower() != ".spc" or len(head) < 4 * JCAC_RESERVED + 64:
+    return path.suffix.lower() == ".spc" and content_jcac(path, head)
+
+
+def content_jcac(path: Path, head: bytes) -> bool:
+    if len(head) < 4 * JCAC_RESERVED + 64:
         return False
     try:
         size = path.stat().st_size
@@ -977,7 +981,7 @@ def sniff_v43(path: Path, head: bytes) -> bool:
 _NOTE = "Layout recovered from Aptec MCA v6.31 converter DLL (%s); no sample file available. "
 register(FormatSpec(70, "jcac_vax", "JCAC VAX", [".spc"], read_jcac, write_jcac, sniff_jcac,
                     _NOTE % "jcac_vax.dll" + "VAX F-floats: real, live, 14 reserved, counts.",
-                    aliases=["jcac"]))
+                    aliases=["jcac"], content_sniffer=content_jcac))
 register(FormatSpec(71, "nd66", "Nuclear Data ND66", [".001"], read_nd66, write_nd66, sniff_nd66,
                     _NOTE % "nd66.dll" + "512-byte PDP-11 header + 24-bit big-endian counts.",
                     aliases=["nd"]))

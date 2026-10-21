@@ -282,10 +282,8 @@ class BatchAnalysisDialog(QDialog):
             self.add_folder(folder)
 
     def add_folder(self, folder, recursive: bool = True) -> None:
-        from ..formats import readable_formats
-        from .dialogs import scan_folder
-        exts = {e for f in readable_formats() for e in f.extensions} or None
-        self.add_paths(scan_folder(Path(folder), recursive, exts))
+        from .dialogs import scan_spectrum_files
+        self.add_paths(scan_spectrum_files(Path(folder), recursive))
 
     def add_paths(self, paths) -> None:
         known = set(self.paths)

@@ -459,8 +459,10 @@ def write_chandata(spec: Spectrum, path: Path) -> None:
 
 
 def sniff_chandata(path: Path, head: bytes) -> bool:
-    if path.suffix.lower() != ".csv":
-        return False
+    return path.suffix.lower() == ".csv" and content_chandata(path, head)
+
+
+def content_chandata(path: Path, head: bytes) -> bool:
     lines = _head_lines(head)
     if not lines:
         return False
@@ -674,8 +676,10 @@ def write_iaea_dat(spec: Spectrum, path: Path) -> None:
 
 
 def sniff_iaea_dat(path: Path, head: bytes) -> bool:
-    if path.suffix.lower() != ".dat":
-        return False
+    return path.suffix.lower() == ".dat" and content_iaea_dat(path, head)
+
+
+def content_iaea_dat(path: Path, head: bytes) -> bool:
     lines = _head_lines(head)
     if not lines or len(lines) < 4 or "LT=" not in lines[0]:
         return False
@@ -733,6 +737,16 @@ def sniff_npl(path: Path, head: bytes) -> bool:
         return True
     rows = [l for l in lines[:30] if re.match(r"^\s*\d+:(\s+\d+){8}\s*$", l)]
     return len(rows) >= 5 and path.suffix.lower() == ".txt"
+
+
+def content_npl(path: Path, head: bytes) -> bool:
+    """Either branch of the NPL test, whatever the extension."""
+    lines = _head_lines(head)
+    if not lines:
+        return False
+    if any("Channel Contents for" in l for l in lines[:5]):
+        return True
+    return len([l for l in lines[:30] if re.match(r"^\s*\d+:(\s+\d+){8}\s*$", l)]) >= 5
 
 
 # ============================================================ 67 Rump ASCII
@@ -837,8 +851,25 @@ def write_wallac(spec: Spectrum, path: Path) -> None:
 
 
 def sniff_wallac(path: Path, head: bytes) -> bool:
-    if path.suffix.lower() != ".001":
+    return path.suffix.lower() == ".001" and content_wallac(path, head)
+
+
+def content_wallac_strict(path: Path, head: bytes) -> bool:
+    """Without the extension: also exactly the 3 + WALLAC_CHANNELS lines the reader and writer use
+    (empty header lines included, trailing empty lines not), which tells it from a
+    one-count-per-line ASCII-1 file."""
+    if not content_wallac(path, head):
         return False
+    try:
+        lines = Path(path).read_bytes().splitlines()
+    except OSError:
+        return False
+    while lines and not lines[-1].strip():
+        lines.pop()
+    return len(lines) == 3 + WALLAC_CHANNELS
+
+
+def content_wallac(path: Path, head: bytes) -> bool:
     lines = _head_lines(head)
     if not lines or len(lines) < 30:
         return False
@@ -920,8 +951,10 @@ def write_laval(spec: Spectrum, path: Path) -> None:
 
 
 def sniff_laval(path: Path, head: bytes) -> bool:
-    if not re.fullmatch(r"\.de.", path.suffix.lower()):
-        return False
+    return re.fullmatch(r"\.de.", path.suffix.lower()) is not None and content_laval(path, head)
+
+
+def content_laval(path: Path, head: bytes) -> bool:
     lines = _head_lines(head)
     if not lines or len(lines) < 15:
         return False
@@ -945,6 +978,7 @@ register(FormatSpec(
 register(FormatSpec(
     code=62, key="chandata_csv", name="Aptec Channel Data CSV", extensions=[".csv"],
     reader=read_chandata, writer=write_chandata, sniffer=sniff_chandata, aliases=["chandata"],
+    content_sniffer=content_chandata,
     notes=_SRC + "chandata.dll. 'channel, energy, counts' per line; no times."))
 register(FormatSpec(
     code=63, key="ci90_ascii", name="Canberra Series 90 ASCII (read only)", extensions=[".o"],
@@ -959,11 +993,13 @@ register(FormatSpec(
 register(FormatSpec(
     code=65, key="iaea_ascii_dat", name="IAEA ASCII (Aptec, EML layout)", extensions=[".dat"],
     reader=read_iaea_dat, writer=write_iaea_dat, sniffer=sniff_iaea_dat, aliases=["iaea_dat"],
+    content_sniffer=content_iaea_dat,
     notes=_SRC + "iaea.dll. Header '<title> LT= ST=' + 10 counts/line; channels 0/1 carry live/real "
           "seconds. Same files as code 17 (EML/Sanderson)."))
 register(FormatSpec(
     code=66, key="npl_ascii", name="NPL ASCII", extensions=[".txt"],
     reader=read_npl, writer=write_npl, sniffer=sniff_npl, aliases=["npl"],
+    content_sniffer=content_npl,
     notes=_SRC + "npl_txt.dll. '%5d: ' + 8 counts, 1-based channels; channels 1/2 = live/real s."))
 register(FormatSpec(
     code=67, key="rump_ascii", name="Rump ASCII (RBS)", extensions=[".mac"],
@@ -973,9 +1009,11 @@ register(FormatSpec(
 register(FormatSpec(
     code=68, key="wallac_ascii", name="Wallac ASCII (1024 ch)", extensions=[".001"],
     reader=read_wallac, writer=write_wallac, sniffer=sniff_wallac, aliases=["wallac"],
+    content_sniffer=content_wallac_strict,
     notes=_SRC + "wallac.dll (import only in Aptec). 2 header lines, counting time, 1024 counts."))
 register(FormatSpec(
     code=69, key="laval_ascii", name="Laval ASCII", extensions=[".de1"],
     reader=read_laval, writer=write_laval, sniffer=sniff_laval, aliases=["laval"],
+    content_sniffer=content_laval,
     notes=_SRC + "laval.dll. One value per line: times, YYMMDD dates, detector, quantity, geometry, "
           "linear calibration, N, counts of channels 11..N-1."))

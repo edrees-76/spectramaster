@@ -3,20 +3,28 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field, replace
 from pathlib import Path
-from typing import Callable, Iterable, Optional
+from typing import Callable, Iterable, Optional, Sequence
 
-from .formats import FormatError, FormatSpec, detect_format, get_format, load_all
+from .formats import FormatError, FormatSpec, detect, get_format, load_all
 from .model import Spectrum
 
 
+CONTENT_NOTE = "format recognised from the content ({name}); choose the input format if this is wrong"
+
+
 def read_spectra(path: Path, fmt: Optional[FormatSpec] = None) -> tuple[list[Spectrum], FormatSpec]:
-    """Read a file. `fmt=None` means auto-detect."""
+    """Read a file. `fmt=None` means auto-detect, whatever the extension: a format recognised from
+    the content alone is recorded as ``extra["format_detection"] = "content"``."""
     load_all()
     path = Path(path)
+    how = "chosen"
     if fmt is None:
-        fmt = detect_format(path)
+        fmt, how, cands = detect(path)
+        if how == "ambiguous":
+            raise FormatError(f"{path.name} could be any of: {', '.join(f.name for f in cands)}; "
+                              "choose the input format")
         if fmt is None:
-            raise FormatError(f"cannot recognise the format of {path.name}")
+            raise FormatError(f"cannot recognise the format of {path.name}; the input format can be chosen by hand")
     if not fmt.can_read:
         raise FormatError(f"{fmt.name} cannot be read")
     spectra = fmt.reader(path)
@@ -25,7 +33,17 @@ def read_spectra(path: Path, fmt: Optional[FormatSpec] = None) -> tuple[list[Spe
     for s in spectra:
         s.source_path = str(path)
         s.source_format = fmt.key
+        s.extra.pop("format_detection", None)          # never carried over from a converted file
+        if how == "content":
+            s.extra["format_detection"] = "content"
     return spectra, fmt
+
+
+def content_note(spectra: Sequence[Spectrum], fmt: Optional[FormatSpec]) -> Optional[str]:
+    """The note to show when the format was recognised from the content alone, else None."""
+    if fmt is not None and any(s.extra.get("format_detection") == "content" for s in spectra):
+        return CONTENT_NOTE.format(name=fmt.name)
+    return None
 
 
 # Formats whose files hold fewer energy-calibration coefficients than our model.

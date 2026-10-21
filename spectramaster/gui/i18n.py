@@ -84,6 +84,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "status_input_mode": "Input: {name}",
         "status_saved": "Saved {path}",
         "status_out_fmt": "Output format: {name}",
+        "fmt_by_content": "Format recognised from the content ({name}); choose the input format if this is wrong.",
         # format chooser
         "dlg_input_title": "Open Input Files As",
         "dlg_input_prompt": "Input spectrum file format:",
@@ -236,6 +237,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "status_input_mode": "الإدخال: {name}",
         "status_saved": "تم الحفظ: {path}",
         "status_out_fmt": "صيغة الإخراج: {name}",
+        "fmt_by_content": "تم التعرّف على الصيغة من محتوى الملف ({name})؛ اختر صيغة الإدخال إن كان ذلك خطأً.",
         "dlg_input_title": "فتح ملفات الإدخال بصيغة",
         "dlg_input_prompt": "صيغة ملف الطيف المُدخل:",
         "dlg_output_title": "حفظ باسم — صيغة الإخراج",

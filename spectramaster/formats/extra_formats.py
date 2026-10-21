@@ -29,6 +29,7 @@ JSON (.json) -- schema version 1::
 """
 from __future__ import annotations
 
+import io
 import json
 import math
 from datetime import datetime
@@ -245,7 +246,8 @@ def _xlsx_read(path: Path) -> list[Spectrum]:
     except ImportError:  # pragma: no cover
         raise FormatError("reading Excel needs the 'openpyxl' package") from None
     try:
-        wb = load_workbook(str(path), read_only=True, data_only=True)
+        # from the bytes, not the name: openpyxl refuses names not ending in .xlsx/.xlsm
+        wb = load_workbook(io.BytesIO(Path(path).read_bytes()), read_only=True, data_only=True)
     except Exception as exc:
         raise FormatError(f"{Path(path).name}: not a readable .xlsx workbook ({exc})") from None
     try:

@@ -20,14 +20,14 @@ from PySide6.QtWidgets import (QApplication, QComboBox, QDockWidget, QFileDialog
                                QStyle, QStyleFactory, QToolBar, QToolButton, QVBoxLayout, QWidget)
 
 from .. import __version__
-from ..convert import output_name, read_spectra, write_spectrum
+from ..convert import content_note, output_name, read_spectra, write_spectrum
 from ..formats import get_format, load_all, readable_formats, writable_formats
 from ..formats.base import FormatSpec
 from ..model import Spectrum
 from . import analysis_panel as ana
 from . import i18n
 from .analysis_panel import AnalysisPanel, export_results, peak_info_text
-from .dialogs import AboutDialog, BatchDialog, FormatDialog, scan_folder
+from .dialogs import AboutDialog, BatchDialog, FormatDialog, scan_spectrum_files
 from .i18n import tr
 from .icon import app_icon
 from .info_panel import InfoPanel
@@ -668,6 +668,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         QApplication.restoreOverrideCursor()
         self.settings.set_folder("open", path)
         self.display(spectra, used, path)
+        if content_note(spectra, used):
+            self.statusBar().showMessage(tr("fmt_by_content", name=used.name), 15000)
         return True
 
     def display(self, spectra: Sequence[Spectrum], fmt: Optional[FormatSpec], path: Optional[Path]) -> None:
@@ -1150,11 +1152,10 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         if len(items) == 1:
             self.load_file(items[0])
             return
-        exts = {e for f in readable_formats() for e in f.extensions} or None
         files: list[Path] = []
         for p in items:
             if p.is_dir():
-                files.extend(scan_folder(p, True, exts))
+                files.extend(scan_spectrum_files(p, True))
             elif p.is_file():
                 files.append(p)
         if files:

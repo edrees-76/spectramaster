@@ -175,6 +175,16 @@ def scan_folder(root: Path, recursive: bool, extensions: Optional[set[str]]) -> 
     return out
 
 
+def scan_spectrum_files(root: Path, recursive: bool) -> list[Path]:
+    """Files with a spectrum extension, plus files with any other extension whose content is
+    recognised (docs/baseline/any_extension_protocol.md)."""
+    from ..formats import detect_format, load_all, readable_formats
+    load_all()
+    exts = {e for f in readable_formats() for e in f.extensions}
+    return [p for p in scan_folder(root, recursive, None)
+            if p.suffix.lower() in exts or detect_format(p) is not None]
+
+
 class BatchDialog(QDialog):
     """Converts many files in a background thread.
 
