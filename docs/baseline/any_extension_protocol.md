@@ -93,3 +93,64 @@ Reported only: corpus files undetected under their own name and detected by the 
 ## Results
 
 (appended after the run)
+
+Run 2026-10-21. The text above the line is unchanged (SHA-256 of the pre-registered part still
+0893ff2ee0a754d51be5cc596bbb5bf3935b28376bd4440b67a0fec1bcc7bf99). Outputs:
+`docs/baseline/after_AX1/` ("before" collected with an export of origin/main 72636ef).
+
+| ID | Value | Limit | Result |
+|---|---|---|---|
+| AX.C1 | 0 differences over 319 files (own name) | 0 | PASS |
+| AX.C2 | 2 failures (one file under both names), over 10 files | 0 | **FAIL** |
+| AX.C3 | 0 of 206 negative files detected | 0 | PASS |
+| AX.C4 | 2 differences (one file under both names) | 0 | **FAIL** |
+| AX.C5 | 16 unit tests (`tests/test_any_extension.py`) | pass | PASS |
+| AX.C6 | 154 PASS / 13 FAIL / 60 REPORT, statuses identical to after_AN1 | as registered | PASS |
+| AX.C7 | 1354 passed, 70 skipped, 0 failed; no existing test changed (the reproduction test was skipped in that run because the results were being written; it passes since) | passes | PASS |
+
+**The two FAILs, recorded as they are (no limit or criterion changed):**
+
+* **AX.C2.** Our `specutils_txt` output is detected as ASCII-2 under `.txt`. With another
+  extension, the usual first stage detects it as SpecUtils text. That stage is unchanged, as
+  §2.2 requires, and §1 already noted this case as "unchanged and reported". The criterion as
+  written still counts it, so AX.C2 fails. Both reads give the same counts and calibration. The
+  SpecUtils reading also keeps the live time (100 s), which the ASCII-2 reading loses.
+* **AX.C4.** A TKA file with another extension is read as ASCII-1, the case §2 stated in advance
+  as a known limit. The criterion as written counts it as a changed detection (before: not
+  recognised), so AX.C4 fails. The protocol's own text conflicted here: §2 accepted the case
+  and the C4 limit did not exempt it. The content note is shown for this file.
+
+**Deviation from the registered wording (implementation).** §2.1 says the Wallac content test
+requires "exactly 3 + 1024 non-empty lines". The reader takes the fields by line position, so
+an empty description line is part of the layout. Our own Wallac file has an empty description,
+so with the registered wording it was not recognised and fell to ASCII-1. The first run gave
+AX.C2 = 4 failures (that file, both names, plus the two above). The test now counts all lines
+up to the last non-empty one (3 + 1024), as the reader's layout requires. The numbers in the
+table are from the run after that change.
+
+Summary over the 254 files recognised under their own name, for each of `.xyz` and no
+extension:
+
+| | before | after |
+|---|---|---|
+| same format, identical read | 241 | 249 |
+| not recognised | 11 | 2 (ieee_asc, oxford_ans: excluded, §2.1) |
+| other format | 1 | 3 (specutils_txt; tka → ascii1; iaea_ascii_dat, see below) |
+| same format, read differs | 1 (Excel) | 0 |
+
+Reported only:
+
+* **Existing misdetection (out of scope, a separate finding).** Our IAEA ASCII `.dat` output
+  (code 65) is detected as EML Sanderson (code 17) under its own name, before and after. The
+  usual stage tries Sanderson first. With another extension the content stage now chooses
+  `iaea_ascii_dat`, via the registered preference.
+* Corpus files not recognised under their own name: none is recognised renamed either.
+* Formats outside the content set (as `.xyz`): every one whose sniffer does not need its
+  extension is detected as before; ieee_asc and oxford_ans are not recognised (excluded); tka is
+  read as ascii1 (above).
+* **Beyond the registered list:** the batch-report window's "add folder"
+  (`report_dialogs.py`) also uses the new folder scan. It is the same folder-scan pattern as
+  §2.5.
+* The "cannot recognise" error now says the input format can be chosen by hand. The GUI shows
+  the content note in the status bar after opening; `spectramaster info` prints it as a
+  "Note" row.

@@ -202,6 +202,9 @@ def cmd_info(args) -> int:
                 ("Channels", f"{s.num_channels} (first {s.first_channel})"),
                 ("Total counts", _fmt_num(s.total_counts, "", 1)),
             ]
+            note = engine.content_note([s], fmt)
+            if note:
+                rows.insert(1, ("Note", note))
             if s.energy_coeffs:
                 e = s.energies() or [0.0]
                 rows.append(("Energy cal.", ", ".join(f"{c:.7g}" for c in s.energy_coeffs)))

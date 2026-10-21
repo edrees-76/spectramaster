@@ -39,7 +39,7 @@ from __future__ import annotations
 import importlib
 import logging
 
-from .base import (FormatError, FormatSpec, all_formats, detect_format, get_format,
+from .base import (FormatError, FormatSpec, all_formats, content_candidates, detect, detect_format, get_format,
                    readable_formats, register, writable_formats)
 
 _MODULES = [
@@ -71,6 +71,6 @@ def load_all() -> None:
 
 
 __all__ = [
-    "FormatError", "FormatSpec", "all_formats", "detect_format", "get_format",
+    "FormatError", "FormatSpec", "all_formats", "content_candidates", "detect", "detect_format", "get_format",
     "readable_formats", "register", "writable_formats", "load_all",
 ]

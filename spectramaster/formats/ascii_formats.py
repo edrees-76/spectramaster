@@ -252,7 +252,11 @@ def _txt_numeric_lines(head: bytes, limit: int = 60) -> list[list[float]]:
 
 
 def sniff_ascii1(path: Path, head: bytes) -> bool:
-    if path.suffix.lower() != ".txt" or b"\x00" in head:
+    return path.suffix.lower() == ".txt" and content_ascii1(path, head)
+
+
+def content_ascii1(path: Path, head: bytes) -> bool:
+    if b"\x00" in head:
         return False
     rows = _txt_numeric_lines(head)
     return len(rows) >= 8 and all(len(r) == 1 for r in rows)
@@ -341,7 +345,11 @@ def write_ascii2(spec: Spectrum, path: Path) -> None:
 
 
 def sniff_ascii2(path: Path, head: bytes) -> bool:
-    if path.suffix.lower() != ".txt" or b"\x00" in head:
+    return path.suffix.lower() == ".txt" and content_ascii2(path, head)
+
+
+def content_ascii2(path: Path, head: bytes) -> bool:
+    if b"\x00" in head:
         return False
     rows = _txt_numeric_lines(head)
     if len(rows) < 8 or not all(2 <= len(r) <= 3 for r in rows):
@@ -586,10 +594,12 @@ def sniff_ieee_asc(path: Path, head: bytes) -> bool:
 register(FormatSpec(
     code=5, key="ascii1", name="ASCII-1 (one count per line)", extensions=[".txt"],
     reader=read_ascii1, writer=write_ascii1, sniffer=sniff_ascii1, aliases=["ascii-1"],
+    content_sniffer=content_ascii1,
     notes="Counts only; header lines and '#Key=Value' trailers tolerated on input."))
 register(FormatSpec(
     code=6, key="ascii2", name="ASCII-2 (channel, counts)", extensions=[".txt"],
     reader=read_ascii2, writer=write_ascii2, sniffer=sniff_ascii2, aliases=["ascii-2"],
+    content_sniffer=content_ascii2,
     notes="Reads 2 or 3 columns (channel[, energy], counts) with any separator; an energy "
           "column is fitted to a polynomial calibration. Writes 'channel<TAB>counts'."))
 register(FormatSpec(

@@ -247,7 +247,11 @@ def read_sanderson(path: Path) -> list[Spectrum]:
 
 
 def sniff_sanderson(path: Path, head: bytes) -> bool:
-    if path.suffix.lower() != ".dat" or b"\x00" in head:
+    return path.suffix.lower() == ".dat" and content_sanderson(path, head)
+
+
+def content_sanderson(path: Path, head: bytes) -> bool:
+    if b"\x00" in head:
         return False
     lines = [l for l in head.decode("latin-1").splitlines() if l.strip()]
     if len(lines) < 5:
@@ -277,4 +281,5 @@ register(FormatSpec(
 register(FormatSpec(
     code=17, key="eml_sanderson", name="EML/Sanderson ASCII test spectra", extensions=[".dat"],
     reader=read_sanderson, sniffer=sniff_sanderson, aliases=["sanderson", "eml"],
+    content_sniffer=content_sanderson,
     notes="Read-only. 1 header line (title LT= ST=) + 10I7/10F7.0 lines (4090 channels)."))

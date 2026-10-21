@@ -35,6 +35,10 @@ class FormatSpec:
     writer: Optional[Writer] = None
     sniffer: Optional[Sniffer] = None
     notes: str = ""
+    content_sniffer: Optional[Sniffer] = None
+    """Test on the content alone (the file name is ignored), used only when no format is
+    recognised the usual way; registered only for tests with no false match on other files
+    (docs/baseline/any_extension_protocol.md)."""
     aliases: list[str] = field(default_factory=list)
 
     @property
@@ -94,14 +98,12 @@ def get_format(key_or_code) -> FormatSpec:
     raise KeyError(f"unknown format {key_or_code!r}")
 
 
-def detect_format(path: Path) -> Optional[FormatSpec]:
-    """Best-effort auto-detection: content sniffers first, then extension."""
-    path = Path(path)
-    try:
-        with open(path, "rb") as fh:
-            head = fh.read(4096)
-    except OSError:
-        return None
+# When several content tests match, the more specific format wins over the more general one.
+CONTENT_PREFERENCE = (("chandata_csv", "ascii2"), ("iaea_ascii_dat", "eml_sanderson"),
+                      ("wallac_ascii", "ascii1"), ("laval_ascii", "ascii1"))
+
+
+def _detect_usual(path: Path, head: bytes) -> Optional[FormatSpec]:
     for f in readable_formats():
         if f.sniffer is not None:
             try:
@@ -116,3 +118,43 @@ def detect_format(path: Path) -> Optional[FormatSpec]:
         if f.sniffer is None and ext in f.extensions:
             return f
     return None
+
+
+def content_candidates(path: Path, head: bytes) -> list[FormatSpec]:
+    """Formats whose content-only test matches, after dropping the less specific of each
+    preferred pair."""
+    found = []
+    for f in readable_formats():
+        if f.content_sniffer is not None:
+            try:
+                if f.content_sniffer(path, head):
+                    found.append(f)
+            except Exception:
+                pass
+    keys = {f.key for f in found}
+    beaten = {loser for winner, loser in CONTENT_PREFERENCE if winner in keys}
+    return [f for f in found if f.key not in beaten]
+
+
+def detect(path: Path) -> tuple[Optional[FormatSpec], str, list[FormatSpec]]:
+    """(format, how, candidates): how is "usual", "content" (recognised from the content alone,
+    whatever the extension), "ambiguous" (several content candidates, format None) or "none"."""
+    path = Path(path)
+    try:
+        with open(path, "rb") as fh:
+            head = fh.read(4096)
+    except OSError:
+        return None, "none", []
+    f = _detect_usual(path, head)
+    if f is not None:
+        return f, "usual", [f]
+    cands = content_candidates(path, head)
+    if len(cands) == 1:
+        return cands[0], "content", cands
+    return None, ("ambiguous" if cands else "none"), cands
+
+
+def detect_format(path: Path) -> Optional[FormatSpec]:
+    """Best-effort auto-detection: content sniffers first, then extension; then, whatever the
+    extension, the content-only tests when they point to exactly one format."""
+    return detect(path)[0]
