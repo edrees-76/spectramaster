@@ -178,6 +178,14 @@ class LineResult:
     blank_activity: Optional[float] = None  # reagent blank subtracted, Bq (parent) at the reference date
     blank_unc: float = 0.0                  # its counting standard uncertainty, Bq
     gross_activity: Optional[float] = None  # activity before the blank correction
+    # signed primary result (ISO 11929) of every line, peak or not (signed_primary_protocol.md):
+    # the fitted net area ("fit"), the window estimator ("window") or a window overlapping another
+    # peak ("interfered": reported, never used)
+    primary: Optional[float] = None         # Bq (parent)
+    primary_u_count: float = 0.0            # its counting standard uncertainty, Bq
+    primary_net: Optional[float] = None     # net counts (full-peak equivalent, after the blank)
+    primary_net_unc: float = 0.0
+    primary_method: str = ""
     note: str = ""
 
 
@@ -210,6 +218,11 @@ class NuclideResult:
     specific_best_u: Optional[float] = None
     specific_low: Optional[float] = None
     specific_high: Optional[float] = None
+    # signed primary result of the nuclide (key line or weighted mean), total standard uncertainty;
+    # equal to activity / u when an activity exists
+    primary: Optional[float] = None
+    primary_u: Optional[float] = None
+    primary_method: str = ""
 
     @property
     def U(self) -> Optional[float]:
@@ -265,6 +278,9 @@ class ActivityOptions:
     reference_peak: Optional[dict] = None
     # true-coincidence summing: {"peak_to_total": [a, b], "pt_rel_unc": fraction}, PT(E) = min(1, a (E/1000)^b)
     tcs: Optional[dict] = None
+    # detection decision: "search" = a search peak above the decision threshold (default);
+    # "iso11929" = also a window result above it without a search peak (signed_primary_protocol.md)
+    decision: str = "search"
 
 
 @dataclass
@@ -345,23 +361,66 @@ def _channel_of_energy(spectrum, energy: float) -> Optional[float]:
 def continuum_under(spectrum, energy: float, fwhm_ch: np.ndarray, counts=None
                     ) -> Optional[tuple[float, int, int, float]]:
     """(B, n, m, window_fraction) for the region E +- 1.25 FWHM; m side channels each side."""
+    win = line_window(spectrum, energy, fwhm_ch)
+    if win is None:
+        return None
+    lo, hi, m, frac = win
+    y = np.asarray(spectrum.counts if counts is None else counts, dtype=float)
+    n = hi - lo + 1
+    side = float(y[lo - m:lo].sum() + y[hi + 1:hi + 1 + m].sum())
+    b = max(side * n / (2.0 * m), 0.0)
+    return b, n, m, frac
+
+
+def line_window(spectrum, energy: float, fwhm_ch: np.ndarray) -> Optional[tuple[int, int, int, float]]:
+    """(lo, hi, m, window_fraction) of the window E +- 1.25 FWHM (count indices) with m side
+    channels each side, or None when it does not fit in the spectrum."""
     idx = _channel_of_energy(spectrum, energy)
     if idx is None:
         return None
-    y = np.asarray(spectrum.counts if counts is None else counts, dtype=float)
     fw = float(fwhm_ch[int(min(max(round(idx), 0), len(fwhm_ch) - 1))])
     half = max(1.25 * fw, 1.0)
     lo, hi = int(math.floor(idx - half + 0.5)), int(math.floor(idx + half + 0.5))
     m = max(2, int(round(1.5 * fw)))
-    if lo - m < 0 or hi + m >= len(y):
+    if lo - m < 0 or hi + m >= len(spectrum.counts):
         return None
-    n = hi - lo + 1
-    side = float(y[lo - m:lo].sum() + y[hi + 1:hi + 1 + m].sum())
-    b = max(side * n / (2.0 * m), 0.0)
     s = fw / (2.0 * math.sqrt(2.0 * math.log(2.0)))
     r2 = s * math.sqrt(2.0)
     frac = 0.5 * (math.erf((idx - (lo - 0.5)) / r2) + math.erf((hi + 0.5 - idx) / r2))
-    return b, n, m, min(max(frac, 0.5), 1.0)
+    return lo, hi, m, min(max(frac, 0.5), 1.0)
+
+
+def window_net(spectrum, energy: float, fwhm_ch: np.ndarray, counts=None) -> Optional[tuple[float, float]]:
+    """(net counts G - B in the window of continuum_under, its variance G + side (n / 2m)^2), the
+    window estimator of a line without a search peak; any sign (signed_primary_protocol.md)."""
+    win = line_window(spectrum, energy, fwhm_ch)
+    if win is None:
+        return None
+    lo, hi, m, _frac = win
+    y = np.asarray(spectrum.counts if counts is None else counts, dtype=float)
+    r = (hi - lo + 1) / (2.0 * m)
+    g = float(y[lo:hi + 1].sum())
+    side = float(y[lo - m:lo].sum() + y[hi + 1:hi + 1 + m].sum())
+    return g - side * r, max(g, 0.0) + max(side, 0.0) * r * r
+
+
+def window_curvature(spectrum, energy: float, fwhm_ch: np.ndarray, counts=None) -> Optional[float]:
+    """B_linear - B_geometric of the window of continuum_under: the linear continuum of the window
+    estimator against a log-linear one between the two side means.  A large difference means the
+    continuum is too curved for the linear estimator (signed_primary_amendment_protocol.md, A1);
+    None when a side mean is not positive."""
+    win = line_window(spectrum, energy, fwhm_ch)
+    if win is None:
+        return None
+    lo, hi, m, _frac = win
+    y = np.asarray(spectrum.counts if counts is None else counts, dtype=float)
+    left, right = float(y[lo - m:lo].mean()), float(y[hi + 1:hi + 1 + m].mean())
+    if left <= 0 or right <= 0:
+        return None
+    xl, xr = lo - (m + 1) / 2.0, hi + (m + 1) / 2.0
+    x = np.arange(lo, hi + 1, dtype=float)
+    b_geo = float(np.sum(left * (right / left) ** ((x - xl) / (xr - xl))))
+    return (left + right) * m * (hi - lo + 1) / (2.0 * m) - b_geo
 
 
 def currie_limits(sigma0: float, k_alpha: float = K_DEFAULT, k_beta: float = K_DEFAULT) -> tuple[float, float]:
@@ -492,6 +551,8 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     opt = options or ActivityOptions()
     if not spectrum.energy_coeffs:
         raise ValueError("the spectrum has no energy calibration")
+    if opt.decision not in ("search", "iso11929"):
+        raise ValueError(f"unknown decision rule {opt.decision!r} (search | iso11929)")
     check_measurement(spectrum)
     t_live = float(spectrum.live_time)
     t_real = float(spectrum.real_time or spectrum.live_time)
@@ -716,8 +777,16 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                 lr.ref_unc_bq = math.sqrt((gross * ref_uc) ** 2 + (ab * bl_uc) ** 2
                                           + (gross * ref_ur - ab * bl_ur) ** 2)
                 lr.detected = nnet > lr.lc_counts
+                lr.primary, lr.primary_u_count = lr.activity, lr.u_count_bq
+                lr.primary_net, lr.primary_net_unc, lr.primary_method = nnet, unet, "fit"
             else:
                 lr.note = (lr.note + "; no peak").strip("; ")
+                # one window estimator for the sample and the background in both modes
+                # (signed_primary_amendment_protocol.md, A3); legacy background peaks: their areas
+                wb, wk = (bcounts, k_b) if bcounts is not None else ((bfit.b, bfit.k) if bfit is not None
+                                                                    else (None, 0.0))
+                _window_primary(lr, spectrum, e, fw_ch, w, fwin, peaks, opt, wb, wk,
+                                bnet if bfit is None else None, blank_counts, (ref_uc, ref_ur, bl_uc, bl_ur))
             res.lines.append(lr)
         _combine(res, opt)
         results.append(res)
@@ -749,12 +818,26 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                 r.specific_u = math.hypot((r.u or 0.0) / qb, abs(r.specific) * opt.quantity_rel_unc)
             r.specific_mda = r.mda / qb if r.mda else None
         if opt.mda_method == "iso11929":
-            be = iso11929_best_estimate(r.activity, r.u, opt.coverage)
+            # from the signed primary result of every nuclide, not only those with an activity
+            # (equal to activity / u when there is one); an interfered window result gives none
+            y, uy = (r.activity, r.u) if r.activity is not None else (
+                (r.primary, r.primary_u) if r.primary_method == "window" else (None, None))
+            be = iso11929_best_estimate(y, uy, opt.coverage)
             if be is not None:
                 r.best_estimate, r.best_u, r.coverage_low, r.coverage_high = be
-            be = iso11929_best_estimate(r.specific, r.specific_u, opt.coverage)
+            if r.activity is not None:
+                ys, us = r.specific, r.specific_u
+            elif y is not None and q and q > 0:
+                ys = y / qb
+                us = math.hypot(uy / qb, abs(ys) * opt.quantity_rel_unc)
+            else:
+                ys = us = None
+            be = iso11929_best_estimate(ys, us, opt.coverage)
             if be is not None:
                 r.specific_best, r.specific_best_u, r.specific_low, r.specific_high = be
+    notes.append("decision rule: " + ("ISO 11929 (a search peak or a window result above the decision "
+                                      "threshold)" if opt.decision == "iso11929" else
+                                      "a search peak above the decision threshold"))
     if background is not None:
         notes.append(f"background: {background.source_path or background.sample_id or '?'} "
                      f"({'peak-by-peak' if opt.bkg_mode == 'peak' else 'full spectrum'}, k = {k_b:.4g})")
@@ -859,7 +942,105 @@ def _blank_checks(blank: "QuantResults", curve: EfficiencyCurve, opt: ActivityOp
     return out
 
 
+_F2S = 1.0 / (2.0 * math.sqrt(2.0 * math.log(2.0)))   # FWHM -> sigma
+WINDOW_BIAS_LIMIT = 0.5       # window results with a larger expected bias (in u) are not used:
+#                               a neighbouring peak or a curved continuum (signed_primary_amendment_protocol.md)
+
+
+def _window_share(p, f0: int, lo: int, hi: int, m: int) -> float:
+    """Expected contribution of found peak `p` to the window result G - B over lo..hi with m side
+    channels each side: A (F_window - r F_sides), F the fractions of its Gaussian, r = n / 2m."""
+    s = max(float(p.fwhm), 1e-6) * _F2S * math.sqrt(2.0)
+    c = float(p.centroid) - f0
+
+    def frac(a, b):
+        return 0.5 * (math.erf((b - c) / s) - math.erf((a - c) / s))
+    r = (hi - lo + 1) / (2.0 * m)
+    sides = frac(lo - m - 0.5, lo - 0.5) + frac(hi + 0.5, hi + m + 0.5)
+    return float(p.net_area) * (frac(lo - 0.5, hi + 0.5) - r * sides)
+
+
+def _window_primary(lr: LineResult, spectrum, e: float, fw_ch, w: float, fwin: float, peaks, opt,
+                    bcounts, k_b: float, bnet, blank_counts: float, ref: tuple) -> None:
+    """Signed primary result of a line without a search peak: the window estimator G - B (the
+    estimator of the decision threshold), minus the scaled background (spectrum mode) or the
+    background fitter's area (peak mode), minus the blank; decision rule opt.decision
+    (docs/baseline/signed_primary_protocol.md)."""
+    wn = window_net(spectrum, e, fw_ch)
+    win = line_window(spectrum, e, fw_ch)
+    if wn is None or win is None:
+        return
+    yw, var = wn
+    if bcounts is not None:
+        bw = window_net(spectrum, e, fw_ch, counts=bcounts)
+        if bw is not None:
+            yw -= k_b * bw[0]
+            var += k_b * k_b * bw[1]
+    elif bnet is not None:
+        yw -= bnet[0]
+        var += bnet[1] ** 2
+    lo, hi, m, _f = win
+    u_win = math.sqrt(max(var, 0.0))
+    near = [p for p in peaks if abs(_window_share(p, spectrum.first_channel, lo, hi, m)) > WINDOW_BIAS_LIMIT * u_win]
+    c_s = window_curvature(spectrum, e, fw_ch)
+    c_b = window_curvature(spectrum, e, fw_ch, counts=bcounts) if bcounts is not None else None
+    curved = ((c_s is not None and abs(c_s) > WINDOW_BIAS_LIMIT * u_win)
+              or (c_b is not None and k_b * abs(c_b) > WINDOW_BIAS_LIMIT * u_win))
+    gross_net, unet = yw / fwin, u_win / fwin
+    nnet = gross_net - blank_counts
+    if lr.blank_activity is not None:
+        unet = math.hypot(unet, lr.blank_unc / w)
+    lr.primary_net, lr.primary_net_unc = nnet, unet
+    lr.primary, lr.primary_u_count = nnet * w, unet * w
+    if near:
+        lr.primary_method = "interfered"
+        lr.note = (lr.note + "; window affected by the peak at " + ", ".join(
+            f"{p.energy:.1f} keV" if p.energy is not None else f"channel {p.centroid:.0f}" for p in near)
+            + ": primary result not used").strip("; ")
+        return
+    if curved:
+        lr.primary_method = "curved"
+        lr.note = (lr.note + "; continuum too curved for the window estimator: primary result not "
+                   "used").strip("; ")
+        return
+    lr.primary_method = "window"
+    ref_uc, ref_ur, bl_uc, bl_ur = ref
+    gross, ab = gross_net * w, lr.blank_activity or 0.0
+    lr.ref_unc_bq = math.sqrt((gross * ref_uc) ** 2 + (ab * bl_uc) ** 2 + (gross * ref_ur - ab * bl_ur) ** 2)
+    if nnet * fwin <= lr.lc_counts:
+        return
+    if opt.decision == "iso11929":
+        lr.detected = True
+        lr.activity, lr.net_area, lr.net_unc = lr.primary, nnet, unet
+        if lr.blank_activity is not None:
+            lr.gross_activity = gross
+        lr.u_count_bq = lr.primary_u_count
+        lr.u_count_rel = unet / abs(nnet)
+        lr.note = (lr.note + "; detected by the window result (decision rule ISO 11929)").strip("; ")
+    else:
+        lr.note = (lr.note + "; window result above the decision threshold without a search "
+                   "peak").strip("; ")
+
+
 def _combine(res: NuclideResult, opt: ActivityOptions) -> None:
+    _combine_activity(res, opt)
+    if res.activity is not None:
+        res.primary, res.primary_u = res.activity, res.u
+        used = [l for l in res.lines if any(abs(l.energy - e) < 1e-6 for e in res.used_energies)]
+        res.primary_method = "fit" if all(l.peak_found for l in used) else "window"
+        return
+    k = res.key_line if res.key_energy is not None else None
+    if k is None or k.primary is None:
+        return
+    a, aa = k.primary, abs(k.primary)
+    res.primary, res.primary_method = a, k.primary_method
+    res.primary_u = math.sqrt(k.primary_u_count ** 2 + (aa * k.eff_rel_unc) ** 2
+                              + (aa * opt.intensity_rel_unc) ** 2 + (aa * k.int_rel_unc) ** 2
+                              + (aa * opt.attenuation_rel_unc) ** 2 + k.ref_unc_bq ** 2
+                              + (aa * k.coi_rel_unc) ** 2)
+
+
+def _combine_activity(res: NuclideResult, opt: ActivityOptions) -> None:
     lines = [l for l in res.lines if l.mda > 0]
     if not lines:
         res.note = (res.note + "; no usable line").strip("; ")
@@ -944,7 +1125,8 @@ def _line_int_unc(nuclide: str, energy: float) -> float:
 ROW_KEYS = ["nuclide", "lines", "net_area", "net_unc", "activity_bq", "u_bq", "specific", "specific_U2",
             "unit", "mda_bq", "mda_specific", "decision", "best_bq", "best_u_bq", "coverage_low_bq",
             "coverage_high_bq", "best_specific", "best_u_specific", "coverage_low_specific",
-            "coverage_high_specific", "blank_bq", "blank_u_bq", "budget", "note"]
+            "coverage_high_specific", "blank_bq", "blank_u_bq", "primary_bq", "primary_u_bq", "primary_method",
+            "budget", "note"]
 
 
 def sampling_decay_factor(half_life_s: Optional[float], sampling_s: Optional[float]) -> float:
@@ -1054,7 +1236,8 @@ def result_row(r: NuclideResult) -> dict:
             "best_u_specific": r.specific_best_u, "coverage_low_specific": r.specific_low,
             "coverage_high_specific": r.specific_high,
             "blank_bq": k.blank_activity if k else None, "blank_u_bq": k.blank_unc if k and k.blank_activity is not None
-            else None, "budget": bud, "note": r.note}
+            else None, "primary_bq": r.primary, "primary_u_bq": r.primary_u, "primary_method": r.primary_method,
+            "budget": bud, "note": r.note}
 
 
 def _fmt(v, digits=4) -> str:

@@ -498,7 +498,10 @@ def test_iso11929_best_estimate_in_results(cal_curve, tmp_path):
     assert (cs.specific_best, cs.specific_best_u, cs.specific_low, cs.specific_high) == pytest.approx(
         act.iso11929_best_estimate(cs.specific, cs.specific_u), rel=1e-12)
     assert cs.coverage_low < cs.best_estimate < cs.coverage_high
-    assert co.activity is None and co.best_estimate is None        # no primary result, no best estimate
+    # no peak: the signed window result is the primary result (signed_primary_protocol.md)
+    assert co.activity is None and co.primary_method == "window"
+    assert (co.best_estimate, co.best_u) == pytest.approx(
+        act.iso11929_best_estimate(co.primary, co.primary_u)[:2], rel=1e-12)
     cur = act.compute_activities(s, curve, act.ActivityOptions(**base)).nuclides[0]
     assert cur.best_estimate is None and cur.specific_best is None   # Currie: not computed
     # export, round trip of a stored session, concentrations
@@ -531,5 +534,5 @@ def test_iso11929_column_in_table(qapp, cal_curve):
     for lang in ("en", "ar"):
         header, rows = quant_table(res, lang)
         assert "90" in header[j] and "Bq/kg" in header[j] and "{p}" not in header[j]
-        assert rows[0][j].count("±") == 1 and rows[1][j] == ""
+        assert rows[0][j].count("±") == 1 and rows[1][j].count("±") == 1   # Co-60: from the window result
         assert rows[0][7] == i18n.tr_in(lang, "quant_res_detected")

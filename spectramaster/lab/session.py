@@ -61,7 +61,9 @@ SCHEMA_VERSION = 1
 #          spectra reported (efficiency_poisson_protocol.md)
 #   1.6.0  2026-10-21 efficiency model error: outliers limited at 3 x the curve's scatter
 #          (model_error_outlier_protocol.md)
-ENGINE_VERSION = "1.6.0"
+#   1.7.0  2026-10-21 signed primary result for lines without a search peak (window estimator),
+#          ISO 11929 best estimate for every nuclide, decision rule option (signed_primary_protocol.md)
+ENGINE_VERSION = "1.7.0"
 
 
 class SessionSchemaError(ValueError):
