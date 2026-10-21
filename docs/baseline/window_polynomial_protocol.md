@@ -117,3 +117,80 @@ decision thresholds.
 ## Results
 
 (appended after the run)
+
+Run 2026-10-21, engine 1.9.0. The text above the line is unchanged (SHA-256 of the pre-registered
+part still 588ebaf7991e68fbaf1988d142a4155585689d5b66ca1c206f45ac902c0f2eca). Outputs:
+`docs/baseline/after_WP1/` (`signed_primary_results.md` with all measured values, `baseline.*`,
+`crm_validation_results.*`).
+
+| id | value | limit | result |
+|---|---|---|---|
+| WP.C1 NaI zero: used / mean z / cov2 | 0.995 / +0.004 / 0.955 (199 quadratic, 1 interfered) | >= 0.90 / <= 0.2 / [0.91, 0.99] | PASS |
+| WP.C2 NaI background-absent, both modes | used 0 of 120: 80 interfered, 40 curved | used >= 0.80 | **FAIL** |
+| WP.C3 s = 1 (97 used) | -0.225 / 0.969, interval 0.98 | | PASS |
+| WP.C3 s = 2 (85 used) | -0.084 / 0.941, interval 0.99 | | PASS |
+| WP.C3 s = 3 (61 used) | **-0.649** / 0.934, interval 1.00 | \|mean z\| <= 0.3 | **FAIL** |
+| WP.C4 NaI H3b: present / D2 / D1 | all / 0.86 / 0.68 (version 2: best estimate absent, D2 0.68) | all / >= 0.50 / D1 <= D2 | PASS |
+| WP.C5 NaI M2, both modes: negative / best / no activity | 20 / **0** / 20 | 18 / all / all | **FAIL** (best) |
+| WP.C6 NaI interference | 50 interfered, 0 detected, 0 best | | PASS |
+| WP.C7 NaI D2 false detections | 0.075 (version 2: 0.000) | [0.010, 0.090] | PASS |
+| WP.C8 NaI edge set | 0 false detections; 0 used (all 100 interfered) | | PASS (see below) |
+| WP.C9 HPGe, every harness value | 0 differences from version 2 | 0 | PASS |
+| WP.C10 found peaks against `main` | 1170 values (234 lines, zero and weak sets, both detectors, Currie and ISO), 0 different | 0 | PASS |
+| WP.C11 benchmark | 154 / 13 / 60, no PASS -> FAIL; one value other than runtimes differs (below) | | **FAIL as written** |
+| WP.C12 CRM | criteria values identical to after_PR1 (only `engine_version` differs) | | PASS |
+| WP.C13 full suite | 1363 passed, 69 skipped; no existing test changed | | PASS |
+
+Reported: NaI window decision threshold / linear threshold, zero set, mean 1.160 (expected about 1.17).
+
+**The three FAILs, recorded as they are.** No limit, estimator or check was changed after the run.
+
+* **WP.C2 and WP.C5 (background spectrum sets).** These sets are unchanged from version 2 (identical
+  method counts and values).
+  * 80 of the 120 background-absent lines, and all 20 M2 K-40 lines, are "interfered".
+    The *linear* interference rule (A2) marks them before the continuum is looked at. In M2 the
+    background-subtracted search finds a peak near 1331 keV. This protocol leaves that rule
+    unchanged (§3: only curved lines are affected).
+  * The other 40 lines (Pb-214 351.9 keV, every pair) stay "curved". The chi-square check rejects
+    the quadratic fit in both sample and background (p = 0): the 2m sides reach neighbouring
+    lines of that scenario.
+  * The limits were written without first looking at the version 2 method counts of these sets,
+    which already showed 80 interfered lines. That was an error in the protocol. The FAIL is kept.
+* **WP.C3 s = 3.** Mean z of the 61 used lines is -0.649. Diagnosis (same 100 spectra):
+  * Over all 100 spectra, the quadratic window gives mean z -0.297, cov2 0.94.
+  * Over the 61 lines the search did not find, it gives -0.649.
+  * About half is selection: lines without a search peak are the downward fluctuations.
+  * The other half is a small negative bias of the estimator with a real peak present. The
+    peak's tails reach the wider sides, and the quadratic extrapolation amplifies them.
+  * s = 1 and s = 2 pass.
+
+**WP.C11.** One value other than runtimes differs from after_AX1.
+* The 15th entry of the benchmark's list of the 15 most frequent implausible IDB
+  identifications is "HPGe Fe-59" (count 15) instead of "HPGe Sr-85" (count 15).
+* The counts are identical. The cause is a tie broken by insertion order: the benchmark iterates
+  a Python `set` of nuclide names, whose order depends on the per-process string hash seed. The
+  identification code is not changed by this work.
+* Evidence: the benchmark run with `PYTHONHASHSEED=0` on an export of `main` and on this branch
+  gives identical values except runtimes and the engine version (15th entry Sr-85 in both).
+* The criterion as written still fails. The benchmark's tie order is recorded as a separate
+  finding: sort ties by name.
+
+**WP.C8 tested less than intended.** In the edge set the search finds a peak at about 625 keV (the
+Compton edge itself) in all 100 spectra, so the Cs-137 line is "interfered" before the continuum
+check. The criterion passes, but the chi-square check is exercised there only by the unit tests
+and the prototype (§2), not by this set.
+
+**What ships.**
+
+* NaI lines without a search peak on a smooth continuum now get a usable window result with an
+  ISO 11929 best estimate. The zero set gives mean z 0.004 and cov2 0.955, against 199 of 200
+  "curved" before.
+* They also get their own decision threshold, about 1.16 times the linear one, used for D2:
+  * false detections 0.075;
+  * H3b-type detection 0.68 -> 0.86.
+* The line's reported decision threshold and MDA are unchanged.
+* Not solved: lines interfered by background-subtracted artefacts (M2, background-absent), lines
+  whose wide sides reach other peaks, and a small negative bias with a real peak near the
+  detection limit.
+
+Tests: new `tests/test_window_polynomial.py` (8). No existing test changed.
