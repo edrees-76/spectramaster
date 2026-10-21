@@ -361,7 +361,7 @@ def cat_identification(det, n_seeds) -> dict:
             "recall_by_drift": {f"{d * 100:g}%": v["tp"] / max(v["n"], 1) for d, v in sorted(by_drift.items())},
             "false_by_drift": {f"{d * 100:g}%": v["fp"] / max(v["spectra"], 1) for d, v in sorted(by_drift.items())},
             "by_mixture": {k: {"recall": v["tp"] / max(v["n"], 1), "false_per_spectrum": v["fp"] / max(v["spectra"], 1),
-                               "false_nuclides": dict(v["false"]), "missed": dict(v["missed"])}
+                               "false_nuclides": _by_name(v["false"]), "missed": _by_name(v["missed"])}
                            for k, v in by_mix.items()},
             "false_per_spectrum_environmental_library": env["fp"] / max(env["spectra"], 1),
             "recall_environmental_library": env["tp"] / max(env["n"], 1),
@@ -767,8 +767,18 @@ def cat_idb(folder: Path) -> dict:
         out[f"{k}_implausible_per_spectrum"] = agg["implausible"] / agg["n"] if agg["n"] else None
         out[f"{k}_implausible_per_spectrum_safeguards_library"] = (agg["implausible_sg"] / agg["n"]
                                                                    if agg["n"] else None)
-    out["most_frequent_implausible"] = dict(sorted(implaus_names.items(), key=lambda kv: -kv[1])[:15])
+    out["most_frequent_implausible"] = _top_counts(implaus_names, 15)
     return out
+
+
+def _by_name(counts: dict) -> dict:
+    """Keys in name order (the counts are filled from sets, whose order depends on the hash seed)."""
+    return dict(sorted(counts.items()))
+
+
+def _top_counts(counts: dict, n: int) -> dict:
+    """The n largest entries, count descending, ties by name (independent of insertion order)."""
+    return dict(sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))[:n])
 
 
 # ------------------------------------------------------------------------------ driver
