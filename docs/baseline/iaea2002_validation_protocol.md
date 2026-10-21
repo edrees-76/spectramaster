@@ -184,3 +184,83 @@ a median it enters as 0.
 ## Results
 
 (appended after the run)
+
+Run on 2026-10-21 with engine 1.7.0 on branch `claude/iaea2002-validation`, which starts from main
+dbac863 plus this protocol (commit b469642). The full tables are in
+`docs/baseline/after_IA1/iaea2002_results.md` and `.json`. A second run gave an identical report.
+
+### Criteria: 3 PASS, 4 FAIL
+
+| ID | Value | Limit | Result |
+|---|---|---|---|
+| IA.C1 | 0.70 (14/20 with \|z\| ≤ 2.58) | ≥ 0.90 | **FAIL** |
+| IA.C2 | 0.80 (8/10 Marinelli within ±10 %) | ≥ 0.80 | PASS |
+| IA.C3 | 0.50 (5/10 pillbox within ±15 %) | ≥ 0.80 | **FAIL** |
+| IA.C4.M | 0.963 | [0.93, 1.07] | PASS |
+| IA.C4.P | 0.863 | [0.93, 1.07] | **FAIL** |
+| IA.C5 | rms z 2.50, none missing | ≤ 2.0 | **FAIL** |
+| IA.C6 | 20/20 detected | 20/20 | PASS |
+
+### Ratios to the certificate, long spectra (1-hour spectra within 0.02)
+
+| | Ba-133 | Co-60 | Eu-152 (121.8 keV) | Cr-51 | Na-22 |
+|---|---|---|---|---|---|
+| Marinelli (SMALL) | 0.963 | 0.973 | 0.908 | 1.007 | **0.803** |
+| Pillbox (BIG, density 1.6) | 0.912 | 0.863 | **0.682** | 0.940 | **0.661** |
+
+### Diagnosis (verified unless marked as a hypothesis)
+
+1. **Na-22, both geometries: summing with the 511 keV annihilation photons is not corrected.**
+   - The coincidence table is gamma–gamma only (`analysis/data/SOURCES.md`, tcs_protocol), and
+     Na-22 is not in it. The engine reports this honestly in the line note ("true-coincidence
+     summing not corrected").
+   - These data give the first measured size of the gap: −20 % in the Marinelli on the 33 %
+     detector and −34 % in the pillbox on the 96 % detector.
+   - Na-22 accounts for 4 of the 6 C1 failures.
+2. **Eu-152 at 121.8 keV: X-ray–gamma summing is missing from the same table.** The engine applies
+   COI 0.97 (gamma–gamma only) at 121.8 keV. That the remaining −9 % (Marinelli) comes from the
+   missing Sm K X-ray coincidences is a *hypothesis*; it was not separated here.
+3. **Pillbox: the efficiency curve is poor and very uncertain.**
+   - The two-branch fit chose Ec = 103.7 keV with orders 1/1. Its leave-one-out model error is
+     5.97 %, and every pillbox result carries u ≈ 14.5 %.
+   - The calibration source contains Cs-134 and Y-88. On a 96 % detector these sum strongly,
+     including summing-in at Cs-134 1365 keV (569 + 796), and the point at 1365 keV lies above
+     the one at 1115 keV.
+   - That this distorts the curve beyond what `summing_free_curve` corrects is a *hypothesis*.
+4. **Pillbox: density 1.6 against 1.15 g/cm3, no self-attenuation correction.** The expected low
+   bias, a few % at 300–1300 keV and more at 122 keV, is part of the pillbox shortfall. Its size
+   was not separated from items 1–3.
+5. **The Marinelli without Na-22 is within ±10 %:**
+   - The other 8 pairs have ratios 0.908–1.010.
+   - Their median is 0.963 for the long spectrum.
+   - z ≤ 2.56 in magnitude.
+
+### Sensitivity variants
+
+- **S1, no summing correction:** Co-60 drops to 0.83 and Eu-152 to 0.87 in the Marinelli. The
+  gamma–gamma correction is needed and works in the right direction: Co-60 goes from 0.83 to 0.97.
+- **S2, loglog model:** Marinelli Na-22 0.75 and the rest 0.92–0.97. In the pillbox, u is smaller,
+  so |z| is larger (−2.1 to −8.9).
+- **S3, `.Chn` start time:** changes at most 2.6 % (Cr-51 1.033, Ba-133 0.986), with the same
+  pattern.
+- **S4, EST clock:** all changes are below 0.3 %.
+- **S5, mix2neq6 peak areas against the IRI list (report only):**
+  - reduced χ² 8.9 for 50 matched high peaks;
+  - 103 reference peaks not found in the 6-min spectrum (χ² 2.8);
+  - 3 false hits;
+  - total 5.8.
+  The reference list comes from a 239× longer spectrum, so most misses are below the detection
+  limit of the short one.
+
+### Findings for later, pre-registered items (no engine change in this check)
+
+- **F1:** a stored FWHM calibration of 1 channel (`maricsmall.chn`) silently stops the peak search,
+  which then finds 3 peaks.
+- **F2:** 511 keV annihilation summing (Na-22 and other β+ emitters) is missing from the
+  coincidence table.
+- **F3:** X-ray–gamma summing (EC nuclides: Eu-152 121.8 keV, Ba-133) is missing.
+- **F4:** the efficiency curve of a close geometry on a large detector is poor when the calibration
+  source holds strong cascade emitters (Cs-134, Y-88).
+- **F5:** no self-attenuation correction for a density different from the calibration.
+
+The standard benchmark of this commit is in `docs/baseline/after_IA1/`.
