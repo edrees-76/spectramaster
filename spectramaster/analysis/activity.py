@@ -186,6 +186,12 @@ class LineResult:
     primary_net: Optional[float] = None     # net counts (full-peak equivalent, after the blank)
     primary_net_unc: float = 0.0
     primary_method: str = ""
+    # continuum of a "window" result: "linear", or "quadratic" where the linear one is too curved,
+    # which has its own decision threshold (window_polynomial_protocol.md); the line's
+    # lc_counts / decision_threshold / mda stay the shared linear ones
+    window_continuum: str = ""
+    window_lc_counts: Optional[float] = None
+    window_decision_threshold: Optional[float] = None   # Bq (parent)
     note: str = ""
 
 
@@ -421,6 +427,45 @@ def window_curvature(spectrum, energy: float, fwhm_ch: np.ndarray, counts=None) 
     x = np.arange(lo, hi + 1, dtype=float)
     b_geo = float(np.sum(left * (right / left) ** ((x - xl) / (xr - xl))))
     return (left + right) * m * (hi - lo + 1) / (2.0 * m) - b_geo
+
+
+QUAD_SIDE_FACTOR = 2          # side channels of the quadratic continuum: 2m each side
+QUAD_CHI2_P = 0.001           # smoothness check of the fit to the sides
+
+
+@dataclass
+class QuadWindow:
+    """Quadratic continuum under a window (window_polynomial_protocol.md): B = c . y[idx]."""
+    b: float                  # continuum in the window
+    var_data: float           # sum c_i^2 y_i (y_i >= 0): variance of B for the window result
+    var_fit: float            # sum c_i^2 f_i with the fitted values f: variance of B under H0
+    idx: np.ndarray           # side channels (count indices)
+    c: np.ndarray
+    p_chi2: float             # chi-square probability of the fit to the sides
+
+
+def quadratic_window(counts, lo: int, hi: int, m: int) -> Optional[QuadWindow]:
+    """Quadratic least-squares continuum over QUAD_SIDE_FACTOR * m side channels each side of the
+    window lo..hi, weighted by a first unweighted fit's values (floored at 1), integrated over the
+    window; None when the sides do not fit in the spectrum."""
+    from scipy.stats import chi2
+    y = np.asarray(counts, dtype=float)
+    w = QUAD_SIDE_FACTOR * m
+    if lo - w < 0 or hi + w >= len(y):
+        return None
+    idx = np.r_[np.arange(lo - w, lo), np.arange(hi + 1, hi + 1 + w)]
+    xc, scale = 0.5 * (lo + hi), float(hi - lo + 2 * w)
+    x = np.vander((idx - xc) / scale, 3, increasing=True)
+    ys = y[idx]
+    f0 = np.maximum(x @ np.linalg.lstsq(x, ys, rcond=None)[0], 1.0)
+    wt = 1.0 / f0
+    a = x.T @ (x * wt[:, None])
+    s = np.vander((np.arange(lo, hi + 1) - xc) / scale, 3, increasing=True).sum(axis=0)
+    c = (s @ np.linalg.solve(a, x.T)) * wt
+    fit = x @ np.linalg.solve(a, x.T @ (wt * ys))
+    p = float(chi2.sf(float(np.sum((ys - fit) ** 2 * wt)), len(idx) - 3))
+    return QuadWindow(float(c @ ys), float(c ** 2 @ np.maximum(ys, 0.0)), float(c ** 2 @ np.maximum(fit, 0.0)),
+                      idx, c, p)
 
 
 def currie_limits(sigma0: float, k_alpha: float = K_DEFAULT, k_beta: float = K_DEFAULT) -> tuple[float, float]:
@@ -738,24 +783,32 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                     ab0 = lr.blank_activity
                     u_ref0 = math.sqrt((ab0 * ref_uc) ** 2 + (ab0 * bl_uc) ** 2 + (ab0 * (ref_ur - bl_ur)) ** 2)
                     var0 += (u_ref0 * fwin / w) ** 2
+            lin_sample, lin_bkg = B * (1.0 + n / (2.0 * m)), 0.0   # linear terms, replaced for a quadratic window
             if bcounts is not None:
                 cb = continuum_under(spectrum, e, fw_ch, counts=bcounts)
                 if cb is not None:
                     idx = _channel_of_energy(spectrum, e)
                     h = max(1, int(round(1.25 * fw_ch[int(round(idx))])))
                     bwin = float(bcounts[max(0, int(round(idx)) - h):int(round(idx)) + h + 1].sum())
-                    var0 += k_b ** 2 * bwin * (1.0 + cb[1] / (2.0 * cb[2]))
-            sigma0 = math.sqrt(max(var0, 0.0))
+                    lin_bkg = k_b ** 2 * bwin * (1.0 + cb[1] / (2.0 * cb[2]))
+                    var0 += lin_bkg
             w_rel = math.sqrt(lr.eff_rel_unc ** 2 + opt.intensity_rel_unc ** 2 + lr.int_rel_unc ** 2
                               + opt.attenuation_rel_unc ** 2 + ref_u ** 2 + lr.coi_rel_unc ** 2)
-            if opt.mda_method == "iso11929":
-                ys, yd = iso11929_limits(sigma0, w / fwin, w_rel, opt.k_alpha, opt.k_beta)
-                lr.lc_counts, lr.ld_counts = ys / w * fwin, yd / w * fwin
-                lr.decision_threshold, lr.mda = ys, yd
-            else:
+
+            def limits(v0, w=w, fwin=fwin, w_rel=w_rel):
+                """(L_C counts, L_D counts, decision threshold Bq, detection limit Bq) of variance v0."""
+                sigma0 = math.sqrt(max(v0, 0.0))
+                if opt.mda_method == "iso11929":
+                    ys, yd = iso11929_limits(sigma0, w / fwin, w_rel, opt.k_alpha, opt.k_beta)
+                    return ys / w * fwin, yd / w * fwin, ys, yd
                 lc, ld = currie_limits(sigma0, opt.k_alpha, opt.k_beta)
-                lr.lc_counts, lr.ld_counts = lc, ld
-                lr.decision_threshold, lr.mda = lc * w / fwin, ld * w / fwin
+                return lc, ld, lc * w / fwin, ld * w / fwin
+            lr.lc_counts, lr.ld_counts, lr.decision_threshold, lr.mda = limits(var0)
+
+            def quad_limits(s_term, b_term, var0=var0, lin_sample=lin_sample, lin_bkg=lin_bkg, limits=limits):
+                """Limits of the quadratic window: the linear sample (and spectrum-mode background)
+                terms of var0 replaced (window_polynomial_protocol.md, 4)."""
+                return limits(var0 - lin_sample - lin_bkg + s_term + b_term)
             if p is not None:
                 lr.peak_found = True
                 nnet, unet = float(p.net_area), float(p.net_area_unc)
@@ -788,7 +841,8 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                 wb, wk = (bcounts, k_b) if bcounts is not None else ((bfit.b, bfit.k) if bfit is not None
                                                                     else (None, 0.0))
                 _window_primary(lr, spectrum, e, fw_ch, w, fwin, peaks, opt, wb, wk,
-                                bnet if bfit is None else None, blank_counts, (ref_uc, ref_ur, bl_uc, bl_ur))
+                                bnet if bfit is None else None, blank_counts, (ref_uc, ref_ur, bl_uc, bl_ur),
+                                quad_limits, bcounts is not None)
             res.lines.append(lr)
         _combine(res, opt)
         results.append(res)
@@ -962,12 +1016,52 @@ def _window_share(p, f0: int, lo: int, hi: int, m: int) -> float:
     return float(p.net_area) * (frac(lo - 0.5, hi + 0.5) - r * sides)
 
 
+def _quad_share(p, f0: int, lo: int, hi: int, q: QuadWindow) -> float:
+    """_window_share for the quadratic continuum: A (F_window - sum c_i F_i)."""
+    s = max(float(p.fwhm), 1e-6) * _F2S * math.sqrt(2.0)
+    c = float(p.centroid) - f0
+
+    def frac(a, b):
+        return 0.5 * (math.erf((b - c) / s) - math.erf((a - c) / s))
+    sides = sum(ci * frac(i - 0.5, i + 0.5) for i, ci in zip(q.idx.tolist(), q.c.tolist()))
+    return float(p.net_area) * (frac(lo - 0.5, hi + 0.5) - sides)
+
+
+def _quad_result(spectrum, lo: int, hi: int, m: int, bcounts, k_b: float, bnet, spectrum_mode: bool):
+    """(window result, its variance, H0 sample term, H0 background term, sample fit) of the
+    quadratic continuum, or None when it cannot be used (sides outside, chi-square p < QUAD_CHI2_P)."""
+    y = np.asarray(spectrum.counts, dtype=float)
+    q = quadratic_window(y, lo, hi, m)
+    if q is None or q.p_chi2 < QUAD_CHI2_P:
+        return None
+    g = float(y[lo:hi + 1].sum())
+    yw, var = g - q.b, max(g, 0.0) + q.var_data
+    b_term = 0.0
+    if bcounts is not None:
+        yb = np.asarray(bcounts, dtype=float)
+        qb = quadratic_window(yb, lo, hi, m)
+        if qb is None or qb.p_chi2 < QUAD_CHI2_P:
+            return None
+        gb = float(yb[lo:hi + 1].sum())
+        yw -= k_b * (gb - qb.b)
+        var += k_b * k_b * (max(gb, 0.0) + qb.var_data)
+        if spectrum_mode:
+            b_term = k_b * k_b * (max(qb.b, 0.0) + qb.var_fit)
+    elif bnet is not None:
+        yw -= bnet[0]
+        var += bnet[1] ** 2
+    return yw, var, max(q.b, 0.0) + q.var_fit, b_term, q
+
+
 def _window_primary(lr: LineResult, spectrum, e: float, fw_ch, w: float, fwin: float, peaks, opt,
-                    bcounts, k_b: float, bnet, blank_counts: float, ref: tuple) -> None:
+                    bcounts, k_b: float, bnet, blank_counts: float, ref: tuple, quad_limits=None,
+                    spectrum_mode: bool = False) -> None:
     """Signed primary result of a line without a search peak: the window estimator G - B (the
     estimator of the decision threshold), minus the scaled background (spectrum mode) or the
     background fitter's area (peak mode), minus the blank; decision rule opt.decision
-    (docs/baseline/signed_primary_protocol.md)."""
+    (docs/baseline/signed_primary_protocol.md).  Where the linear continuum is too curved, a
+    quadratic one over wider sides with its own decision threshold
+    (docs/baseline/window_polynomial_protocol.md)."""
     wn = window_net(spectrum, e, fw_ch)
     win = line_window(spectrum, e, fw_ch)
     if wn is None or win is None:
@@ -1000,16 +1094,40 @@ def _window_primary(lr: LineResult, spectrum, e: float, fw_ch, w: float, fwin: f
             f"{p.energy:.1f} keV" if p.energy is not None else f"channel {p.centroid:.0f}" for p in near)
             + ": primary result not used").strip("; ")
         return
+    lc_counts = lr.lc_counts
     if curved:
-        lr.primary_method = "curved"
-        lr.note = (lr.note + "; continuum too curved for the window estimator: primary result not "
-                   "used").strip("; ")
-        return
+        qr = _quad_result(spectrum, lo, hi, m, bcounts, k_b, bnet, spectrum_mode) if quad_limits else None
+        if qr is None:
+            lr.primary_method = "curved"
+            lr.note = (lr.note + "; continuum too curved for the window estimator and not smooth enough for a "
+                       "polynomial window (e.g. a Compton edge): primary result not used").strip("; ")
+            return
+        yw, var, s_term, b_term, q = qr
+        u_win = math.sqrt(max(var, 0.0))
+        gross_net, unet = yw / fwin, u_win / fwin
+        nnet = gross_net - blank_counts
+        if lr.blank_activity is not None:
+            unet = math.hypot(unet, lr.blank_unc / w)
+        lr.primary_net, lr.primary_net_unc = nnet, unet
+        lr.primary, lr.primary_u_count = nnet * w, unet * w
+        near = [p for p in peaks if abs(_quad_share(p, spectrum.first_channel, lo, hi, q)) > WINDOW_BIAS_LIMIT * u_win]
+        if near:
+            lr.primary_method = "interfered"
+            lr.note = (lr.note + "; quadratic window affected by the peak at " + ", ".join(
+                f"{p.energy:.1f} keV" if p.energy is not None else f"channel {p.centroid:.0f}" for p in near)
+                + ": primary result not used").strip("; ")
+            return
+        lc_counts, _ld, dt, _mda = quad_limits(s_term, b_term)
+        lr.window_continuum, lr.window_lc_counts, lr.window_decision_threshold = "quadratic", lc_counts, dt
+        lr.note = (lr.note + f"; quadratic continuum (curved for the linear window), decision threshold "
+                   f"{dt:.4g} Bq").strip("; ")
+    else:
+        lr.window_continuum = "linear"
     lr.primary_method = "window"
     ref_uc, ref_ur, bl_uc, bl_ur = ref
     gross, ab = gross_net * w, lr.blank_activity or 0.0
     lr.ref_unc_bq = math.sqrt((gross * ref_uc) ** 2 + (ab * bl_uc) ** 2 + (gross * ref_ur - ab * bl_ur) ** 2)
-    if nnet * fwin <= lr.lc_counts:
+    if nnet * fwin <= lc_counts:
         return
     if opt.decision == "iso11929":
         lr.detected = True

@@ -65,7 +65,9 @@ SCHEMA_VERSION = 1
 #          ISO 11929 best estimate for every nuclide, decision rule option (signed_primary_protocol.md)
 #   1.8.0  2026-10-21 511 keV annihilation summing of beta+ emitters in the true-coincidence correction
 #          (annihilation_summing_protocol.md)
-ENGINE_VERSION = "1.8.0"
+#   1.9.0  2026-10-21 quadratic continuum with its own decision threshold for window results whose
+#          linear continuum is too curved (NaI) (window_polynomial_protocol.md)
+ENGINE_VERSION = "1.9.0"
 
 
 class SessionSchemaError(ValueError):

@@ -1,5 +1,6 @@
 """Signed primary result of lines without a search peak: evaluation harness of
-docs/baseline/signed_primary_protocol.md (synthetic spectra only, fixed seeds).
+docs/baseline/signed_primary_protocol.md, its amendment (version 2) and
+docs/baseline/window_polynomial_protocol.md (version 3; synthetic spectra only, fixed seeds).
 
     python -m spectramaster.validation.primary [--out folder]
 """
@@ -16,11 +17,12 @@ import numpy as np
 from ..analysis.activity import ActivityOptions, compute_activities
 from . import scenarios
 from .benchmark import _flat_curve
-from .synthetic import HPGE, NAI, TruePeak, area_for_snr, continuum_counts, make_spectrum
+from .synthetic import HPGE, NAI, Continuum, TruePeak, area_for_snr, continuum_counts, make_spectrum
 
 CS = 661.657
 K40 = 1460.82
-N_ZERO, N_WEAK, N_H3B, N_INTERF, N_M2, N_PAIRS = 200, 100, 100, 50, 20, 40
+N_ZERO, N_WEAK, N_H3B, N_INTERF, N_M2, N_PAIRS, N_EDGE = 200, 100, 100, 50, 20, 40, 100
+EDGE_LINE = 850.0        # Compton edge at 653.6 keV, under the Cs-137 window (window_polynomial_protocol.md)
 WEAK_S = (1.0, 2.0, 3.0)
 H3B_S = 2.45
 
@@ -34,8 +36,15 @@ def _co60(det, cy):
     return [TruePeak(e, area_for_snr(det, cy, e, 40.0), tag="Co-60") for e in (1173.228, 1332.492)]
 
 
-def _cs_spectra(det, category: str, n: int, extra):
-    cont = scenarios.base_continuum(det)
+def edge_continuum(det) -> Continuum:
+    k = det.gain_kev / 0.5
+    base = scenarios.base_continuum(det)
+    return Continuum(exp_amp=base.exp_amp, exp_scale_kev=base.exp_scale_kev, flat=base.flat,
+                     compton_line_kev=EDGE_LINE, compton_level=40.0 * k)
+
+
+def _cs_spectra(det, category: str, n: int, extra, cont=None):
+    cont = cont or scenarios.base_continuum(det)
     cy = continuum_counts(det, cont)
     for i in range(n):
         peaks = _co60(det, cy) + extra(cy)
@@ -58,6 +67,10 @@ def _methods(rows) -> dict:
     return {m: sum(r["method"] == m for r in rows) for m in ("fit", "window", "interfered", "curved")}
 
 
+def _quadratic(rows) -> int:
+    return sum(r.get("continuum") == "quadratic" for r in rows)
+
+
 def _area_at_sigma0(det, x: float) -> float:
     """True Cs-137 area whose window result is x sigma_0 (amendment A4), sigma_0 from the noiseless
     continuum: sqrt(B_lin (1 + n / 2m)) in window counts, divided by the window fraction."""
@@ -73,9 +86,9 @@ def _area_at_sigma0(det, x: float) -> float:
     return x * math.sqrt(b * (1.0 + n / (2.0 * m))) / frac
 
 
-def _cs_run(det, curve, category, n, extra, **opt):
+def _cs_run(det, curve, category, n, extra, cont=None, **opt):
     rows = []
-    for sp, true in _cs_spectra(det, category, n, extra):
+    for sp, true in _cs_spectra(det, category, n, extra, cont):
         res = compute_activities(sp, curve, ActivityOptions(nuclides=["Cs-137"], **opt))
         r, ln = _line(res, "Cs-137", CS)
         z = (ln.primary_net - true) / ln.primary_net_unc if ln.primary_net is not None and ln.primary_net_unc else math.nan
@@ -83,7 +96,9 @@ def _cs_run(det, curve, category, n, extra, **opt):
         true_bq = true * per_count
         rows.append({"z": z, "method": ln.primary_method, "detected": bool(r.detected), "line_detected": ln.detected,
                      "best": r.best_estimate, "low": r.coverage_low, "high": r.coverage_high, "true_bq": true_bq,
-                     "activity": r.activity, "primary": r.primary})
+                     "activity": r.activity, "primary": r.primary, "continuum": ln.window_continuum,
+                     "lc_ratio": (ln.window_lc_counts / ln.lc_counts if ln.window_lc_counts and ln.lc_counts
+                                  else None)})
     return rows
 
 
@@ -93,6 +108,10 @@ def run_detector(det) -> dict:
     zero = _cs_run(det, curve, "zero", N_ZERO, lambda cy: [])
     out["zero"] = {**_z_stats([r["z"] for r in zero]), "methods": _methods(zero),
                    "used": _z_stats([r["z"] for r in zero if r["method"] in USED])}
+    if det.name == "NaI":
+        out["zero"]["quadratic"] = _quadratic(zero)
+        ratios = [r["lc_ratio"] for r in zero if r["lc_ratio"]]
+        out["zero"]["lc_ratio_mean"] = float(np.mean(ratios)) if ratios else None
     zero_iso = _cs_run(det, curve, "zero", N_ZERO, lambda cy: [], decision="iso11929")
     out["zero_iso_false_detect"] = float(np.mean([r["detected"] for r in zero_iso]))
     for s in WEAK_S:
@@ -103,6 +122,8 @@ def run_detector(det) -> dict:
                                "found": float(np.mean([r["method"] == "fit" for r in rows])),
                                "methods": _methods(rows),
                                "used": _z_stats([r["z"] for r in rows if r["method"] in USED])}
+        if det.name == "NaI":
+            out[f"weak_s{s:g}"]["quadratic"] = _quadratic(rows)
     a_h3b = _area_at_sigma0(det, H3B_S)
     h3b = lambda cy: [TruePeak(CS, a_h3b)]     # noqa: E731
     d1 = _cs_run(det, curve, "h3b", N_H3B, h3b, mda_method="iso11929")
@@ -119,6 +140,11 @@ def run_detector(det) -> dict:
                            "best_from_it": sum(r["best"] is not None for r in rows if r["method"] == "interfered")}
     out["m2"] = {mode: _m2(det, curve, mode) for mode in ("spectrum", "peak")}
     out["bkg_absent"] = {mode: _bkg_absent(det, curve, mode) for mode in ("spectrum", "peak")}
+    if det.name == "NaI":
+        rows = _cs_run(det, curve, "edge", N_EDGE, lambda cy: [], cont=edge_continuum(det), decision="iso11929")
+        out["edge"] = {"false_detect": float(np.mean([r["detected"] for r in rows])), "methods": _methods(rows),
+                       "quadratic": _quadratic(rows), "n": len(rows),
+                       "used": _z_stats([r["z"] for r in rows if r["method"] in USED])}
     return out
 
 
@@ -155,7 +181,7 @@ def _bkg_absent(det, curve, mode: str) -> dict:
                 methods.append(ln.primary_method)
                 if ln.primary_net is not None and ln.primary_net_unc and ln.primary_method in USED:
                     z.append(ln.primary_net / ln.primary_net_unc)
-    return {**_z_stats(z), "methods": {m: methods.count(m) for m in sorted(set(methods))}}
+    return {**_z_stats(z), "methods": {m: methods.count(m) for m in sorted(set(methods))}, "lines": len(methods)}
 
 
 def criteria(name: str, m: dict) -> list[dict]:
@@ -242,15 +268,91 @@ def criteria_v2(name: str, m: dict) -> list[dict]:
     return out
 
 
+V2_RESULTS = Path(__file__).resolve().parents[2] / "docs" / "baseline" / "after_PR1" / "signed_primary_results_v2.md"
+
+
+def _v2_measured() -> dict:
+    text = V2_RESULTS.read_text(encoding="utf-8")
+    return json.loads(text.split("## Measured values", 1)[1].split("```", 2)[1])
+
+
+def _same(old, new, path="") -> list[str]:
+    """Paths of `old` whose value differs in `new` (keys added in `new` are ignored)."""
+    if isinstance(old, dict):
+        if not isinstance(new, dict):
+            return [path]
+        return [d for k, v in old.items() for d in _same(v, new.get(k), f"{path}/{k}")]
+    if isinstance(old, float) and isinstance(new, float) and math.isnan(old) and math.isnan(new):
+        return []
+    return [] if old == new else [path]
+
+
+def criteria_v3(name: str, m: dict) -> list[dict]:
+    """docs/baseline/window_polynomial_protocol.md (WP.*)."""
+    def c(cid, value, ok, limit):
+        return {"id": f"{name}.{cid}", "value": value, "pass": bool(ok), "limit": limit}
+    if name == "HPGe":
+        diff = _same(_v2_measured()["HPGe"], json.loads(json.dumps(m, default=float)))
+        return [c("WP.C9.identical_to_v2", float(len(diff)), not diff, "0 differences" + (
+            f" ({', '.join(diff[:5])})" if diff else ""))]
+    out = []
+    z = m["zero"]
+    used = z["used"]
+    frac = used["n"] / N_ZERO
+    out += [c("WP.C1.used", frac, frac >= 0.90, ">= 0.90"),
+            c("WP.C1.mean_z", used["mean_z"], abs(used["mean_z"]) <= 0.2, "abs <= 0.2"),
+            c("WP.C1.cov2", used["cov2"], 0.91 <= used["cov2"] <= 0.99, "in [0.91, 0.99]")]
+    for mode, v in m["bkg_absent"].items():
+        f = v["n"] / v["lines"] if v["lines"] else 0.0
+        out += [c(f"WP.C2.{mode}.used", f, f >= 0.80, ">= 0.80"),
+                c(f"WP.C2.{mode}.mean_z", v["mean_z"], abs(v["mean_z"]) <= 0.3, "abs <= 0.3"),
+                c(f"WP.C2.{mode}.cov2", v["cov2"], v["cov2"] >= 0.90, ">= 0.90")]
+    for s in WEAK_S:
+        v = m[f"weak_s{s:g}"]
+        u = v["used"]
+        if u["n"] >= 20:
+            out += [c(f"WP.C3.s{s:g}.mean_z", u["mean_z"], abs(u["mean_z"]) <= 0.3, f"abs <= 0.3 (used n={u['n']})"),
+                    c(f"WP.C3.s{s:g}.cov2", u["cov2"], 0.90 <= u["cov2"] <= 0.99, "in [0.90, 0.99]")]
+        else:
+            out.append(c(f"WP.C3.s{s:g}.used", float(u["n"]), True, "fewer than 20 used: reported"))
+        out.append(c(f"WP.C3.s{s:g}.interval", v["interval_coverage"], v["interval_coverage"] >= 0.89, ">= 0.89"))
+    h = m["h3b"]
+    out += [c("WP.C4.present", float(h["primary_present"] and h["best_present"]),
+              h["primary_present"] and h["best_present"], "all"),
+            c("WP.C4.d2_detected", h["d2_detected"], h["d2_detected"] >= 0.50, ">= 0.50"),
+            c("WP.C4.d1_le_d2", h["d1_detected"], h["d1_detected"] <= h["d2_detected"], "<= D2")]
+    for mode, v in m["m2"].items():
+        out += [c(f"WP.C5.{mode}.negative", v["negative"], v["negative"] >= 18, ">= 18 of 20"),
+                c(f"WP.C5.{mode}.best", v["best_and_interval"], v["best_and_interval"] == v["n"], "all"),
+                c(f"WP.C5.{mode}.no_activity", v["no_activity_not_detected"],
+                  v["no_activity_not_detected"] == v["n"], "all")]
+    i = m["interference"]
+    out += [c("WP.C6.interfered", i["interfered"], i["interfered"] >= 45, ">= 45 of 50"),
+            c("WP.C6.detected", i["detected"], i["detected"] == 0, "0"),
+            c("WP.C6.best", i["best_from_it"], i["best_from_it"] == 0, "0")]
+    fd = m["zero_iso_false_detect"]
+    out.append(c("WP.C7.false_detect", fd, 0.010 <= fd <= 0.090, "in [0.010, 0.090]"))
+    ed = m["edge"]
+    out.append(c("WP.C8.false_detect", ed["false_detect"], ed["false_detect"] <= 0.090, "<= 0.090"))
+    if ed["used"]["n"] >= 20:
+        ok = abs(ed["used"]["mean_z"]) <= 0.3 and ed["used"]["cov2"] >= 0.90
+        out.append(c("WP.C8.used", ed["used"]["mean_z"], ok,
+                     f"used n={ed['used']['n']}: abs mean z <= 0.3, cov2 >= 0.90 (cov2 {ed['used']['cov2']:.3f})"))
+    else:
+        out.append(c("WP.C8.used", float(ed["used"]["n"]), True, "fewer than 20 used: reported"))
+    return out
+
+
 def run_all() -> dict:
     return {det.name: run_detector(det) for det in (HPGE, NAI)}
 
 
 def report(results: dict) -> str:
-    lines = ["# Signed primary result: results", "", "Protocol: `signed_primary_amendment_protocol.md` (harness version 2; version 1 criteria in `criteria`).", "",
-             "| id | value | limit | status |", "|---|---|---|---|"]
+    lines = ["# Signed primary result: results", "",
+             "Protocol: `window_polynomial_protocol.md` (harness version 3; version 2 criteria in `criteria_v2`, "
+             "version 1 in `criteria`).", "", "| id | value | limit | status |", "|---|---|---|---|"]
     for name, m in results.items():
-        for c in criteria_v2(name, m):
+        for c in criteria_v3(name, m):
             v = c["value"]
             lines.append(f"| {c['id']} | {v:.4g} | {c['limit']} | {'PASS' if c['pass'] else 'FAIL'} |")
     lines += ["", "## Measured values", "", "```", json.dumps(results, indent=1, default=float), "```", ""]
