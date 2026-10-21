@@ -81,3 +81,51 @@ Outputs go to a new folder `docs/baseline/after_FP2/`.
 ## Results
 
 (appended after the run)
+
+Run 2026-10-22, engine 1.10.0. The text above the line is unchanged (SHA-256 of the pre-registered
+part still 46efb21c57d02a585e095bf7e5dc658ee114f1e33da2c1e7fa08a14762a3be6e). Outputs:
+`docs/baseline/after_FP2/`, which holds:
+* `fwhm_plausibility_results.json` (FA.C1–C5);
+* `baseline.*`;
+* `iaea2002_results.*`;
+* `crm_validation_results.*`.
+
+| id | value | limit | result |
+|---|---|---|---|
+| FA.C1 `maricsmall.chn` | rescaled x2; note in `FitReport` and activity notes; 102 peaks (`main` 14) | >= 60 | PASS |
+| FA.C2 calibration | 16 lines on `.chn` (17 on `.spe`); gain 0.4328666 against 0.4328654 (+0.0003 %) | >= 15; 0.5 % | PASS |
+| FA.C3 IAEA `.Chn` | rescaled in exactly the 6 files. Peaks against the `.spe` copy: maricsmall 102/79, maritsmall60 76/78, mix2eq 116/136, mix2eq3 54/54, mix2neq6 64/69, **Cs137SMALL 14/19 (74 %)** | >= 80 % each | **FAIL** |
+| FA.C4 synthetic `isolated_strong` | rescaled as registered in all 10 cases; recall 1.000 in every case (`main`: NaI k = 0.25 0.783, all others 1.000); false peaks per spectrum NaI k = 0.25 0.10 (`main` 4.7) | | PASS |
+| FA.C5 other synthetic sets | 0 rescaled in all 16 sets | 0 | PASS |
+| FA.C6 benchmark | statuses identical, 154 / 13 / 60, no PASS -> FAIL. Values identical (key order included) except `engine_version` and 3 IDB values: CdTe implausible per spectrum 5.29 -> 6.71 (and its REPORT criterion), CdTe safeguards library 0.14 -> 0.00, CZT safeguards library 0.65 -> 0.68 | | PASS |
+| FA.C7 IAEA 2002 | identical except the engine version | | PASS |
+| FA.C8 CRM | identical except `engine_version` | | PASS |
+| FA.C9 tests | the 5 tests that failed in after_FP1 pass; full suite 1389 passed, 69 skipped; no existing test changed (`tests/test_fwhm_plausibility.py` belongs to this item: its NaI k = 4 case was removed and a power-of-two test added, as §2 and §3 say) | | PASS |
+
+**FA.C3, recorded as it is.** `Cs137SMALL.Chn` is rescaled x1/16.
+* The guessed NaI default (58 channels at a quarter of the range) becomes, after the usual
+  `_rescale_model` refinement, 2.8 channels there and 4.0 at half the range.
+* It finds 14 peaks (`main`: 8; first rule: 18; its `.spe` copy: 19).
+* Four peaks of the `.spe` search have no counterpart within 2 channels. Three are at low channels:
+  22.5 (significance 4.3), 55.8 (17.8) and 66.3 (11.0). The fourth is 413.3 (4.7).
+* The low-channel misses are where the rescaled model, a scaled NaI shape, is narrowest. A scaled
+  model keeps the energy dependence of the wrong detector type. The width model measured on the
+  `.spe` copy does not.
+* The limit stays as registered.
+
+**Reported.**
+* `maricsmall.chn` now finds more peaks than its `.spe` copy (102 against 79). The extra peaks are
+  not checked against a reference list here.
+* The three changed IDB values come from the 3 CdTe spectra in the benchmark subset (761, 771 and
+  781) and 1 CZT spectrum (1321). Their default CZT resolution is replaced by measured widths.
+  More CdTe nuclides are now reported as implausible; it is a REPORT criterion.
+* Unchanged finding: some `.Chn` files with the placeholder energy calibration (0, 1) still find
+  fewer peaks than their `.spe` copy, for example Am241 and Cd109. Their peaks do not fit at a
+  common bound, so this check does not apply. The placeholder calibration is a separate finding.
+
+**What ships.**
+* A stored FWHM calibration or default resolution that is wrong by more than x2 is now rescaled to
+  the strongest peaks. The search, the manual refits and the activity windows use the rescaled
+  model, and a note tells the user to check the calibration.
+* No result of the benchmark (outside 3 IDB values), of the IAEA 2002 check or of the CRM check
+  changes.

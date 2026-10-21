@@ -1,4 +1,4 @@
-"""Implausible FWHM model, finding F1 (docs/baseline/fwhm_plausibility_protocol.md)."""
+"""Implausible FWHM model, finding F1 (docs/baseline/fwhm_plausibility_amendment_protocol.md)."""
 from __future__ import annotations
 
 import numpy as np
@@ -25,8 +25,8 @@ def _spectrum(det, k=None):
     return syn
 
 
-@pytest.mark.parametrize("det,k", [(HPGE, 4.0), (NAI, 4.0), (NAI, 0.25)])
-def test_implausible_calibration_is_replaced_with_a_note(det, k):
+@pytest.mark.parametrize("det,k", [(HPGE, 4.0), (NAI, 0.25)])
+def test_implausible_calibration_is_rescaled_with_a_note(det, k):
     syn = _spectrum(det, k)
     rep = P.FitReport()
     found = P.find_peaks(syn.spectrum, report=rep)
@@ -43,6 +43,15 @@ def test_plausible_calibration_is_kept(det, k):
     f, src = P.checked_fwhm_model(syn.spectrum, y)
     assert src == "fwhm calibration"
     assert np.array_equal(f, P.fwhm_model(syn.spectrum, y)[0])
+
+
+def test_rescale_is_a_power_of_two_of_the_model():
+    syn = _spectrum(HPGE, 4.0)
+    y = np.asarray(syn.spectrum.counts, dtype=float)
+    f, src = P.checked_fwhm_model(syn.spectrum, y)
+    k = f / P.fwhm_model(syn.spectrum, y)[0]
+    assert np.allclose(k, k[0]) and np.log2(k[0]) == round(np.log2(k[0])) and k[0] < 1
+    assert src == f"{P.IMPLAUSIBLE_PREFIX}: fwhm calibration x{k[0]:g})"
 
 
 def test_user_width_is_never_checked(monkeypatch):
