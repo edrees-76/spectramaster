@@ -26,7 +26,7 @@ from ..formats.base import FormatSpec
 from ..model import Spectrum
 from . import analysis_panel as ana
 from . import i18n
-from .analysis_panel import AnalysisPanel, export_results
+from .analysis_panel import AnalysisPanel, export_results, peak_info_text
 from .dialogs import AboutDialog, BatchDialog, FormatDialog, scan_folder
 from .i18n import tr
 from .icon import app_icon
@@ -71,6 +71,7 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         self.plot = SpectrumPlot()
         self.plot.filesDropped.connect(self.handle_dropped)
         self.plot.hovered.connect(self._on_hover)
+        self.plot.peakIndexed.connect(self._on_peak_indexed)
         self.plot.historyChanged.connect(self._update_history_actions)
         self.plot.viewChanged.connect(self._update_history_actions)
         self.plot.contextRequested.connect(self._plot_context_menu)
@@ -587,6 +588,12 @@ class MainWindow(ReportActionsMixin, QMainWindow):
 
     def _on_hover(self, text: str) -> None:
         self.status_hover.setText(text)
+
+    def _on_peak_indexed(self, pk) -> None:
+        """Ctrl+Left / Right, Space / Tab without ROIs, double-click: the peak's information."""
+        self.statusBar().showMessage(peak_info_text(pk))
+        if hasattr(self, "analysis_panel"):
+            self.analysis_panel.select_peak(pk)
 
     def set_y_mode(self, mode: str) -> None:
         if mode not in Y_MODES:
@@ -1273,6 +1280,8 @@ def create_app(argv: Optional[list[str]] = None) -> QApplication:
     app.setApplicationVersion(__version__)
     app.setWindowIcon(app_icon())
     style_application(app)
+    from .window_buttons import install
+    install(app)            # maximize / minimize buttons on every dialog
     return app
 
 

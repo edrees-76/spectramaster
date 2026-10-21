@@ -33,7 +33,7 @@ from dataclasses import dataclass, field
 from typing import Optional, Sequence
 
 import numpy as np
-from PySide6.QtCore import QLineF, QPoint, QPointF, QRectF, QSize, Qt, QTimer, Signal
+from PySide6.QtCore import QEvent, QLineF, QPoint, QPointF, QRectF, QSize, Qt, QTimer, Signal
 from PySide6.QtGui import (QColor, QFont, QFontMetrics, QImage, QLinearGradient, QPainter,
                            QPen, QPolygonF)
 from PySide6.QtWidgets import QApplication, QSizePolicy, QWidget
@@ -61,6 +61,16 @@ C_HILITE = QColor("#c2185b")
 C_PAINT = QColor(46, 125, 50)          # ROI being painted / edited (Aptec Paint)
 C_FIT = QColor("#2e7d32")              # fitted peaks of the analysis (Aptec Show Fitted ROIs)
 C_WINDOW = QColor(47, 109, 179, 45)    # expanded region shown on the split full-spectrum view
+C_LINE_FOUND = QColor("#2e7d32")       # nuclide line with a found peak (MAESTRO isotope markers)
+C_LINE_MISSING = QColor("#1565c0")     # expected line without a found peak
+
+
+def line_has_peak(energy: float, peaks) -> bool:
+    """A found peak lies on the library line: within 1.5 FWHM (1 keV when the width is unknown)."""
+    for pk in peaks:
+        if pk.energy is not None and abs(pk.energy - energy) <= 1.5 * max(float(pk.fwhm_kev or 0.0), 0.67):
+            return True
+    return False
 
 # View > Color: the colors a user can change, with the defaults (Aptec View Color...)
 COMPARE_STEP_PX = 4            # Ctrl+Up / Ctrl+Down step of the compare spectrum (pixels)
@@ -208,6 +218,7 @@ class SpectrumPlot(QWidget):
     contextRequested = Signal(QPoint, float)   # global pos, index position (nan outside)
     markerMoved = Signal(int)        # stored-array index of the channel marker
     roiIndexChanged = Signal(int)    # indexed ROI (Space / Shift+Space), -1 = none
+    peakIndexed = Signal(object)     # found peak indexed (Ctrl+Left / Right; Space, Tab without ROIs)
     selectionChanged = Signal()      # Edit > Select All / Select Region / Clear Selection
     paintChanged = Signal()          # ROI Paint / Edit started, changed or ended
 
@@ -237,6 +248,7 @@ class SpectrumPlot(QWidget):
         self.last_roi: Optional[Roi] = None
         self.roi_props = RoiProperties()     # Aptec ROI Properties (Shift+R)
         self.indexed_roi: Optional[Roi] = None   # Aptec "indexed" ROI (Space / Shift+Space)
+        self.indexed_peak = None                 # found peak the marker was moved to (Ctrl+Left / Right)
         self.paint: Optional[list[int]] = None   # [left, right] of the ROI being painted / edited
         self.paint_edit: Optional[Roi] = None    # the ROI being edited (None: painting a new one)
         self._paint_drag = False
@@ -304,6 +316,7 @@ class SpectrumPlot(QWidget):
             self.paint = self.paint_edit = None
             self.paintChanged.emit()
         self.peaks = []
+        self.indexed_peak = None
         self.highlight = None
         self._history = []
         self._hist_idx = -1
@@ -762,9 +775,62 @@ class SpectrumPlot(QWidget):
         self.set_marker(mid)
         self.roiIndexChanged.emit(i)
 
+    # --- found peaks (MAESTRO Ctrl+Left / Right; Space and Tab when there are no ROIs)
+    def _sorted_peaks(self) -> list:
+        return sorted(self.peaks, key=lambda p: p.centroid)
+
+    def index_peak(self, peak) -> None:
+        """Move the channel marker to `peak` (in view) and report it (``peakIndexed``)."""
+        pos = self.pos_of_channel(peak.centroid)
+        mid = int(math.floor(pos))
+        if not self.x0 <= pos <= self.x1:
+            half = (self.x1 - self.x0) / 2
+            self.set_view(pos - half, pos + half, None)
+        self.indexed_peak = peak
+        self.set_marker(mid)
+        self.peakIndexed.emit(peak)
+
+    def peak_near(self, pos: float):
+        """The found peak whose centroid is within 1.5 FWHM of index position `pos`, or None."""
+        best = None
+        for p in self.peaks:
+            x = self.pos_of_channel(p.centroid)
+            w = 1.5 * max(float(p.fwhm or 0.0), 1.0)
+            if abs(x - pos) <= w and (best is None or abs(x - pos) < best[0]):
+                best = (abs(x - pos), p)
+        return best[1] if best else None
+
+    def peak_step(self, d: int) -> bool:
+        """Index the next found peak to the right (d > 0) or left of the marker / indexed peak;
+        False when there is none in that direction."""
+        peaks = self._sorted_peaks()
+        if not peaks:
+            return False
+        ip = self.indexed_peak
+        if ip is not None and ip in peaks and self.marker == int(math.floor(self.pos_of_channel(ip.centroid))):
+            ref = self.pos_of_channel(ip.centroid)          # still on the indexed peak
+        elif self.marker is not None:
+            ref = self.marker + 0.5
+        else:
+            ref = -math.inf if d > 0 else math.inf
+        pos = [self.pos_of_channel(p.centroid) for p in peaks]
+        if d > 0:
+            cand = [p for p, x in zip(peaks, pos) if x > ref + 1e-9]
+            nxt = cand[0] if cand else None
+        else:
+            cand = [p for p, x in zip(peaks, pos) if x < ref - 1e-9]
+            nxt = cand[-1] if cand else None
+        if nxt is None:
+            return False
+        self.index_peak(nxt)
+        return True
+
     def index_next(self) -> None:
-        """Space: index the next ROI to the right (wraps around)."""
+        """Space: index the next ROI to the right (wraps around); the next found peak when the
+        spectrum has no ROIs (after the main engine's analysis)."""
         if not self.rois:
+            if not self.peak_step(1) and self.peaks:
+                self.index_peak(self._sorted_peaks()[0])          # wraps around, like the ROIs
             return
         i = self.roi_index
         if i < 0:
@@ -775,8 +841,11 @@ class SpectrumPlot(QWidget):
         self.index_roi(i)
 
     def index_prev(self) -> None:
-        """Shift+Space: index the next ROI to the left (wraps around)."""
+        """Shift+Space: index the next ROI to the left (wraps around); the found peaks when the
+        spectrum has no ROIs."""
         if not self.rois:
+            if not self.peak_step(-1) and self.peaks:
+                self.index_peak(self._sorted_peaks()[-1])
             return
         i = self.roi_index
         if i < 0:
@@ -1044,6 +1113,7 @@ class SpectrumPlot(QWidget):
     # ======================================================== analysis marks
     def set_peaks(self, peaks: Sequence) -> None:
         self.peaks = list(peaks or [])
+        self.indexed_peak = None
         self.update()
 
     def set_highlight(self, hl: Optional[Highlight]) -> None:
@@ -1649,12 +1719,15 @@ class SpectrumPlot(QWidget):
 
     def _paint_highlight(self, p, rect, prim, ypx, fm) -> None:
         hl = self.highlight
-        p.setPen(QPen(C_HILITE, 1, Qt.DashLine))
         last_right = -1e9
         for e in sorted(hl.lines):
             pos = self.pos_of_energy(e)
             if pos is None or not (self.x0 <= pos <= self.x1):
                 continue
+            # MAESTRO isotope markers: green where a found peak sits on the line, blue where not
+            found = line_has_peak(e, hl.peaks)
+            p.setPen(QPen(C_LINE_FOUND if found else C_LINE_MISSING, 1.5 if found else 1,
+                          Qt.SolidLine if found else Qt.DashLine))
             px = float(self._x_to_px(pos, rect))
             lab = f"{e:.1f}"
             tw = fm.horizontalAdvance(lab)
@@ -1990,11 +2063,16 @@ class SpectrumPlot(QWidget):
     def mouseDoubleClickEvent(self, ev):
         if ev.button() != Qt.LeftButton:
             return
+        pos = self._px_to_x(ev.position().x(), self.plot_rect())
         if not self.rois:
-            self.reset_view()
+            # MAESTRO: double-click on a found peak shows its information; elsewhere full spectrum
+            near = self.peak_near(pos)
+            if near is not None:
+                self.index_peak(near)
+            else:
+                self.reset_view()
             return
         # Aptec: double-click to the left of an ROI indexes it (Shift: the ROI to the left)
-        pos = self._px_to_x(ev.position().x(), self.plot_rect())
         if ev.modifiers() & Qt.ShiftModifier:
             left = [k for k, r in enumerate(self.rois) if r.right + 1 <= pos]
             self.index_roi(left[-1] if left else len(self.rois) - 1)
@@ -2038,6 +2116,8 @@ class SpectrumPlot(QWidget):
             self.paint_set()
         elif k == Qt.Key_Escape:
             self.reset_view()
+        elif k in (Qt.Key_Left, Qt.Key_Right) and mods & Qt.ControlModifier:   # MAESTRO: next peak
+            self.peak_step(-1 if k == Qt.Key_Left else 1)
         elif k == Qt.Key_Backspace or (k == Qt.Key_Left and mods & Qt.AltModifier):
             self.back()
         elif k == Qt.Key_Right and mods & Qt.AltModifier:
@@ -2069,6 +2149,17 @@ class SpectrumPlot(QWidget):
             self.zoom_x(2.0, self._hover_idx + 0.5 if self._hover_idx is not None else None)
         else:
             super().keyPressEvent(ev)
+
+    def event(self, ev):
+        # Aptec: Tab / Shift+Tab index the next / previous ROI (found peaks without ROIs); Tab
+        # would otherwise move the keyboard focus away from the plot
+        if ev.type() == QEvent.KeyPress and ev.key() in (Qt.Key_Tab, Qt.Key_Backtab):
+            if ev.key() == Qt.Key_Backtab or ev.modifiers() & Qt.ShiftModifier:
+                self.index_prev()
+            else:
+                self.index_next()
+            return True
+        return super().event(ev)
 
     def resizeEvent(self, ev):
         self._col_cache.clear()
