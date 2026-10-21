@@ -504,6 +504,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     bcounts = None          # full-spectrum mode: background counts on the sample grid
     bfit = None             # peak mode: background fitted at the sample peaks
     bkg_under: dict = {}
+    fit_report = None
     from .background import BackgroundFitter, check_not_subtracted, compatibility, net_spectrum, not_poisson_note
     if background is not None:
         check_not_subtracted(spectrum)
@@ -520,13 +521,17 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             bfit = BackgroundFitter(spectrum, background)
             if bfit.note:
                 notes.append(bfit.note)
+            # the peaks are fitted on S - kB: background lines the resolution does not separate
+            # from a sample peak would otherwise distort its shape (docs/baseline/bkg_peak_protocol.md);
+            # the background fitter then gives the background under each peak with this fit's estimator
+            from .peaks import FitReport
+            work_net, net_var, _k = net_spectrum(spectrum, background)
+            fit_report = FitReport()
+            peaks = find_peaks(work_net, min_sig=opt.min_sig, variance=net_var, report=fit_report)
     if not_poisson_note(spectrum):
         notes.append(not_poisson_note(spectrum))
-    fit_report = None
     if peaks is None:
-        from .peaks import FitReport
-        fit_report = FitReport() if bfit is not None else None
-        peaks = find_peaks(work, min_sig=opt.min_sig, report=fit_report)
+        peaks = find_peaks(work, min_sig=opt.min_sig)
     if bfit is not None:
         bkg_under = bfit.under_peaks(peaks, fit_report)
     y = np.asarray(spectrum.counts, dtype=float)
@@ -677,7 +682,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             if p is not None:
                 lr.peak_found = True
                 nnet, unet = float(p.net_area), float(p.net_area_unc)
-                if bnet is not None:          # not clipped: a negative net area is kept
+                if bnet is not None and bfit is None:   # legacy background peaks; not clipped
                     nnet -= bnet[0]
                     unet = math.hypot(unet, bnet[1])
                 lr.net_area, lr.net_unc = nnet, unet

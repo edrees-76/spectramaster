@@ -1017,3 +1017,17 @@ describe:
 
 Still not documented: the remaining Release B dialogs (fit inspection and manual refit, review and the JSON report,
 batch analysis) beyond their menu entries.
+
+## Peak-by-peak background with unresolved background lines (2026-10-21)
+
+Pre-registered in `docs/baseline/bkg_peak_protocol.md`, with the results there.
+
+- **Cause.** In NaI, the background lines Bi-214 at 1120, 1238 and 1377 keV are not resolved from
+  the Co-60 sample peaks. In peak mode they distorted the fitted Co-60 shapes, so 9 % of
+  1173 keV was counted under 1332 keV, and K-40 was falsely detected in half the pairs.
+- **Change.** Peak mode now fits the peaks on S - kB, the same fit as full-spectrum mode. The
+  background under each line is still reported and enters the detection limits.
+- **Results.** NaI.bkg_peak.cov1, cov2 and false_detect go from FAIL to PASS. No criterion went
+  from PASS to FAIL, and 13 criteria fail.
+- **Behaviour change.** A line present only in the background is reported as not found, with its
+  background, instead of with a net area near zero.

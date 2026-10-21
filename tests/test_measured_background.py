@@ -82,14 +82,32 @@ def test_identical_background_gives_exactly_zero_net():
         assert under[id(p)][0] == pytest.approx(p.net_area, rel=1e-6, abs=1e-6)
 
 
-def test_negative_net_area_is_kept():
-    """Background line stronger than in the sample: the net area is negative, not clipped."""
+def test_background_line_stronger_than_in_the_sample():
+    """Background line stronger than in the sample.  Peak mode fits the peaks on S - kB
+    (docs/baseline/bkg_peak_protocol.md): no peak is found there, the line is not detected and the
+    background under it is reported and enters its detection limit."""
     s = make_spectrum(HPGE, [TruePeak(1460.82, 3e3)], CONT, 5).spectrum
     b = make_spectrum(HPGE, [TruePeak(1460.82, 6e3)], CONT, 6).spectrum        # same live time
     q = compute_activities(s, _flat_curve(), ActivityOptions(nuclides=["K-40"]), background=b)
     ln = next(l for l in q.nuclides[0].lines if abs(l.energy - 1460.82) < 1)
-    assert ln.peak_found and ln.net_area < 0 and not ln.detected
-    assert ln.net_area == pytest.approx(-3e3, abs=4 * ln.net_unc)
+    assert not ln.peak_found and not ln.detected
+    assert ln.bkg_peak == pytest.approx(6e3, rel=0.1)
+    q0 = compute_activities(s, _flat_curve(), ActivityOptions(nuclides=["K-40"]),
+                            background=make_spectrum(HPGE, [], CONT, 6).spectrum)
+    ln0 = next(l for l in q0.nuclides[0].lines if abs(l.energy - 1460.82) < 1)
+    assert ln.mda > ln0.mda
+
+
+def test_unresolved_background_line_does_not_bias_a_sample_peak():
+    """NaI: Bi-214 1377 keV (background) 45 keV from Co-60 1332 keV (sample)."""
+    from spectramaster.validation import scenarios
+    rel = []
+    for smp, bkg, truth in scenarios.background_pairs(NAI, 12):
+        q = compute_activities(smp.spectrum, _flat_curve(), ActivityOptions(nuclides=["Co-60"], bkg_mode="peak"),
+                               background=bkg.spectrum)
+        ln = next(l for l in q.nuclides[0].lines if abs(l.energy - 1332.49) < 1)
+        rel.append(ln.net_area / truth[("Co-60", 1332.492)] - 1.0)
+    assert abs(np.mean(rel)) < 0.04                  # was +9 %
 
 
 @pytest.mark.parametrize("mode", ["peak", "spectrum"])
