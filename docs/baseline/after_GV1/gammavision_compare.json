@@ -1,0 +1,608 @@
+{
+ "spectra": [
+  {
+   "file": "sand sample 2.Spc",
+   "live_time_s": 86217.76,
+   "total_counts": 1150951,
+   "peaks": 100,
+   "nuclides": [
+    "Pb-214",
+    "Bi-214",
+    "Ac-228",
+    "K-40",
+    "Bi-212",
+    "Cs-137",
+    "U-235",
+    "Tl-208",
+    "Pb-212",
+    "Th-231",
+    "Yb-169",
+    "Pa-234m"
+   ],
+   "oil_energies": [
+    {
+     "energy": 186.072,
+     "net": 5675.2,
+     "unc_pct": 2.31,
+     "fwhm_kev": 1.066,
+     "sig": 43.3
+    },
+    {
+     "energy": 295.261,
+     "net": 14677.0,
+     "unc_pct": 0.97,
+     "fwhm_kev": 1.038,
+     "sig": 103.4
+    },
+    {
+     "energy": 352.015,
+     "net": 25157.2,
+     "unc_pct": 0.72,
+     "fwhm_kev": 1.108,
+     "sig": 138.2
+    },
+    {
+     "energy": 1120.89,
+     "net": 3956.1,
+     "unc_pct": 1.97,
+     "fwhm_kev": 1.67,
+     "sig": 50.7
+    },
+    null
+   ]
+  },
+  {
+   "file": "sand sample 2.An1",
+   "live_time_s": 86217.76,
+   "total_counts": 1150951,
+   "peaks": 100,
+   "nuclides": [
+    "Pb-214",
+    "Bi-214",
+    "Ac-228",
+    "K-40",
+    "Bi-212",
+    "Cs-137",
+    "U-235",
+    "Tl-208",
+    "Pb-212",
+    "Th-231",
+    "Yb-169",
+    "Pa-234m"
+   ],
+   "oil_energies": [
+    {
+     "energy": 186.072,
+     "net": 5675.2,
+     "unc_pct": 2.31,
+     "fwhm_kev": 1.066,
+     "sig": 43.3
+    },
+    {
+     "energy": 295.261,
+     "net": 14677.0,
+     "unc_pct": 0.97,
+     "fwhm_kev": 1.038,
+     "sig": 103.4
+    },
+    {
+     "energy": 352.015,
+     "net": 25157.2,
+     "unc_pct": 0.72,
+     "fwhm_kev": 1.108,
+     "sig": 138.2
+    },
+    {
+     "energy": 1120.89,
+     "net": 3956.1,
+     "unc_pct": 1.97,
+     "fwhm_kev": 1.67,
+     "sig": 50.7
+    },
+    null
+   ]
+  },
+  {
+   "file": "oil sample 1.An1",
+   "live_time_s": 86359.28,
+   "total_counts": 22634,
+   "peaks": 10,
+   "nuclides": [
+    "Bi-214",
+    "Pb-214"
+   ],
+   "oil_energies": [
+    null,
+    null,
+    {
+     "energy": 352.35,
+     "net": 101.0,
+     "unc_pct": 24.07,
+     "fwhm_kev": 1.184,
+     "sig": 4.2
+    },
+    {
+     "energy": 1119.772,
+     "net": 46.1,
+     "unc_pct": 33.29,
+     "fwhm_kev": 1.68,
+     "sig": 3.0
+    },
+    {
+     "energy": 1763.644,
+     "net": 25.4,
+     "unc_pct": 30.24,
+     "fwhm_kev": 2.003,
+     "sig": 3.3
+    }
+   ]
+  },
+  {
+   "file": "Oil sample 6.Spc",
+   "live_time_s": 86330.32,
+   "total_counts": 121864,
+   "peaks": 34,
+   "nuclides": [
+    "Pb-214",
+    "Th-234",
+    "Bi-214",
+    "K-40",
+    "Ac-228",
+    "Ra-226",
+    "As-74",
+    "Pb-212",
+    "Th-228",
+    "Pb-210",
+    "Mo-99",
+    "Tc-99m",
+    "Tl-208"
+   ],
+   "oil_energies": [
+    {
+     "energy": 185.738,
+     "net": 338.6,
+     "unc_pct": 8.99,
+     "fwhm_kev": 1.046,
+     "sig": 11.1
+    },
+    {
+     "energy": 295.198,
+     "net": 301.3,
+     "unc_pct": 8.48,
+     "fwhm_kev": 1.138,
+     "sig": 11.8
+    },
+    {
+     "energy": 351.934,
+     "net": 417.7,
+     "unc_pct": 6.65,
+     "fwhm_kev": 1.184,
+     "sig": 15.0
+    },
+    {
+     "energy": 1120.208,
+     "net": 88.8,
+     "unc_pct": 16.28,
+     "fwhm_kev": 1.68,
+     "sig": 6.1
+    },
+    null
+   ]
+  },
+  {
+   "file": "sludge sample 4.Spc",
+   "live_time_s": 86088.76,
+   "total_counts": 1527625,
+   "peaks": 107,
+   "nuclides": [
+    "Bi-214",
+    "Pb-214",
+    "K-40",
+    "Ac-228",
+    "Tl-208",
+    "Ra-226",
+    "Bi-212",
+    "Th-231",
+    "Cs-137",
+    "Pa-231",
+    "Pb-212",
+    "Yb-169",
+    "Pb-211"
+   ],
+   "oil_energies": [
+    {
+     "energy": 186.153,
+     "net": 8149.5,
+     "unc_pct": 1.78,
+     "fwhm_kev": 0.975,
+     "sig": 56.0
+    },
+    {
+     "energy": 295.234,
+     "net": 29995.9,
+     "unc_pct": 0.78,
+     "fwhm_kev": 1.043,
+     "sig": 128.7
+    },
+    {
+     "energy": 351.99,
+     "net": 50848.3,
+     "unc_pct": 0.62,
+     "fwhm_kev": 1.104,
+     "sig": 161.9
+    },
+    {
+     "energy": 1120.848,
+     "net": 8106.8,
+     "unc_pct": 1.52,
+     "fwhm_kev": 1.711,
+     "sig": 65.8
+    },
+    null
+   ]
+  },
+  {
+   "file": "Sludg Sample 7.Spc",
+   "live_time_s": 84645.82,
+   "total_counts": 43257591,
+   "peaks": 217,
+   "nuclides": [
+    "Bi-214",
+    "Pb-214",
+    "Ac-228",
+    "Tl-208",
+    "Bi-212",
+    "Th-228",
+    "Ra-226",
+    "Gd-153",
+    "Pb-212",
+    "Mn-56",
+    "Xe-133",
+    "Dy-165",
+    "Co-60",
+    "Cs-134",
+    "Ce-141",
+    "As-74"
+   ],
+   "oil_energies": [
+    {
+     "energy": 186.238,
+     "net": 318049.6,
+     "unc_pct": 0.26,
+     "fwhm_kev": 0.927,
+     "sig": 391.4
+    },
+    {
+     "energy": 295.282,
+     "net": 1207527.7,
+     "unc_pct": 0.18,
+     "fwhm_kev": 1.039,
+     "sig": 543.4
+    },
+    {
+     "energy": 352.036,
+     "net": 2023804.8,
+     "unc_pct": 0.27,
+     "fwhm_kev": 1.094,
+     "sig": 371.5
+    },
+    {
+     "energy": 1120.89,
+     "net": 286758.4,
+     "unc_pct": 0.76,
+     "fwhm_kev": 1.684,
+     "sig": 132.4
+    },
+    null
+   ]
+  },
+  {
+   "file": "SLUDG SAMPIL 13.Spc",
+   "live_time_s": 85890.82,
+   "total_counts": 10714329,
+   "peaks": 189,
+   "nuclides": [
+    "Ac-228",
+    "Bi-214",
+    "Pb-214",
+    "Tl-208",
+    "Ra-226",
+    "Bi-212",
+    "Pb-210",
+    "Th-228",
+    "Pb-212",
+    "Ce-141"
+   ],
+   "oil_energies": [
+    {
+     "energy": 186.221,
+     "net": 47554.8,
+     "unc_pct": 0.68,
+     "fwhm_kev": 0.935,
+     "sig": 147.7
+    },
+    {
+     "energy": 295.272,
+     "net": 185384.2,
+     "unc_pct": 0.26,
+     "fwhm_kev": 1.038,
+     "sig": 384.5
+    },
+    {
+     "energy": 352.032,
+     "net": 312706.3,
+     "unc_pct": 0.32,
+     "fwhm_kev": 1.089,
+     "sig": 313.1
+    },
+    {
+     "energy": 1120.963,
+     "net": 48543.0,
+     "unc_pct": 0.9,
+     "fwhm_kev": 1.676,
+     "sig": 111.5
+    },
+    null
+   ]
+  },
+  {
+   "file": "SLUDG SAMPIL 15.Spc",
+   "live_time_s": 86243.74,
+   "total_counts": 680115,
+   "peaks": 92,
+   "nuclides": [
+    "Pb-214",
+    "Bi-214",
+    "Ac-228",
+    "K-40",
+    "Tl-208",
+    "Th-234",
+    "Bi-212",
+    "Cs-137",
+    "U-235",
+    "Th-231",
+    "Pb-212",
+    "Pb-210",
+    "Be-7",
+    "Pa-234m",
+    "Pb-211"
+   ],
+   "oil_energies": [
+    {
+     "energy": 186.077,
+     "net": 3412.7,
+     "unc_pct": 3.01,
+     "fwhm_kev": 1.059,
+     "sig": 33.3
+    },
+    {
+     "energy": 295.231,
+     "net": 9741.8,
+     "unc_pct": 1.31,
+     "fwhm_kev": 1.044,
+     "sig": 76.5
+    },
+    {
+     "energy": 351.976,
+     "net": 16801.7,
+     "unc_pct": 0.93,
+     "fwhm_kev": 1.106,
+     "sig": 107.7
+    },
+    {
+     "energy": 1120.82,
+     "net": 2707.8,
+     "unc_pct": 2.25,
+     "fwhm_kev": 1.716,
+     "sig": 44.4
+    },
+    null
+   ]
+  },
+  {
+   "file": "Water  Sample 11.Spc",
+   "live_time_s": 86315.94,
+   "total_counts": 559598,
+   "peaks": 89,
+   "nuclides": [
+    "Pb-214",
+    "Ac-228",
+    "Bi-214",
+    "K-40",
+    "Ra-226",
+    "Tl-208",
+    "Pb-212",
+    "Ra-223"
+   ],
+   "oil_energies": [
+    {
+     "energy": 186.275,
+     "net": 2947.2,
+     "unc_pct": 3.64,
+     "fwhm_kev": 0.899,
+     "sig": 27.5
+    },
+    {
+     "energy": 295.279,
+     "net": 11410.3,
+     "unc_pct": 1.12,
+     "fwhm_kev": 1.068,
+     "sig": 88.9
+    },
+    {
+     "energy": 352.018,
+     "net": 19114.5,
+     "unc_pct": 1.03,
+     "fwhm_kev": 1.113,
+     "sig": 97.2
+    },
+    {
+     "energy": 1120.845,
+     "net": 2807.1,
+     "unc_pct": 3.75,
+     "fwhm_kev": 1.709,
+     "sig": 26.6
+    },
+    null
+   ]
+  }
+ ],
+ "sand_comparison": [
+  {
+   "nuclide": "Pb-214",
+   "e_gv": 295.25,
+   "a_gv": 14771,
+   "u_gv_pct": 1.17,
+   "w_gv": 1.054,
+   "sm": {
+    "energy": 295.261,
+    "net": 14677.0,
+    "unc_pct": 0.97,
+    "fwhm_kev": 1.038,
+    "sig": 103.4
+   },
+   "de_kev": 0.011,
+   "area_ratio": 0.9936,
+   "area_limit": 0.05,
+   "width_ratio": 0.9851
+  },
+  {
+   "nuclide": "Pb-214",
+   "e_gv": 352.0,
+   "a_gv": 25322,
+   "u_gv_pct": 0.8,
+   "w_gv": 1.128,
+   "sm": {
+    "energy": 352.015,
+    "net": 25157.2,
+    "unc_pct": 0.72,
+    "fwhm_kev": 1.108,
+    "sig": 138.2
+   },
+   "de_kev": 0.015,
+   "area_ratio": 0.9935,
+   "area_limit": 0.05,
+   "width_ratio": 0.9826
+  },
+  {
+   "nuclide": "Tl-208",
+   "e_gv": 583.45,
+   "a_gv": 5335,
+   "u_gv_pct": 2.49,
+   "w_gv": 1.206,
+   "sm": {
+    "energy": 583.49,
+    "net": 5112.2,
+    "unc_pct": 1.71,
+    "fwhm_kev": 1.225,
+    "sig": 58.6
+   },
+   "de_kev": 0.04,
+   "area_ratio": 0.9582,
+   "area_limit": 0.0604,
+   "width_ratio": 1.0159
+  },
+  {
+   "nuclide": "Bi-214",
+   "e_gv": 609.61,
+   "a_gv": 19368,
+   "u_gv_pct": 0.89,
+   "w_gv": 1.317,
+   "sm": {
+    "energy": 609.636,
+    "net": 19018.7,
+    "unc_pct": 0.89,
+    "fwhm_kev": 1.327,
+    "sig": 112.1
+   },
+   "de_kev": 0.026,
+   "area_ratio": 0.982,
+   "area_limit": 0.05,
+   "width_ratio": 1.0075
+  },
+  {
+   "nuclide": "Ac-228",
+   "e_gv": 911.63,
+   "a_gv": 3619,
+   "u_gv_pct": 2.68,
+   "w_gv": 1.467,
+   "sm": {
+    "energy": 911.689,
+    "net": 3475.7,
+    "unc_pct": 2.39,
+    "fwhm_kev": 1.568,
+    "sig": 41.8
+   },
+   "de_kev": 0.059,
+   "area_ratio": 0.9604,
+   "area_limit": 0.0719,
+   "width_ratio": 1.0689
+  },
+  {
+   "nuclide": "K-40",
+   "e_gv": 1461.44,
+   "a_gv": 25119,
+   "u_gv_pct": 0.68,
+   "w_gv": 1.823,
+   "sm": {
+    "energy": 1461.549,
+    "net": 24154.1,
+    "unc_pct": 1.29,
+    "fwhm_kev": 1.929,
+    "sig": 77.4
+   },
+   "de_kev": 0.109,
+   "area_ratio": 0.9616,
+   "area_limit": 0.05,
+   "width_ratio": 1.0583
+  },
+  {
+   "nuclide": "Bi-214",
+   "e_gv": 1765.26,
+   "a_gv": 3269,
+   "u_gv_pct": 2.02,
+   "w_gv": 1.955,
+   "sm": {
+    "energy": 1765.375,
+    "net": 3136.8,
+    "unc_pct": 2.17,
+    "fwhm_kev": 2.093,
+    "sig": 46.1
+   },
+   "de_kev": 0.115,
+   "area_ratio": 0.9596,
+   "area_limit": 0.0593,
+   "width_ratio": 1.0706
+  }
+ ],
+ "criteria": {
+  "G1": {
+   "pass": false,
+   "detail": "7/7 matched, max |dE| 0.115 keV"
+  },
+  "G2": {
+   "pass": false,
+   "detail": "7/7 within limit, median ratio 0.9616"
+  },
+  "G3": {
+   "pass": true,
+   "detail": "7/7 within 10 %"
+  },
+  "G4": {
+   "pass": true,
+   "detail": "all identified"
+  },
+  "G5": {
+   "pass": true,
+   "detail": "0 narrow peak(s) at the oil-sample energies"
+  },
+  "G6": {
+   "pass": true,
+   "detail": "identical"
+  }
+ },
+ "summary": {
+  "pass": 4,
+  "fail": 2
+ }
+}
