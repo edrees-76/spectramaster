@@ -108,3 +108,48 @@ Outputs go to a new folder `docs/baseline/after_CG1/`.
 ## Results
 
 (appended after the run)
+
+Run 2026-10-22, engine 1.12.0. The text above the line is unchanged (SHA-256 of the pre-registered
+file 41077eb4c14dca560f380acec53143b018a10e62a2fd44494c2014287a293bce, commit a4fa232). Outputs:
+`docs/baseline/after_CG1/`:
+* `close_geometry_results.json`: CG.C1 residuals, CG.C2/C3 values, the pillbox pairs with the F5
+  correction. No spectrum data is stored.
+* `baseline.*`, `iaea2002_results.*` (the harness as written, no self-attenuation),
+  `crm_validation_results.*`.
+
+| id | value | limit | result |
+|---|---|---|---|
+| CG.C1 pillbox curve | Ec = 205.7 keV, orders 3/3 (was 103.7 keV, 1/1). Largest residual of the listed points 2.2 % (Zn-65); Co-57 122.06 keV −1.2 % (was −12.6 %) | ≤ 3 % | PASS |
+| CG.C2 pillbox with F5 | IA.C3 1.0 (10/10); IA.C4.P 0.940 | ≥ 0.80; [0.93, 1.07] | PASS |
+| CG.C3 Marinelli | IA.C2 1.0, IA.C4.M 0.959; largest ratio change from after_SA1 1.4 % (Ba-133, Co-60) | 2 % | PASS |
+| CG.C4 unchanged cases | explicit orders and crossover, no cascade points, curves loaded without the new fields: refitted exactly as before (`tests/test_close_geometry_efficiency.py`) | identical | PASS |
+| CG.C5 benchmark, CRM | benchmark vs after_SA1: 1 difference, `meta/engine_version`; CRM: 1 difference, `engine_version` | engine version only | PASS |
+| CG.C6 tests | new `tests/test_close_geometry_efficiency.py` (5) pass; full suite 1409 passed, 69 skipped after one change below | | PASS |
+
+**Changed existing test.** `tests/test_iaea2002_validation.py::test_marinelli_reproduces_the_recorded_ratios`
+compared the Marinelli ratios with the engine 1.8.0 record (after_AN1). This change moves them by up
+to 1.4 % (CG.C3), as intended; the test now reproduces the after_CG1 record. Its check (1e-9) is
+unchanged.
+
+**Note on CG.C1.** `coincidence.has_cascades` also counts Zn-65 (annihilation photons), so the
+engine corrects its point; the criterion uses the protocol's list, in which Zn-65 is included.
+
+**Reported.**
+* The IAEA criteria as the harness writes them (no self-attenuation): IA.C1 0.55 (was 0.70),
+  IA.C2 1.0, IA.C3 0.8, IA.C4.M 0.959, IA.C4.P 0.887 (was 0.863), IA.C5 2.90 (was 2.50), IA.C6 20.
+  The ratios are closer to 1, but the pillbox u fell from about 14 % to 3–5 % (model error 6.0 % ->
+  0), so the remaining density bias now gives |z| > 2.58.
+* With the F5 correction: IA.C1 0.85 FAIL, IA.C5 1.61. The three pairs with |z| > 2.58 are all
+  Eu-152 at 121.8 keV (PITBIG −3.59, both Marinelli spectra −2.86 and −2.71). PITBIG60 takes
+  1408 keV as its Eu-152 key line: ratio 0.955. This is consistent with missing X-ray–gamma summing
+  (F3), still a hypothesis.
+* Pillbox long ratios with F5: Ba-133 0.960, Co-60 0.940, Eu-152 0.860, Cr-51 0.986, Na-22 0.924.
+* The Cs-134 points stay 4–7 % below the curve after correction: under-corrected summing, not
+  changed here.
+
+**What ships.**
+* An efficiency curve whose orders or crossover were chosen automatically has them chosen again
+  on the summing-corrected points when the sample analysis corrects true-coincidence summing.
+* Explicit models and earlier saved curves are refitted as before.
+* The IAEA pillbox now passes IA.C3 and IA.C4.P with the self-attenuation correction. The
+  remaining defect is Eu-152 at 121.8 keV (F3).

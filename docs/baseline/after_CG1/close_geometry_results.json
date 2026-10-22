@@ -1,0 +1,363 @@
+{
+ "pillbox_time_s": 10.3,
+ "C1": {
+  "curve": "two-branch log-log, Ec = 205.7 keV, orders 3/3",
+  "u_model_rel": 0.0,
+  "selection": "orders chosen by leave-one-out cross-validation (mean squared normalised prediction error 1.58)",
+  "points": [
+   {
+    "nuclide": "Am-241",
+    "energy": 59.541,
+    "cascade": false,
+    "residual": -0.0037800437151428445,
+    "protocol_list": true
+   },
+   {
+    "nuclide": "Cd-109",
+    "energy": 88.034,
+    "cascade": false,
+    "residual": 0.0029292264772022847,
+    "protocol_list": true
+   },
+   {
+    "nuclide": "Co-57",
+    "energy": 122.061,
+    "cascade": true,
+    "residual": -0.01170465891360084,
+    "protocol_list": true
+   },
+   {
+    "nuclide": "Co-57",
+    "energy": 136.474,
+    "cascade": true,
+    "residual": 0.014121707377314552,
+    "protocol_list": true
+   },
+   {
+    "nuclide": "Ce-139",
+    "energy": 165.857,
+    "cascade": false,
+    "residual": -0.003029103836641567,
+    "protocol_list": true
+   },
+   {
+    "nuclide": "Sn-113",
+    "energy": 255.134,
+    "cascade": false,
+    "residual": 0.0012981115921493203,
+    "protocol_list": true
+   },
+   {
+    "nuclide": "Hg-203",
+    "energy": 279.195,
+    "cascade": false,
+    "residual": -0.003247501400304942,
+    "protocol_list": true
+   },
+   {
+    "nuclide": "Sn-113",
+    "energy": 391.698,
+    "cascade": false,
+    "residual": 0.002581942862934561,
+    "protocol_list": true
+   },
+   {
+    "nuclide": "Cs-134",
+    "energy": 563.246,
+    "cascade": true,
+    "residual": -0.06737125257923582,
+    "protocol_list": false
+   },
+   {
+    "nuclide": "Cs-134",
+    "energy": 569.331,
+    "cascade": true,
+    "residual": -0.06732364781593836,
+    "protocol_list": false
+   },
+   {
+    "nuclide": "Cs-134",
+    "energy": 604.721,
+    "cascade": true,
+    "residual": -0.04899608799230781,
+    "protocol_list": false
+   },
+   {
+    "nuclide": "Cs-137",
+    "energy": 661.657,
+    "cascade": false,
+    "residual": 0.007983151754060946,
+    "protocol_list": true
+   },
+   {
+    "nuclide": "Cs-134",
+    "energy": 795.864,
+    "cascade": true,
+    "residual": -0.0410834822116406,
+    "protocol_list": false
+   },
+   {
+    "nuclide": "Cs-134",
+    "energy": 801.953,
+    "cascade": true,
+    "residual": -0.05461664927974086,
+    "protocol_list": false
+   },
+   {
+    "nuclide": "Mn-54",
+    "energy": 834.848,
+    "cascade": false,
+    "residual": 0.0022969025332919557,
+    "protocol_list": true
+   },
+   {
+    "nuclide": "Y-88",
+    "energy": 898.042,
+    "cascade": true,
+    "residual": -0.007896793802219082,
+    "protocol_list": false
+   },
+   {
+    "nuclide": "Zn-65",
+    "energy": 1115.539,
+    "cascade": true,
+    "residual": 0.02248391818575657,
+    "protocol_list": true
+   },
+   {
+    "nuclide": "Cs-134",
+    "energy": 1365.185,
+    "cascade": true,
+    "residual": -0.019003136258019748,
+    "protocol_list": false
+   },
+   {
+    "nuclide": "Y-88",
+    "energy": 1836.063,
+    "cascade": true,
+    "residual": -0.0026923253924069357,
+    "protocol_list": false
+   }
+  ],
+  "max_noncascade": 0.02248391818575657,
+  "pass": true,
+  "note": "points of the protocol list (Zn-65 included)"
+ },
+ "criteria_with_correction": {
+  "IA.C1": [
+   0.85,
+   false
+  ],
+  "IA.C2": [
+   1.0,
+   true
+  ],
+  "IA.C3": [
+   1.0,
+   true
+  ],
+  "IA.C4.M": [
+   0.9593025338896123,
+   true
+  ],
+  "IA.C4.P": [
+   0.939712653588817,
+   true
+  ],
+  "IA.C5": [
+   1.6071992715636814,
+   true
+  ],
+  "IA.C6": [
+   20,
+   true
+  ]
+ },
+ "C2": {
+  "IA.C3": [
+   1.0,
+   true
+  ],
+  "IA.C4.P": [
+   0.939712653588817,
+   true
+  ],
+  "pass": true
+ },
+ "C3": {
+  "rows": [
+   {
+    "spectrum": "maritsmall",
+    "nuclide": "Ba-133",
+    "ratio_before": 0.9627258303045116,
+    "ratio_after": 0.9518270596335141,
+    "rel_change": -0.011320741926650335
+   },
+   {
+    "spectrum": "maritsmall",
+    "nuclide": "Co-60",
+    "ratio_before": 0.9733537761970201,
+    "ratio_after": 0.9593617897567599,
+    "rel_change": -0.014375026616661568
+   },
+   {
+    "spectrum": "maritsmall",
+    "nuclide": "Eu-152",
+    "ratio_before": 0.908111811589599,
+    "ratio_after": 0.905053957658291,
+    "rel_change": -0.003367265894224425
+   },
+   {
+    "spectrum": "maritsmall",
+    "nuclide": "Cr-51",
+    "ratio_before": 1.0069114404241466,
+    "ratio_after": 1.0033853097164662,
+    "rel_change": -0.0035019273454625077
+   },
+   {
+    "spectrum": "maritsmall",
+    "nuclide": "Na-22",
+    "ratio_before": 0.9543565097400412,
+    "ratio_after": 0.9593025338896123,
+    "rel_change": 0.005182574959244901
+   },
+   {
+    "spectrum": "maritsmall60",
+    "nuclide": "Ba-133",
+    "ratio_before": 0.9613823664027288,
+    "ratio_after": 0.9504988047398513,
+    "rel_change": -0.011320741926650113
+   },
+   {
+    "spectrum": "maritsmall60",
+    "nuclide": "Co-60",
+    "ratio_before": 0.9680913349668792,
+    "ratio_after": 0.9541749962593707,
+    "rel_change": -0.01437502661666168
+   },
+   {
+    "spectrum": "maritsmall60",
+    "nuclide": "Eu-152",
+    "ratio_before": 0.9116649381105909,
+    "ratio_after": 0.9085951198575309,
+    "rel_change": -0.003367265894224425
+   },
+   {
+    "spectrum": "maritsmall60",
+    "nuclide": "Cr-51",
+    "ratio_before": 1.0096314529900317,
+    "ratio_after": 1.0060957969959665,
+    "rel_change": -0.003501927345462841
+   },
+   {
+    "spectrum": "maritsmall60",
+    "nuclide": "Na-22",
+    "ratio_before": 0.938987143164322,
+    "ratio_after": 0.943853514419538,
+    "rel_change": 0.005182574959244679
+   }
+  ],
+  "max_change": 0.01437502661666168,
+  "IA.C2": [
+   1.0,
+   true
+  ],
+  "IA.C4.M": [
+   0.9593025338896123,
+   true
+  ],
+  "pass": true
+ },
+ "pillbox_pairs": [
+  {
+   "spectrum": "PITBIG",
+   "nuclide": "Ba-133",
+   "ratio": 0.9595098961207418,
+   "z": -0.9846592519713943,
+   "u": 45.42337003705511,
+   "value": 1202.2658998392894,
+   "lines": "356.0"
+  },
+  {
+   "spectrum": "PITBIG",
+   "nuclide": "Co-60",
+   "ratio": 0.939712653588817,
+   "z": -1.4455671349874601,
+   "u": 29.493378568283436,
+   "value": 750.8304102174648,
+   "lines": "1173.2"
+  },
+  {
+   "spectrum": "PITBIG",
+   "nuclide": "Eu-152",
+   "ratio": 0.8603862140043271,
+   "z": -3.589077892547719,
+   "u": 95.30115029840582,
+   "value": 2432.311826990233,
+   "lines": "121.8"
+  },
+  {
+   "spectrum": "PITBIG",
+   "nuclide": "Cr-51",
+   "ratio": 0.9855018027855734,
+   "z": -0.34784905077041417,
+   "u": 288.6922368240769,
+   "value": 7713.522610402683,
+   "lines": "320.1"
+  },
+  {
+   "spectrum": "PITBIG",
+   "nuclide": "Na-22",
+   "ratio": 0.9236639588317141,
+   "z": -1.6111188665278182,
+   "u": 45.94559751190396,
+   "value": 981.8547882381122,
+   "lines": "1274.5"
+  },
+  {
+   "spectrum": "PITBIG60",
+   "nuclide": "Ba-133",
+   "ratio": 0.9492757624071753,
+   "z": -1.2257601442607695,
+   "u": 45.79389902123714,
+   "value": 1189.4425302961906,
+   "lines": "356.0"
+  },
+  {
+   "spectrum": "PITBIG60",
+   "nuclide": "Co-60",
+   "ratio": 0.9254346385628904,
+   "z": -1.799846859849639,
+   "u": 29.243766805207063,
+   "value": 739.4222762117495,
+   "lines": "1173.2"
+  },
+  {
+   "spectrum": "PITBIG60",
+   "nuclide": "Eu-152",
+   "ratio": 0.9554374998888926,
+   "z": -1.0454612961083039,
+   "u": 107.28163231583613,
+   "value": 2701.0218121858993,
+   "lines": "1408.0"
+  },
+  {
+   "spectrum": "PITBIG60",
+   "nuclide": "Cr-51",
+   "ratio": 0.9799624213701126,
+   "z": -0.48159158484145587,
+   "u": 288.0502253511559,
+   "value": 7670.165872063872,
+   "lines": "320.1"
+  },
+  {
+   "spectrum": "PITBIG60",
+   "nuclide": "Na-22",
+   "ratio": 0.9245407002558311,
+   "z": -1.5837808621537472,
+   "u": 46.253376149873084,
+   "value": 982.7867643719485,
+   "lines": "1274.5"
+  }
+ ]
+}
