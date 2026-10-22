@@ -343,6 +343,24 @@ def _reader(parser):
     return read
 
 
+def _placeholder_calibration(spec: Spectrum) -> Spectrum:
+    """E = 0 + 1 * channel stored by an MCA that was never calibrated is not a calibration
+    (docs/baseline/placeholder_energy_calibration_protocol.md): the stored values are kept in
+    ``extra``, the spectrum is read as uncalibrated."""
+    c = list(spec.energy_coeffs or [])
+    if len(c) >= 2 and tuple(c[:2]) == (0.0, 1.0) and not any(c[2:]):
+        spec.extra["stored_energy_coeffs"] = c
+        if spec.fwhm_coeffs:
+            spec.extra["stored_fwhm_coeffs"] = list(spec.fwhm_coeffs)
+        spec.energy_coeffs, spec.fwhm_coeffs = [], []
+        spec.extra["energy_calibration"] = "placeholder"
+    return spec
+
+
+def _amptek_read(path: Path) -> list[Spectrum]:
+    return [_placeholder_calibration(s) for s in _read_with(path, P.AmptekMca)]
+
+
 # ------------------------------------------------------------------ ORTEC CHN
 _MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 # CHN always holds a date: an unknown start is written as 2000-01-01 00:00:00 and read
@@ -412,7 +430,7 @@ def _chn_read(path: Path) -> list[Spectrum]:
                     return b[off + 1:off + 1 + ln].decode("latin-1", "replace").rstrip("\x00 ").strip()
                 spec.detector = pstr(t + 256)
                 spec.sample_id = pstr(t + 320)
-    return [spec]
+    return [_placeholder_calibration(spec)]
 
 
 def _chn_write(spec: Spectrum, path: Path) -> None:
@@ -603,6 +621,7 @@ def _cnf_read(path: Path) -> list[Spectrum]:
     # "channel 1" at E = c0 + c1*1).  Our channel numbers are 0-based, so the
     # polynomial is re-expressed as E(i) = p(i + 1); counts are not shifted.
     for s in spectra:
+        _placeholder_calibration(s)                 # stored values, before the shift
         if s.energy_coeffs:
             s.energy_coeffs = [_f32(c) for c in _shift_poly(s.energy_coeffs, 1.0)]
     try:
@@ -960,7 +979,7 @@ _reg(29, "exploranium_gr130", "Exploranium GR-130 binary", [".dat"], P.Explorani
      W.ExploraniumGr130v0, sniffer=_gr_sniff(False), notes="Rebinned to 256 channels on write.")
 _reg(30, "exploranium_gr135", "Exploranium GR-135 v2 binary", [".dat"], P.Exploranium,
      W.ExploraniumGr135v2, sniffer=_gr_sniff(True))
-_reg(31, "amptek_mca", "Amptek MCA (read only)", [".mca"], P.AmptekMca,
+_reg(31, "amptek_mca", "Amptek MCA (read only)", [".mca"], reader=_amptek_read,
      sniffer=_contains(b"<<PMCA SPECTRUM>>", within=200), aliases=["amptek"])
 _reg(32, "radiacode_xml", "RadiaCode / BecqMoni XML (read only)", [".xml", ".rcspg"], P.RadiaCode,
      sniffer=_contains(b"<ResultDataFile", b"<ResultDataList"), aliases=["radiacode", "becqmoni"])

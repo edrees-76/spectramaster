@@ -79,3 +79,28 @@ repository.
 ## Results
 
 (appended after the run)
+
+Run 2026-10-22, engine 1.10.0. The text above the line is unchanged (SHA-256 of the pre-registered
+part still e22f6a76a90e5b043dbf2d8c0ca4baea86148cad3fb242e51e82ee58d2dbb06b). Outputs:
+`docs/baseline/after_PE1/`:
+* `placeholder_calibration_results.json`: per-file flags, stored coefficients and peak counts. No
+  spectrum data is stored.
+* `baseline.*`.
+
+| id | value | limit | result |
+|---|---|---|---|
+| PE.C1 35 IAEA `.Chn` | all read without energy calibration, stored (0, 1) kept; peak lists identical to the `.spe` copy in 35 of 35 | | PASS |
+| PE.C2 the other 11 | `maricsmall.chn`: no calibration, stored energy (0, 1) and FWHM (1) kept, note returned, 79 peaks (its `.spe` copy: 79; on `main` 14, after #52 102). The 2 CNF: no calibration, stored (0, 1), note. The 8 Amptek: no calibration, stored (0, 1) | | PASS |
+| PE.C3 survey | 1993 spectra; 46 placeholders (36 CHN, 2 CNF, 8 Amptek); 0 other spectra with a changed energy or FWHM calibration | 0 | PASS |
+| PE.C4 benchmark | 0 differences from after_FP2 (key order included, runtime fields excepted); 154 / 13 / 60 | | PASS |
+| PE.C5 IAEA 2002, CRM | identical to after_FP2 | | PASS |
+| PE.C6 tests | new `tests/test_placeholder_calibration.py` (7) pass; full suite 1396 passed, 69 skipped; no existing test changed | | PASS |
+
+**What ships.**
+* A CHN, CNF or Amptek MCA file holding the uncalibrated default E = 0 + 1 · channel is read
+  without energy calibration. The stored values are kept in `extra`.
+* `spectramaster info` and the GUI status bar say so and ask for a calibration.
+* All 36 IAEA 2002 `.Chn` files now analyse exactly like their uncalibrated `.spe` copies; 35 of
+  them have identical counts.
+* No other file, benchmark value, IAEA 2002 or CRM result changes.
+* The F1 check (#52) still guards stored FWHM calibrations that are wrong for other reasons.

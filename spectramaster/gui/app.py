@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (QApplication, QComboBox, QDockWidget, QFileDialog
                                QStyle, QStyleFactory, QToolBar, QToolButton, QVBoxLayout, QWidget)
 
 from .. import __version__
-from ..convert import content_note, output_name, read_spectra, write_spectrum
+from ..convert import calibration_note, content_note, output_name, read_spectra, write_spectrum
 from ..formats import get_format, load_all, readable_formats, writable_formats
 from ..formats.base import FormatSpec
 from ..model import Spectrum
@@ -670,6 +670,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         self.display(spectra, used, path)
         if content_note(spectra, used):
             self.statusBar().showMessage(tr("fmt_by_content", name=used.name), 15000)
+        elif calibration_note(spectra):
+            self.statusBar().showMessage(tr("cal_placeholder"), 15000)
         return True
 
     def display(self, spectra: Sequence[Spectrum], fmt: Optional[FormatSpec], path: Optional[Path]) -> None:

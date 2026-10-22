@@ -1,0 +1,762 @@
+{
+ "C1_iaea_chn": {
+  "Am241big.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 14,
+   "peaks_spe": 14,
+   "identical": true
+  },
+  "Am241small.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 20,
+   "peaks_spe": 20,
+   "identical": true
+  },
+  "BGBIGPOINT.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 66,
+   "peaks_spe": 66,
+   "identical": true
+  },
+  "BGSMALLMARI.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 89,
+   "peaks_spe": 89,
+   "identical": true
+  },
+  "BGSMALLPOINT.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 68,
+   "peaks_spe": 68,
+   "identical": true
+  },
+  "Cd109BIG.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 26,
+   "peaks_spe": 26,
+   "identical": true
+  },
+  "Cd109SMALL.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 22,
+   "peaks_spe": 22,
+   "identical": true
+  },
+  "Co57BIG.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 25,
+   "peaks_spe": 25,
+   "identical": true
+  },
+  "Co57SMALL.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 24,
+   "peaks_spe": 24,
+   "identical": true
+  },
+  "Cs137BIG.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 18,
+   "peaks_spe": 18,
+   "identical": true
+  },
+  "Cs137SMALL.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 19,
+   "peaks_spe": 19,
+   "identical": true
+  },
+  "maricsmall.chn": {
+   "same_counts": false,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 79,
+   "peaks_spe": 79,
+   "identical": false
+  },
+  "maritsmall.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 131,
+   "peaks_spe": 131,
+   "identical": true
+  },
+  "maritsmall60.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 78,
+   "peaks_spe": 78,
+   "identical": true
+  },
+  "mix1eq.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 129,
+   "peaks_spe": 129,
+   "identical": true
+  },
+  "mix1neqlong.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 198,
+   "peaks_spe": 198,
+   "identical": true
+  },
+  "mix2eq.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 136,
+   "peaks_spe": 136,
+   "identical": true
+  },
+  "mix2eq3.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 54,
+   "peaks_spe": 54,
+   "identical": true
+  },
+  "mix2neq20.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 106,
+   "peaks_spe": 106,
+   "identical": true
+  },
+  "mix2neq6.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 69,
+   "peaks_spe": 69,
+   "identical": true
+  },
+  "mix2neqlong.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 230,
+   "peaks_spe": 230,
+   "identical": true
+  },
+  "Mn54BIG.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 16,
+   "peaks_spe": 16,
+   "identical": true
+  },
+  "Mn54SMALL.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 20,
+   "peaks_spe": 20,
+   "identical": true
+  },
+  "picbig.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 92,
+   "peaks_spe": 92,
+   "identical": true
+  },
+  "PITBIG.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 115,
+   "peaks_spe": 115,
+   "identical": true
+  },
+  "PITBIG60.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 75,
+   "peaks_spe": 75,
+   "identical": true
+  },
+  "QCDBIG0.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 36,
+   "peaks_spe": 36,
+   "identical": true
+  },
+  "QCDBIG20.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 58,
+   "peaks_spe": 58,
+   "identical": true
+  },
+  "QCDBIG30.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 73,
+   "peaks_spe": 73,
+   "identical": true
+  },
+  "QCDSMALL0.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 40,
+   "peaks_spe": 40,
+   "identical": true
+  },
+  "QCDSMALL10.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 57,
+   "peaks_spe": 57,
+   "identical": true
+  },
+  "QCDSMALL20.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 102,
+   "peaks_spe": 102,
+   "identical": true
+  },
+  "Sn113BIG.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 25,
+   "peaks_spe": 25,
+   "identical": true
+  },
+  "Sn113SMALL.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 23,
+   "peaks_spe": 23,
+   "identical": true
+  },
+  "Zn65BIG.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 20,
+   "peaks_spe": 20,
+   "identical": true
+  },
+  "Zn65SMALL.Chn": {
+   "same_counts": true,
+   "uncalibrated": true,
+   "stored": [
+    0.0,
+    1.0
+   ],
+   "note": true,
+   "peaks": 17,
+   "peaks_spe": 17,
+   "identical": true
+  }
+ },
+ "C3_spectra_surveyed": 1993,
+ "C3_changed_other_than_placeholder": [],
+ "placeholder_spectra": {
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\Am241big.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\Am241small.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\BGBIGPOINT.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\BGSMALLMARI.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\BGSMALLPOINT.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\Cd109BIG.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\Cd109SMALL.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\Co57BIG.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\Co57SMALL.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\Cs137BIG.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\Cs137SMALL.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\MIX2NEQ6.CNF#0": {
+   "format": "ci_cnf",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\MIX2NEQLONG.CNF#0": {
+   "format": "ci_cnf",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\Mn54BIG.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\Mn54SMALL.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\PITBIG.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\PITBIG60.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\QCDBIG0.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\QCDBIG20.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\QCDBIG30.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\QCDSMALL0.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\QCDSMALL10.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\QCDSMALL20.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\Sn113BIG.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\Sn113SMALL.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\Zn65BIG.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\Zn65SMALL.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\maricsmall.chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\maritsmall.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\maritsmall60.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\mix1eq.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\mix1neqlong.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\mix2eq.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\mix2eq3.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\mix2neq20.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\mix2neq6.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\mix2neqlong.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "D:\\SpectraMaster_public_data\\iaea_2002_testspectra\\extracted\\IAEA_2002_testspectra\\iaea2002\\spectra\\picbig.Chn#0": {
+   "format": "ortec_chn",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "test_corpus\\muGPD\\data\\251118\\live_data_chip_w2b_86p6_18112025_D1000_B330.mca#0": {
+   "format": "amptek_mca",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "test_corpus\\muGPD\\data\\251127\\live_data_chip27112025b_w7b_86p6_D1000_B320.mca#0": {
+   "format": "amptek_mca",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "test_corpus\\muGPD\\data\\251128\\live_data_chip28112025_w8b_86p6_CI5_10_15mV.mca#0": {
+   "format": "amptek_mca",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "test_corpus\\muGPD\\data\\251128\\other\\live_data_chip28112025b_w8b_86p6_D1300_B360.mca#0": {
+   "format": "amptek_mca",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "test_corpus\\muGPD\\data\\251201\\1000\\live_data_chip01122025_w8b_86p6L_CI5_10_15mV_0.mca#0": {
+   "format": "amptek_mca",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "test_corpus\\muGPD\\data\\251201\\1300\\live_data_chip01122025_w8b_86p6L_CI5_10_15mV_0.mca#0": {
+   "format": "amptek_mca",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "test_corpus\\muGPD\\data\\251201\\drift\\live_data_chip01122025_w8b_86p6L_CI5_10_15mV_0.mca#0": {
+   "format": "amptek_mca",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  },
+  "test_corpus\\muGPD\\data\\251201\\live_data_chip01122025_w8b_86p6L_CI5_10_15mV_0.mca#0": {
+   "format": "amptek_mca",
+   "stored": [
+    0.0,
+    1.0
+   ]
+  }
+ }
+}
