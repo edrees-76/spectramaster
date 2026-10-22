@@ -1060,18 +1060,19 @@ def checked_fwhm_model(spectrum, y: np.ndarray, var=None) -> tuple[np.ndarray, s
     if src == "none":
         return f, src
     start = _start_index(y, f)
-    k = 1.0
+    steps = 0                      # factor 2**steps
     for _ in range(IMPLAUSIBLE_MAX_STEPS):
-        n, wider, narrower = _bound_votes(y, f * k, start, var)
+        n, wider, narrower = _bound_votes(y, f * 2.0 ** steps, start, var)
         need = max(3.0, n / 2)
         if n >= 3 and wider >= need:
-            k *= 2.0
+            steps += 1
         elif n >= 3 and narrower >= need:
-            k *= 0.5
+            steps -= 1
         else:
             break
-    if k == 1.0:
+    if steps == 0:
         return f, src
+    k = 2.0 ** steps
     return f * k, f"{IMPLAUSIBLE_PREFIX}: {src} x{k:g})"
 
 

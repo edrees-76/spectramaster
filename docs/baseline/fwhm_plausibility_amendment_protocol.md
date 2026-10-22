@@ -129,3 +129,8 @@ part still 46efb21c57d02a585e095bf7e5dc658ee114f1e33da2c1e7fa08a14762a3be6e). Ou
   model, and a note tells the user to check the calibration.
 * No result of the benchmark (outside 3 IDB values), of the IAEA 2002 check or of the CRM check
   changes.
+
+**Addendum (after the PR was opened).** SonarCloud failed the PR's reliability rating on
+`if k == 1.0` (rule python:S1244, float equality). The factor is now kept as an integer exponent
+(`2.0 ** steps`). The behaviour is unchanged: FA.C1–C5, re-run after the change, give identical
+results, and the unit tests pass.
