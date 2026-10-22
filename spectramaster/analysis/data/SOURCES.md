@@ -20,7 +20,7 @@ answered on 2026-10-22, when the decay schemes of the coincidence table were dow
 
     python spectramaster/analysis/data/build_coincidences_ensdf.py path/to/livechart/raw
     # check: SPECTRAMASTER_LIVECHART_DIR=path/to/livechart/raw pytest tests/test_coincidence.py
-    # independent Monte Carlo check: python -m spectramaster.validation.coincidence_ensdf_check --out DIR
+    # independent Monte Carlo check: python -m spectramaster.validation.coincidence_ensdf_check
 
 `path/to/livechart/raw` holds `decay_rads_g/` and `decay_rads_bp/` with one `<A><el>.csv` per
 nuclide (e.g. `152eu.csv`). Method (docs/baseline/ensdf_coincidence_protocol.md):

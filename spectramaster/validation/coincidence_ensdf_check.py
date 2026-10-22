@@ -4,11 +4,12 @@ cascades, written separately from the builder: its own reading of the LiveChart 
 feeding from the intensity balance, and a random walk down the levels instead of the analytic
 path sums (docs/baseline/ensdf_coincidence_protocol.md).
 
-    python -m spectramaster.validation.coincidence_ensdf_check [--raw DIR] [--old OLD_TABLE] --out DIR
+    python -m spectramaster.validation.coincidence_ensdf_check [--raw DIR] [--old OLD_TABLE]
 
 ``DIR`` of the LiveChart files: ``SPECTRAMASTER_LIVECHART_DIR`` or
 D:/SpectraMaster_public_data/livechart/raw (kept outside the repository).  Writes
-``coincidence_check.json`` and ``coincidence_check.md``; no ENSDF data is copied.
+``coincidence_check.json`` and ``coincidence_check.md`` to OUT (docs/baseline/after_CT1, a fixed
+folder of the repository); no ENSDF data is copied.
 """
 from __future__ import annotations
 
@@ -41,6 +42,7 @@ ANALYTIC_TOL = 5.0e-4
 LEVEL_TOL = 0.6
 LONG_LIVED_S = 1.0e-6
 GROUP_KEV = 0.06
+OUT = Path(__file__).resolve().parents[2] / "docs" / "baseline" / "after_CT1"
 
 
 def raw_folder(arg=None) -> Path:
@@ -285,34 +287,19 @@ def write_md(res: dict, path: Path) -> None:
     path.write_text("\n".join(lines), encoding="utf-8", newline="\n")
 
 
-def out_folder(arg: str) -> Path:
-    """The output folder, which must lie inside the current working directory."""
-    base = Path(os.path.realpath(os.getcwd()))
-    out = Path(os.path.realpath(os.path.join(base, arg)))
-    if os.path.commonpath([base, out]) != str(base):
-        raise ValueError(f"output folder {arg!r} is outside the working directory")
-    return out
-
-
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--raw", default=None)
     ap.add_argument("--old", default=None, help="previous coincidence table, for the coverage comparison")
-    ap.add_argument("--out", required=True)
     a = ap.parse_args(argv)
     raw = raw_folder(a.raw)
     if not (raw / "decay_rads_g").is_dir():
         print(f"no LiveChart files in {raw}", file=sys.stderr)
         return 2
-    try:
-        out = out_folder(a.out)
-    except ValueError as e:
-        print(e, file=sys.stderr)
-        return 2
     res = run(raw, a.old)
-    out.mkdir(parents=True, exist_ok=True)
-    (out / "coincidence_check.json").write_text(json.dumps(res, indent=1), encoding="utf-8", newline="\n")
-    write_md(res, out / "coincidence_check.md")
+    OUT.mkdir(parents=True, exist_ok=True)
+    (OUT / "coincidence_check.json").write_text(json.dumps(res, indent=1), encoding="utf-8", newline="\n")
+    write_md(res, OUT / "coincidence_check.md")
     print(json.dumps(res["summary"]))
     return 0
 
