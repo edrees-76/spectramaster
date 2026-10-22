@@ -72,7 +72,9 @@ SCHEMA_VERSION = 1
 #          (fwhm_plausibility_protocol.md)
 #   1.11.0 2026-10-22 energy-dependent self-attenuation correction for a sample density or matrix
 #          different from the calibration (slab model, NIST mu/rho) (self_attenuation_protocol.md)
-ENGINE_VERSION = "1.11.0"
+#   1.12.0 2026-10-22 summing_free_curve chooses an automatically chosen efficiency model (orders,
+#          crossover) again on the summing-corrected points (close_geometry_efficiency_protocol.md)
+ENGINE_VERSION = "1.12.0"
 
 
 class SessionSchemaError(ValueError):

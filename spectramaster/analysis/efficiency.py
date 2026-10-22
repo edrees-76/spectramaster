@@ -507,6 +507,8 @@ class EfficiencyCurve:
     knots: list = field(default_factory=list)              # spline_lnln: ln E of the knots
     summing_corrected: bool = False  # cascade-emitter points free of true-coincidence summing
     #                                  (corrected, or measured where summing is negligible)
+    orders_auto: bool = False        # orders chosen by cross-validation (chosen again by summing_free_curve)
+    crossover_auto: bool = False     # two_branch crossover chosen automatically (likewise)
 
     # --- evaluation
     def _design(self, e) -> np.ndarray:
@@ -626,6 +628,7 @@ def fit_efficiency(points: Sequence[EfficiencyPoint], model: str = "loglog", ord
     use = [p for p in points if p.use and p.efficiency > 0 and p.energy > 0]
     auto_x = model == "two_branch" and (crossover is None or str(crossover).lower() == "auto")
     selection = ""
+    orders_auto = order is None and (model != "two_branch" or order_high is None)   # none given
     if order is None or (model == "two_branch" and order_high is None):
         fixed_x = None if (auto_x or model != "two_branch") else float(crossover)
         order, order_high, crossover, score = select_orders(points, model, fixed_x, order, order_high)
@@ -674,6 +677,8 @@ def fit_efficiency(points: Sequence[EfficiencyPoint], model: str = "loglog", ord
     curve.u_common_rel = u_common
     curve.cov_method = "gls"
     curve.selection = selection
+    curve.orders_auto = orders_auto
+    curve.crossover_auto = auto_x
     capped: list = []
     curve.u_model_rel = model_error(points, model, order, order_high, float(crossover) if model == "two_branch"
                                     else 200.0, capped=capped)
@@ -734,9 +739,12 @@ def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0,
         raise ValueError(f"the efficiency curve ({curve.describe()}) has cascade-emitter points that lose counts by "
                          "true-coincidence summing and cannot be refitted here: the summing correction of the "
                          "sample would count it twice; refit the calibration in SpectraMaster first")
-    kw = {"order": curve.order, "u_sys_rel": curve.u_common_rel}
+    # refit like the original fit: a model chosen automatically is chosen again on the corrected
+    # points, since the uncorrected ones are distorted by summing (close_geometry_efficiency_protocol.md)
+    kw = {"order": None if curve.orders_auto else curve.order, "u_sys_rel": curve.u_common_rel}
     if curve.model == "two_branch":
-        kw.update(order_high=curve.order_high, crossover=curve.e_ref)
+        kw.update(order_high=None if curve.orders_auto else curve.order_high,
+                  crossover="auto" if curve.crossover_auto else curve.e_ref)
     meta = {k: getattr(curve, k) for k in ("geometry", "detector", "geometry_record", "validation_status",
                                             "name", "source", "date")}
     cur, factors, prev, n_iter = curve, {}, None, 0
@@ -768,7 +776,8 @@ def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0,
                              "summing correction of the sample would count their losses twice")
         now = np.array([pts[i].efficiency for i in cascade])
         cur = fit_efficiency(pts, curve.model, **kw, **meta)
-        cur.selection = curve.selection
+        if not (curve.orders_auto or curve.crossover_auto):
+            cur.selection = curve.selection
         if prev is not None and float(np.max(np.abs(now / prev - 1.0))) < TCS_REFIT_TOL:
             break
         prev = now
