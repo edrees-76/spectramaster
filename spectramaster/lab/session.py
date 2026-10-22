@@ -70,7 +70,9 @@ SCHEMA_VERSION = 1
 #   1.10.0 2026-10-22 an FWHM model (stored calibration or default resolution) that does not match
 #          the peak widths of the spectrum is replaced by measured widths, with a note
 #          (fwhm_plausibility_protocol.md)
-ENGINE_VERSION = "1.10.0"
+#   1.11.0 2026-10-22 energy-dependent self-attenuation correction for a sample density or matrix
+#          different from the calibration (slab model, NIST mu/rho) (self_attenuation_protocol.md)
+ENGINE_VERSION = "1.11.0"
 
 
 class SessionSchemaError(ValueError):

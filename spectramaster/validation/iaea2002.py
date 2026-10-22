@@ -127,7 +127,7 @@ def peak_to_total_points(data: Path, geo: dict) -> tuple[list[dict], tuple[float
 # ------------------------------------------------------------------------------ one geometry
 def run_geometry(data: Path, key: str, model: str = "two_branch", tcs: bool = True,
                  cert_date: datetime = CERT_DATE, cal_start: Optional[datetime] = None,
-                 pt: Optional[tuple] = None) -> dict:
+                 pt: Optional[tuple] = None, self_attenuation=None) -> dict:
     geo = GEOMETRIES[key]
     cals = []
     bkg, info = calibrated(read(data, geo["bkg"]), BKG_NUCLIDES, geo["bkg"])
@@ -145,7 +145,7 @@ def run_geometry(data: Path, key: str, model: str = "two_branch", tcs: bool = Tr
     pt_points = None
     if pt is None and tcs:
         pt_points, pt = peak_to_total_points(data, geo)
-    options = ActivityOptions(nuclides=list(TEST_NUCLIDES), ref_date=cert_date)
+    options = ActivityOptions(nuclides=list(TEST_NUCLIDES), ref_date=cert_date, self_attenuation=self_attenuation)
     if tcs:
         a, b = pt
         curve = ef.summing_free_curve(curve, lambda e: coincidence.peak_to_total(e, a, b), PT_REL_UNC)

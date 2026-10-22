@@ -1,0 +1,150 @@
+{
+ "C3": [
+  {
+   "pair": [
+    "PITBIG",
+    "Ba-133"
+   ],
+   "ratio_before": 0.9121242731961976,
+   "ratio_after": 0.9863290543446125,
+   "factor": 1.0813538059768897,
+   "key_energy": 356.013,
+   "rel_dev_from_factor": 2.220446049250313e-16
+  },
+  {
+   "pair": [
+    "PITBIG",
+    "Co-60"
+   ],
+   "ratio_before": 0.8626080676670996,
+   "ratio_after": 0.9048297003694667,
+   "factor": 1.0489464848347112,
+   "key_energy": 1173.228,
+   "rel_dev_from_factor": 0.0
+  },
+  {
+   "pair": [
+    "PITBIG",
+    "Eu-152"
+   ],
+   "ratio_before": 0.6825032222939145,
+   "ratio_after": 0.7601277482155901,
+   "factor": 1.1137350321376904,
+   "key_energy": 121.782,
+   "rel_dev_from_factor": 0.0
+  },
+  {
+   "pair": [
+    "PITBIG",
+    "Cr-51"
+   ],
+   "ratio_before": 0.9403191954135629,
+   "ratio_after": 1.0198270545900585,
+   "factor": 1.0845541169044488,
+   "key_energy": 320.082,
+   "rel_dev_from_factor": 0.0
+  },
+  {
+   "pair": [
+    "PITBIG",
+    "Na-22"
+   ],
+   "ratio_before": 0.8378850638398546,
+   "ratio_after": 0.8772670608513026,
+   "factor": 1.0470016696931777,
+   "key_energy": 1274.537,
+   "rel_dev_from_factor": 0.0
+  },
+  {
+   "pair": [
+    "PITBIG60",
+    "Ba-133"
+   ],
+   "ratio_before": 0.9023955545941073,
+   "ratio_after": 0.9758088674569638,
+   "factor": 1.0813538059768895,
+   "key_energy": 356.013,
+   "rel_dev_from_factor": 0.0
+  },
+  {
+   "pair": [
+    "PITBIG60",
+    "Co-60"
+   ],
+   "ratio_before": 0.8495015814400602,
+   "ratio_after": 0.8910816977130792,
+   "factor": 1.048946484834711,
+   "key_energy": 1173.228,
+   "rel_dev_from_factor": 2.220446049250313e-16
+  },
+  {
+   "pair": [
+    "PITBIG60",
+    "Eu-152"
+   ],
+   "ratio_before": 0.670718649597161,
+   "ratio_after": 0.7470028567644424,
+   "factor": 1.1137350321376904,
+   "key_energy": 121.782,
+   "rel_dev_from_factor": 0.0
+  },
+  {
+   "pair": [
+    "PITBIG60",
+    "Cr-51"
+   ],
+   "ratio_before": 0.9350337797390791,
+   "ratio_after": 1.014094735260746,
+   "factor": 1.0845541169044488,
+   "key_energy": 320.082,
+   "rel_dev_from_factor": 0.0
+  },
+  {
+   "pair": [
+    "PITBIG60",
+    "Na-22"
+   ],
+   "ratio_before": 0.8386803839745134,
+   "ratio_after": 0.8780997623602307,
+   "factor": 1.0470016696931774,
+   "key_energy": 1274.537,
+   "rel_dev_from_factor": 2.220446049250313e-16
+  }
+ ],
+ "C4": {
+  "water": 0.004949722827727543,
+  "mineral": 0.015170856043801528
+ },
+ "median_long_before": 0.8626080676670996,
+ "median_long_after": 0.9048297003694667,
+ "criteria_with_correction": {
+  "IA.C1": [
+   1.0,
+   true
+  ],
+  "IA.C2": [
+   1.0,
+   true
+  ],
+  "IA.C3": [
+   0.8,
+   true
+  ],
+  "IA.C4.M": [
+   0.9627258303045116,
+   true
+  ],
+  "IA.C4.P": [
+   0.9048297003694667,
+   false
+  ],
+  "IA.C5": [
+   1.2434883037533333,
+   true
+  ],
+  "IA.C6": [
+   20,
+   true
+  ]
+ }
+}
