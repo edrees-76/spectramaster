@@ -85,3 +85,41 @@ widths, ratios, nuclide names), file names as listed above, no sample descriptio
 - Activities are not compared. The efficiency file `effcaas.Eft` (Eu-152, reference 2007) lists an
   efficiency at 40 keV about 90 times lower than at 122 keV and counts that do not match its source
   activity; it ends at 1212 keV. It is not used.
+
+---
+
+## Results (2026-10-22)
+
+`python -m spectramaster.validation.gammavision_compare` (engine 1.14.0), output in
+`docs/baseline/after_GV1/`. **4 PASS / 2 FAIL**, reported as registered.
+
+| ID | result | detail |
+|---|---|---|
+| G1 | FAIL | 7/7 peaks matched; \|dE\| 0.011-0.115 keV, above 0.10 keV for 1461 and 1765 keV |
+| G2 | FAIL | every peak within its own limit, but the median area ratio is 0.962 (limit 0.97-1.03) |
+| G3 | PASS | FWHM ratios 0.98-1.07 |
+| G4 | PASS | K-40, Pb-212, Pb-214, Bi-214, Ac-228, Tl-208 identified |
+| G5 | PASS | no narrow peak; at 186 and 295 keV no peak, at 352, 1120 and 1764 keV peaks of normal width (1.2-2.0 keV) at significance 3.0-4.2 |
+| G6 | PASS | `.Spc` and `.An1` of sand sample 2 identical |
+
+Findings (to be checked, not established):
+
+- **Centroid and area differ with energy in the same way.** SpectraMaster's centroids are higher by
+  0.06 channel at 295 keV rising to 0.61 channel at 1765 keV (same energy coefficients), and its areas
+  are lower by 0.6 % at 295-352 keV and by about 4 % from 583 keV upwards, with a higher continuum
+  under the peak (K-40: 1002 against 682 counts) and widths 6-7 % larger above 900 keV. A low-energy
+  tail on this detector's peaks, counted in the peak by GammaVision (five-point average background)
+  and partly in the continuum by SpectraMaster, would explain all three. A dedicated check of the
+  peak tail on these spectra is needed before any change.
+- **Spurious identifications in GammaVision.** In oil sample 1 GammaVision accepted five peaks of width
+  0.2-0.5 keV (the detector FWHM there is 1.0-2.0 keV) and reported Ra-226 35.8 Bq and Bi-214 85.8 Bq
+  from them. SpectraMaster finds no peak at 186 and 295 keV.
+- **Doubtful identifications in SpectraMaster.** Short-lived or activation nuclides are proposed in
+  NORM samples measured weeks after collection (Mn-56, Dy-165, Xe-133, Mo-99/Tc-99m, As-74, Yb-169,
+  Ce-141, Gd-153). These are candidates from single weak lines; they show the limits of automatic
+  identification and need the analyst's review.
+- Both programs place the lines 0.3-0.9 keV above the library energies (Bi-214 1764.49 keV: GV
+  1765.26, SM 1765.38): the stored energy calibration has drifted; a drift check (section 8.2 of the
+  manual) would show it.
+
+This is a comparison with another program on one report; it is not a validation of either program.
