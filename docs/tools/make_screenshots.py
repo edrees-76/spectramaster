@@ -53,6 +53,20 @@ app = create_app(["manual"])
 import spectramaster.gui.window_buttons as _wb  # noqa: E402
 _wb.fit_to_screen = lambda w: None   # the offscreen screen is 800 x 800: keep the sizes set here
 from spectramaster.gui import i18n  # noqa: E402
+_bidi_path = i18n.bidi_path
+
+
+def _shown_path(path):
+    """The private lab folder and the temporary folder are not shown in the pictures."""
+    text = str(path)
+    if str(REF) in text:
+        return _bidi_path(Path(text).name)
+    return _bidi_path(text.replace(str(TMP), r"%APPDATA%\SpectraMaster"))
+
+
+i18n.bidi_path = _shown_path
+import spectramaster.gui.dialogs as _dialogs  # noqa: E402
+_dialogs.bidi_path = _shown_path
 
 GEOM: dict = {}     # lang -> {name: QRect} for the annotation step
 
@@ -247,6 +261,7 @@ def shoot(lang: str) -> None:
     rp.save_options(st, opts)
     rd = ReportOptionsDialog(st, "pdf", opts, w)
     rd.show()
+    rd.ed_logo.setText(r"D:\Lab\logo.png")                  # not the build folder
     for i, name in enumerate(("report_opt_header", "report_opt_content", "report_opt_plot", "report_opt_page")):
         rd.tabs.setCurrentIndex(i)
         save(rd, lang, name)
