@@ -76,7 +76,10 @@ SCHEMA_VERSION = 1
 #          crossover) again on the summing-corrected points (close_geometry_efficiency_protocol.md)
 #   1.13.0 2026-10-22 FWHM calibration from a source fitted through measured (free-width) line widths,
 #          not the search's width model (mix_peak_areas_protocol.md)
-ENGINE_VERSION = "1.13.0"
+#   1.14.0 2026-10-22 coincidence table computed from the ENSDF decay schemes (IAEA LiveChart) instead
+#          of SandiaDecay, whose probabilities were wrong for 80 of 191 transitions
+#          (ensdf_coincidence_protocol.md)
+ENGINE_VERSION = "1.14.0"
 
 
 class SessionSchemaError(ValueError):

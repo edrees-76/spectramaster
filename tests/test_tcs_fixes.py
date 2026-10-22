@@ -26,13 +26,20 @@ pt = tcs_mc.peak_to_total
 # ------------------------------------------------------------------ TF.C1 Bi-207
 def _hand_coi(energy):
     """Summing-out of `energy` from the raw table records of Bi-207 and Pb-207m, weighted by hand
-    (gamma-gamma and, since annihilation_summing_protocol.md, 511 keV annihilation)."""
-    tab = json.loads(co.TABLE.read_text(encoding="utf-8"))["nuclides"]
+    (gamma-gamma and, since annihilation_summing_protocol.md, 511 keV annihilation).  The ENSDF decay
+    of Bi-207 already lists the gammas of Pb-207m (ensdf_coincidence_protocol.md): its IT record is
+    not added again."""
+    doc = json.loads(co.TABLE.read_text(encoding="utf-8"))
+    tab = doc["nuclides"]
+    listed = doc["daughters_listed_by_parent"]["Bi-207"]
+    assert listed == ["Pb-207m"]
     lib = json.loads(co.LIBRARY.read_text(encoding="utf-8"))["nuclides"]["Bi-207"]
     f = dict(zip(lib["includes"], lib["include_factors"]))
     num = wsum = 0.0
     for name, w in (("Bi-207", 1.0), ("Pb-207m", f["Pb-207m"])):
         for rec in tab[name]:
+            if name in listed and rec["mode"] == "IT":
+                continue
             g = np.array(rec["g"], dtype=float).reshape(-1, 2)
             k = int(np.argmin(np.abs(g[:, 0] - energy)))
             if abs(g[k, 0] - energy) > 1.0:
@@ -81,7 +88,8 @@ def test_bi207_calibration_point_is_corrected_and_untreatable_point_refused():
     free = eff.summing_free_curve(curve, pt)
     assert free.summing_corrected and "Bi-207" in free.note and "()" not in free.note
     bad = eff.fit_efficiency(_points([("Ir-192", 484.575)]), "loglog", order=2)
-    bad.points = [eff.EfficiencyPoint(**{**p.__dict__, "intensity": 0.0319 if p.nuclide == "Ir-192"
+    # a stated intensity three times the table's (3.19 %): the table does not describe this line
+    bad.points = [eff.EfficiencyPoint(**{**p.__dict__, "intensity": 3 * 0.0319 if p.nuclide == "Ir-192"
                                          else p.intensity}) for p in bad.points]
     with pytest.raises(ValueError, match="Ir-192 484.6"):
         eff.summing_free_curve(bad, pt)

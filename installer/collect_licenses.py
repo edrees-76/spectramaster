@@ -122,8 +122,10 @@ Reverse engineering of SpectraMaster for debugging such modifications is permitt
 Nuclear data
 ------------
 The gamma-line library (gamma_library.json) is derived from IAEA ENSDF data (IAEA-NDS ndlab,
-MIT) and SandiaDecay (LGPL-2.1). The gamma-gamma coincidence table (coincidence_table.json) is
-derived from SandiaDecay (sandia.decay.min.xml, LGPL-2.1). The sample spectra in {{app}}\\Samples carry their own
+MIT) and SandiaDecay (LGPL-2.1). The coincidence table (coincidence_table.json) is derived from
+ENSDF decay data of the IAEA LiveChart of Nuclides (https://nds.iaea.org/relnsd/), source: IAEA
+Nuclear Data Section; used under the IAEA terms of use, which do not imply IAEA endorsement of
+SpectraMaster. The sample spectra in {{app}}\\Samples carry their own
 licenses (see Samples\\README.txt).
 """
 
