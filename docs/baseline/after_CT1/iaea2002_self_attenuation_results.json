@@ -1,0 +1,217 @@
+{
+ "engine": "1.14.0",
+ "self_attenuation": "pillbox organic 1.6 g/cm3, calibration organic 1.15, 35.3 mm",
+ "criteria": [
+  {
+   "id": "IA.C1",
+   "value": 1.0,
+   "limit": ">= 0.9",
+   "pass": true,
+   "detail": "20/20 pairs with |z| <= 2.58"
+  },
+  {
+   "id": "IA.C2",
+   "value": 1.0,
+   "limit": ">= 0.8",
+   "pass": true,
+   "detail": "marinelli: 10/10 pairs with |ratio - 1| <= 0.1"
+  },
+  {
+   "id": "IA.C3",
+   "value": 1.0,
+   "limit": ">= 0.8",
+   "pass": true,
+   "detail": "pillbox: 10/10 pairs with |ratio - 1| <= 0.15"
+  },
+  {
+   "id": "IA.C4.M",
+   "value": 0.959410918126438,
+   "limit": "in [0.93, 1.07]",
+   "pass": true,
+   "detail": "marinelli: median ratio of 5 long-spectrum pairs"
+  },
+  {
+   "id": "IA.C4.P",
+   "value": 0.9407807412044176,
+   "limit": "in [0.93, 1.07]",
+   "pass": true,
+   "detail": "pillbox: median ratio of 5 long-spectrum pairs"
+  },
+  {
+   "id": "IA.C5",
+   "value": 1.1152853267764673,
+   "limit": "<= 2.0, none missing",
+   "pass": true,
+   "detail": "rms z of 20 pairs"
+  },
+  {
+   "id": "IA.C6",
+   "value": 20,
+   "limit": "20 / 20",
+   "pass": true,
+   "detail": "20/20 pairs reported as detected"
+  }
+ ],
+ "pairs": [
+  {
+   "spectrum": "maritsmall",
+   "nuclide": "Ba-133",
+   "ratio": 0.9527790007827377,
+   "z": -1.3440497667820468,
+   "lines": "356.0",
+   "long": true
+  },
+  {
+   "spectrum": "maritsmall",
+   "nuclide": "Co-60",
+   "ratio": 0.959410918126438,
+   "z": -1.019826936251939,
+   "lines": "1173.2",
+   "long": true
+  },
+  {
+   "spectrum": "maritsmall",
+   "nuclide": "Eu-152",
+   "ratio": 0.9633270065413768,
+   "z": -1.0195553880108483,
+   "lines": "121.8",
+   "long": true
+  },
+  {
+   "spectrum": "maritsmall",
+   "nuclide": "Cr-51",
+   "ratio": 1.002903725606859,
+   "z": 0.08202528509949485,
+   "lines": "320.1",
+   "long": true
+  },
+  {
+   "spectrum": "maritsmall",
+   "nuclide": "Na-22",
+   "ratio": 0.9591647282754499,
+   "z": -0.9252260753681821,
+   "lines": "1274.5",
+   "long": true
+  },
+  {
+   "spectrum": "maritsmall60",
+   "nuclide": "Ba-133",
+   "ratio": 0.9517616509410596,
+   "z": -1.3640113811697283,
+   "lines": "356.0",
+   "long": false
+  },
+  {
+   "spectrum": "maritsmall60",
+   "nuclide": "Co-60",
+   "ratio": 0.965320070743859,
+   "z": -0.8546365508221916,
+   "lines": "1173.2",
+   "long": false
+  },
+  {
+   "spectrum": "maritsmall60",
+   "nuclide": "Eu-152",
+   "ratio": 0.9680429611969589,
+   "z": -0.8834132083855308,
+   "lines": "121.8",
+   "long": false
+  },
+  {
+   "spectrum": "maritsmall60",
+   "nuclide": "Cr-51",
+   "ratio": 1.0076853561047285,
+   "z": 0.21471317211016752,
+   "lines": "320.1",
+   "long": false
+  },
+  {
+   "spectrum": "maritsmall60",
+   "nuclide": "Na-22",
+   "ratio": 0.9608450904197758,
+   "z": -0.8682992354888043,
+   "lines": "1274.5",
+   "long": false
+  },
+  {
+   "spectrum": "PITBIG",
+   "nuclide": "Ba-133",
+   "ratio": 0.9595333443348446,
+   "z": -1.0102869179760285,
+   "lines": "356.0",
+   "long": true
+  },
+  {
+   "spectrum": "PITBIG",
+   "nuclide": "Co-60",
+   "ratio": 0.9407807412044176,
+   "z": -1.4559080925403654,
+   "lines": "1173.2",
+   "long": true
+  },
+  {
+   "spectrum": "PITBIG",
+   "nuclide": "Eu-152",
+   "ratio": 0.9355573611142473,
+   "z": -1.5193991421664814,
+   "lines": "121.8",
+   "long": true
+  },
+  {
+   "spectrum": "PITBIG",
+   "nuclide": "Cr-51",
+   "ratio": 0.9855488471265199,
+   "z": -0.35508880524187314,
+   "lines": "320.1",
+   "long": true
+  },
+  {
+   "spectrum": "PITBIG",
+   "nuclide": "Na-22",
+   "ratio": 0.9236800872120651,
+   "z": -1.641098597731046,
+   "lines": "1274.5",
+   "long": true
+  },
+  {
+   "spectrum": "PITBIG60",
+   "nuclide": "Ba-133",
+   "ratio": 0.9492987680140117,
+   "z": -1.2566842895645873,
+   "lines": "356.0",
+   "long": false
+  },
+  {
+   "spectrum": "PITBIG60",
+   "nuclide": "Co-60",
+   "ratio": 0.9270037387208547,
+   "z": -1.8049137901132468,
+   "lines": "1173.2",
+   "long": false
+  },
+  {
+   "spectrum": "PITBIG60",
+   "nuclide": "Eu-152",
+   "ratio": 0.9935193710754534,
+   "z": -0.14858200148865922,
+   "lines": "1408.0",
+   "long": false
+  },
+  {
+   "spectrum": "PITBIG60",
+   "nuclide": "Cr-51",
+   "ratio": 0.9805813273700091,
+   "z": -0.4776336624525676,
+   "lines": "320.1",
+   "long": false
+  },
+  {
+   "spectrum": "PITBIG60",
+   "nuclide": "Na-22",
+   "ratio": 0.9245568729503555,
+   "z": -1.612965207794774,
+   "lines": "1274.5",
+   "long": false
+  }
+ ]
+}

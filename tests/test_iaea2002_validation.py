@@ -10,7 +10,7 @@ from spectramaster.validation import iaea2002 as ia
 
 BASE = Path(__file__).resolve().parents[1] / "docs" / "baseline"
 RESULTS = BASE / "after_IA1" / "iaea2002_results.json"          # the pre-registered record (engine 1.7.0)
-CURRENT = BASE / "after_MX1" / "iaea2002_results.json"          # the current engine (1.13.0)
+CURRENT = BASE / "after_CT1" / "iaea2002_results.json"          # the current engine (1.14.0)
 
 
 def _pair(geo, spectrum, nuc, ratio, z, detected=True):

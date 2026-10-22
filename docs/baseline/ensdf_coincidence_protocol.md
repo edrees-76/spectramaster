@@ -175,3 +175,75 @@ repository; only the derived numbers are.
 ## Results
 
 (appended after the run)
+
+Run 2026-10-22, engine 1.14.0, implementation commit 581390c. The text above the line is unchanged
+(SHA-256 of the pre-registered file d602340380ae0cfcf07a4ce0d2b3c4bcb083043d0b6dec94bdfaf319966c1cb4,
+commit 9cb5c65). Outputs in `docs/baseline/after_CT1/`:
+* `coincidence_check.*`: CT.C1–C3. Derived numbers only; no ENSDF rows are stored.
+* `iaea2002_results.*`: CT.C4.
+* `iaea2002_self_attenuation_results.json`: CT.C5.
+* `baseline.*`, `crm_validation_results.*`: CT.C6.
+
+| id | value | limit | result |
+|---|---|---|---|
+| CT.C1 single-path cascades | Co-60 0.999838, Sc-48 0.999876, Y-88 0.99986, Eu-152 1408 → 121.8 0.464037; each equals 1/(1+α_j) to 1e-6 | ≤ 5e-4 | PASS |
+| CT.C2 Monte Carlo, 18 nuclides | 237 comparisons, 0 outside max(0.005, 4σ); largest \|diff\| 0.024 (Eu-152); z of 212: mean 0.10, rms 1.02 (10 above 2, 1 above 3) | all within; rms ≤ 1.3 | PASS |
+| CT.C3 coverage | 1015 described, 6 not described; no `ann_unresolved`; `no_ensdf_data` Ag-109m, Ce-140m | ≥ 1000; ≤ 10; none; those two | PASS |
+| CT.C4 IAEA as written | Eu-152 0.904 → 0.963, 0.908 → 0.968, 0.771 → 0.840, 0.759 → 0.950 (PITBIG60 key line now 1408 keV); other 16 pairs within 0.13 %; IA.C1 0.55 → 0.65, IA.C3 0.8 → 0.9, IA.C5 2.94 → 2.09; no criterion changes state | closer to 1; ≤ 1 %; no PASS → FAIL | PASS |
+| CT.C5 IAEA with F5 correction | IA.C1 1.0, C2 1.0, C3 1.0, C4.M 0.959, C4.P 0.941, C5 1.115, C6 20 | all pass | PASS |
+| CT.C6 benchmark, CRM | benchmark: the same failing criteria as after_MX1; largest close-geometry TCS \|Δd\| 0.0067 (Y-88 2734 keV sum peak); CRM: 1 difference, `engine_version` | same; ≤ 0.01; same states, ≤ 2 % | PASS |
+| CT.C7 tests | new `tests/test_build_coincidences_ensdf.py` (6) pass; full suite 1425 passed, 69 skipped | | PASS |
+
+**Deviation found after registration (builder).**
+* **What happened.** In Te-131m, the merged 852.21 keV line comes from two levels: the weak gamma
+  from 2001 keV lies above the 296.8 keV gamma, and the strong gamma from 852 keV lies below it.
+  The table then held both directions of the pair, so the two-way probability of the 296.8 keV
+  line reached 1.48.
+* **Fix.** When the two directions of a pair together exceed REVERSE_TOL, the builder now keeps only
+  the larger contribution and counts the pair as `dropped`.
+* **Effect.** One pair of Te-131m (296.8 keV, 0.066 % per decay) changed; nothing else in the table.
+* **Timing.** All criteria above were run with this fix.
+
+**Changed existing tests (reasons).**
+* **`test_coincidence`:**
+  * Co-60 and Cs-134 exact values now from ENSDF (1/(1+α) = 0.999838; 0.994046);
+  * the covered set is {Ra-228}, because Th-228 has its own weak cascades in ENSDF;
+  * provenance checks the ENSDF source digest;
+  * the rebuild test uses `SPECTRAMASTER_LIVECHART_DIR`.
+* **`test_tcs_fixes`:**
+  * the Bi-207 hand calculation skips the Pb-207m IT record listed by the parent (COI 0.9306 →
+    0.9335 with the table's own data);
+  * the untreatable-point example states three times the Ir-192 484.6 keV intensity, because the
+    line is now described.
+* **`test_tcs_safety`:**
+  * the partner-below-the-curve example is Mg-28 1342.2 keV (30.6 keV partner) instead of U-235;
+  * the line-not-described example is In-114m 558.4 keV (4.4 % library, 3.27 % ENSDF) instead of
+    Ir-192 484.6 keV.
+* **`test_annihilation_summing`:**
+  * Na-22 P(β⁺ | 1274.5) is 0.899515 from ENSDF (β⁺ 89.9 %) instead of 0.90379;
+  * the unresolved case is a hand-made transition, because the ENSDF table has none.
+* **`test_close_geometry_efficiency`:** Am-241 is removed from the list of nuclides without
+  cascades.
+* **`test_iaea2002_validation`:** reproduces the after_CT1 record.
+
+**AN.C1 of annihilation_summing_protocol.md fails as written with the new table.**
+* **Value.** Its registered Na-22 value 0.90326/0.99941 = 0.9038 comes from SandiaDecay. ENSDF
+  (LiveChart) gives 0.8995, a difference of 0.0043 against the limit of 0.002. The other six AN.C1
+  lines agree within 5e-5.
+* **Not changed.** The criterion and its harness are left unchanged. The test now states this
+  failure explicitly.
+
+**Reported.**
+* **Lines no longer described:** In-116m 1753.8, Kr-88 1249.0, and Sb-126 555.2, 605.4 and
+  1034.8 keV. Their library intensity differs from ENSDF; they are left uncorrected with the usual
+  note.
+* **Eu-152 lines of the long Marinelli spectra, from §2:** 121.8 keV 0.963, 244.7 keV 0.927,
+  344.3 keV 1.030, 778.9 keV 1.033, 964.1 keV 0.940, 1408 keV 0.983. The remaining EC-line
+  deficit, 3–7 %, is in the range of the missing X-ray summing (Sm K X-rays), the rest of F3.
+* **Run time:** Monte Carlo check about 1 min.
+
+**What ships.** The true-coincidence correction now uses cascade probabilities computed from the
+ENSDF level schemes:
+* every transition is checked against an independent simulation;
+* the large SandiaDecay errors (Sc-48, Eu-152 EC and 78 others) are gone;
+* β⁺ summing is resolved for every positron emitter of the library.
