@@ -66,6 +66,7 @@ def _open(window, spec):
     from spectramaster.gui.fit_inspection import open_fit_inspection
     window.display([spec], None, None)
     dlg = open_fit_inspection(window, show=False)
+    assert dlg.windowModality() == Qt.ApplicationModal      # the main window waits while it is open
     dlg.msgs = []
     dlg.message = dlg.msgs.append
     assert wait_idle(dlg) and dlg.report is not None, dlg.last_error

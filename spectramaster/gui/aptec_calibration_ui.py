@@ -5,8 +5,11 @@ know by heart:
 
 * **Setup > Quick Energy Calibration... (F2)** -- :class:`QuickEnergyDialog`: up to 16
   channel-energy points, Encal Units, Max Degree, Encal Time; buttons Calib, Clear, OK, Cancel.
-  A Channel cell takes the channel of the marker (click the spectrum) or the centroid of the ROI
-  that contains it.
+  A Channel cell takes the channel of the marker or the centroid of the ROI that contains it;
+  as in Aptec ("first move the Channel Marker ... before calibrating") the marker is placed
+  before the window opens.
+* Both windows are modal like Aptec's: the main window cannot be used while one is open (a
+  calibration started on one spectrum must not end on another).
 * **Full Energy / Resolution / Efficiency Calibration... (Shift+F2 = efficiency)** --
   :class:`FullCalibrationWindow`, the S_CALIB window: menus File, Calibration (Energy F5,
   Resolution F6, Efficiency F7, Calculate Efficiency F8, Delete F9), EditPoints, Method, View,
@@ -221,8 +224,8 @@ class QuickEnergyDialog(_Messages, QDialog):
         spec = self.spectrum
         coeffs = list(spec.energy_coeffs) if spec is not None else []
         self.degree.setValue(min(max(len(coeffs) - 1, 1), ac.MAX_DEGREE) if coeffs else ac.DEFAULT_DEGREE)
-        pts = []
-        stored = _aptec_sections(spec)
+        pts = _session_points(spec)
+        stored = None if pts else _aptec_sections(spec)
         if stored and stored.get(ENERGY) is not None:
             c = stored[ENERGY]
             pts = list(zip(c.channels, c.values))[:ac.MAX_QUICK_POINTS]
@@ -238,7 +241,7 @@ class QuickEnergyDialog(_Messages, QDialog):
             self.table.clearContents()
             for r, (ch, e) in enumerate(pts[:ac.MAX_QUICK_POINTS]):
                 self.table.setItem(r, 0, QTableWidgetItem(f"{ch:.2f}"))
-                self.table.setItem(r, 1, QTableWidgetItem(f"{e:g}"))
+                self.table.setItem(r, 1, QTableWidgetItem(f"{e:.10g}"))
         finally:
             self._filling = False
 
@@ -332,7 +335,7 @@ class QuickEnergyDialog(_Messages, QDialog):
             note = (f"quick energy calibration: {len(c.channels)} points, max degree {c.max_degree}, "
                     f"degree {c.degree}, units {c.units}")
             new = cal_tools.apply_calibration(self.spectrum, c.coeffs, note=note)
-            new.extra["energy_calibration_points"] = "; ".join(f"{a:.2f}:{b:g}" for a, b in
+            new.extra["energy_calibration_points"] = "; ".join(f"{a:.2f}:{b:.10g}" for a, b in
                                                                zip(c.channels, c.values))
             new.extra["energy_calibration_time"] = c.time.isoformat(timespec="seconds")
             msg = atr("applied", n=ltr(len(c.channels)), deg=ltr(c.degree))
@@ -351,6 +354,21 @@ class QuickEnergyDialog(_Messages, QDialog):
 
 
 # ===================================================================== helpers for the full window
+def _session_points(spec) -> list:
+    """Channel-energy points an earlier quick calibration of this spectrum stored with OK: the
+    window is modal, so the next peak is added by reopening it (Aptec keeps its points too)."""
+    text = (getattr(spec, "extra", None) or {}).get("energy_calibration_points", "") if spec is not None else ""
+    pts = []
+    for item in str(text).split(";"):
+        a, sep, b = item.partition(":")
+        try:
+            if sep:
+                pts.append((float(a), float(b)))
+        except ValueError:
+            return []
+    return pts[:ac.MAX_QUICK_POINTS]
+
+
 def _aptec_sections(spec) -> Optional[dict]:
     """Aptec calibration points of the displayed spectrum when it was read from an Aptec file."""
     if spec is None or not spec.source_path:
@@ -1329,7 +1347,7 @@ class FullCalibrationWindow(_Messages, QDialog):
             new.energy_coeffs = []
         if self.energy is not None:
             new.extra["energy_calibration_points"] = "; ".join(
-                f"{a:.2f}:{b:g}" for a, b in zip(self.energy.channels, self.energy.values))
+                f"{a:.2f}:{b:.10g}" for a, b in zip(self.energy.channels, self.energy.values))
         if self.resolution is not None:
             new.extra["resolution_calibration_points"] = "; ".join(
                 f"{a:.2f}:{b:g}" for a, b in zip(self.resolution.channels, self.resolution.values))
@@ -1443,10 +1461,11 @@ def open_quick_energy(win, modal: bool = False):
         return None
     d = QuickEnergyDialog(win, spec, win)
     d.setAttribute(Qt.WA_DeleteOnClose, True)
+    d.setWindowModality(Qt.ApplicationModal)      # as in Aptec; the marker is placed before opening
     if modal:
         d.exec()
     else:
-        d.show()          # not modal: the marker can be moved on the spectrum meanwhile
+        d.show()          # modal without blocking the caller
     return d
 
 
@@ -1457,6 +1476,7 @@ def open_full_calibration(win, kind: str = ENERGY, modal: bool = False):
         return None
     d = FullCalibrationWindow(win, spec, win, kind)
     d.setAttribute(Qt.WA_DeleteOnClose, True)
+    d.setWindowModality(Qt.ApplicationModal)
     if modal:
         d.exec()
     else:

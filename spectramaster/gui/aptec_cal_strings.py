@@ -36,10 +36,12 @@ EN = {
     "btn_cancel": "Cancel",
     "btn_marker": "Channel from &Marker",
     "tip_marker": "Put the channel of the marker (or the centroid of the ROI that contains it) "
-                  "into the selected row. Click the spectrum to move the marker.",
-    "quick_hint": "Click the spectrum to move the marker (or into an ROI), then click a Channel "
-                  "cell: it takes the marker channel or the ROI centroid. Type the energy and "
-                  "press Calib.",
+                  "into the selected row. The marker is placed on the spectrum before this window "
+                  "is opened.",
+    "quick_hint": "Before opening this window, place the marker on the peak (or inside its ROI), as "
+                  "in Aptec. Click a Channel cell: it takes the marker channel or the ROI centroid. "
+                  "Type the energy and press Calib; for the next peak press OK, move the marker and "
+                  "open the window again (F2).",
     "no_points": "Enter at least one channel-energy point.",
     "bad_number": "Row {row}: {text!r} is not a number.",
     "fit_failed": "The calibration could not be calculated:\n{msg}",
@@ -183,9 +185,10 @@ AR = {
     "btn_cancel": "إلغاء",
     "btn_marker": "القناة من ال&مؤشر",
     "tip_marker": "ضع قناة المؤشر (أو مركز منطقة الاهتمام التي تحتويه) في الصف المحدد. "
-                  "انقر على الطيف لتحريك المؤشر.",
-    "quick_hint": "انقر على الطيف لتحريك المؤشر (أو داخل منطقة اهتمام)، ثم انقر خانة القناة: "
-                  "تأخذ قناة المؤشر أو مركز المنطقة. اكتب الطاقة واضغط احسب.",
+                  "يوضع المؤشر على الطيف قبل فتح هذه النافذة.",
+    "quick_hint": "قبل فتح هذه النافذة ضع المؤشر على القمة (أو داخل منطقتها)، كما في Aptec. "
+                  "انقر خانة القناة: تأخذ قناة المؤشر أو مركز المنطقة. اكتب الطاقة واضغط احسب؛ "
+                  "وللقمة التالية اضغط موافق، وحرّك المؤشر، وافتح النافذة من جديد (F2).",
     "no_points": "أدخل نقطة واحدة على الأقل (قناة ← طاقة).",
     "bad_number": "الصف {row}: {text!r} ليس رقماً.",
     "fit_failed": "تعذّر حساب المعايرة:\n{msg}",
