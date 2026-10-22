@@ -249,6 +249,38 @@ def test_window_export_pdf_offers_analysis(window, tmp_path, monkeypatch):
     assert not (tmp_path / "x.pdf").exists()
 
 
+
+def test_window_report_command_analyses_on_the_worker_thread(window, tmp_path):
+    """The menu command (threaded) runs the analysis like Analyze, then writes the report."""
+    from spectramaster.gui import report as rp
+    assert window.load_file(make_file(tmp_path, "t.fak", sid="THR-SAMPLE"))
+    window.ask_yes_no = lambda text: True
+    out = tmp_path / "thr.pdf"
+    assert window.export_report_pdf(str(out), rp.ReportOptions(language="en"), threaded=True) is None
+    assert window.analysis_running() and not out.exists()
+    assert wait_until(lambda: out.exists() and not window.analysis_running(), 60)
+    assert window.analysis_panel.analysed and window._report_resume is None
+    assert "Not analysed" not in "\n".join(_pdf_text(out)[1])
+    # declined: written at once without analysis, nothing waits
+    assert window.load_file(make_file(tmp_path, "u.fak", sid="NO-ANA"))
+    window.ask_yes_no = lambda text: False
+    out2 = window.export_report_pdf(str(tmp_path / "no.pdf"), rp.ReportOptions(language="en"), threaded=True)
+    assert out2 is not None and not window.analysis_running() and window._report_resume is None
+    # an analysis that fails: the report is not written
+    assert window.load_file(make_file(tmp_path, "v.fak", sid="FAIL"))
+    window.ask_yes_no = lambda text: True
+    window._report_resume = None
+    window._resume_report(window._ana_token + 1, False)          # nothing pending: no-op
+    called = []
+    window._report_resume = (7, lambda: called.append(1))
+    window._resume_report(7, False)
+    assert not called and window._report_resume is None
+    window._report_resume = (9, lambda: called.append(1))
+    window._resume_report(8, True)                               # an older analysis: keeps waiting
+    assert window._report_resume is not None and not called
+    window._resume_report(9, True)
+    assert called == [1]
+
 def test_window_report_uses_current_view(window, tmp_path):
     from spectramaster.gui import report as rp
     p = make_file(tmp_path, "v.fak", n=512)

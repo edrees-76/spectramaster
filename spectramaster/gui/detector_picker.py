@@ -182,6 +182,23 @@ class DetectorEditor(QDialog):
 
 
 # ===================================================================== manager
+class _ReadError(Exception):
+    """A calibration spectrum could not be read (message: "Type: text" of the cause)."""
+
+
+def _measure_shape(files: list) -> dict:
+    """Read the calibration spectra and measure the peak shape (no widget access: worker thread)."""
+    from ..analysis.peaks import shape_calibration
+    from ..convert import read_spectra
+    spectra = []
+    try:
+        for f in files:
+            spectra.extend(read_spectra(f)[0])
+    except Exception as exc:
+        raise _ReadError(f"{type(exc).__name__}: {exc}") from exc
+    return shape_calibration(spectra)
+
+
 class DetectorManagerDialog(QDialog):
     """List of the registry's profiles with New / Edit / Delete.  ``ask_profile`` and ``confirm`` are
     separate methods so tests can replace them."""
@@ -209,12 +226,15 @@ class DetectorManagerDialog(QDialog):
         self.btn_delete.clicked.connect(lambda: self.delete_selected())
         self.btn_shape = QPushButton(ctr("mgr_shape"))
         self.btn_shape.setToolTip(ctr("mgr_shape_tip"))
-        self.btn_shape.clicked.connect(lambda: self.measure_shape_selected())
+        self.btn_shape.clicked.connect(lambda: self.measure_shape_selected(threaded=True))
         for b in (self.btn_new, self.btn_edit, self.btn_delete, self.btn_shape):
             col.addWidget(b)
         col.addStretch(1)
         row.addLayout(col)
         lay.addLayout(row, 1)
+        self.busy_label = QLabel("")
+        lay.addWidget(self.busy_label)
+        self._shape_pending = None
         self.problems_label = QLabel("")
         self.problems_label.setWordWrap(True)
         self.problems_label.setStyleSheet("color: #e65100;")
@@ -273,10 +293,15 @@ class DetectorManagerDialog(QDialog):
                 self.list.setCurrentRow(i)
 
     def _sync(self) -> None:
-        has = self.selected_id() is not None
+        has = self.selected_id() is not None and self._shape_pending is None
         self.btn_edit.setEnabled(has)
         self.btn_delete.setEnabled(has)
         self.btn_shape.setEnabled(has)
+        self.btn_new.setEnabled(self._shape_pending is None)
+
+    @property
+    def busy(self) -> bool:
+        return self._shape_pending is not None
 
     # ------------------------------------------------------------ commands
     def _save(self, p: DetectorProfile) -> Optional[str]:
@@ -299,27 +324,56 @@ class DetectorManagerDialog(QDialog):
         new = self.ask_profile(p)
         return self._save(new) if new is not None else None
 
-    def measure_shape_selected(self, files: Optional[list] = None) -> Optional[dict]:
+    def measure_shape_selected(self, files: Optional[list] = None, threaded: bool = False) -> Optional[dict]:
         """Measure the peak shape (low-energy tail) of the selected detector on calibration spectra
-        and, after confirmation, record it in its profile.  Returns the recorded shape."""
-        from pathlib import Path
-
-        from ..analysis.peaks import TAIL_MIN_PEAKS, shape_calibration
-        from ..convert import read_spectra
+        and, after confirmation, record it in its profile.  Returns the recorded shape; with
+        `threaded` (the button) the spectra are read and measured on a worker thread, the
+        confirmation follows when it finishes, and None is returned."""
+        if self._shape_pending is not None:
+            return None
         p = self.registry.get(self.selected_id())
         if p is None:
             return None
         files = list(files) if files is not None else self.ask_spectrum_files()
         if not files:
             return None
-        spectra = []
-        try:
-            for f in files:
-                spectra.extend(read_spectra(f)[0])
-        except Exception as exc:
-            self.show_error(ctr("shape_err_read", msg=f"{type(exc).__name__}: {exc}"))
+        if threaded:
+            from .worker import start_call
+            self._shape_pending = (p.id, files)
+            self.busy_label.setText(ctr("shape_busy"))
+            self._sync()
+            start_call(self, lambda: _measure_shape(files), self._shape_done, self._shape_failed)
             return None
-        cal = shape_calibration(spectra)
+        try:
+            cal = _measure_shape(files)
+        except _ReadError as exc:
+            self.show_error(ctr("shape_err_read", msg=str(exc)))
+            return None
+        return self._record_shape(p.id, files, cal)
+
+    def _shape_finished(self):
+        pending, self._shape_pending = self._shape_pending, None
+        self.busy_label.setText("")
+        self._sync()
+        return pending
+
+    def _shape_done(self, cal) -> None:
+        pending = self._shape_finished()
+        if pending is not None:
+            self._record_shape(pending[0], pending[1], cal)
+
+    def _shape_failed(self, msg: str) -> None:
+        self._shape_finished()
+        prefix = _ReadError.__name__ + ": "
+        self.show_error(ctr("shape_err_read", msg=msg[len(prefix):] if msg.startswith(prefix) else msg))
+
+    def _record_shape(self, detector_id: str, files: list, cal: dict) -> Optional[dict]:
+        from pathlib import Path
+
+        from ..analysis.peaks import TAIL_MIN_PEAKS
+        p = self.registry.get(detector_id)
+        if p is None:
+            return None
         if cal["n_peaks"] < TAIL_MIN_PEAKS:
             self.show_error(ctr("shape_err_peaks", n=cal["n_peaks"], need=TAIL_MIN_PEAKS))
             return None

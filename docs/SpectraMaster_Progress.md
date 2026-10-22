@@ -1031,3 +1031,32 @@ Pre-registered in `docs/baseline/bkg_peak_protocol.md`, with the results there.
   from PASS to FAIL, and 13 criteria fail.
 - **Behaviour change.** A line present only in the background is reported as not found, with its
   background, instead of with a net area near zero.
+
+
+## Long operations off the interface thread (2026-10-22)
+
+Timed on 8192-channel HPGe spectra before the change (the operations below 0.3 s stay on the interface thread):
+
+| operation | time | change |
+|---|---|---|
+| Aptec analysis window: peak search, multiplet fit, identify, quantify | 0.02-0.22 s each | none |
+| opening a spectrum file | 0.01-0.12 s | none |
+| detector manager: Measure peak shape (3 spectra) | 4.5 s | worker thread |
+| report (Print, Print Preview, Export PDF) with "analyse first?" answered yes | 0.8-1.1 s, more on 16k spectra | worker thread |
+
+- **Detector manager.** Measure peak shape reads the spectra and measures the shape on a worker
+  thread. The dialog shows "Measuring the peak shape ..." and refuses a second start, and its
+  buttons are disabled until the measurement ends. The confirmation and the saving follow on the
+  interface thread. A file that cannot be read is reported as before.
+- **Reports.** When a report command needs an analysis first, the menu commands start the same
+  background analysis as Analyze. The command is repeated after the analysis thread has ended, so
+  the busy cursor is gone before a save dialog opens. If the analysis fails, its error is shown and
+  no report is written. A newer analysis replaces a waiting one.
+- **Unchanged.** Direct calls without `threaded` (scripts, tests) stay synchronous.
+- **Tests.** `test_gui_detector_context.py::test_peak_shape_button_measures_on_a_worker_thread` and
+  `test_report.py::test_window_report_command_analyses_on_the_worker_thread`.
+- **X-ray summing (F3) deferred.** In the IAEA 2002 data the efficiency curves start at 59.5 keV,
+  so the K X-rays (Sm 39.5-46 keV in Eu-152, Cs 30.6-35.4 keV in Ba-133) lie below 0.8 x e_min and
+  are left out by the existing rule. The expected effect is about 2-3 % on the EC lines and needs
+  per-level K-capture fractions and K-shell conversion coefficients that are not in the
+  downloaded data. It is worth doing only with a calibration below about 47 keV.
