@@ -554,6 +554,11 @@ def designer_section(logo_height: int = 110) -> QWidget:
 
 
 class AboutDialog(QDialog):
+    @staticmethod
+    def _version_text() -> str:
+        from ..lab.session import ENGINE_VERSION
+        return tr("about_version", v=__version__) + "  ·  " + tr("about_engine", v=ENGINE_VERSION)
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle(tr("about_title"))
@@ -570,7 +575,7 @@ class AboutDialog(QDialog):
             pic.setPixmap(logo)
             pic.setAlignment(Qt.AlignCenter)
             lay.addWidget(pic)
-            ver = QLabel(tr("about_version", v=__version__))
+            ver = QLabel(self._version_text())
             ver.setAlignment(Qt.AlignCenter)
             lay.addWidget(ver)
         else:
@@ -586,7 +591,7 @@ class AboutDialog(QDialog):
             name.setFont(f)
             txt.addWidget(name)
             txt.addWidget(QLabel(tr("app_subtitle")))
-            txt.addWidget(QLabel(tr("about_version", v=__version__)))
+            txt.addWidget(QLabel(self._version_text()))
             head.addLayout(txt, 1)
             lay.addLayout(head)
         self.designer = designer_section(110)
