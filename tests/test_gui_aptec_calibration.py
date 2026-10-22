@@ -193,7 +193,7 @@ def test_full_efficiency_load_rois_calculate_fit_and_save(window, tmp_path):
         assert dlg.points[2].activity == 25 and dlg.points[2].activity_err == 2.0   # same isotope filled in
         dlg.points.append(ac.EffPoint(energy=122.06, isotope="manual", efficiency=0.08, efficiency_err=5.0,
                                       manual=True))
-        dlg.detector, dlg.geometry = "HPGe-1", "Marinelli-1L"
+        dlg.detector, dlg.geometry_id = "HPGe-1", "Marinelli-1L"
         dlg.ok_fit()
         return dlg.result() == QDialog.Accepted
 

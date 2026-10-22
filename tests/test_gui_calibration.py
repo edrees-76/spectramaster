@@ -149,7 +149,7 @@ def test_drift_correction_requires_confirmation(window):
     dlg = open_drift_dialog(window, modal=False)
     dlg.message = lambda text: None
     assert dlg.check() and wait_idle(dlg)
-    r = dlg.result
+    r = dlg.drift_result
     assert r is not None and r.detected and dlg.btn_apply.isEnabled()
     assert dlg.table.rowCount() == len(r.points)
     assert window.current_spectrum().energy_coeffs == old        # nothing applied by the check

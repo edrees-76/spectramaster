@@ -123,7 +123,7 @@ def test_sample_and_quantity_description(window):
     dlg = ui.SampleDescriptionDialog(spec)
     assert dlg.title.text() == "soil" and dlg.label.text() == "S1" and dlg.detector.text() == "HPGe-1"
     dlg.user.setText("EF")
-    dlg.geometry.setText("Marinelli1L")
+    dlg.geometry_edit.setText("Marinelli1L")
     dlg.times["sample_start"][0].setChecked(True)
     dlg.times["sample_start"][1].setDateTime(QDateTime(datetime(2024, 4, 30, 8, 0)))
     new = dlg.apply_to(spec)
@@ -195,7 +195,7 @@ def test_decay_calculator_and_library(window):
     d.act.setValue(1000.0)
     d.t0.setDateTime(QDateTime(datetime(2000, 1, 1)))
     d.t1.setDateTime(QDateTime(datetime(2030, 1, 1)))
-    assert d.result == pytest.approx(1000 * 0.5 ** (30 * 365.25 / (d.hl.value() * 365.25)), rel=0.01)
+    assert d.decay_activity == pytest.approx(1000 * 0.5 ** (30 * 365.25 / (d.hl.value() * 365.25)), rel=0.01)
     lib = ui.LibraryDialog(window)
     rows = lib.rows("cs-137")
     assert any(abs(e - 661.66) < 0.1 for _n, _h, e, _i in rows)
