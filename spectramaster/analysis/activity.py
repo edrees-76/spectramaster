@@ -592,7 +592,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                        blank: Optional["QuantResults"] = None) -> QuantResults:
     """Activities / MDAs for ``options.nuclides`` in ``spectrum`` (see module docstring).
     ``blank``: results of the reagent blank (:func:`compute_activities` on the blank sample)."""
-    from .peaks import find_peaks, fwhm_model
+    from .peaks import IMPLAUSIBLE_PREFIX, checked_fwhm_model, find_peaks, implausible_note
     opt = options or ActivityOptions()
     if not spectrum.energy_coeffs:
         raise ValueError("the spectrum has no energy calibration")
@@ -645,7 +645,9 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     if bfit is not None:
         bkg_under = bfit.under_peaks(peaks, fit_report)
     y = np.asarray(spectrum.counts, dtype=float)
-    fw_ch, _src = fwhm_model(spectrum, y)
+    fw_ch, fw_src = checked_fwhm_model(spectrum, np.maximum(y, 0.0))
+    if fw_src.startswith(IMPLAUSIBLE_PREFIX):
+        notes.append(implausible_note(fw_src))
     if spectrum.start_time is None and opt.ref_date is not None:
         notes.append("acquisition start unknown: no decay correction")
     dt = (spectrum.start_time - ref).total_seconds() if (spectrum.start_time and ref) else 0.0

@@ -788,7 +788,7 @@ def width_model(spectrum, y: np.ndarray, fwhm: Optional[float] = None, min_energ
         f = np.full(n, float(fwhm))
         src = "user"
     else:
-        f, src = fwhm_model(spectrum, y)
+        f, src = checked_fwhm_model(spectrum, y, var)
         if src == "none":
             f = _estimate_fwhm_from_data(y)
             src = "data"
@@ -842,6 +842,8 @@ def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit
     f, src, start = width_model(spectrum, y, fwhm, min_energy, var)
     if report is not None:
         report.fwhm_source = src
+        if src.startswith(IMPLAUSIBLE_PREFIX):
+            report.notes.append(implausible_note(src))
     model = _Model(f)
     model.loglinear = loglinear_continuum(spectrum)
     cands = _candidates(y, f, min_sig * 0.8, start, var=var)
@@ -1021,6 +1023,63 @@ def _rescale_model(y, f, start, var=None, shape: bool = False):
         if abs(k - 1.0) > 0.08:
             return f * k
     return f
+
+
+IMPLAUSIBLE_PREFIX = "rescaled (FWHM model implausible"
+IMPLAUSIBLE_MAX_STEPS = 5        # x2 or x0.5 per step: up to x32 / x1/32
+
+
+def _bound_votes(y, f, start, var=None) -> tuple[int, int, int]:
+    """(isolated, wider, narrower): free-width fits of the strongest isolated candidates that end
+    at the upper (x2) or lower (x0.5) bound of the model; fit quality is not required."""
+    cands = _candidates(y, f, 12.0, start, var=var)
+    cands = sorted(cands, key=lambda c: -c[1])[:8]
+    allc = sorted(c for c, _ in cands)
+    m = _Model(f)
+    n = wider = narrower = 0
+    for c, _z in cands:
+        fw = m.at(c)
+        if any(0 < abs(o - c) < 4 * fw for o in allc):
+            continue
+        n += 1
+        lo, hi = int(max(c - 2.5 * fw, 0)), int(min(c + 2.5 * fw, len(y) - 1))
+        r = _fit_group(y, m, [c], lo, hi, free_width=True, step=True, width_bounds=(0.5, 2.0), var=var)
+        if r is None or not r.at_bound:
+            continue
+        if r.scale >= 2.0 - 1e-6:
+            wider += 1
+        else:
+            narrower += 1
+    return n, wider, narrower
+
+
+def checked_fwhm_model(spectrum, y: np.ndarray, var=None) -> tuple[np.ndarray, str]:
+    """:func:`fwhm_model`, rescaled by x2 or x0.5 while most strong isolated peaks fit at the same
+    width bound of it (docs/baseline/fwhm_plausibility_amendment_protocol.md)."""
+    f, src = fwhm_model(spectrum, y)
+    if src == "none":
+        return f, src
+    start = _start_index(y, f)
+    steps = 0                      # factor 2**steps
+    for _ in range(IMPLAUSIBLE_MAX_STEPS):
+        n, wider, narrower = _bound_votes(y, f * 2.0 ** steps, start, var)
+        need = max(3.0, n / 2)
+        if n >= 3 and wider >= need:
+            steps += 1
+        elif n >= 3 and narrower >= need:
+            steps -= 1
+        else:
+            break
+    if steps == 0:
+        return f, src
+    k = 2.0 ** steps
+    return f * k, f"{IMPLAUSIBLE_PREFIX}: {src} x{k:g})"
+
+
+def implausible_note(src: str) -> str:
+    return (f"The {src.split(': ', 1)[1].rsplit(' x', 1)[0]} does not match the peak widths of this "
+            f"spectrum; it was rescaled by x{src.rsplit(' x', 1)[1].rstrip(')')} to the widths of the "
+            "strongest peaks. Check the energy and FWHM calibration.")
 
 
 def _estimate_fwhm_from_data(y) -> np.ndarray:

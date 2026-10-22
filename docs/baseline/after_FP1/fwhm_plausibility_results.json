@@ -1,0 +1,375 @@
+{
+ "C1": {
+  "source": "data (FWHM model implausible: fwhm calibration x4.00)",
+  "note_search": true,
+  "note_activity": true,
+  "peaks": 76
+ },
+ "C2": {
+  "lines_chn": 17,
+  "lines_spe": 17,
+  "gain_chn": 0.43286574546475803,
+  "gain_spe": 0.4328654192729964,
+  "rel": 7.535639188205323e-07,
+  "method_chn": "pattern search"
+ },
+ "C3": {
+  "Am241big.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 5,
+   "peaks_spe": 14
+  },
+  "Am241small.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 5,
+   "peaks_spe": 20
+  },
+  "BGBIGPOINT.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 63,
+   "peaks_spe": 66
+  },
+  "BGSMALLMARI.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 71,
+   "peaks_spe": 89
+  },
+  "BGSMALLPOINT.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 64,
+   "peaks_spe": 68
+  },
+  "Cd109BIG.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 5,
+   "peaks_spe": 26
+  },
+  "Cd109SMALL.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 8,
+   "peaks_spe": 22
+  },
+  "Co57BIG.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 30,
+   "peaks_spe": 25
+  },
+  "Co57SMALL.Chn": {
+   "replaced": true,
+   "source": "data (FWHM model implausible: default HPGe resolution x2.31)",
+   "peaks": 25,
+   "peaks_spe": 24
+  },
+  "Cs137BIG.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 16,
+   "peaks_spe": 18
+  },
+  "Cs137SMALL.Chn": {
+   "replaced": true,
+   "source": "data (FWHM model implausible: default NaI resolution x0.05)",
+   "peaks": 18,
+   "peaks_spe": 19
+  },
+  "maricsmall.chn": {
+   "replaced": true,
+   "source": "data (FWHM model implausible: fwhm calibration x4.00)",
+   "peaks": 76,
+   "peaks_spe": 79
+  },
+  "maritsmall.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 138,
+   "peaks_spe": 131
+  },
+  "maritsmall60.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 79,
+   "peaks_spe": 78
+  },
+  "mix1eq.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 120,
+   "peaks_spe": 129
+  },
+  "mix1neqlong.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 199,
+   "peaks_spe": 198
+  },
+  "mix2eq.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 116,
+   "peaks_spe": 136
+  },
+  "mix2eq3.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 59,
+   "peaks_spe": 54
+  },
+  "mix2neq20.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 92,
+   "peaks_spe": 106
+  },
+  "mix2neq6.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 65,
+   "peaks_spe": 69
+  },
+  "mix2neqlong.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 188,
+   "peaks_spe": 230
+  },
+  "Mn54BIG.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 14,
+   "peaks_spe": 16
+  },
+  "Mn54SMALL.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 17,
+   "peaks_spe": 20
+  },
+  "picbig.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 103,
+   "peaks_spe": 92
+  },
+  "PITBIG.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 115,
+   "peaks_spe": 115
+  },
+  "PITBIG60.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 76,
+   "peaks_spe": 75
+  },
+  "QCDBIG0.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 34,
+   "peaks_spe": 36
+  },
+  "QCDBIG20.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 58,
+   "peaks_spe": 58
+  },
+  "QCDBIG30.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 75,
+   "peaks_spe": 73
+  },
+  "QCDSMALL0.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 35,
+   "peaks_spe": 40
+  },
+  "QCDSMALL10.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 56,
+   "peaks_spe": 57
+  },
+  "QCDSMALL20.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 91,
+   "peaks_spe": 102
+  },
+  "Sn113BIG.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 24,
+   "peaks_spe": 25
+  },
+  "Sn113SMALL.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 24,
+   "peaks_spe": 23
+  },
+  "Zn65BIG.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 11,
+   "peaks_spe": 20
+  },
+  "Zn65SMALL.Chn": {
+   "replaced": false,
+   "source": "default HPGe resolution",
+   "peaks": 18,
+   "peaks_spe": 17
+  }
+ },
+ "C4": {
+  "HPGe k=0.25": {
+   "replaced": 0,
+   "n": 20,
+   "recall": 1.0,
+   "extra_per_spectrum": 1.15
+  },
+  "HPGe k=0.7": {
+   "replaced": 0,
+   "n": 20,
+   "recall": 1.0,
+   "extra_per_spectrum": 1.15
+  },
+  "HPGe k=1.0": {
+   "replaced": 0,
+   "n": 20,
+   "recall": 1.0,
+   "extra_per_spectrum": 1.05
+  },
+  "HPGe k=1.4": {
+   "replaced": 0,
+   "n": 20,
+   "recall": 1.0,
+   "extra_per_spectrum": 1.15
+  },
+  "HPGe k=4.0": {
+   "replaced": 20,
+   "n": 20,
+   "recall": 1.0,
+   "extra_per_spectrum": 1.15
+  },
+  "NaI k=0.25": {
+   "replaced": 20,
+   "n": 20,
+   "recall": 0.9583333333333334,
+   "extra_per_spectrum": 0.05
+  },
+  "NaI k=0.7": {
+   "replaced": 0,
+   "n": 20,
+   "recall": 1.0,
+   "extra_per_spectrum": 0.05
+  },
+  "NaI k=1.0": {
+   "replaced": 0,
+   "n": 20,
+   "recall": 1.0,
+   "extra_per_spectrum": 0.1
+  },
+  "NaI k=1.4": {
+   "replaced": 0,
+   "n": 20,
+   "recall": 1.0,
+   "extra_per_spectrum": 0.1
+  },
+  "NaI k=4.0": {
+   "replaced": 20,
+   "n": 20,
+   "recall": 0.9583333333333334,
+   "extra_per_spectrum": 0.05
+  }
+ },
+ "C4_main": {
+  "HPGe k=0.25": {
+   "recall": 1.0,
+   "extra_per_spectrum": 1.15,
+   "missed_kev": []
+  },
+  "HPGe k=0.7": {
+   "recall": 1.0,
+   "extra_per_spectrum": 1.15,
+   "missed_kev": []
+  },
+  "HPGe k=1.0": {
+   "recall": 1.0,
+   "extra_per_spectrum": 1.05,
+   "missed_kev": []
+  },
+  "HPGe k=1.4": {
+   "recall": 1.0,
+   "extra_per_spectrum": 1.15,
+   "missed_kev": []
+  },
+  "HPGe k=4.0": {
+   "recall": 1.0,
+   "extra_per_spectrum": 0.55,
+   "missed_kev": []
+  },
+  "NaI k=0.25": {
+   "recall": 0.7833333333333333,
+   "extra_per_spectrum": 4.7,
+   "missed_kev": [
+    122.0,
+    364.0,
+    122.0,
+    122.0,
+    364.0,
+    122.0,
+    122.0,
+    122.0,
+    122.0,
+    364.0,
+    122.0,
+    122.0,
+    662.0,
+    122.0,
+    122.0,
+    122.0,
+    122.0,
+    662.0,
+    122.0,
+    122.0,
+    364.0,
+    122.0,
+    122.0,
+    122.0,
+    122.0,
+    122.0
+   ]
+  },
+  "NaI k=0.7": {
+   "recall": 1.0,
+   "extra_per_spectrum": 0.05,
+   "missed_kev": []
+  },
+  "NaI k=1.0": {
+   "recall": 1.0,
+   "extra_per_spectrum": 0.1,
+   "missed_kev": []
+  },
+  "NaI k=1.4": {
+   "recall": 1.0,
+   "extra_per_spectrum": 0.1,
+   "missed_kev": []
+  },
+  "NaI k=4.0": {
+   "recall": 1.0,
+   "extra_per_spectrum": 0.0,
+   "missed_kev": []
+  }
+ }
+}
