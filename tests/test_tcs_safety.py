@@ -25,18 +25,20 @@ def pt(e):
 
 
 def test_partner_below_the_curve_is_ignored():
-    # U-235 185.7 keV: its 19.6 keV cascade partner cannot reach the detector's calibrated range
+    # Mg-28 1342.2 keV: its 30.6 keV cascade partner (P 0.94) cannot reach the detector's calibrated
+    # range (U-235 185.7 keV until the ENSDF table, ensdf_coincidence_protocol.md)
     def steep(e):                      # a close geometry: 2 % at 1 MeV, rising to 22 % at 59.5 keV
         return 0.02 * (np.clip(np.asarray(e, dtype=float), 59.5, 2000.0) / 1000.0) ** -0.85
-    old = co.coi("U-235", 185.715, steep, pt)
-    new = co.coi("U-235", 185.715, steep, pt, e_min=59.5)
+    old = co.coi("Mg-28", 1342.2, steep, pt)
+    new = co.coi("Mg-28", 1342.2, steep, pt, e_min=59.5)
     assert old.factor < 0.9
     assert new.factor > 0.97 and new.ignored > 0.5
 
 
 def test_line_not_described_by_the_table_is_not_corrected():
-    # Ir-192 484.6 keV (3.19 %) is missing from the table; a 0.002 % gamma at 485.3 keV is not it
-    c = co.coi("Ir-192", 484.575, true_eps, pt, intensity=0.0319)
+    # In-114m 558.4 keV: 4.4 % in the library, 3.27 % in the ENSDF table (Ir-192 484.6 keV, missing
+    # from the SandiaDecay table, until ensdf_coincidence_protocol.md)
+    c = co.coi("In-114m", 558.43, true_eps, pt, intensity=0.044)
     assert not c.found and c.factor == 1.0 and "library" in c.reason
     ok = co.coi("Co-60", 1173.228, true_eps, pt, intensity=0.9985)
     assert ok.found and ok.factor == pytest.approx(co.coi("Co-60", 1173.228, true_eps, pt).factor)

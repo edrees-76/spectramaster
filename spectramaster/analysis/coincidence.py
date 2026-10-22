@@ -1,24 +1,27 @@
 """Gamma-gamma coincidence data for true-coincidence summing (TCS).
 
-The table ``data/coincidence_table.json`` is built by ``data/build_coincidences.py`` from
-SandiaDecay (ENSDF-derived, LGPL-2.1; see data/SOURCES.md).  For each decay transition of a
-nuclide it gives the gammas (energy, gammas per decay of the transition) and the cascade
+The table ``data/coincidence_table.json`` is built by ``data/build_coincidences_ensdf.py`` from the
+ENSDF decay schemes of the IAEA LiveChart of Nuclides (see data/SOURCES.md and
+docs/baseline/ensdf_coincidence_protocol.md; SandiaDecay until engine 1.14.0).  For each decay mode
+of a nuclide it gives the gammas (energy, gammas per decay of the transition) and the cascade
 coincidence probabilities P(j | i): gamma j is emitted in the same decay given that gamma i is,
 i above j.  The reverse probability is P(i | j) = I_i P(j | i) / I_j.
 
 Annihilation: per gamma, ``ann`` gives P(beta+ | gamma), the probability that a positron, and so two
-511 keV photons, comes with it in the same decay (reconstructed from the source's beta+ branches,
-docs/baseline/annihilation_summing_protocol.md).  Transitions whose beta+ feeding could not be
-reconstructed are marked ``ann_unresolved``: their lines are corrected for gamma-gamma summing only.
+511 keV photons, comes with it in the same decay (from the beta+ feeding of the levels,
+docs/baseline/annihilation_summing_protocol.md).  Transitions whose beta+ feeding is inconsistent
+are marked ``ann_unresolved``: their lines are corrected for gamma-gamma summing only.
 
 Limits of the data: no X-ray coincidences (X-ray - gamma summing of EC nuclides is not described),
-no angular correlation, and a few physically impossible pairs of the source were dropped (``dropped``).
+no angular correlation, and pairs with inconsistent intensities were dropped (``dropped``).
 
 Short-lived daughters that the gamma library folds into their parent (``includes`` and
 ``include_factors`` of ``data/gamma_library.json``: Bi-207 -> Pb-207m, Ce-144 -> Pr-144 ...) are
 separate nuclides of the table; :func:`transitions` adds their transitions to the parent's,
 weighted by the include factor (docs/baseline/tcs_fixes_protocol.md).  Gammas of the parent's
-decay and of the daughter's decay are not coincident.
+decay and of the daughter's decay are not coincident.  A daughter whose gammas the parent's ENSDF
+decay already lists (``daughters_listed_by_parent``: Ba-137m of Cs-137, Pb-207m of Bi-207) is not
+added again.
 """
 from __future__ import annotations
 
@@ -91,8 +94,11 @@ def transitions(nuclide: str) -> list[Transition]:
     """The nuclide's decay transitions that have gamma cascades, with those of the short-lived
     daughters the library folds into it (branching x include factor); [] when it has none."""
     out = []
+    listed = _table().get("daughters_listed_by_parent", {}).get(nuclide, ())
     for name, f in [(nuclide, 1.0)] + _daughters().get(nuclide, []):
         for rec in _table()["nuclides"].get(name, []):
+            if name in listed and rec.get("mode") == "IT":
+                continue        # the isomer's de-excitation is already in the parent's own decay record
             g = np.array(rec["g"], dtype=float).reshape(-1, 2)
             after = np.zeros((len(g), len(g)))
             for i, j, p in rec["c"]:

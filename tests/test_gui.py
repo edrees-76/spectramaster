@@ -409,6 +409,8 @@ def test_about_dialog(qapp, fake_format):
     assert not dlg.grab().isNull()
     labels = " ".join(lab.text() for lab in dlg.findChildren(QLabel))
     assert __version__ in labels and "SpecUtils" in labels
+    from spectramaster.lab.session import ENGINE_VERSION
+    assert ENGINE_VERSION in labels and "IAEA" in labels and "ENSDF" in labels
     tree = dlg.findChild(QTreeWidget)
     names = [tree.topLevelItem(i).text(1) for i in range(tree.topLevelItemCount())]
     assert "Fake GUI Test" in names

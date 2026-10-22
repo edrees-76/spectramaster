@@ -18,21 +18,29 @@ def _const(v):
     return lambda e: np.full(np.shape(e), v, dtype=float)
 
 
+# Na-22 P(beta+ | 1274.5 keV) of the ENSDF table (LiveChart: beta+ 89.9 % to the 1274.5 keV level,
+# gamma 99.94 %); AN.C1 registered 0.90326 / 0.99941 of SandiaDecay (ensdf_coincidence_protocol.md)
+NA22_ANN = 0.899515
+
+
 def test_table_probabilities_as_registered():
     r = an.c1()
-    assert r["pass"], r["rows"]
+    off = [x for x in r["rows"] if abs(x["diff"]) > an.C1_TOL]
+    # AN.C1 fails as written with the ENSDF table, only by the source difference of Na-22
+    assert [x["nuclide"] for x in off] == ["Na-22"] and not r["pass"]
+    assert off[0]["table"] == pytest.approx(0.899 / 0.99941, abs=1e-4)
 
 
 def test_na22_coi_is_the_analytic_value():
     assert an.c4()["pass"]
     c = co.coi("Na-22", 1274.537, _const(0.03), _const(0.25))
-    assert c.found and c.annihilation == pytest.approx(0.90379 * 2 * 0.12, abs=1e-5)
+    assert c.found and c.annihilation == pytest.approx(NA22_ANN * 2 * 0.12, abs=1e-5)
     assert c.summing_out == pytest.approx(c.annihilation)          # no gamma partner
 
 
 def test_511_below_the_curve_is_left_out_and_reported():
     c = co.coi("Na-22", 1274.537, _const(0.03), _const(0.25), e_min=700.0)
-    assert c.factor == 1.0 and c.annihilation == 0.0 and c.ignored == pytest.approx(0.90379, abs=1e-5)
+    assert c.factor == 1.0 and c.annihilation == 0.0 and c.ignored == pytest.approx(NA22_ANN, abs=1e-5)
 
 
 def test_ground_state_positrons_give_no_correction():
@@ -41,11 +49,13 @@ def test_ground_state_positrons_give_no_correction():
         assert c.annihilation == 0.0
 
 
-def test_unresolved_transitions_are_reported():
-    t = [x for x in co.transitions("Mn-52") if x.ann_unresolved]
-    assert t
-    e = float(t[0].energies[np.argmax(t[0].intensities)])
-    c = co.coi("Mn-52", e, _const(0.03), _const(0.25))
+def test_unresolved_transitions_are_reported(monkeypatch):
+    # the ENSDF table has none (Mn-52 was one of SandiaDecay's): a hand-made transition
+    assert not any(t.ann_unresolved for n in co._table()["nuclides"] for t in co.transitions(n))
+    t = co.Transition(1.0, np.array([1434.0, 744.2]), np.array([1.0, 0.9]),
+                      np.array([[0.0, 0.9], [0.0, 0.0]]), ann_unresolved=True)
+    monkeypatch.setattr(co, "transitions", lambda nuclide: [t])
+    c = co.coi("Mn-52", 1434.0, _const(0.03), _const(0.25))
     assert c.note == co.ANN_UNRESOLVED_NOTE and c.annihilation == 0.0
 
 

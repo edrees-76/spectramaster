@@ -69,7 +69,8 @@ def test_explicit_loglog_unchanged_and_no_cascade_untouched():
     curve, ptc = _apparent_curve(0.11)            # loglog order 1, given explicitly
     free = eff.summing_free_curve(curve, ptc)
     assert free.order == 1 and not free.orders_auto
-    flat = [p for p in apparent_points() if p.nuclide in ("Am-241", "Cs-137", "Mn-54", "Cd-109", "Sn-113")]
+    # Am-241 59.5 keV has cascade partners in the ENSDF table (ensdf_coincidence_protocol.md)
+    flat = [p for p in apparent_points() if p.nuclide in ("Cs-137", "Mn-54", "Cd-109", "Sn-113")]
     assert len(flat) >= 2
     plain = eff.fit_efficiency(flat, "loglog", order=1)
     plain.orders_auto = True                      # an automatic curve without cascade points: untouched

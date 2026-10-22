@@ -152,14 +152,22 @@ STRINGS: dict[str, dict[str, str]] = {
         # about
         "about_title": "About SpectraMaster",
         "about_version": "Version {v}",
+        "about_engine": "Analysis engine {v}",
         "about_body": (
-            "Converts gamma-ray spectrum files between formats, in the style of "
-            "ORTEC DataMaster (A49-B32). Format codes 1-16 match the DataMaster "
-            "command line."
+            "Gamma-ray spectrum analysis for HPGe and NaI detectors: peak search and fitting, energy "
+            "and FWHM calibration, efficiency calibration with true-coincidence summing correction "
+            "(gamma-gamma and 511 keV), self-attenuation correction, nuclide identification, activity "
+            "with uncertainty, decision threshold and detection limit, reagent blank and reference "
+            "peak corrections, reports and analysis sessions.\n\n"
+            "Converts spectrum files between formats in the style of ORTEC DataMaster (A49-B32); "
+            "format codes 1-16 match the DataMaster command line."
         ),
         "about_credits": (
-            "Built with Python, Qt (PySide6, LGPL) and Sandia National Laboratories "
-            "SpecUtils (LGPL 2.1)."
+            "Built with Python, Qt (PySide6, LGPL), NumPy, SciPy and Sandia National Laboratories "
+            "SpecUtils (LGPL 2.1).\n"
+            "Nuclear data: ENSDF from the IAEA Nuclear Data Section (ndlab, LiveChart of Nuclides; "
+            "source: IAEA, no IAEA endorsement implied), SandiaDecay (LGPL 2.1), LNHB/DDEP; "
+            "attenuation coefficients: NIST SRD 126."
         ),
         "about_formats": "Supported formats",
         "about_read": "Read",
@@ -300,13 +308,19 @@ STRINGS: dict[str, dict[str, str]] = {
         "folder_found": "عدد الملفات التي عُثر عليها: {n}",
         "about_title": "حول SpectraMaster",
         "about_version": "الإصدار {v}",
+        "about_engine": "محرك التحليل {v}",
         "about_body": (
-            "يحوّل ملفات أطياف أشعة غاما بين الصيغ المختلفة على غرار برنامج "
-            "ORTEC DataMaster (A49-B32). رموز الصيغ 1-16 مطابقة لسطر أوامر DataMaster."
+            "تحليل أطياف أشعة غاما لكواشف HPGe و NaI: البحث عن القمم وملاءمتها، معايرة الطاقة "
+            "وعرض القمة، معايرة الكفاءة مع تصحيح الجمع التصادفي الحقيقي (غاما-غاما و 511 keV)، "
+            "تصحيح التوهين الذاتي، التعرف على النويدات، النشاط الإشعاعي مع عدم اليقين، عتبة القرار "
+            "وحد الكشف، تصحيح الكاشف الفارغ والقمة المرجعية، التقارير وجلسات التحليل.\n\n"
+            "يحوّل ملفات الأطياف بين الصيغ على غرار برنامج ORTEC DataMaster (A49-B32)؛ "
+            "رموز الصيغ 1-16 مطابقة لسطر أوامر DataMaster."
         ),
         "about_credits": (
-            "مبني باستخدام Python و Qt (PySide6، رخصة LGPL) ومكتبة SpecUtils "
-            "من مختبرات سانديا الوطنية (رخصة LGPL 2.1)."
+            "المكتبات: Python و Qt (PySide6) و NumPy و SciPy ومكتبة SpecUtils من مختبرات سانديا الوطنية، برخصة LGPL 2.1.\n"
+            "البيانات النووية: ENSDF من الوكالة الدولية للطاقة الذرية عبر ndlab و LiveChart، والمصدر هو الوكالة دون أي تزكية منها؛ وكذلك SandiaDecay و LNHB/DDEP.\n"
+            "معاملات التوهين: NIST SRD 126."
         ),
         "about_formats": "الصيغ المدعومة",
         "about_read": "قراءة",
