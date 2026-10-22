@@ -71,8 +71,8 @@ def large(w: int, h: int, icon: Image.Image, mark: Image.Image) -> Image.Image:
     y += side + 8 * u
     f_name = fit_font(d, "SpectraMaster", "segoeuib.ttf", 23 * u, W - 14 * u)
     y = centered(d, y, "SpectraMaster", f_name, NAVY, W) + 7 * u
-    y = centered(d, y, "Gamma-Spectrum Analysis", fit_font(d, "Gamma-Spectrum Analysis", "segoeui.ttf",
-                                                           11 * u, W - 16 * u), SLATE, W) + 8 * u
+    sub = "Gamma Spectrum Analysis System"
+    y = centered(d, y, sub, fit_font(d, sub, "segoeui.ttf", 11 * u, W - 16 * u), SLATE, W) + 8 * u
     d.rounded_rectangle([W / 2 - 22 * u, y, W / 2 + 22 * u, y + 2.2 * u], radius=1.1 * u, fill=ORANGE)
     y += 9 * u
     centered(d, y, "Version 1.0.0", font("segoeuisl.ttf", 10.5 * u), NAVY, W)
