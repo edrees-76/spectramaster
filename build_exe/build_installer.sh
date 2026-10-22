@@ -31,6 +31,10 @@ if [[ "${1:-}" != "--iss-only" ]]; then
     COMMON=(--paths . --collect-all SpecUtils --collect-submodules spectramaster.formats
             --collect-submodules spectramaster.analysis --collect-submodules spectramaster.tools
             --exclude-module matplotlib --exclude-module tkinter
+            # large packages that may be installed in the build Python but are never imported
+            # (PyInstaller would bundle them, and torch crashes its import analysis)
+            --exclude-module torch --exclude-module pandas --exclude-module sympy --exclude-module numba
+            --exclude-module llvmlite --exclude-module pytest --exclude-module IPython
             # optional imports of openpyxl/numpy that SpectraMaster never uses (smaller bundle,
             # and every bundled component is covered by installer/licenses)
             --exclude-module PIL --exclude-module lxml --exclude-module yaml

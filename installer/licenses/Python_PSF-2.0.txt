@@ -1,5 +1,5 @@
 Python runtime (incl. bzip2, libffi, OpenSSL, SQLite, zlib, xz, mpdecimal; Microsoft Visual C++ runtime)
-Version: 3.14.0
+Version: 3.14.7
 License: PSF-2.0 and the licenses listed inside
 ------------------------------------------------------------------------------
 
