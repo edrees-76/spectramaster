@@ -129,15 +129,15 @@ class SampleDescriptionDialog(QDialog):
         self.label.setMaxLength(32)
         self.user = QLineEdit(str(x.get("user_id", "")))
         self.detector = QLineEdit(spec.detector)
-        self.geometry = QLineEdit(str(x.get("geometry_id", "")))
+        self.geometry_edit = QLineEdit(str(x.get("geometry_id", "")))
         self.sample = QLineEdit(str(x.get("aptec_sample_id", "")))
-        for w in (self.user, self.detector, self.geometry, self.sample):
+        for w in (self.user, self.detector, self.geometry_edit, self.sample):
             w.setMaxLength(16)
         form.addRow(etr("f_title"), self.title)
         form.addRow(etr("f_label"), self.label)
         form.addRow(etr("f_user"), self.user)
         form.addRow(etr("f_detector"), self.detector)
-        form.addRow(etr("f_geometry"), self.geometry)
+        form.addRow(etr("f_geometry"), self.geometry_edit)
         form.addRow(etr("f_sample"), self.sample)
         self.times = {}
         for key, label in (("sample_start", "f_sample_start"), ("sample_stop", "f_sample_stop")):
@@ -160,7 +160,7 @@ class SampleDescriptionDialog(QDialog):
         form.addRow(bb)
 
     def clear(self) -> None:
-        for w in (self.title, self.label, self.user, self.detector, self.geometry, self.sample):
+        for w in (self.title, self.label, self.user, self.detector, self.geometry_edit, self.sample):
             w.clear()
         for box, _ed in self.times.values():
             box.setChecked(False)
@@ -170,7 +170,7 @@ class SampleDescriptionDialog(QDialog):
         new.description = self.title.text().strip()
         new.sample_id = self.label.text().strip()
         new.detector = self.detector.text().strip()
-        for key, w in (("user_id", self.user), ("geometry_id", self.geometry), ("aptec_sample_id", self.sample)):
+        for key, w in (("user_id", self.user), ("geometry_id", self.geometry_edit), ("aptec_sample_id", self.sample)):
             v = w.text().strip()
             if v:
                 new.extra[key] = v
@@ -670,12 +670,12 @@ class DecayDialog(QDialog):
         hl = dc.convert_time(self.hl.value(), self.hl_unit.currentText(), "s")
         if hl <= 0:
             self.d_out.setText(etr("d_bad"))
-            self.result = None
+            self.decay_activity = None
             return
         dt = (_pydt(self.t1) - _pydt(self.t0)).total_seconds()
         fac = dc.decay_factor(hl, dt)
         a = self.act.value() * fac
-        self.result = a
+        self.decay_activity = a
         days = dt / 86400.0
         self.d_out.setText(etr("d_out", a=_ltr(f"{a:.6g}"), u=self.act_unit.currentText(),
                                e=_ltr(f"{self.err.value():.3g}"), f=_ltr(f"{fac:.6g}"),

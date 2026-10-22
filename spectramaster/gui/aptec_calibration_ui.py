@@ -619,12 +619,12 @@ class IdDialog(QDialog):
         form = QFormLayout(self)
         self.units = QLineEdit(units or "keV")
         self.detector = QLineEdit(detector)
-        self.geometry = QLineEdit(geometry)
-        for w in (self.units, self.detector, self.geometry):
+        self.geometry_edit = QLineEdit(geometry)
+        for w in (self.units, self.detector, self.geometry_edit):
             w.setMaxLength(15)
         form.addRow(atr("id_units"), self.units)
         form.addRow(atr("id_detector"), self.detector)
-        form.addRow(atr("id_geometry"), self.geometry)
+        form.addRow(atr("id_geometry"), self.geometry_edit)
         bb = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
         bb.accepted.connect(self.accept)
         bb.rejected.connect(self.reject)
@@ -687,7 +687,7 @@ class EfficiencyPointsDialog(_Messages, QDialog):
         self.win = win
         self.spectrum = spectrum
         self.points = [copy.copy(p) for p in points]
-        self.units, self.detector, self.geometry = units or "keV", detector, geometry
+        self.units, self.detector, self.geometry_id = units or "keV", detector, geometry
         self.defaults = {"units": "Bq", "time": None, "quantity": 1.0, "quantity_err": 0.0, "certificate": ""}
         if self.points:
             p0 = self.points[0]
@@ -879,11 +879,11 @@ class EfficiencyPointsDialog(_Messages, QDialog):
 
     # ------------------------------------------------------------ buttons
     def edit_id(self) -> bool:
-        d = IdDialog(self, self.units, self.detector, self.geometry)
+        d = IdDialog(self, self.units, self.detector, self.geometry_id)
         if d.exec() != QDialog.Accepted:
             return False
         self.units = d.units.text().strip() or "keV"
-        self.detector, self.geometry = d.detector.text().strip(), d.geometry.text().strip()
+        self.detector, self.geometry_id = d.detector.text().strip(), d.geometry_edit.text().strip()
         return True
 
     def load_rois(self, defaults: Optional[dict] = None) -> int:
@@ -981,9 +981,9 @@ class EfficiencyPointsDialog(_Messages, QDialog):
     def ok_fit(self) -> None:
         if not self.calculate():
             return
-        if not self.detector or not self.geometry:
+        if not self.detector or not self.geometry_id:
             self.message(atr("id_required"))
-            if not self.edit_id() or not self.detector or not self.geometry:
+            if not self.edit_id() or not self.detector or not self.geometry_id:
                 return
         self.accept()
 
@@ -1023,10 +1023,10 @@ class CalcEfficiencyDialog(QDialog):
         self.energy.setValue(661.657)
         self.energy.valueChanged.connect(self.update_result)
         form.addRow(atr("calc_energy"), self.energy)
-        self.result = QLabel("")
-        self.result.setWordWrap(True)
-        self.result.setTextInteractionFlags(Qt.TextSelectableByMouse)
-        form.addRow(self.result)
+        self.calc_result = QLabel("")
+        self.calc_result.setWordWrap(True)
+        self.calc_result.setTextInteractionFlags(Qt.TextSelectableByMouse)
+        form.addRow(self.calc_result)
         bb = QDialogButtonBox(QDialogButtonBox.Ok)
         bb.accepted.connect(self.accept)
         form.addRow(bb)
@@ -1034,7 +1034,7 @@ class CalcEfficiencyDialog(QDialog):
 
     def update_result(self, *_):
         if self.cal is None:
-            self.result.setText(atr("calc_none"))
+            self.calc_result.setText(atr("calc_none"))
             return
         e = self.energy.value()
         v, err, inside = ac.calculate_efficiency(self.cal, e)
@@ -1043,7 +1043,7 @@ class CalcEfficiencyDialog(QDialog):
         if not inside:
             lo, hi = self.cal.energy_range
             text += "\n" + atr("calc_outside", lo=ltr(f"{lo:.1f}"), hi=ltr(f"{hi:.1f}"))
-        self.result.setText(text)
+        self.calc_result.setText(text)
 
 
 # ===================================================================== full calibration window (S_Calib)
@@ -1233,7 +1233,7 @@ class FullCalibrationWindow(_Messages, QDialog):
             if not run(d):
                 return False
             self.eff_points = d.points
-            self.eff_ids = {"units": d.units, "detector": d.detector, "geometry": d.geometry}
+            self.eff_ids = {"units": d.units, "detector": d.detector, "geometry": d.geometry_id}
             ok = self._fit_eff()
         else:
             cal = self.energy if kind == ENERGY else self.resolution

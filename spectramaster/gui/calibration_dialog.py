@@ -473,7 +473,7 @@ class DriftDialog(_MessageMixin, QDialog):
         self.setLayoutDirection(Qt.RightToLeft if i18n.is_rtl() else Qt.LeftToRight)
         self.spectrum = spectrum
         self.main_window = main_window
-        self.result: Optional[cal.DriftCheck] = None
+        self.drift_result: Optional[cal.DriftCheck] = None
         self.result_spectrum = None
         self.last_error = ""
         self._busy = False
@@ -555,7 +555,7 @@ class DriftDialog(_MessageMixin, QDialog):
                 return False
         self._busy = True
         self.last_error = ""
-        self.result = None
+        self.drift_result = None
         self.state_label.setText(ctr("drift_running"))
         self._show()
         start_call(self, lambda: cal.check_drift(spec, text or None), self._on_done, self._on_failed)
@@ -563,7 +563,7 @@ class DriftDialog(_MessageMixin, QDialog):
 
     def _on_done(self, r) -> None:
         self._busy = False
-        self.result = r
+        self.drift_result = r
         self._show()
 
     def _on_failed(self, msg: str) -> None:
@@ -574,7 +574,7 @@ class DriftDialog(_MessageMixin, QDialog):
         self.message(ctr("drift_failed", msg=msg))
 
     def summary(self) -> str:
-        r = self.result
+        r = self.drift_result
         if r is None:
             return ""
         state = ctr("drift_detected") if r.detected else ctr("drift_none")
@@ -587,7 +587,7 @@ class DriftDialog(_MessageMixin, QDialog):
                    sig=ltr(f"{r.max_shift_sigma:.1f}"))
 
     def _show(self) -> None:
-        r = self.result
+        r = self.drift_result
         spec = self.spectrum
         self.btn_check.setEnabled(spec is not None and not self._busy)
         self.current_label.setText(ctr("drift_current") + " "
@@ -620,7 +620,7 @@ class DriftDialog(_MessageMixin, QDialog):
     def apply_correction(self):
         """Apply the proposed coefficients after an explicit confirmation.
         Returns the corrected copy of the spectrum, or None (nothing changed)."""
-        r = self.result
+        r = self.drift_result
         if r is None or not r.proposed_coeffs or self.spectrum is None:
             return None
         text = ctr("drift_confirm", old=coeffs_text(self.spectrum.energy_coeffs),
@@ -638,7 +638,7 @@ class DriftDialog(_MessageMixin, QDialog):
         if win is not None and replace_displayed_spectrum(win, new):
             win.statusBar().showMessage(ctr("status_drift_applied"), 15000)
         self.spectrum = new
-        self.result = None           # the report belonged to the old coefficients
+        self.drift_result = None           # the report belonged to the old coefficients
         self._show()
         return new
 
