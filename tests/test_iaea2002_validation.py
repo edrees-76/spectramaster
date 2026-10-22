@@ -10,7 +10,7 @@ from spectramaster.validation import iaea2002 as ia
 
 BASE = Path(__file__).resolve().parents[1] / "docs" / "baseline"
 RESULTS = BASE / "after_IA1" / "iaea2002_results.json"          # the pre-registered record (engine 1.7.0)
-CURRENT = BASE / "after_CG1" / "iaea2002_results.json"          # the current engine (1.12.0)
+CURRENT = BASE / "after_MX1" / "iaea2002_results.json"          # the current engine (1.13.0)
 
 
 def _pair(geo, spectrum, nuc, ratio, z, detected=True):
@@ -52,7 +52,7 @@ def test_recorded_results_match_the_protocol_limits():
 @pytest.mark.skipif(not (ia.DEFAULT_DATA / "spectra").exists(), reason="IAEA 2002 test spectra not present")
 def test_marinelli_reproduces_the_recorded_ratios():
     if not CURRENT.exists():
-        pytest.skip("after_CG1 results not present")
+        pytest.skip("after_MX1 results not present")
     rec = {(p["spectrum"], p["nuclide"]): p["ratio"]
            for p in json.loads(CURRENT.read_text(encoding="utf-8"))["pairs"]}
     r = ia.run_geometry(ia.DEFAULT_DATA, "marinelli")

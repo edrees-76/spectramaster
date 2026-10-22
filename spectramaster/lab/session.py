@@ -74,7 +74,9 @@ SCHEMA_VERSION = 1
 #          different from the calibration (slab model, NIST mu/rho) (self_attenuation_protocol.md)
 #   1.12.0 2026-10-22 summing_free_curve chooses an automatically chosen efficiency model (orders,
 #          crossover) again on the summing-corrected points (close_geometry_efficiency_protocol.md)
-ENGINE_VERSION = "1.12.0"
+#   1.13.0 2026-10-22 FWHM calibration from a source fitted through measured (free-width) line widths,
+#          not the search's width model (mix_peak_areas_protocol.md)
+ENGINE_VERSION = "1.13.0"
 
 
 class SessionSchemaError(ValueError):
