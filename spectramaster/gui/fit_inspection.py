@@ -827,6 +827,7 @@ def open_fit_inspection(win, show: bool = True):
         return old
     dlg = FitInspectionDialog(win, spec, win, getattr(win, "fit_session", None))
     dlg.setAttribute(Qt.WA_DeleteOnClose, False)
+    dlg.setWindowModality(Qt.ApplicationModal)    # its fits belong to this spectrum: no switching meanwhile
     win.fit_window = dlg
     dlg.run_inspection()
     if show:

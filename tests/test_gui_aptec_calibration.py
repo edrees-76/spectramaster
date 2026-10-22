@@ -269,3 +269,32 @@ def test_windows_render_in_both_languages(window, lang):
         d.dirty = False
         d.done(0)
     window.apply_language("en", save=False)
+
+
+def test_calibration_windows_are_modal_like_aptec(window):
+    """The main window cannot be used while a calibration window is open (Aptec: modal dialog;
+    the marker is placed before calibrating)."""
+    from PySide6.QtCore import Qt
+
+    from spectramaster.gui.aptec_calibration_ui import ENERGY, open_full_calibration, open_quick_energy
+    window.display([_spectrum(())], None, None)
+    for d in (open_quick_energy(window), open_full_calibration(window, ENERGY)):
+        assert d.windowModality() == Qt.ApplicationModal and d.isVisible()
+        d.close()
+
+
+def test_quick_energy_keeps_its_points_when_reopened(window):
+    """Modal like Aptec: the next peak is added by reopening the window, so the points stay."""
+    from spectramaster.gui.aptec_calibration_ui import open_quick_energy
+    window.display([_spectrum(())], None, None)
+    d = open_quick_energy(window)
+    d.message = lambda text: (_ for _ in ()).throw(AssertionError(text))
+    d.table.setItem(0, 0, QTableWidgetItem("2346.5"))
+    d.table.setItem(0, 1, QTableWidgetItem("1173.228"))
+    d.table.setItem(1, 0, QTableWidgetItem("2665.0"))
+    d.table.setItem(1, 1, QTableWidgetItem("1332.492"))
+    assert d.ok() is not None
+    again = open_quick_energy(window)
+    assert again.points() == [(pytest.approx(2346.5), pytest.approx(1173.228)),
+                              (pytest.approx(2665.0), pytest.approx(1332.492))]
+    again.close()
