@@ -167,8 +167,7 @@ STRINGS: dict[str, dict[str, str]] = {
             "SpecUtils (LGPL 2.1).\n"
             "Nuclear data: ENSDF from the IAEA Nuclear Data Section (ndlab, LiveChart of Nuclides; "
             "source: IAEA, no IAEA endorsement implied), SandiaDecay (LGPL 2.1), LNHB/DDEP; "
-            "attenuation coefficients: NIST SRD 126.\n"
-            "The program is not certified for regulatory use; results need review by the analyst."
+            "attenuation coefficients: NIST SRD 126."
         ),
         "about_formats": "Supported formats",
         "about_read": "Read",
@@ -321,8 +320,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "about_credits": (
             "المكتبات: Python و Qt (PySide6) و NumPy و SciPy ومكتبة SpecUtils من مختبرات سانديا الوطنية، برخصة LGPL 2.1.\n"
             "البيانات النووية: ENSDF من الوكالة الدولية للطاقة الذرية عبر ndlab و LiveChart، والمصدر هو الوكالة دون أي تزكية منها؛ وكذلك SandiaDecay و LNHB/DDEP.\n"
-            "معاملات التوهين: NIST SRD 126.\n"
-            "البرنامج غير معتمد للاستخدام الرقابي؛ تحتاج النتائج إلى مراجعة المحلل."
+            "معاملات التوهين: NIST SRD 126."
         ),
         "about_formats": "الصيغ المدعومة",
         "about_read": "قراءة",
