@@ -85,6 +85,9 @@ def components() -> list[tuple[str, str, str, str, Path | str]]:
         ("IAEA_ndlab_data_MIT.txt", "IAEA-NDS ndlab nuclear data (extract)", "commit cf7fc218", "MIT", MIT_NDLAB),
         ("numpy_BSD-3-Clause.txt", "NumPy (incl. OpenBLAS, LAPACK, GCC runtime with exception)", ver("numpy"),
          "BSD-3-Clause and the licenses listed inside", dist_file("numpy", "LICENSE.txt")),
+        ("scipy_BSD-3-Clause.txt", "SciPy (incl. OpenBLAS, LAPACK, GCC runtime with exception, and the "
+         "bundled libraries listed inside)", ver("scipy"), "BSD-3-Clause and the licenses listed inside",
+         dist_file("scipy", "LICENSE.txt")),
         ("openpyxl_MIT.txt", "openpyxl", ver("openpyxl"), "MIT", dist_file("openpyxl", "LICENCE.rst")),
         ("et_xmlfile_MIT.txt", "et_xmlfile", ver("et_xmlfile"), "MIT", dist_file("et_xmlfile", "LICENCE.rst")),
         ("pywin32_PSF.txt", "pywin32 (pywintypes, win32pdh)", ver("pywin32"), "PSF-2.0",
@@ -125,9 +128,10 @@ licenses (see Samples\\README.txt).
 """
 
 # folders/files in the PyInstaller bundle -> component (for the consistency check)
-EXPECTED = {"PySide6": "Qt6", "shiboken6": "Qt6", "SpecUtils": "SpecUtils", "numpy": "numpy",
+EXPECTED = {"PySide6": "Qt6", "shiboken6": "Qt6", "SpecUtils": "SpecUtils", "numpy": "numpy", "scipy": "scipy",
             "pywin32_system32": "pywin32", "win32": "pywin32"}
-UNEXPECTED = ["PIL", "lxml", "yaml", "charset_normalizer", "scipy", "matplotlib", "html5lib"]
+UNEXPECTED = ["PIL", "lxml", "yaml", "charset_normalizer", "matplotlib", "html5lib", "torch", "pandas", "sympy",
+              "numba", "llvmlite", "pytest", "IPython"]
 
 
 def check_bundle(dist: Path) -> list[str]:

@@ -4,7 +4,7 @@ SpectraMaster (c) 2026 Edrees F. Hery. The program bundles the components below;
 its own license. The full license texts are in this folder.
 
   Python runtime (incl. bzip2, libffi, OpenSSL, SQLite, zlib, xz, mpdecimal; Microsoft Visual C++ runtime)
-      version 3.14.0; license PSF-2.0 and the licenses listed inside; text: Python_PSF-2.0.txt
+      version 3.14.7; license PSF-2.0 and the licenses listed inside; text: Python_PSF-2.0.txt
   Qt 6 / Qt for Python (PySide6, Shiboken6)
       version 6.11.1; license LGPL-3.0; text: Qt6_PySide6_Shiboken6_LGPL-3.0.txt
   GNU GPL 3.0 (referenced by the LGPL-3.0)
@@ -17,6 +17,8 @@ its own license. The full license texts are in this folder.
       version commit cf7fc218; license MIT; text: IAEA_ndlab_data_MIT.txt
   NumPy (incl. OpenBLAS, LAPACK, GCC runtime with exception)
       version 2.3.5; license BSD-3-Clause and the licenses listed inside; text: numpy_BSD-3-Clause.txt
+  SciPy (incl. OpenBLAS, LAPACK, GCC runtime with exception, and the bundled libraries listed inside)
+      version 1.16.3; license BSD-3-Clause and the licenses listed inside; text: scipy_BSD-3-Clause.txt
   openpyxl
       version 3.1.5; license MIT; text: openpyxl_MIT.txt
   et_xmlfile
