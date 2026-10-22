@@ -6,7 +6,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-python build_exe/make_icons.py   # logo.jfif -> gui/assets/*.png + gui/spectramaster.ico
+python build_exe/make_icons.py   # logo.jpg -> gui/assets/*.png + gui/spectramaster.ico
 
 ROOT="$(pwd -W)"
 ICO="$ROOT/spectramaster/gui/spectramaster.ico"
