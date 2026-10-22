@@ -91,3 +91,44 @@ Outputs go to a new folder `docs/baseline/after_SA1/`.
 ## Results
 
 (appended after the run)
+
+Run 2026-10-22, engine 1.11.0. The text above the line is unchanged (SHA-256 of the pre-registered
+part still e2c26a050a9a7720416bba0388510ba38767a2edad3995a32f90d0ace0c7b214). Outputs:
+`docs/baseline/after_SA1/`:
+* `self_attenuation_results.json`: SA.C3 per pair (ratio before and after, factor, key energy),
+  SA.C4 maxima, and the IAEA criteria with the correction. No spectrum data is stored.
+* `baseline.*`, `iaea2002_results.*`, `crm_validation_results.*` (without the correction).
+
+| id | value | limit | result |
+|---|---|---|---|
+| SA.C1 NIST values | 84 tabulated points (28 per matrix, 10 keV - 20 MeV); worst relative deviation 4.4e-16 | 1e-9 | PASS |
+| SA.C2 factor limits | 1 within 1e-12 when sample = calibration; within 1e-6 at h = 1e-6 mm; > 1 and strictly decreasing over 400 energies 30 keV - 3 MeV for 1.6 vs 1.15 g/cm³, all three matrices | | PASS |
+| SA.C3 IAEA pillbox | corrected = uncorrected × factor within 2.2e-16 for all 10 pairs; median ratio of the long spectrum 0.8626 -> 0.9048 | [0.89, 0.92] | PASS |
+| SA.C4 water, mineral | largest difference from `organic` at the test energies: water 0.49 %, mineral 1.52 % (at the 79.6 / 81.0 keV Ba-133 lines) | 1 % | **FAIL as written** (mineral) |
+| SA.C5 without correction | benchmark vs after_PE1: 1 difference, `meta/engine_version`; IAEA 2002 vs after_FP2: 1 difference, `engine`; CRM vs after_FP2: 1 difference, `engine_version` | engine version only | PASS |
+| SA.C6 tests | new `tests/test_self_attenuation.py` (8) pass; full suite 1404 passed, 69 skipped; no existing test changed | | PASS |
+
+**SA.C4.** The prototype of §2 compared the matrices at the key lines only (all above 120 keV),
+where they differ by at most 0.4 %. The test energies include the Ba-133 lines at 79.6 and 81 keV,
+where photoelectric absorption in the heavier elements of concrete makes `mineral` 1.5 % higher
+than `organic` (5.5 % at 53 keV; 0.6 % at 100 keV). Water stays within 1 % everywhere (0.9 % at
+53 keV). So the matrix choice matters below about 100 keV: it must match the sample, and a
+mineral sample must not be corrected with `organic`. The criterion is not changed; this is
+reported as a property of the physics, not a defect of the code.
+
+**Reported.**
+* Ratios after correction (PITBIG / PITBIG60): Ba-133 0.986 / 0.976, Co-60 0.905 / 0.891,
+  Eu-152 0.760 / 0.747, Cr-51 1.020 / 1.014, Na-22 0.877 / 0.878.
+* IAEA criteria with the correction: IA.C1 1.0, IA.C2 1.0, IA.C3 0.8 PASS (FAIL without it),
+  IA.C4.M 0.963, **IA.C4.P 0.905 FAIL** (F4 remains: Eu-152, Co-60, Na-22 low), IA.C5 1.24,
+  IA.C6 20.
+
+**What ships.**
+* `analysis/attenuation.py` with NIST SRD 126 μ/ρ for water, organic (PMMA) and mineral (concrete);
+  the slab self-attenuation factor `T_cal / T_sample`.
+* `ActivityOptions.self_attenuation` and the `quant` options `--self-att-*`, `--cal-*`; the factor
+  per line is recorded in `LineResult.self_attenuation`; the model uncertainty adds in quadrature.
+* Without the option nothing changes (benchmark, IAEA 2002, CRM identical except the engine
+  version).
+* Limits: slab geometry only (not Marinelli); three matrices; the matrix must be chosen to match the
+  sample below about 100 keV (SA.C4).

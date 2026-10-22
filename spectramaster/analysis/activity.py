@@ -174,6 +174,7 @@ class LineResult:
     int_rel_unc: float = 0.0     # library emission-probability uncertainty of this line (relative)
     coi: float = 1.0             # true-coincidence summing factor (observed / summing-free), divided out
     coi_rel_unc: float = 0.0
+    self_attenuation: float = 1.0      # density/matrix correction factor of this line (1 = none)
     coi_applied: bool = False    # the line was corrected for true-coincidence summing
     blank_activity: Optional[float] = None  # reagent blank subtracted, Bq (parent) at the reference date
     blank_unc: float = 0.0                  # its counting standard uncertainty, Bq
@@ -269,6 +270,7 @@ class ActivityOptions:
     quantity_rel_unc: float = 0.0        # fraction
     attenuation: Union[float, dict] = 1.0   # correction factor(s) (multiplies the activity), per nuclide dict ok
     attenuation_rel_unc: float = 0.0
+    self_attenuation: Optional[object] = None   # analysis.attenuation.SelfAttenuation (energy-dependent factor)
     intensity_rel_unc: float = 0.0       # optional extra; each line's library (ENSDF) uncertainty is added
     bkg_mode: str = "peak"               # "peak" | "spectrum"
     mda_method: str = "currie"           # "currie" | "iso11929"
@@ -334,6 +336,9 @@ class QuantResults:
         if isinstance(o.get("geometry"), dict):
             from ..lab.detector import MeasurementGeometry
             o["geometry"] = MeasurementGeometry.from_dict(o["geometry"])
+        if isinstance(o.get("self_attenuation"), dict):
+            from .attenuation import SelfAttenuation
+            o["self_attenuation"] = SelfAttenuation(**o["self_attenuation"])
         if "nuclides" in o:
             o["nuclides"] = tuple(o["nuclides"])
         nucl = []
@@ -720,7 +725,9 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             lr.in_range = curve.in_range(e)
             if not lr.in_range:
                 lr.note = "efficiency extrapolated"
-            w = ref_k * att / (eff * inten * t_live * C * D) / b       # Bq (parent) per net count
+            if opt.self_attenuation is not None:
+                lr.self_attenuation = float(opt.self_attenuation.factor(e))
+            w = ref_k * att * lr.self_attenuation / (eff * inten * t_live * C * D) / b   # Bq (parent) per net count
             if tcs_on:
                 c = coincidence.coi(ln_name, e, eps_peak, tcs_pt, e_min=curve.e_min, intensity=inten)
                 if c.reason:
@@ -795,7 +802,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                     lin_bkg = k_b ** 2 * bwin * (1.0 + cb[1] / (2.0 * cb[2]))
                     var0 += lin_bkg
             w_rel = math.sqrt(lr.eff_rel_unc ** 2 + opt.intensity_rel_unc ** 2 + lr.int_rel_unc ** 2
-                              + opt.attenuation_rel_unc ** 2 + ref_u ** 2 + lr.coi_rel_unc ** 2)
+                              + _att_rel_unc(opt) ** 2 + ref_u ** 2 + lr.coi_rel_unc ** 2)
 
             def limits(v0, w=w, fwin=fwin, w_rel=w_rel):
                 """(L_C counts, L_D counts, decision threshold Bq, detection limit Bq) of variance v0."""
@@ -980,6 +987,8 @@ def _blank_checks(blank: "QuantResults", curve: EfficiencyCurve, opt: ActivityOp
             same_att = math.isclose(a_b, a_s, rel_tol=1e-12)
         if not same_att:
             differ.append("attenuation correction")
+        if bo.self_attenuation != opt.self_attenuation:
+            differ.append("self-attenuation correction")
         if bool(bo.tcs) != bool(opt.tcs) or (bo.tcs and opt.tcs and bo.tcs != opt.tcs):
             differ.append("true-coincidence summing correction")
         if bool(bo.reference_peak) != bool(opt.reference_peak):
@@ -1158,8 +1167,15 @@ def _combine(res: NuclideResult, opt: ActivityOptions) -> None:
     res.primary, res.primary_method = a, k.primary_method
     res.primary_u = math.sqrt(k.primary_u_count ** 2 + (aa * k.eff_rel_unc) ** 2
                               + (aa * opt.intensity_rel_unc) ** 2 + (aa * k.int_rel_unc) ** 2
-                              + (aa * opt.attenuation_rel_unc) ** 2 + k.ref_unc_bq ** 2
+                              + (aa * _att_rel_unc(opt)) ** 2 + k.ref_unc_bq ** 2
                               + (aa * k.coi_rel_unc) ** 2)
+
+
+def _att_rel_unc(opt: ActivityOptions) -> float:
+    """Relative uncertainty of the attenuation corrections: the constant factor and the
+    self-attenuation model, combined in quadrature."""
+    sa = opt.self_attenuation.rel_unc if opt.self_attenuation is not None else 0.0
+    return math.hypot(opt.attenuation_rel_unc, sa)
 
 
 def _combine_activity(res: NuclideResult, opt: ActivityOptions) -> None:
@@ -1177,7 +1193,7 @@ def _combine_activity(res: NuclideResult, opt: ActivityOptions) -> None:
         else:
             key = min(found or lines, key=lambda l: l.mda)
     res.key_energy = key.energy
-    ui, ua, um = opt.intensity_rel_unc, opt.attenuation_rel_unc, opt.quantity_rel_unc
+    ui, ua, um = opt.intensity_rel_unc, _att_rel_unc(opt), opt.quantity_rel_unc
     ut = 0.0
     if opt.method == "mean":
         cand = [l for l in lines if l.activity is not None and l.detected and l.net_area > 0]

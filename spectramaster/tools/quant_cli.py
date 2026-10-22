@@ -94,6 +94,18 @@ def _tcs(args) -> "dict | None":
     return out
 
 
+def _self_attenuation(args):
+    """--self-att-density with --cal-density and --self-att-height-mm: energy-dependent correction
+    (analysis.attenuation.SelfAttenuation); None without --self-att-density."""
+    if getattr(args, "self_att_density", None) is None:
+        return None
+    if args.cal_density is None or args.self_att_height_mm is None:
+        raise ValueError("--self-att-density needs --cal-density and --self-att-height-mm")
+    from ..analysis.attenuation import SelfAttenuation
+    return SelfAttenuation(args.self_att_matrix, args.self_att_density, args.cal_matrix or args.self_att_matrix,
+                           args.cal_density, args.self_att_height_mm, (args.self_att_unc or 0.0) / 100.0)
+
+
 def cmd_activity(args) -> int:
     try:
         spec = _read(args.file)
@@ -104,7 +116,8 @@ def cmd_activity(args) -> int:
             nuclides=nucl, method=args.method, ref_date=eff.parse_date(args.ref_date) if args.ref_date else None,
             quantity=args.mass, quantity_unit=args.unit, quantity_rel_unc=(args.mass_unc or 0.0) / 100.0,
             attenuation=args.attenuation, bkg_mode=args.bkg_mode, mda_method=args.mda,
-            decision=args.decision, reference_peak=_reference_peak(args), tcs=_tcs(args))
+            decision=args.decision, reference_peak=_reference_peak(args), tcs=_tcs(args),
+            self_attenuation=_self_attenuation(args))
         blank = None
         if args.blank:      # the reagent blank, analysed exactly like the sample
             blank = act.compute_activities(_read(args.blank), curve, opt, background=bkg)
@@ -234,5 +247,13 @@ def add_quant_commands(sub) -> None:
                    help="detected: a search peak above the decision threshold (default), or also a window "
                         "result above it (ISO 11929, about 5 %% false detections per line)")
     p.add_argument("--attenuation", type=float, default=1.0, help="self-attenuation correction factor")
+    from ..analysis.attenuation import MATRICES
+    p.add_argument("--self-att-density", type=float,
+                   help="sample density g/cm3: energy-dependent correction to the calibration density (slab model)")
+    p.add_argument("--self-att-matrix", choices=MATRICES, default="water", help="sample matrix (default water)")
+    p.add_argument("--cal-density", type=float, help="density of the calibration source g/cm3")
+    p.add_argument("--cal-matrix", choices=MATRICES, help="calibration matrix (default: the sample's)")
+    p.add_argument("--self-att-height-mm", type=float, help="fill height of sample and calibration source, mm")
+    p.add_argument("--self-att-unc", type=float, default=0.0, help="model uncertainty of the factor, %%")
     p.add_argument("-o", "--out", help="write results .csv or .xlsx")
     p.set_defaults(func=cmd_activity)
