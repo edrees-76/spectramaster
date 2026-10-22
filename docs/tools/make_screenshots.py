@@ -21,6 +21,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 TMP = Path(tempfile.mkdtemp(prefix="sm_manual_"))
 os.environ["SPECTRAMASTER_EFF_DIR"] = str(TMP / "eff")
+os.environ["SPECTRAMASTER_DETECTOR_DIR"] = str(TMP / "detectors")
 
 from PySide6.QtCore import QPoint, QRect, QSettings, QSize, Qt  # noqa: E402
 from PySide6.QtGui import QColor, QImage, QPainter  # noqa: E402
@@ -49,7 +50,23 @@ APTEC_LIB = Path(r"C:\APTEC\APTEC\isotope.lib")
 IMG = ROOT / "docs" / "images"
 
 app = create_app(["manual"])
+import spectramaster.gui.window_buttons as _wb  # noqa: E402
+_wb.fit_to_screen = lambda w: None   # the offscreen screen is 800 x 800: keep the sizes set here
 from spectramaster.gui import i18n  # noqa: E402
+_bidi_path = i18n.bidi_path
+
+
+def _shown_path(path):
+    """The private lab folder and the temporary folder are not shown in the pictures."""
+    text = str(path)
+    if str(REF) in text:
+        return _bidi_path(Path(text).name)
+    return _bidi_path(text.replace(str(TMP), r"%APPDATA%\SpectraMaster"))
+
+
+i18n.bidi_path = _shown_path
+import spectramaster.gui.dialogs as _dialogs  # noqa: E402
+_dialogs.bidi_path = _shown_path
 
 GEOM: dict = {}     # lang -> {name: QRect} for the annotation step
 
@@ -66,6 +83,18 @@ def save(widget, lang: str, name: str) -> Path:
     widget.grab().save(str(out))
     print("  ", out.relative_to(ROOT))
     return out
+
+
+def wait_for(pred, seconds: float = 120.0) -> bool:
+    """Process events until `pred()` is true (background workers of the dialogs)."""
+    import time
+    end = time.monotonic() + seconds
+    while time.monotonic() < end:
+        QApplication.processEvents()
+        if pred():
+            return True
+        time.sleep(0.02)
+    return False
 
 
 def wait_analysis(w) -> None:
@@ -232,6 +261,7 @@ def shoot(lang: str) -> None:
     rp.save_options(st, opts)
     rd = ReportOptionsDialog(st, "pdf", opts, w)
     rd.show()
+    rd.ed_logo.setText(r"D:\Lab\logo.png")                  # not the build folder
     for i, name in enumerate(("report_opt_header", "report_opt_content", "report_opt_plot", "report_opt_page")):
         rd.tabs.setCurrentIndex(i)
         save(rd, lang, name)
@@ -263,6 +293,16 @@ def shoot(lang: str) -> None:
     ed.measure_and_fit()
     pump()
     save(ed, lang, "efficiency")
+    from PySide6.QtWidgets import QTabWidget
+    etabs = ed.findChild(QTabWidget)
+    if etabs is not None and etabs.count() > 1:
+        etabs.setCurrentIndex(1)
+        pump()
+        save(ed, lang, "efficiency_geometry")
+        etabs.setCurrentIndex(etabs.count() - 1)
+        pump()
+        save(ed, lang, "efficiency_validation")
+        etabs.setCurrentIndex(0)
     curve = ed.save_curve(str(TMP / "eff" / "QCY48_Bottle_10cm.json"))
     ed.close()
     w.load_file(CHERN)
@@ -273,12 +313,15 @@ def shoot(lang: str) -> None:
     ad.load_background(str(BKG))
     ad.nuc_edit.setText("Cs-137, Cs-134, I-131, Ru-103, K-40")
     ad.qty_spin.setValue(1.0)
+    ad.sample_box._num["mass_kg"].setText("1.0")           # Bq/kg on a dry basis
+    ad.sample_box.basis_combo.setCurrentIndex(ad.sample_box.basis_combo.findData("dry"))
     res = ad.calculate()
     print("   activity:", None if res is None else len(res.nuclides))
-    ad.resize(1180, 760)
+    ad.resize(1180, 1240)
     save(ad, lang, "activity")
     ad.close()
 
+    shoot_release_b(w, lang, st)
     shoot_aptec(w, lang, st)
     if not (TMP / "archive.sqlite").exists() or not QC_STORE.exists():
         print("   archive / QC data not found: those screenshots are kept as they are")
@@ -333,6 +376,84 @@ def shoot(lang: str) -> None:
     if errors:
         print("   messages:", [e[:120] for e in errors])
     w.close()
+
+
+def shoot_release_b(w, lang: str, st) -> None:
+    """Calibration from a source, drift check, fit inspection, batch analysis, review, detectors."""
+    from spectramaster.gui import calibration_dialog as cd
+    from spectramaster.gui import fit_inspection as fi
+    from spectramaster.gui import session_io as si
+    from spectramaster.gui.detector_picker import DetectorManagerDialog
+    from spectramaster.gui.detector_registry import DetectorRegistry
+    from spectramaster.lab.detector import DetectorProfile
+
+    w.load_file(EU)
+    pump()
+    d = cd.open_calibration_dialog(w, modal=False)
+    d.message = lambda text: print("   cal:", text[:100])
+    d.resize(1100, 760)
+    d.source_edit.setText("Eu-152")
+    d.propose()
+    wait_for(lambda: not d.busy)
+    pump()
+    save(d, lang, "calibration")
+    d.close()
+
+    w.load_file(CHERN)
+    pump()
+    d = cd.open_drift_dialog(w, modal=False)
+    d.message = lambda text: print("   drift:", text[:100])
+    d.resize(980, 640)
+    d.check()
+    wait_for(lambda: not d.busy)
+    pump()
+    save(d, lang, "drift")
+    d.close()
+
+    w.load_file(EU)
+    pump()
+    d = fi.open_fit_inspection(w, show=False)
+    d.message = lambda text: print("   fit:", text[:100])
+    d.resize(1280, 820)
+    d.show()
+    wait_for(lambda: not d.busy)
+    pump()
+    for row in range(d.group_list.count()):              # the Eu-152 doublet 1085.8 / 1089.7 keV
+        if "108" in d.group_list.item(row).text():
+            d.group_list.setCurrentRow(row)
+            break
+    pump(5)
+    save(d, lang, "fit_inspection")
+    d.close()
+
+    b = si.open_batch_analysis(w, show=False)
+    b.resize(1280, 760)
+    b.show()
+    b.add_paths([EU, CHERN, BKG, QCY])
+    b.scan()
+    wait_for(lambda: not b.busy, 60)
+    pump(5)
+    save(b, lang, "batch_analysis")
+    b.close()
+
+    rv = si.ReviewDialog(w, "Edrees F. Hery")
+    rv.show()
+    save(rv, lang, "review")
+    rv.close()
+
+    reg = DetectorRegistry(TMP / "detectors")
+    for name, kind, rel in (("G4 HPGe 40 %", "HPGe", 40.0), ("NaI 3x3", "NaI", None)):
+        if not any(p.name == name for p in reg.list()):
+            reg.save(DetectorProfile(name=name, type=kind, relative_efficiency_pct=rel))
+    dm = DetectorManagerDialog(w, reg)
+    dm.list.setCurrentRow(0)
+    dm.show()
+    save(dm, lang, "detectors")
+    dm.close()
+
+    w.workflow_dock.show()
+    pump()
+    save(w.workflow_dock, lang, "workflow")
 
 
 def shoot_aptec(w, lang: str, st) -> None:

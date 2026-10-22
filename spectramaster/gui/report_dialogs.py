@@ -618,7 +618,7 @@ class ReportBatchDialog(QDialog):
                 continue
             seen.add(key)
             self.files.append(f)
-            it = QListWidgetItem(f"{f.name}    ‎{f.parent}")
+            it = QListWidgetItem(f"{i18n.bidi_path(f.name)}    {i18n.bidi_path(f.parent)}")
             it.setToolTip(str(f))
             self.list.addItem(it)
         self.count_label.setText(tr("batch_files", n=len(self.files)))
