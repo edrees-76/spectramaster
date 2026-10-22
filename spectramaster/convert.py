@@ -46,6 +46,17 @@ def content_note(spectra: Sequence[Spectrum], fmt: Optional[FormatSpec]) -> Opti
     return None
 
 
+CALIBRATION_NOTE = ("the stored energy calibration E = 0 + 1 x channel is the default of an uncalibrated "
+                    "MCA; the spectrum is read without energy calibration (calibrate it first)")
+
+
+def calibration_note(spectra: Sequence[Spectrum]) -> Optional[str]:
+    """The note to show when a stored placeholder calibration was not used, else None."""
+    if any(s.extra.get("energy_calibration") == "placeholder" for s in spectra):
+        return CALIBRATION_NOTE
+    return None
+
+
 # Formats whose files hold fewer energy-calibration coefficients than our model.
 # Writers silently truncate extra terms (a dropped cubic term on an 8k APTEC
 # spectrum is ~6 keV at the top end), so we refit before handing over.

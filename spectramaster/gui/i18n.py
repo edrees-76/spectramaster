@@ -85,6 +85,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "status_saved": "Saved {path}",
         "status_out_fmt": "Output format: {name}",
         "fmt_by_content": "Format recognised from the content ({name}); choose the input format if this is wrong.",
+        "cal_placeholder": "The stored energy calibration (E = channel) is an uncalibrated default; the spectrum was read without energy calibration. Calibrate it first.",
         # format chooser
         "dlg_input_title": "Open Input Files As",
         "dlg_input_prompt": "Input spectrum file format:",
@@ -238,6 +239,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "status_saved": "تم الحفظ: {path}",
         "status_out_fmt": "صيغة الإخراج: {name}",
         "fmt_by_content": "تم التعرّف على الصيغة من محتوى الملف ({name})؛ اختر صيغة الإدخال إن كان ذلك خطأً.",
+        "cal_placeholder": "معايرة الطاقة المخزّنة (الطاقة = رقم القناة) قيمة افتراضية لجهاز لم يُعايَر؛ قُرئ الطيف بلا معايرة طاقة. عايِره أولًا.",
         "dlg_input_title": "فتح ملفات الإدخال بصيغة",
         "dlg_input_prompt": "صيغة ملف الطيف المُدخل:",
         "dlg_output_title": "حفظ باسم — صيغة الإخراج",
