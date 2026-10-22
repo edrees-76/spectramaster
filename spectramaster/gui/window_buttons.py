@@ -29,10 +29,13 @@ def wants_buttons(w) -> bool:
 
 
 def add_buttons(w) -> None:
-    flags = w.windowFlags()
-    new = (flags | BUTTONS | Qt.WindowSystemMenuHint) & ~Qt.WindowContextHelpButtonHint
+    # in plain integers: PySide's ~ of a WindowType keeps only the low 25 bits, so
+    # "& ~Qt.WindowContextHelpButtonHint" also cleared Qt.WindowCloseButtonHint (bit 27) and
+    # Windows showed a disabled close button
+    flags = int(w.windowFlags().value)
+    new = (flags | int(BUTTONS.value) | int(Qt.WindowSystemMenuHint.value)) & ~int(Qt.WindowContextHelpButtonHint.value)
     if new != flags:
-        w.setWindowFlags(new)
+        w.setWindowFlags(Qt.WindowType(new))
 
 
 TITLE_BAR_GUESS = 32           # px above the client area when the frame is not known yet

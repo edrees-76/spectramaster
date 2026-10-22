@@ -158,12 +158,14 @@ def test_dialogs_get_maximize_buttons(qapp):
     assert d.windowFlags() & Qt.WindowMaximizeButtonHint
     assert d.windowFlags() & Qt.WindowMinimizeButtonHint
     assert not d.windowFlags() & Qt.WindowContextHelpButtonHint
+    assert d.windowFlags() & Qt.WindowCloseButtonHint        # was cleared with the help button
     d.close()
     m = QMessageBox()
     m.setText("x")
     m.show()
     QApplication.processEvents()
     assert m.windowFlags() & Qt.WindowMaximizeButtonHint     # every window the program draws
+    assert m.windowFlags() & Qt.WindowCloseButtonHint
     m.close()
 
 
