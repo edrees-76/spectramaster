@@ -1,0 +1,442 @@
+{
+ "C2": {
+  "rows": [
+   {
+    "spectrum": "BGSMALLMARI",
+    "lines": 8,
+    "exists": true,
+    "time_s": 1.78,
+    "order": 2,
+    "widths": 7,
+    "labels": [
+     "Th-232 238.63",
+     "Ra-226 295.22",
+     "Th-232 338.32",
+     "Ra-226 351.93",
+     "Th-232 911.20",
+     "Ra-226 1120.29",
+     "K-40 1460.82"
+    ],
+    "rises": true,
+    "median_rel": 0.02316194911365721,
+    "max_rel": 0.034503565396300506,
+    "pass": true
+   },
+   {
+    "spectrum": "maricsmall",
+    "lines": 17,
+    "exists": true,
+    "time_s": 1.81,
+    "order": 2,
+    "widths": 16,
+    "labels": [
+     "Am-241 59.54",
+     "Cd-109 88.03",
+     "Co-57 122.06",
+     "Co-57 136.47",
+     "Ce-139 165.86",
+     "Hg-203 279.19",
+     "Sn-113 391.70",
+     "Cs-134 563.25",
+     "Cs-134 569.33",
+     "Cs-134 604.72",
+     "Cs-137 661.66",
+     "Cs-134 795.86",
+     "Mn-54 834.85",
+     "Y-88 898.04",
+     "Zn-65 1115.54",
+     "Cs-134 1365.18"
+    ],
+    "rises": true,
+    "median_rel": 0.004277127735648367,
+    "max_rel": 0.0193578916060273,
+    "pass": true
+   },
+   {
+    "spectrum": "maritsmall",
+    "lines": 20,
+    "exists": true,
+    "time_s": 2.15,
+    "order": 2,
+    "widths": 19,
+    "labels": [
+     "Ba-133 81.00",
+     "Eu-152 121.78",
+     "Eu-152 244.70",
+     "Ba-133 276.40",
+     "Ba-133 302.85",
+     "Eu-152 344.28",
+     "Ba-133 356.01",
+     "Ba-133 383.85",
+     "Eu-152 411.12",
+     "Eu-152 443.96",
+     "Eu-152 778.90",
+     "Eu-152 867.38",
+     "Eu-152 964.08",
+     "Eu-152 1085.84",
+     "Eu-152 1112.08",
+     "Co-60 1173.23",
+     "Na-22 1274.54",
+     "Co-60 1332.49",
+     "Eu-152 1408.01"
+    ],
+    "rises": true,
+    "median_rel": 0.004804985688707575,
+    "max_rel": 0.0241027253958519,
+    "pass": true
+   },
+   {
+    "spectrum": "maritsmall60",
+    "lines": 19,
+    "exists": true,
+    "time_s": 1.87,
+    "order": 2,
+    "widths": 18,
+    "labels": [
+     "Ba-133 81.00",
+     "Eu-152 121.78",
+     "Eu-152 244.70",
+     "Ba-133 276.40",
+     "Ba-133 302.85",
+     "Eu-152 344.28",
+     "Ba-133 356.01",
+     "Ba-133 383.85",
+     "Eu-152 411.12",
+     "Eu-152 443.96",
+     "Eu-152 778.90",
+     "Eu-152 964.08",
+     "Eu-152 1085.84",
+     "Eu-152 1112.08",
+     "Co-60 1173.23",
+     "Na-22 1274.54",
+     "Co-60 1332.49",
+     "Eu-152 1408.01"
+    ],
+    "rises": true,
+    "median_rel": 0.009036594931979502,
+    "max_rel": 0.025395050532317942,
+    "pass": true
+   },
+   {
+    "spectrum": "BGBIGPOINT",
+    "lines": 10,
+    "exists": true,
+    "time_s": 1.26,
+    "order": 2,
+    "widths": 8,
+    "labels": [
+     "Th-232 238.63",
+     "Ra-226 295.22",
+     "Th-232 338.32",
+     "Ra-226 351.93",
+     "Th-232 583.19",
+     "Ra-226 609.31",
+     "Ra-226 1120.29",
+     "K-40 1460.82"
+    ],
+    "rises": true,
+    "median_rel": 0.007601615421655716,
+    "max_rel": 0.06921805194492348,
+    "pass": true
+   },
+   {
+    "spectrum": "picbig",
+    "lines": 18,
+    "exists": true,
+    "time_s": 1.88,
+    "order": 2,
+    "widths": 18,
+    "labels": [
+     "Am-241 59.54",
+     "Cd-109 88.03",
+     "Co-57 122.06",
+     "Co-57 136.47",
+     "Ce-139 165.86",
+     "Hg-203 279.19",
+     "Sn-113 391.70",
+     "Cs-134 563.25",
+     "Cs-134 569.33",
+     "Cs-134 604.72",
+     "Cs-137 661.66",
+     "Cs-134 795.86",
+     "Cs-134 801.95",
+     "Mn-54 834.85",
+     "Y-88 898.04",
+     "Zn-65 1115.54",
+     "Cs-134 1365.18",
+     "Y-88 1836.06"
+    ],
+    "rises": true,
+    "median_rel": 0.009683192210785896,
+    "max_rel": 0.03928385306938709,
+    "pass": true
+   },
+   {
+    "spectrum": "PITBIG",
+    "lines": 19,
+    "exists": true,
+    "time_s": 1.8,
+    "order": 2,
+    "widths": 19,
+    "labels": [
+     "Ba-133 81.00",
+     "Eu-152 121.78",
+     "Eu-152 244.70",
+     "Ba-133 276.40",
+     "Ba-133 302.85",
+     "Eu-152 344.28",
+     "Ba-133 356.01",
+     "Ba-133 383.85",
+     "Eu-152 411.12",
+     "Eu-152 443.96",
+     "Eu-152 778.90",
+     "Eu-152 867.38",
+     "Eu-152 964.08",
+     "Eu-152 1085.84",
+     "Eu-152 1112.08",
+     "Co-60 1173.23",
+     "Na-22 1274.54",
+     "Co-60 1332.49",
+     "Eu-152 1408.01"
+    ],
+    "rises": true,
+    "median_rel": 0.008238876758489888,
+    "max_rel": 0.05515329932959867,
+    "pass": true
+   },
+   {
+    "spectrum": "PITBIG60",
+    "lines": 19,
+    "exists": true,
+    "time_s": 1.45,
+    "order": 2,
+    "widths": 18,
+    "labels": [
+     "Ba-133 81.00",
+     "Eu-152 121.78",
+     "Eu-152 244.70",
+     "Ba-133 276.40",
+     "Ba-133 302.85",
+     "Eu-152 344.28",
+     "Ba-133 356.01",
+     "Ba-133 383.85",
+     "Eu-152 411.12",
+     "Eu-152 443.96",
+     "Eu-152 778.90",
+     "Eu-152 867.38",
+     "Eu-152 964.08",
+     "Eu-152 1085.84",
+     "Eu-152 1112.08",
+     "Co-60 1173.23",
+     "Na-22 1274.54",
+     "Co-60 1332.49"
+    ],
+    "rises": true,
+    "median_rel": 0.00804183083678811,
+    "max_rel": 0.02036128359983036,
+    "pass": true
+   },
+   {
+    "spectrum": "mix2neqlong",
+    "lines": 12,
+    "exists": true,
+    "time_s": 3.33,
+    "order": 2,
+    "widths": 11,
+    "labels": [
+     "Th-232 238.63",
+     "Ra-226 295.22",
+     "Th-232 338.32",
+     "Ra-226 351.93",
+     "Th-232 583.19",
+     "Ra-226 609.31",
+     "Th-232 911.20",
+     "Th-232 968.97",
+     "Ra-226 1120.29",
+     "K-40 1460.82",
+     "Ra-226 1764.49"
+    ],
+    "rises": true,
+    "median_rel": 0.011724772766677383,
+    "max_rel": 0.057250925202030234,
+    "pass": true
+   }
+  ],
+  "pass": true
+ },
+ "C3": {
+  "rows": [
+   {
+    "spectrum": "picbig",
+    "energy": 122.06,
+    "scan": 1.65,
+    "calibration": 1.6542534612743036,
+    "diff": 0.004253461274302817
+   },
+   {
+    "spectrum": "picbig",
+    "energy": 661.66,
+    "scan": 2.0,
+    "calibration": 1.9926474631650584,
+    "diff": -0.007352536834942525
+   },
+   {
+    "spectrum": "picbig",
+    "energy": 1115.54,
+    "scan": 2.3,
+    "calibration": 2.2892825301042183,
+    "diff": -0.01071746989578326
+   },
+   {
+    "spectrum": "maricsmall",
+    "energy": 122.06,
+    "scan": 1.1,
+    "calibration": 1.0879525182280014,
+    "diff": -0.01204748177199888
+   },
+   {
+    "spectrum": "maricsmall",
+    "energy": 661.66,
+    "scan": 1.6,
+    "calibration": 1.5925347138309578,
+    "diff": -0.007465286169042962
+   },
+   {
+    "spectrum": "maricsmall",
+    "energy": 1115.54,
+    "scan": 2.0,
+    "calibration": 1.9794715387840855,
+    "diff": -0.02052846121591534
+   },
+   {
+    "spectrum": "PITBIG",
+    "energy": 121.78,
+    "scan": 1.6,
+    "calibration": 1.6366433600781818,
+    "diff": 0.03664336007818103
+   },
+   {
+    "spectrum": "PITBIG",
+    "energy": 344.28,
+    "scan": 1.7,
+    "calibration": 1.7289390297117297,
+    "diff": 0.028939029711728903
+   },
+   {
+    "spectrum": "PITBIG",
+    "energy": 1332.49,
+    "scan": 2.35,
+    "calibration": 2.3651059056132286,
+    "diff": 0.015105905613227222
+   },
+   {
+    "spectrum": "PITBIG60",
+    "energy": 121.78,
+    "scan": 1.3,
+    "calibration": 1.3009200466477506,
+    "diff": 0.000920046647750139
+   },
+   {
+    "spectrum": "PITBIG60",
+    "energy": 344.28,
+    "scan": 1.45,
+    "calibration": 1.4571595689200194,
+    "diff": 0.007159568920018788
+   },
+   {
+    "spectrum": "PITBIG60",
+    "energy": 1332.49,
+    "scan": 2.2,
+    "calibration": 2.1712340827077794,
+    "diff": -0.028765917292221665
+   },
+   {
+    "spectrum": "maritsmall",
+    "energy": 121.78,
+    "scan": 1.1,
+    "calibration": 1.0928872811292873,
+    "diff": -0.007112718870712964
+   },
+   {
+    "spectrum": "maritsmall",
+    "energy": 344.28,
+    "scan": 1.3,
+    "calibration": 1.2981600945299845,
+    "diff": -0.0018399054700160011
+   },
+   {
+    "spectrum": "maritsmall",
+    "energy": 1332.49,
+    "scan": 2.2,
+    "calibration": 2.1691913278836132,
+    "diff": -0.030808672116387825
+   },
+   {
+    "spectrum": "maritsmall60",
+    "energy": 121.78,
+    "scan": 1.1,
+    "calibration": 1.0881715466359325,
+    "diff": -0.011828453364067792
+   },
+   {
+    "spectrum": "maritsmall60",
+    "energy": 344.28,
+    "scan": 1.3,
+    "calibration": 1.2913545940313569,
+    "diff": -0.008645405968643605
+   },
+   {
+    "spectrum": "maritsmall60",
+    "energy": 1332.49,
+    "scan": 2.2,
+    "calibration": 2.0780588520169645,
+    "diff": -0.12194114798303657
+   },
+   {
+    "spectrum": "mix2neqlong",
+    "energy": 351.93,
+    "scan": 1.3,
+    "calibration": 1.2498038745292868,
+    "diff": -0.050196125470713726
+   },
+   {
+    "spectrum": "mix2neqlong",
+    "energy": 609.31,
+    "scan": 1.55,
+    "calibration": 1.486849518959719,
+    "diff": -0.06315048104028165
+   },
+   {
+    "spectrum": "mix2neqlong",
+    "energy": 911.2,
+    "scan": 1.8,
+    "calibration": 1.7457676369970057,
+    "diff": -0.054232363002995276
+   },
+   {
+    "spectrum": "mix2neqlong",
+    "energy": 1120.29,
+    "scan": 2.0,
+    "calibration": 1.9130091453147435,
+    "diff": -0.08699085468525736
+   },
+   {
+    "spectrum": "mix2neqlong",
+    "energy": 1460.82,
+    "scan": 2.4,
+    "calibration": 2.1638486440996396,
+    "diff": -0.23615135590036163
+   },
+   {
+    "spectrum": "mix2neqlong",
+    "energy": 1764.49,
+    "scan": 2.5,
+    "calibration": 2.3652834936674827,
+    "diff": -0.13471650633251908
+   }
+  ],
+  "max_abs_diff_certificate": 0.12194114798303657,
+  "pass": true,
+  "note": "fixed-width chi2 scan, 0.05 keV steps; mix2neqlong reported only"
+ }
+}

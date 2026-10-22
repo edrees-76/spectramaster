@@ -979,6 +979,43 @@ def _width_points(y, f, start, var=None) -> "_Points":
     return out
 
 
+LINE_WIDTH_BOUNDS = (1.0 / 3.0, 3.0)   # free width relative to the width model
+LINE_WIDTH_GROUP_FWHM = 3.0            # search candidates this close are fitted with the line
+LINE_WIDTH_MIN_RATIO = 10.0            # area / u(area) of a measured width
+
+
+def line_widths(spectrum, centroids) -> list[Optional[float]]:
+    """Measured FWHM (channels) of the peaks at `centroids` (channels): a free-width fit of each,
+    centred on the nearest search candidate within one model FWHM (a peak split under too narrow
+    a model is fitted whole), with the other candidates within LINE_WIDTH_GROUP_FWHM (shared width), between
+    LINE_WIDTH_BOUNDS times the width model.  None where the fit fails, ends at a width bound
+    or the area is below LINE_WIDTH_MIN_RATIO times its uncertainty.  The widths are measured,
+    not the model's (docs/baseline/mix_peak_areas_protocol.md)."""
+    y = np.asarray(spectrum.counts, dtype=float)
+    n = len(y)
+    f, _src, start = width_model(spectrum, y)
+    m = _Model(f)
+    m.loglinear = loglinear_continuum(spectrum)
+    allc = sorted(c for c, _ in _candidates(y, f, 3.0, start))
+    out: list[Optional[float]] = []
+    for c in centroids:
+        i = float(c) - spectrum.first_channel
+        fw = m.at(i)
+        near = [o for o in allc if abs(o - i) <= fw]
+        if near:
+            i = min(near, key=lambda o: abs(o - i))
+        group = sorted([i] + [o for o in allc if fw < abs(o - i) <= LINE_WIDTH_GROUP_FWHM * fw])
+        lo, hi = int(max(group[0] - 2.5 * fw, 0)), int(min(group[-1] + 2.5 * fw, n - 1))
+        r = _fit_group(y, m, group, lo, hi, free_width=True, step=True, width_bounds=LINE_WIDTH_BOUNDS)
+        j = group.index(i)
+        if (r is None or r.at_bound or not r.area_unc[j] > 0
+                or r.areas[j] / r.area_unc[j] < LINE_WIDTH_MIN_RATIO):
+            out.append(None)
+        else:
+            out.append(float(r.fwhms[j]))
+    return out
+
+
 SHAPE_MIN_PEAKS = 3            # strong isolated peaks needed to correct the shape of the model
 
 

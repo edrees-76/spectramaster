@@ -388,14 +388,42 @@ def calibrate_from_source(spec: Spectrum, nuclides, order: Optional[int] = None,
     emin = float(P.polyval(spec.first_channel, fit.coeffs))
     emax = float(P.polyval(n_last, fit.coeffs))
     unmatched = [(n, e) for n, e, _ in lines if emin <= e <= emax and e not in matched_e]
-    fw_pairs = [(m.peak.centroid, m.peak.fwhm * abs(float(P.polyval(m.peak.centroid, P.polyder(fit.coeffs)))))
-                for m in matches if m.peak.fwhm > 0]
-    fwhm_fit = None
-    if len(fw_pairs) >= 2:
-        fwhm_fit = fit_fwhm_calibration(fw_pairs, 1 if len(fw_pairs) < 4 else 2,
-                                        labels=[f"{m.nuclide} {m.energy:.2f}" for m in matches if m.peak.fwhm > 0])
+    fwhm_fit = _fwhm_from_lines(spec, matches, fit.coeffs)
     validation = validate_calibration(spec, fit, points, lines, p_order, chi2r, fitted)
     return SourceCalibration(fit, matches, unmatched, peaks, fwhm_fit, method, points, validation)
+
+
+ANNIHILATION_KEV = 511.0
+FWHM_SKIP_KEV = 3.0              # lines this close to 511 keV are Doppler broadened: not used
+FWHM_OUTLIER_REL = 0.10          # a width this far from the fit is removed (one at a time)
+
+
+def _fwhm_from_lines(spec: Spectrum, matches, coeffs) -> Optional[CalibrationFit]:
+    """FWHM calibration from the widths of the matched lines measured with a free width, not
+    the search's width model, which is the spectrum's own guess when it has no calibration
+    (docs/baseline/mix_peak_areas_protocol.md).  The annihilation line is left out; order 2
+    (from 4 widths) only when it rises with energy over the lines, else order 1; the width
+    furthest from the fit is removed while it is more than FWHM_OUTLIER_REL off and more than
+    3 widths remain.  None with fewer than 2 measured widths."""
+    from ..analysis.peaks import line_widths
+    use = [m for m in matches if abs(m.energy - ANNIHILATION_KEV) > FWHM_SKIP_KEV]
+    widths = line_widths(spec, [m.peak.centroid for m in use])
+    pts = [(m.peak.centroid, w * abs(float(P.polyval(m.peak.centroid, P.polyder(coeffs)))),
+            f"{m.nuclide} {m.energy:.2f}") for m, w in zip(use, widths) if w]
+    while len(pts) >= 2:
+        pairs = [(c, v) for c, v, _l in pts]
+        ff = fit_fwhm_calibration(pairs, 1, labels=[l for *_cv, l in pts])
+        if len(pts) >= 4:
+            q = fit_fwhm_calibration(pairs, 2, labels=[l for *_cv, l in pts])
+            ch = np.linspace(min(c for c, _v in pairs), max(c for c, _v in pairs), 200)
+            if np.all(np.diff(P.polyval(ch, q.coeffs)) > 0):
+                ff = q
+        rel = [abs(v / f - 1.0) if f > 0 else math.inf for v, f in zip(ff.values, ff.fitted)]
+        worst = int(np.argmax(rel))
+        if rel[worst] <= FWHM_OUTLIER_REL or len(pts) <= 3:
+            return ff
+        del pts[worst]
+    return None
 
 
 def _engine_search(spec: Spectrum, min_significance: float) -> list[Peak]:

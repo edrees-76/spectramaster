@@ -130,3 +130,42 @@ only the derived numbers are.
 ## Results
 
 (appended after the run)
+
+Run 2026-10-22, engine 1.13.0. The text above the line is unchanged (SHA-256 of the pre-registered
+file 90915e740b682168f5546ba13e8c59fc918671abcc46a3d7b4ac907c49ee8d2c, commit 012f29a). Outputs:
+`docs/baseline/after_MX1/`:
+* `fwhm_calibration_results.json`: MX.C2 per spectrum and the MX.C3 scan. No spectrum data is
+  stored.
+* `iaea2002_results.*`, including S5 (MX.C1, MX.C4).
+* `baseline.*`, `crm_validation_results.*`.
+
+| id | value | limit | result |
+|---|---|---|---|
+| MX.C1 S5 | high-peak χ² 2.41 (53 matches; was 8.88); false hits 0 (was 3); total 2.59 (was 5.79); misses 100, χ² 2.69 | ≤ 3.0; ≤ 1; ≤ 3.0 | PASS |
+| MX.C2 9 FWHM calibrations | all exist, order 2, rise with energy; median \|residual\| 0.4–2.3 %, largest 6.9 % (BGBIGPOINT) | ≤ 3 %; ≤ 10 % | PASS |
+| MX.C3 independent scan | largest \|calibration − scan\| over the 18 certificate-source lines 0.122 keV (maritsmall60 1332 keV; before 0.678) | ≤ 0.15 keV | PASS |
+| MX.C4 IAEA 2002 | largest ratio change from after_CG1 1.8 % (maritsmall60 Na-22); all 7 criteria keep their state (IA.C2, C3, C4.M, C6 pass; C1, C4.P, C5 fail as before) | 2 %; no PASS → FAIL | PASS |
+| MX.C5 benchmark, CRM | benchmark: 1 difference, `meta/engine_version`; CRM: 1 difference, `engine_version` | engine version only | PASS |
+| MX.C6 tests | new `tests/test_source_fwhm_calibration.py` (4) pass; full suite 1413 passed, 69 skipped after one change below | | PASS |
+
+**Changed existing test.** `tests/test_iaea2002_validation.py::test_marinelli_reproduces_the_recorded_ratios`
+now reproduces the after_MX1 record instead of after_CG1. This change moves maritsmall60 Co-60 and
+Na-22 by 1.2 and 1.8 % (MX.C4), as intended. Its check (1e-9) is unchanged.
+
+**Reported.**
+* `mix2neqlong` scan: the calibration is 0.05–0.24 keV below a scan that fits no neighbours (the
+  largest at K-40 1460.8 keV, next to Ac-228 1459.1 keV). It was 0.02–1.15 keV below before.
+* Long-spectrum areas: median (area / 239) / Ar 0.957 (57 strong peaks), 0.948 above 1000 keV.
+* With the F5 correction: IA.C3 1.0, IA.C4.P 0.941, IA.C5 1.60, IA.C1 0.85 (Eu-152 121.8 keV, F3).
+* Run time of `calibrate_from_source`: 1.3–3.3 s per spectrum.
+
+**What ships.**
+* A source calibration (calibration dialog, `calibrate` CLI, `calibrate_from_source`) proposes a
+  FWHM calibration through line widths measured with a free width:
+  * the annihilation line is left out;
+  * outliers are removed;
+  * the curve rises with energy.
+
+  It is no longer the search's guess.
+* The IAEA mix spectrum peak areas now agree with the reference list to χ² 2.4 for the high peaks,
+  with no false hits.
