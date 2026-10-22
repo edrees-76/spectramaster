@@ -50,6 +50,7 @@ EN = {
     "shape_gaussian": "Peak shape: Gaussian (no significant tail on {n} peaks)",
     "shape_tail": "Peak shape: low-energy tail {eta}, slope {tau} sigma ({n} peaks)",
     "shape_err_read": "Cannot read the spectra:\n{msg}",
+    "shape_busy": "Measuring the peak shape ...",
     "shape_err_peaks": "Only {n} strong isolated peak(s) were found; at least {need} are needed. "
                        "Use calibration spectra with strong, well separated peaks.",
     "ed_title": "Detector Profile",
@@ -150,6 +151,7 @@ AR = {
     "shape_gaussian": "شكل القمة: غاوسي (لا ذيل معتبر في {n} قمة)",
     "shape_tail": "شكل القمة: ذيل طاقة منخفضة {eta}، ميل {tau} سيغما ({n} قمة)",
     "shape_err_read": "تعذّرت قراءة الأطياف:\n{msg}",
+    "shape_busy": "جارٍ قياس شكل القمة ...",
     "shape_err_peaks": "وُجدت {n} قمة قوية معزولة فقط، والمطلوب {need} على الأقل. "
                        "استخدم أطياف معايرة فيها قمم قوية ومتباعدة.",
     "ed_title": "ملف تعريف الكاشف",

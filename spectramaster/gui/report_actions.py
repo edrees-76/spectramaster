@@ -27,15 +27,16 @@ class ReportActionsMixin:
         icon = self.style().standardIcon
         self.act_print = QAction(icon(sp.SP_FileDialogDetailedView), "", self)
         self.act_print.setShortcut(QKeySequence.Print)
-        self.act_print.triggered.connect(lambda: self.print_report())
+        self.act_print.triggered.connect(lambda: self.print_report(threaded=True))
         self.act_print_preview = QAction(icon(sp.SP_FileDialogContentsView), "", self)
-        self.act_print_preview.triggered.connect(lambda: self.print_preview())
+        self.act_print_preview.triggered.connect(lambda: self.print_preview(threaded=True))
         self.act_export_pdf = QAction(icon(sp.SP_DialogSaveButton), "", self)
         self.act_export_pdf.setShortcut(QKeySequence("Ctrl+Shift+P"))
-        self.act_export_pdf.triggered.connect(lambda: self.export_report_pdf())
+        self.act_export_pdf.triggered.connect(lambda: self.export_report_pdf(threaded=True))
         self.act_batch_reports = QAction(self)
         self.act_batch_reports.triggered.connect(lambda: self.open_report_batch())
         self._report_batch_dialogs: list = []
+        self._report_resume = None            # (analysis token, command) waiting for the analysis
 
     def report_actions(self) -> list:
         return [self.act_print, self.act_print_preview, self.act_export_pdf, self.act_batch_reports]
@@ -106,15 +107,21 @@ class ReportActionsMixin:
         except Exception:                  # the report is never blocked by the workflow panel
             data.statuses = []
 
-    def ensure_analysis_for_report(self, opts: rp.ReportOptions) -> None:
-        """Peaks / nuclides wanted but not analysed: offer to run the analysis (never blocks)."""
+    def _report_wants_analysis(self, opts: rp.ReportOptions) -> bool:
+        """Peaks / nuclides wanted but not analysed, and the user agrees to analyse first."""
         panel = self.analysis_panel
         if not opts.wants_analysis() or getattr(panel, "analysed", False) or panel.peaks or panel.matches:
-            return
+            return False
         if self._ana_reason is not None or self.current_spectrum() is None:
+            return False
+        return bool(self.ask_yes_no(tr("rep_ask_analyse")))
+
+    def ensure_analysis_for_report(self, opts: rp.ReportOptions) -> None:
+        """Peaks / nuclides wanted but not analysed: offer to run the analysis, synchronously
+        (scripts and tests; the menu commands analyse on a worker thread, see _prepare_report)."""
+        if not self._report_wants_analysis(opts):
             return
-        if not self.ask_yes_no(tr("rep_ask_analyse")):
-            return
+        panel = self.analysis_panel
         spec = self.current_spectrum()
         QApplication.setOverrideCursor(Qt.BusyCursor)
         try:
@@ -128,7 +135,10 @@ class ReportActionsMixin:
         self._ana_token += 1                       # a running background analysis is now stale
         self._on_analysis_done(self._ana_token, peaks, matches, identified)
 
-    def _prepare_report(self, mode: str, opts: Optional[rp.ReportOptions]):
+    def _prepare_report(self, mode: str, opts: Optional[rp.ReportOptions], resume=None):
+        """(options, data), or None when cancelled.  With `resume` (a menu command), an analysis
+        the user asks for runs on the worker thread of Analyze; `resume(opts)` repeats the command
+        when it has finished and None is returned meanwhile."""
         if self.current_spectrum() is None:
             self.show_info(tr("ana_no_spectrum"))
             return None
@@ -136,8 +146,25 @@ class ReportActionsMixin:
             opts = self.ask_report_options(mode)
             if opts is None:
                 return None
-        self.ensure_analysis_for_report(opts)
+        if resume is None:
+            self.ensure_analysis_for_report(opts)
+        elif self._report_wants_analysis(opts):
+            self.run_analysis()
+            if self.analysis_running():
+                self._report_resume = (self._ana_token, lambda: resume(opts))
+                return None
         return opts, self.report_data()
+
+    def _resume_report(self, token: int, ok: bool) -> None:
+        """Called when an analysis ends: repeat the report command that waited for it."""
+        pending, self._report_resume = self._report_resume, None
+        if pending is None:
+            return
+        if pending[0] != token:                   # a newer analysis replaced it
+            self._report_resume = pending if token < pending[0] else None
+            return
+        if ok:
+            pending[1]()
 
     def _new_printer(self, opts: rp.ReportOptions):
         from PySide6.QtPrintSupport import QPrinter
@@ -148,8 +175,8 @@ class ReportActionsMixin:
         return printer
 
     # ------------------------------------------------------------ commands
-    def print_report(self, opts: Optional[rp.ReportOptions] = None) -> int:
-        prep = self._prepare_report("print", opts)
+    def print_report(self, opts: Optional[rp.ReportOptions] = None, threaded: bool = False) -> int:
+        prep = self._prepare_report("print", opts, self.print_report if threaded else None)
         if prep is None:
             return 0
         opts, data = prep
@@ -166,8 +193,9 @@ class ReportActionsMixin:
         self.statusBar().showMessage(tr("rep_status_printed", n=n), 10000)
         return n
 
-    def print_preview(self, opts: Optional[rp.ReportOptions] = None, exec_dialog: bool = True):
-        prep = self._prepare_report("preview", opts)
+    def print_preview(self, opts: Optional[rp.ReportOptions] = None, exec_dialog: bool = True,
+                      threaded: bool = False):
+        prep = self._prepare_report("preview", opts, self.print_preview if threaded else None)
         if prep is None:
             return None
         opts, data = prep
@@ -182,8 +210,9 @@ class ReportActionsMixin:
         return dlg
 
     def export_report_pdf(self, path: Optional[str] = None,
-                          opts: Optional[rp.ReportOptions] = None) -> Optional[Path]:
-        prep = self._prepare_report("pdf", opts)
+                          opts: Optional[rp.ReportOptions] = None, threaded: bool = False) -> Optional[Path]:
+        prep = self._prepare_report("pdf", opts,
+                                    (lambda o: self.export_report_pdf(path, o)) if threaded else None)
         if prep is None:
             return None
         opts, data = prep

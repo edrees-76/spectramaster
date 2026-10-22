@@ -1093,10 +1093,14 @@ class MainWindow(ReportActionsMixin, QMainWindow):
             self._ana_worker.deleteLater()
         self._ana_thread = self._ana_worker = None
         self._update_actions()
+        ended, self._ana_ended = getattr(self, "_ana_ended", None), None
+        if ended is not None:                     # a report command waiting for this analysis
+            self._resume_report(*ended)
 
     def _on_analysis_done(self, token: int, peaks, matches, identified: bool) -> None:
         if token != self._ana_token:
             return
+        self._ana_ended = (token, True)
         self.analysis_panel.set_results(peaks, matches, identified, getattr(self, "_ana_application", None))
         from ..analysis.background import not_poisson_note
         if not_poisson_note(self.current_spectrum()):
@@ -1117,6 +1121,7 @@ class MainWindow(ReportActionsMixin, QMainWindow):
     def _on_analysis_failed(self, token: int, kind: str, msg: str) -> None:
         if token != self._ana_token:
             return
+        self._ana_ended = (token, False)
         self.statusBar().clearMessage()
         if kind == "missing":
             self._ana_reason = msg

@@ -409,3 +409,44 @@ def test_peak_shape_measured_in_the_registry_and_used_by_the_session(window, tmp
     # a detector never measured: Gaussian peaks, not calibrated
     assert ctl.context.choose(other.id)
     assert not shape_calibrated(spec) and "peak_tail_source" not in spec.extra
+
+
+def test_peak_shape_button_measures_on_a_worker_thread(window, tmp_path):
+    import time
+
+    from PySide6.QtWidgets import QApplication
+
+    from spectramaster.gui.detector_picker import DetectorManagerDialog
+    reg = _registry()
+    ge = DetectorProfile(name="Ge-Th", type="HPGe")
+    reg.save(ge)
+    dlg = DetectorManagerDialog(None, reg)
+    dlg.select(ge.id)
+    files = [_tailed_cal_file(tmp_path / "cal", f"c{i}.s0", 961000 + i) for i in range(2)]
+    dlg.ask_spectrum_files = lambda: files
+    asked = []
+    dlg.confirm = lambda title, text: asked.append(text) or True
+    dlg.btn_shape.click()                                   # the button: threaded
+    assert dlg.busy and dlg.busy_label.text() and not dlg.btn_shape.isEnabled()
+    assert dlg.measure_shape_selected(files) is None       # refused while one is running
+    end = time.monotonic() + 60
+    while dlg.busy and time.monotonic() < end:
+        QApplication.processEvents()
+        time.sleep(0.01)
+    assert not dlg.busy and dlg.busy_label.text() == "" and dlg.btn_shape.isEnabled()
+    assert len(asked) == 1 and reg.get(ge.id).peak_shape["eta"] > 0
+    # an unreadable file: the error comes back to the dialog, nothing recorded
+    bad = tmp_path / "bad.xyz"
+    bad.write_text("not a spectrum", encoding="utf-8")
+    other = DetectorProfile(name="Ge-Bad", type="HPGe")
+    reg.save(other)
+    dlg.refresh_list(other.id)
+    errs = []
+    dlg.show_error = errs.append
+    dlg.ask_spectrum_files = lambda: [str(bad)]
+    dlg.btn_shape.click()
+    end = time.monotonic() + 30
+    while dlg.busy and time.monotonic() < end:
+        QApplication.processEvents()
+        time.sleep(0.01)
+    assert errs and "_ReadError" not in errs[0] and reg.get(other.id).peak_shape == {}
