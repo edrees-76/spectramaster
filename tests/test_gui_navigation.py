@@ -163,18 +163,18 @@ def test_dialogs_get_maximize_buttons(qapp):
     m.setText("x")
     m.show()
     QApplication.processEvents()
-    assert not m.windowFlags() & Qt.WindowMaximizeButtonHint
+    assert m.windowFlags() & Qt.WindowMaximizeButtonHint     # every window the program draws
     m.close()
 
 
-def test_every_dialog_class_of_the_program_gets_the_buttons():
+def test_every_dialog_class_of_the_program_gets_the_buttons(qapp):
     """The filter decides by class: every QDialog subclass defined in the GUI qualifies."""
     import importlib
     import inspect
     import pkgutil
 
     import spectramaster.gui as g
-    from spectramaster.gui.window_buttons import KEEP_FRAME
+    from spectramaster.gui.window_buttons import wants_buttons
     found = []
     for m in pkgutil.iter_modules(g.__path__):
         if m.name.startswith("__"):                        # __main__ would start the program
@@ -184,5 +184,5 @@ def test_every_dialog_class_of_the_program_gets_the_buttons():
             if issubclass(cls, QDialog) and cls.__module__ == mod.__name__:
                 found.append(cls)
     assert len(found) >= 20
-    kept = {c.__name__ for c in found if issubclass(c, KEEP_FRAME)}
-    assert kept == {"PreviewFileDialog"}                   # a file picker keeps the standard frame
+    assert "PreviewFileDialog" in {c.__name__ for c in found}        # the open dialog too
+    assert wants_buttons(QDialog()) and wants_buttons(QMessageBox())
