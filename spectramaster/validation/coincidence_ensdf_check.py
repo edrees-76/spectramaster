@@ -285,6 +285,15 @@ def write_md(res: dict, path: Path) -> None:
     path.write_text("\n".join(lines), encoding="utf-8", newline="\n")
 
 
+def out_folder(arg: str) -> Path:
+    """The output folder, which must lie inside the current working directory."""
+    base = Path(os.path.realpath(os.getcwd()))
+    out = Path(os.path.realpath(os.path.join(base, arg)))
+    if os.path.commonpath([base, out]) != str(base):
+        raise ValueError(f"output folder {arg!r} is outside the working directory")
+    return out
+
+
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--raw", default=None)
@@ -295,8 +304,12 @@ def main(argv=None) -> int:
     if not (raw / "decay_rads_g").is_dir():
         print(f"no LiveChart files in {raw}", file=sys.stderr)
         return 2
+    try:
+        out = out_folder(a.out)
+    except ValueError as e:
+        print(e, file=sys.stderr)
+        return 2
     res = run(raw, a.old)
-    out = Path(a.out)
     out.mkdir(parents=True, exist_ok=True)
     (out / "coincidence_check.json").write_text(json.dumps(res, indent=1), encoding="utf-8", newline="\n")
     write_md(res, out / "coincidence_check.md")

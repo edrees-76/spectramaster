@@ -122,3 +122,13 @@ def test_daughter_listed_by_the_parent_is_not_added_again(tmp_path, monkeypatch)
     monkeypatch.setattr(co, "_daughters", lambda: {"Aa-100": [("Bb-100m", 1.0)]})
     (t,) = co.transitions("Aa-100")
     assert t.intensities[t.index(300.0)] == pytest.approx(0.9)            # not 0.9 + 0.9
+
+
+def test_check_writes_only_inside_the_working_directory(tmp_path, monkeypatch):
+    from spectramaster.validation import coincidence_ensdf_check as ck
+    monkeypatch.chdir(tmp_path)
+    assert ck.out_folder("out/sub") == (tmp_path / "out" / "sub").resolve()
+    for bad in ("../elsewhere", str(tmp_path.parent / "x")):
+        with pytest.raises(ValueError, match="outside"):
+            ck.out_folder(bad)
+    assert ck.main(["--raw", str(tmp_path), "--out", "../x"]) == 2      # no LiveChart files: refused first
