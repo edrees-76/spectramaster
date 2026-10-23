@@ -79,7 +79,11 @@ SCHEMA_VERSION = 1
 #   1.14.0 2026-10-22 coincidence table computed from the ENSDF decay schemes (IAEA LiveChart) instead
 #          of SandiaDecay, whose probabilities were wrong for 80 of 191 transitions
 #          (ensdf_coincidence_protocol.md)
-ENGINE_VERSION = "1.14.0"
+#   1.15.0 2026-10-23 round-4 review (round4_activity_protocol.md): ISO 11929 detection limit with the
+#          reference-peak term linear in the activity (blank + reference peak); coincidence summing of a
+#          self-attenuating sample with its own efficiency; best estimate of nuclides not detected in the
+#          concentration table; constant attenuation together with the self-attenuation model refused
+ENGINE_VERSION = "1.15.0"
 
 
 class SessionSchemaError(ValueError):

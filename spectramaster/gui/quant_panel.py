@@ -551,7 +551,8 @@ class ActivityDialog(QDialog):
         par = self.parent()
         ctl = getattr(par, "session_ctl", None) if par is not None else None
         s = ctl.session_for(self.spectrum) if ctl is not None else None
-        if s is not None and s.status.get("peaks_edited") and (s.results or {}).get("peaks"):
+        # an edited list that is empty (every peak removed) is used as it is, not searched again
+        if s is not None and s.status.get("peaks_edited") and isinstance((s.results or {}).get("peaks"), list):
             from dataclasses import fields
             from ..analysis import Peak
             names = {f.name for f in fields(Peak)}

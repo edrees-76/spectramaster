@@ -485,18 +485,19 @@ def currie_limits(sigma0: float, k_alpha: float = K_DEFAULT, k_beta: float = K_D
 
 
 def iso11929_limits(sigma0: float, w: float, w_rel_unc: float, k_alpha: float = K_DEFAULT,
-                    k_beta: float = K_DEFAULT) -> tuple[float, float]:
+                    k_beta: float = K_DEFAULT, lin: float = 0.0) -> tuple[float, float]:
     """(decision threshold y*, detection limit y#) in activity units (simple formulation).
 
-    y# solves y# = y* + k_b sqrt(w y# + w^2 sigma0^2 + y#^2 u_rel^2), i.e. the larger root of
-    (1 - k_b^2 u_rel^2) y#^2 - (2 y* + k_b^2 w) y# + y*^2 - k_b^2 w^2 sigma0^2 = 0
-    (closed form: the fixed-point iteration converges too slowly as k_b u_rel -> 1).
-    No detection limit exists (inf) when k_b u_rel >= 1."""
+    y# solves y# = y* + k_b sqrt((w + lin) y# + w^2 sigma0^2 + y#^2 u_rel^2), i.e. the larger root of
+    (1 - k_b^2 u_rel^2) y#^2 - (2 y* + k_b^2 (w + lin)) y# + y*^2 - k_b^2 w^2 sigma0^2 = 0
+    (closed form: the fixed-point iteration converges too slowly as k_b u_rel -> 1).  ``lin`` (Bq):
+    a variance term linear in y besides the counting one (reference peak with a blank,
+    round4_activity_protocol.md).  No detection limit exists (inf) when k_b u_rel >= 1."""
     ys = k_alpha * w * sigma0
     a = 1.0 - (k_beta * w_rel_unc) ** 2
     if a <= 0:
         return ys, float("inf")
-    b = 2.0 * ys + k_beta ** 2 * w
+    b = 2.0 * ys + k_beta ** 2 * (w + lin)
     c = ys * ys - (k_beta * w * sigma0) ** 2
     disc = max(b * b - 4.0 * a * c, 0.0)
     yd = (b + math.sqrt(disc)) / (2.0 * a)            # the larger root: y# >= y*
@@ -604,11 +605,18 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     if opt.decision not in ("search", "iso11929"):
         raise ValueError(f"unknown decision rule {opt.decision!r} (search | iso11929)")
     check_measurement(spectrum)
+    if opt.self_attenuation is not None:
+        consts = opt.attenuation.values() if isinstance(opt.attenuation, dict) else [opt.attenuation or 1.0]
+        if any(not math.isclose(float(v), 1.0, rel_tol=1e-12) for v in consts):
+            raise ValueError("a constant attenuation factor and the self-attenuation model correct the same "
+                             "effect: give only one of them")
     t_live = float(spectrum.live_time)
     t_real = float(spectrum.real_time or spectrum.live_time)
     ref = opt.ref_date or spectrum.start_time
     notes: list[str] = []
     notes.extend(calibration_checks(curve, opt))
+    if opt.self_attenuation is not None:
+        notes.append(opt.self_attenuation.describe())
     k_b = 0.0
     work = spectrum
     net_var = None          # full-spectrum mode: variance S + k^2 B of the net channels
@@ -680,6 +688,15 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             curve = free
         eps_peak = lambda en: np.clip(curve.efficiency(np.clip(np.asarray(en, dtype=float),     # noqa: E731
                                                                curve.e_min, curve.e_max)), 0.0, 1.0)
+        eps_sample = eps_peak
+        if opt.self_attenuation is not None:
+            sa_vec = np.vectorize(opt.self_attenuation.factor, otypes=[float])
+            # the sample's efficiency (round4_activity_protocol.md, 2); peak-to-total kept
+            # energies clamped to the curve's range like the efficiency itself
+            eps_sample = lambda en: eps_peak(en) / sa_vec(np.clip(np.asarray(en, dtype=float),   # noqa: E731
+                                                                  curve.e_min, curve.e_max))
+            notes.append("true-coincidence summing of the sample computed with its self-attenuated efficiency "
+                         "(peak-to-total of the calibration kept)")
         notes.append(f"true-coincidence summing corrected where the coincidence data describe the line (first "
                      f"order, gamma-gamma, no angular correlation): peak-to-total PT(E) = min(1, {pa:g} "
                      f"(E/1000 keV)^{pb:g}) +- {100 * tcs_u:g} % (assumed), efficiencies of the curve clamped "
@@ -729,7 +746,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                 lr.self_attenuation = float(opt.self_attenuation.factor(e))
             w = ref_k * att * lr.self_attenuation / (eff * inten * t_live * C * D) / b   # Bq (parent) per net count
             if tcs_on:
-                c = coincidence.coi(ln_name, e, eps_peak, tcs_pt, e_min=curve.e_min, intensity=inten)
+                c = coincidence.coi(ln_name, e, eps_sample, tcs_pt, e_min=curve.e_min, intensity=inten)
                 if c.reason:
                     lr.note = (lr.note + "; not corrected for summing: " + c.reason).strip("; ")
                 elif c.found and c.factor <= 0:
@@ -777,6 +794,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                 lr.bkg_peak = bnet[0]
                 var0 += max(bnet[0], 0.0) + bnet[1] ** 2
             blank_counts = 0.0
+            ref_lin = 0.0       # u_ref^2(y) term linear in the net activity y (reference peak with a blank)
             if blank is not None:
                 bl = _blank_line(blank, name, e)
                 if bl is None:
@@ -792,6 +810,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                     ab0 = lr.blank_activity
                     u_ref0 = math.sqrt((ab0 * ref_uc) ** 2 + (ab0 * bl_uc) ** 2 + (ab0 * (ref_ur - bl_ur)) ** 2)
                     var0 += (u_ref0 * fwin / w) ** 2
+                    ref_lin = 2.0 * ab0 * (ref_uc ** 2 + ref_ur * (ref_ur - bl_ur))
             lin_sample, lin_bkg = B * (1.0 + n / (2.0 * m)), 0.0   # linear terms, replaced for a quadratic window
             if bcounts is not None:
                 cb = continuum_under(spectrum, e, fw_ch, counts=bcounts)
@@ -804,11 +823,11 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             w_rel = math.sqrt(lr.eff_rel_unc ** 2 + opt.intensity_rel_unc ** 2 + lr.int_rel_unc ** 2
                               + _att_rel_unc(opt) ** 2 + ref_u ** 2 + lr.coi_rel_unc ** 2)
 
-            def limits(v0, w=w, fwin=fwin, w_rel=w_rel):
+            def limits(v0, w=w, fwin=fwin, w_rel=w_rel, ref_lin=ref_lin):
                 """(L_C counts, L_D counts, decision threshold Bq, detection limit Bq) of variance v0."""
                 sigma0 = math.sqrt(max(v0, 0.0))
                 if opt.mda_method == "iso11929":
-                    ys, yd = iso11929_limits(sigma0, w / fwin, w_rel, opt.k_alpha, opt.k_beta)
+                    ys, yd = iso11929_limits(sigma0, w / fwin, w_rel, opt.k_alpha, opt.k_beta, lin=ref_lin)
                     return ys / w * fwin, yd / w * fwin, ys, yd
                 lc, ld = currie_limits(sigma0, opt.k_alpha, opt.k_beta)
                 return lc, ld, lc * w / fwin, ld * w / fwin
@@ -1345,9 +1364,13 @@ def concentrations(res: "QuantResults", sample, unit: str, quantity_rel_unc: flo
         row["mda"] = r.mda * f / q if r.mda else None
         row["text"] = (f"{row['value']:.4g} +- {row['U']:.2g} (k=2) {label}" if row["value"] is not None
                        else (f"< {row['mda']:.3g} {label} (MDA)" if row["mda"] else "not determined"))
-        if res.options.mda_method == "iso11929" and r.activity is not None and r.u:
-            y = r.activity * f / q
-            uy = math.hypot(r.u * f / q, abs(y) * quantity_rel_unc)
+        # the same primary result as compute_activities: the window result without an activity
+        # (round4_activity_protocol.md, 3)
+        y0, u0 = (r.activity, r.u) if r.activity is not None else (
+            (r.primary, r.primary_u) if r.primary_method == "window" else (None, None))
+        if res.options.mda_method == "iso11929" and y0 is not None and u0:
+            y = y0 * f / q
+            uy = math.hypot(u0 * f / q, abs(y) * quantity_rel_unc)
             be = iso11929_best_estimate(y, uy, res.options.coverage)
             if be is not None:
                 row.update(best=be[0], best_u=be[1], coverage_low=be[2], coverage_high=be[3])

@@ -68,3 +68,29 @@ def test_model_uncertainty_adds_in_quadrature():
     r1 = compute_activities(sp, curve, ActivityOptions(nuclides=["Co-60"], self_attenuation=sa)).nuclides[0]
     assert r1.activity == pytest.approx(r0.activity, rel=1e-12)
     assert r1.u ** 2 == pytest.approx(r0.u ** 2 + (0.05 * r0.activity) ** 2, rel=1e-6)
+
+
+@pytest.mark.parametrize("kw", [{"sample_density": math.inf}, {"calibration_density": math.inf},
+                                {"height_mm": math.inf}, {"sample_density": math.nan}, {"rel_unc": math.nan},
+                                {"rel_unc": math.inf}])
+def test_non_finite_inputs_refused(kw):
+    base = dict(sample_matrix="mineral", sample_density=1.6, calibration_matrix="water",
+                calibration_density=1.0, height_mm=50.0)
+    with pytest.raises(ValueError):
+        A.SelfAttenuation(**{**base, **kw})
+
+
+def test_constant_attenuation_with_the_model_refused_and_model_noted():
+    sp, curve = _spectrum(), pr._flat_curve()
+    for att in (1.15, {"Co-60": 1.2}):
+        with pytest.raises(ValueError, match="only one"):
+            compute_activities(sp, curve, ActivityOptions(nuclides=["Co-60"], attenuation=att, self_attenuation=SA))
+    res = compute_activities(sp, curve, ActivityOptions(nuclides=["Co-60"], attenuation={"Co-60": 1.0},
+                                                        self_attenuation=SA))
+    assert SA.describe() in res.notes
+
+
+def test_round4_activity_criteria():
+    from spectramaster.validation import round4_activity as r4
+    res = r4.run()
+    assert all(v["pass"] for v in r4.criteria(res).values())

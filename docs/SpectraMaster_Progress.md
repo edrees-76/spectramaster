@@ -1060,3 +1060,28 @@ Timed on 8192-channel HPGe spectra before the change (the operations below 0.3 s
   are left out by the existing rule. The expected effect is about 2-3 % on the EC lines and needs
   per-level K-capture fractions and K-shell conversion coefficients that are not in the
   downloaded data. It is worth doing only with a calibration below about 47 keV.
+
+
+## Round-4 external review: activity findings R4-A (2026-10-23)
+
+Reviews: Codex 78, Antigravity 82, Gemini 92 (Gemini reviewed 5945b16, before #67). Each finding was
+checked on the code before any change; findings by batch: R4-A activity (here), R4-B identification,
+R4-C formats, R4-D calibration and manual fit, R4-E interface thread, R4-F validation and documents.
+Refuted: undo does restore the "peaks edited" status (`status_before`). Antigravity cites files that
+do not exist (`gui/aptec_panel.py`, `gui/aptec_spectrum_view.py`, `tools/session_io.py`); its own
+findings were not used.
+
+Protocol `docs/baseline/round4_activity_protocol.md` (committed before the change), results in
+`docs/baseline/after_R4A/`, engine 1.15.0:
+
+- **Detection limit, blank with a reference peak (Codex H1).** The reference-peak variance has a
+  term linear in the net activity, `2 A_b (u_s^2 + u_r (u_r - u_rb)) y`, now in the ISO 11929
+  detection limit. Codex's case: 28.198 -> 31.466 Bq (Codex 31.461).
+- **Summing of a self-attenuating sample (Gemini H3).** Computed with the sample's efficiency
+  `eps / F_sa`; peak-to-total kept.
+- **Concentration table (Gemini H2).** A nuclide not detected has its ISO 11929 best estimate and
+  interval in Bq/kg, Bq/L and Bq/m3, as in Bq.
+- **Without numerical criterion.** Removing every peak of a session is respected (Codex H2); a
+  constant attenuation factor with the self-attenuation model is refused; the model refuses
+  non-finite inputs and is described in the notes.
+- **Kept.** The reagent blank is analysed with the sample's options, self-attenuation included.
