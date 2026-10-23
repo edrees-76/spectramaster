@@ -519,7 +519,11 @@ def test_iso11929_best_estimate_in_results(cal_curve, tmp_path):
     y = cs.activity / 0.5
     assert (row["best"], row["best_u"]) == pytest.approx(act.iso11929_best_estimate(
         y, math.hypot(cs.u / 0.5, 0.01 * y))[:2], rel=1e-12)
-    assert "ISO 11929" in row["best_text"] and "best" not in conc["rows"][1]
+    assert "ISO 11929" in row["best_text"]
+    # a nuclide not detected has the best estimate of its window result (round4_activity_protocol.md, 3)
+    co_row = conc["rows"][1]
+    assert (co_row["best"], co_row["best_u"]) == pytest.approx(act.iso11929_best_estimate(
+        co.primary / 0.5, math.hypot(co.primary_u / 0.5, 0.01 * co.primary / 0.5))[:2], rel=1e-12)
 
 
 def test_iso11929_column_in_table(qapp, cal_curve):

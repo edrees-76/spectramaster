@@ -246,7 +246,7 @@ def add_quant_commands(sub) -> None:
     p.add_argument("--decision", choices=["search", "iso11929"], default="search",
                    help="detected: a search peak above the decision threshold (default), or also a window "
                         "result above it (ISO 11929, about 5 %% false detections per line)")
-    p.add_argument("--attenuation", type=float, default=1.0, help="self-attenuation correction factor")
+    p.add_argument("--attenuation", type=float, default=1.0, help="constant self-attenuation correction factor (not together with --self-att-density)")
     from ..analysis.attenuation import MATRICES
     p.add_argument("--self-att-density", type=float,
                    help="sample density g/cm3: energy-dependent correction to the calibration density (slab model)")

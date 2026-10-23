@@ -170,3 +170,15 @@ def test_blank_changed_during_a_threaded_calculation(window, tmp_path, cal_curve
     assert ad.results.blank.endswith("b1.json")
     assert window.session.blank_ref["path"].endswith("b1.json")
     ad.close()
+
+
+def test_dialog_respects_the_removal_of_every_peak(window, tmp_path, cal_curve):
+    """An edited peak list that is empty is used as it is (round-4 review, Codex H2)."""
+    ad = _dialog(window, tmp_path, cal_curve)
+    s = window.session
+    while s.results["peaks"]:
+        s.remove_peak(0, reason="test: all peaks removed")
+    assert s.status["peaks_edited"] and ad.inputs()["peaks"] == []
+    res = ad.calculate()
+    assert all(r.activity is None for r in res.nuclides)
+    ad.close()

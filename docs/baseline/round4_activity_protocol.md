@@ -67,3 +67,27 @@ from `python -m spectramaster.validation.round4_activity`. Engine version raised
   is not modelled.
 - RA.C1 checks the program against the measurement model it implements and one independent number; it
   is not an audit of every term of ISO 11929.
+
+---
+
+## Results (2026-10-23)
+
+`python -m spectramaster.validation.round4_activity` (engine 1.15.0), output in
+`docs/baseline/after_R4A/`. **7 PASS / 0 FAIL.**
+
+| ID | result | detail |
+|---|---|---|
+| RA.C1 | PASS | y# 28.198 -> 31.4665 Bq (+0.017 % from Codex's 31.461); y* 13.706721 Bq unchanged |
+| RA.C2 | PASS | no blank 0.330165 / 0.695198, no reference peak 1.021354 / 2.059014 Bq |
+| RA.C3 | PASS | Currie 13.706721 / 27.429372 Bq |
+| RA.C4 | PASS | COI 0.956410, 0.958094, 0.993632, 0.991883 |
+| RA.C5 | PASS | summing-out Co-60 1332 keV 0.041906 -> 0.039015, Ba-133 81 keV 0.029109 -> 0.025675, equal to the independent sum (relative < 1e-9) |
+| RA.C6 | PASS | Co-60 not detected: best 0.2962 Bq/kg, 95 % [0.0116, 0.8321], equal to `iso11929_best_estimate` (relative 1e-12); Cs-137 unchanged |
+| RA.C7 | PASS | full test suite 1441 passed, 69 skipped, 0 failed; benchmark 154 PASS / 13 FAIL / 60 REPORT, every value as in `after_CT1` except run times |
+
+Note on "as before": the reference values in the criteria are printed to 6-7 digits, so the harness
+compares to that rounding (relative 1e-6). At full precision the printed values of the harness
+before and after the change are identical in every digit (C1 threshold 13.70672112504547, C2
+0.3301648007063946 / 0.6951983605985783 and 1.0213540011406923 / 2.0590138394020925, C3
+27.42937167849215, C4 0.9564104332800208, 0.958093894653114, 0.9936321659398546,
+0.9918828563428237).

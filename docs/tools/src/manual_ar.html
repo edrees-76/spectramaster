@@ -826,11 +826,13 @@ Aptec: نموذج بفرعين، <bdi>χ²/ν = 0.41</bdi>.</figcaption></figure
       المصدر المعياري: <code>--self-att-matrix</code> و<code>--self-att-density</code> (العينة)، و<code>--cal-matrix</code>
       و<code>--cal-density</code> (المصدر المعياري)، و<code>--self-att-height-mm</code> (ارتفاع العينة)، و<code>--self-att-unc</code>
       (ارتياب النموذج %). والمواد: <code>water</code> (ماء) و<code>organic</code> (راتنجات ومواد عضوية) و<code>mineral</code> (تربة
-      وخرسانة). ويُسجَّل معامل كل خط، ويدخل ارتيابه في الميزانية.</li>
+      وخرسانة). ويُسجَّل معامل كل خط، ويدخل ارتيابه في الميزانية. ومع تصحيح التجميع التزامني يُحسب تجميع العينة بكفاءتها بعد
+      الامتصاص الذاتي.</li>
 </ul>
 <pre>smconvert activity SAMPLE.chn --eff curve.json --self-att-matrix organic --self-att-density 1.6 ^
           --cal-matrix organic --cal-density 1.15 --self-att-height-mm 35</pre>
-<div class="note">نموذج الشريحة تقريب؛ وتختلف المواد حتى 1.5 % تحت 100 keV (المعدنية مقابل العضوية). اختر المادة المطابقة للعينة.</div>
+<div class="note">نموذج الشريحة تقريب؛ وتختلف المواد حتى 1.5 % تحت 100 keV (المعدنية مقابل العضوية). اختر المادة المطابقة للعينة. والمعامل اليدوي والنموذج المعتمد على الطاقة يصححان الأثر نفسه، فيرفض
+البرنامج الجمع بينهما.</div>
 
 <h3 id="q-conc">9.7 معلومات العينة والتراكيز</h3>
 <p>في <b>معلومات العينة</b> اختر <b>نوع العينة</b> (تربة / رواسب، مياه، غذاء، مرشح هواء، أخرى) والوحدة: Bq أو Bq/kg أو Bq/L

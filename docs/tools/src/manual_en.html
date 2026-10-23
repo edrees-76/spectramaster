@@ -924,12 +924,14 @@ first-order coincidence summing factor (COI), computed from coincidence data and
       <code>--self-att-density</code> (sample), <code>--cal-matrix</code> and <code>--cal-density</code> (standard),
       <code>--self-att-height-mm</code> (sample height) and <code>--self-att-unc</code> (model uncertainty, %). Matrices:
       <code>water</code>, <code>organic</code> (resins, organic matter) and <code>mineral</code> (soil, concrete). The factor
-      of every line is recorded, and its uncertainty enters the budget.</li>
+      of every line is recorded, and its uncertainty enters the budget. With true-coincidence summing, the summing
+      of the sample is computed with its self-attenuated efficiency.</li>
 </ul>
 <pre>smconvert activity SAMPLE.chn --eff curve.json --self-att-matrix organic --self-att-density 1.6 ^
           --cal-matrix organic --cal-density 1.15 --self-att-height-mm 35</pre>
 <div class="note">The slab model is an approximation; the matrices differ by up to 1.5 % below 100 keV (mineral against
-organic). Choose the matrix that matches the sample.</div>
+organic). Choose the matrix that matches the sample. The manual factor and the energy-dependent model correct the
+same effect: the program refuses both together.</div>
 
 <h3 id="q-conc">9.7 Sample information and concentrations</h3>
 <p>In <b>Sample information</b>, choose the <b>matrix</b> (soil / sediment, water, food, air filter, other) and the

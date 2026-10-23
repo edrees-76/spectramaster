@@ -153,10 +153,10 @@ class SelfAttenuation:
             if m not in MU_RHO:
                 raise ValueError(f"matrix must be one of {MATRICES}, got {m!r}")
         for n in ("sample_density", "calibration_density", "height_mm"):
-            if not getattr(self, n) > 0:
-                raise ValueError(f"{n} must be positive")
-        if self.rel_unc < 0:
-            raise ValueError("rel_unc must not be negative")
+            if not (math.isfinite(getattr(self, n)) and getattr(self, n) > 0):
+                raise ValueError(f"{n} must be positive and finite")
+        if not (math.isfinite(self.rel_unc) and self.rel_unc >= 0):
+            raise ValueError("rel_unc must be finite and not negative")
 
     def factor(self, energy_kev: float) -> float:
         """Multiplies the activity: T_calibration(E) / T_sample(E)."""
