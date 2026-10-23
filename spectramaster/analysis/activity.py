@@ -607,7 +607,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     check_measurement(spectrum)
     if opt.self_attenuation is not None:
         consts = opt.attenuation.values() if isinstance(opt.attenuation, dict) else [opt.attenuation or 1.0]
-        if any(float(v) != 1.0 for v in consts):
+        if any(not math.isclose(float(v), 1.0, rel_tol=1e-12) for v in consts):
             raise ValueError("a constant attenuation factor and the self-attenuation model correct the same "
                              "effect: give only one of them")
     t_live = float(spectrum.live_time)
