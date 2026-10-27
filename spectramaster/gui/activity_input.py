@@ -33,12 +33,12 @@ def from_bq(bq: float, unit: str) -> float:
     return float(bq) / factor(unit)
 
 
-_NUM_UNIT = re.compile(r"^\s*([-+]?\d*\.?\d+(?:[eE][-+]?\d+)?)\s*([A-Za-zµ]+)?\s*$")
+_NUM_UNIT = re.compile(r"([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)(?:\s*([A-Za-zµ]+))?")
 
 
 def parse_activity(text: str, default_unit: str = "Bq") -> float:
     """Bq of "37000", "37 kBq", "1uCi", "1 µCi" ..."""
-    m = _NUM_UNIT.match(text.replace(",", ""))
+    m = _NUM_UNIT.fullmatch(text.replace(",", "").strip())
     if m is None:
         raise ValueError(f"not an activity: {text!r}")
     return to_bq(float(m.group(1)), m.group(2) or default_unit)
