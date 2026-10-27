@@ -90,7 +90,9 @@ SCHEMA_VERSION = 1
 #          channel contents; EML/Sanderson time channels only with a possible real time
 #   1.18.0 2026-10-27 round-4 review (round4_calibration_protocol.md): source FWHM calibration
 #          positive and not decreasing; manual fit of a net spectrum with its variance
-ENGINE_VERSION = "1.18.0"
+#   1.19.0 2026-10-27 round-4 review (round4_primary_protocol.md): signed primary result of a nuclide
+#          not detected combined like the activity; an unusable key line replaced by a usable line
+ENGINE_VERSION = "1.19.0"
 
 
 class SessionSchemaError(ValueError):

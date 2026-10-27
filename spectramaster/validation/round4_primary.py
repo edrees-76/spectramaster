@@ -64,7 +64,7 @@ def mean_set(det, n: int = N_MEAN) -> dict:
         if use:
             with_usable += 1
             best_ok += r.best_estimate is not None and r.coverage_low is not None
-        if len(use) >= 2:
+        if len(use) >= 2 and r.activity is None:      # the change applies to nuclides without an activity
             multi += 1
             exact += _close(r.primary, _weighted_mean(use, opt))
     return {"n": n, **_zs(z), "multi_line": multi, "exact": exact, "with_usable": with_usable,

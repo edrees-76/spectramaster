@@ -56,3 +56,24 @@ and is left as it is.
   numbers of RH.C1 are reported, not judged).
 - The ISO 11929 best estimate of a nuclide not detected stays a reported quantity; the activity
   column keeps "< MDA".
+
+---
+
+## Results (after_R4H)
+
+Run 2026-10-27, engine 1.19.0. The text above the line is unchanged (SHA-256 of the registered file
+8de437b9cfbda6a5719290398c9f7a7d56c5fffc7f2a11e934e1730fdc3ffa6f, commit 72c060a).
+
+**First run: 1 PASS / 1 FAIL, from an error of the harness.** RH.C1 counted 197/200 exact
+combinations. The 3 others were spectra in which the search found a peak, so Ba-133 had an
+activity and its primary result is that activity. Finding 1 changes only nuclides **without** an
+activity, so the harness was wrong to count them. The harness was corrected to count only
+nuclides without an activity; the limit is unchanged.
+
+**Corrected run: 3 PASS / 0 FAIL** (`after_R4H/round4_primary.md`):
+
+| ID | result | key numbers (before the change) |
+|---|---|---|
+| RH.C1 | PASS | 197/197 nuclide primaries equal the weighted mean of the usable lines (before 0/200, key line only); 6.0 usable lines per spectrum; z mean 0.091, \|z\| <= 2 0.985 (before 0.092, 0.975); best estimate 200/200. NaI (reported): mean z -0.213, 0.995; 199 window, 1 fit (before 197 window, 1 interfered, 1 curved, 1 fit; best estimate 198/200) |
+| RH.C2 | PASS | 99/99 spectra with the 604.7 keV key line interfered take the 795.9 keV window result, with a best estimate (before: 99 "interfered", no best estimate); z mean -0.117, \|z\| <= 2 0.970 |
+| RH.C3 | PASS | `validation.primary` (versions 1-3): every result line identical to the run before the change (25 lines with PASS and 9 with FAIL, as before); benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state, only run times differ (`after_R4H/baseline.md`); full suite 1470 passed, 69 skipped; no existing test had to be changed |

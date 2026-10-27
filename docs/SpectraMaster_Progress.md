@@ -1215,3 +1215,26 @@ Protocol `docs/baseline/round4_validation_protocol.md` (registered before the ru
 - **Round-3 record.** The section above lists PRs #36-#67.
 - No change to the analysis engine or the coincidence table (engine 1.18.0).
 - **Result: 2 PASS / 2 FAIL as registered.** The downward rows are unchanged. Upward and two-way rows: 13 outside the limit, from ENSDF levels whose intensity balance does not close (Ac-228 968.3 and 938.6 keV levels, Co-57 14.4 keV). Effect on the correction: at most about 1.4 % on the weak Ac-228 270/328 keV lines in a close geometry. Left for its own protocol.
+
+## Round-4 external review: primary result of nuclides not detected, Gemini H2 (2026-10-27)
+
+Protocol `docs/baseline/round4_primary_protocol.md` (registered before the change); engine 1.19.0.
+
+- **Part 1** (`concentrations()` without the ISO 11929 best estimate) was fixed in R4-A.
+- **Part 2, confirmed.** For a nuclide without an activity, the signed primary result came from the
+  key line only, so with "weighted mean of lines" the other lines were ignored. A flagged key line
+  (interfered or curved) left the nuclide without a best estimate even when another line had a
+  usable window result. It is now combined like the activity: the key line, or the weighted mean of
+  the usable lines. A flagged key line is replaced by the usable line with the smallest MDA, named in
+  the nuclide's note. The activity, the decision, the decision threshold and the MDA are unchanged.
+- **Part 3, not confirmed.** `_quad_result()` subtracts a background **peak area** or the background
+  spectrum's own window, never a linear sample continuum. The unit detail found (a full peak area
+  against a window holding 99.7 % of a peak) is at most 0.3 % of the background term and is left as
+  it is.
+- **Result:** first run 1 PASS / 1 FAIL from a harness error (RH.C1 also counted 3 nuclides that had
+  an activity); corrected run 3 PASS / 0 FAIL (`after_R4H`). Ba-133, weighted mean: 197/197
+  combinations exact, mean z 0.091, coverage 0.985. Cs-134 with the key line interfered: 99/99 now
+  from the 795.9 keV line, mean z -0.117, coverage 0.970 (before: 99 "interfered", no best estimate).
+  The signed-primary harness and the benchmark are unchanged.
+- Manuals AR/EN: the primary result row says how lines are combined.
+
