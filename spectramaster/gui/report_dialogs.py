@@ -517,6 +517,7 @@ class ReportBatchDialog(QDialog):
         self._thread: Optional[QThread] = None
         self._worker: Optional[ReportBatchWorker] = None
         self.files: list[Path] = []
+        self.scanning = False
         lay = QVBoxLayout(self)
 
         brow = QHBoxLayout()
@@ -622,7 +623,7 @@ class ReportBatchDialog(QDialog):
             it.setToolTip(str(f))
             self.list.addItem(it)
         self.count_label.setText(tr("batch_files", n=len(self.files)))
-        self.start_btn.setEnabled(bool(self.files) and not self.is_running())
+        self.start_btn.setEnabled(bool(self.files) and not self.is_running() and not self.scanning)
         self.progress.setRange(0, max(1, len(self.files)))
         self.progress.setValue(0)
 
@@ -633,10 +634,38 @@ class ReportBatchDialog(QDialog):
             self.add_files([Path(p) for p in paths])
 
     def _add_folder(self) -> None:
-        from .dialogs import scan_spectrum_files
         d = QFileDialog.getExistingDirectory(self, tr("fd_choose_folder"), self.settings.folder("folder_in"))
         if d:
-            self.add_files(scan_spectrum_files(Path(d), True))
+            self.add_folder(Path(d))
+
+    def add_folder(self, folder: Path) -> bool:
+        """Add the spectrum files of `folder`, searched on a worker thread (the add buttons and
+        Start wait meanwhile)."""
+        from .dialogs import scan_spectrum_files
+        from .worker import start_call
+        if self.scanning:
+            return False
+        self.scanning = True
+        for b in (self.add_btn, self.add_dir_btn, self.clear_btn, self.start_btn):
+            b.setEnabled(False)
+        self.count_label.setText(tr("scan_folder_running"))
+        start_call(self, lambda: scan_spectrum_files(Path(folder), True), self._folder_scanned,
+                   self._folder_scan_failed)
+        return True
+
+    def _scan_finished(self) -> None:
+        self.scanning = False
+        for b in (self.add_btn, self.add_dir_btn, self.clear_btn):
+            b.setEnabled(True)
+
+    def _folder_scanned(self, files) -> None:
+        self._scan_finished()
+        self.add_files(files)
+
+    def _folder_scan_failed(self, msg: str) -> None:
+        self._scan_finished()
+        self.add_files([])
+        QMessageBox.warning(self, tr("err_title"), msg)
 
     def _browse_out(self) -> None:
         d = QFileDialog.getExistingDirectory(self, tr("fd_choose_folder"),

@@ -281,9 +281,19 @@ class BatchAnalysisDialog(QDialog):
         if folder:
             self.add_folder(folder)
 
-    def add_folder(self, folder, recursive: bool = True) -> None:
+    def add_folder(self, folder, recursive: bool = True) -> bool:
+        """Add the spectrum files of `folder`, searched on a worker thread."""
         from .dialogs import scan_spectrum_files
-        self.add_paths(scan_spectrum_files(Path(folder), recursive))
+        if self.busy:
+            return False
+        self._set_busy(True, i18n.tr("scan_folder_running"))
+        start_call(self, lambda: scan_spectrum_files(Path(folder), recursive), self._on_folder_scanned,
+                   self._on_scan_failed)
+        return True
+
+    def _on_folder_scanned(self, paths) -> None:
+        self._set_busy(False)
+        self.add_paths(paths)
 
     def add_paths(self, paths) -> None:
         known = set(self.paths)

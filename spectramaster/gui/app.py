@@ -27,7 +27,7 @@ from ..model import Spectrum
 from . import analysis_panel as ana
 from . import i18n
 from .analysis_panel import AnalysisPanel, export_results, peak_info_text
-from .dialogs import AboutDialog, BatchDialog, FormatDialog, scan_spectrum_files
+from .dialogs import AboutDialog, BatchDialog, FormatDialog, expand_spectrum_paths
 from .i18n import tr
 from .icon import app_icon
 from .info_panel import InfoPanel
@@ -1179,14 +1179,22 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         if len(items) == 1:
             self.load_file(items[0])
             return
-        files: list[Path] = []
-        for p in items:
-            if p.is_dir():
-                files.extend(scan_spectrum_files(p, True))
-            elif p.is_file():
-                files.append(p)
+        if any(p.is_dir() for p in items):          # folders are searched on a worker thread
+            from .worker import start_call
+            self.statusBar().showMessage(tr("scan_folder_running"))
+            start_call(self, lambda: expand_spectrum_paths(items), self._dropped_files_found,
+                       self._dropped_scan_failed)
+            return
+        self._dropped_files_found(expand_spectrum_paths(items))
+
+    def _dropped_files_found(self, files) -> None:
+        self.statusBar().clearMessage()
         if files:
             self.open_batch(files)
+
+    def _dropped_scan_failed(self, msg: str) -> None:
+        self.statusBar().clearMessage()
+        self.show_error(msg)
 
     def dragEnterEvent(self, ev):
         if SpectrumPlot.local_paths(ev.mimeData()):
