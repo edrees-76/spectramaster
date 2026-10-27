@@ -179,9 +179,10 @@ def criteria(res: dict, before: dict) -> dict:
                       f"peaks {c1['finite']}; note {c1['note_nan']!r}")
     c2, b2 = res["C2"], before["C2"]
     g = c2["gemini"]
-    ok = (g["counts_0_4"] == [100, 500, 10, 20] and g["live_time"] == 100.0 and g["real_time"] == 100.0
+    ok = (g["counts_0_4"] == [100, 500, 10, 20] and math.isclose(g["live_time"], 100.0)
+          and math.isclose(g["real_time"], 100.0)
           and not g["time_channels"] and "channel 1" in g["note"])
-    ok = ok and c2["own_writer"] == b2["own_writer"] and c2["own_writer"]["real_time"] == 1100.0
+    ok = ok and c2["own_writer"] == b2["own_writer"] and math.isclose(c2["own_writer"]["real_time"], 1100.0)
     ok = ok and c2["eml"] == b2["eml"] and len(c2["eml"]) > 0
     c["RC.C2"] = (ok, f"Gemini's case {g} (before {b2['gemini']}); own IAEA .dat writer {c2['own_writer']}; "
                       f"{len(c2['eml'])} EML/Sanderson files {'identical' if c2['eml'] == b2['eml'] else 'CHANGED'}, "
@@ -196,8 +197,7 @@ def criteria(res: dict, before: dict) -> dict:
     st = c4["specutils_txt as .txt"]
     tk = c4["tka as .xyz"]
     a1 = c4["ascii1 starting with zeros as .xyz"]
-    ok = (isinstance(st["read"], list) and st["read"][0] == "specutils_txt" and st["read"][3:] == [100.0, 110.0]
-          and st["read"][2] == 15345.0)
+    ok = (isinstance(st["read"], list) and st["read"][0] == "specutils_txt" and all(map(math.isclose, st["read"][2:], [15345.0, 100.0, 110.0])))
     ok = ok and tk["how"] == "ambiguous" and set(tk["candidates"]) == {"tka", "ascii1"}
     ok = ok and a1 == b4["ascii1 starting with zeros as .xyz"]
     ra = {r["file"]: r for r in c4["any_extension"]["rows"]}
@@ -221,11 +221,12 @@ def criteria(res: dict, before: dict) -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--collect", default=None, help="write the raw observations to this file and stop")
+    ap.add_argument("--collect", action="store_true",
+                    help=f"write the raw observations to {BEFORE_JSON.name} (before the change) and stop")
     a = ap.parse_args(argv)
     res = collect()
     if a.collect:
-        Path(a.collect).write_text(json.dumps(res, indent=1, default=str), encoding="utf-8", newline="\n")
+        BEFORE_JSON.write_text(json.dumps(res, indent=1, default=str), encoding="utf-8", newline="\n")
         return 0
     before = json.loads(BEFORE_JSON.read_text(encoding="utf-8"))
     res["criteria"] = criteria(res, before)
@@ -241,7 +242,7 @@ def main(argv=None) -> int:
     lines += [f"| {k} | {'PASS' if v['pass'] else 'FAIL'} | {v['detail']} |" for k, v in res["criteria"].items()]
     (OUT / "round4_formats.md").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     print(json.dumps(res["summary"]))
-    return 0
+    return 1 if res["summary"]["fail"] else 0
 
 
 if __name__ == "__main__":

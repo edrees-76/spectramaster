@@ -54,6 +54,7 @@ Code 17 ``eml_sanderson``  EML / C.G. Sanderson PC test spectra *.dat  read-only
 """
 from __future__ import annotations
 
+import math
 import re
 import struct
 from datetime import datetime, timedelta
@@ -241,7 +242,7 @@ def read_sanderson(path: Path) -> list[Spectrum]:
         c = s.counts
         if c and c[0] == s.live_time:
             rt = float(c[1]) if len(c) > 1 else float("nan")
-            if rt == 0.0 or s.live_time <= rt <= 2.0 * s.live_time:
+            if math.isclose(rt, 0.0, abs_tol=1e-9) or s.live_time <= rt <= 2.0 * s.live_time:
                 s.real_time = max(rt, s.live_time)
                 c[0:2] = [0, 0]
                 s.extra["time_channels"] = True
