@@ -6,12 +6,12 @@ path sums (docs/baseline/ensdf_coincidence_protocol.md).  Besides P(j | i) down 
 upward P(i | j) = I_i P(j | i) / I_j and the two-way probability the correction uses
 (``Transition.coincident``) are compared (docs/baseline/round4_validation_protocol.md).
 
-    python -m spectramaster.validation.coincidence_ensdf_check [--raw DIR] [--old OLD_TABLE] [--out DIR]
+    python -m spectramaster.validation.coincidence_ensdf_check [--raw DIR] [--old OLD_TABLE] [--r4f]
 
 ``DIR`` of the LiveChart files: ``SPECTRAMASTER_LIVECHART_DIR`` or
 D:/SpectraMaster_public_data/livechart/raw (kept outside the repository).  Writes
-``coincidence_check.json`` and ``coincidence_check.md`` to OUT (docs/baseline/after_CT1 unless
-``--out`` is given); no ENSDF data is copied.
+``coincidence_check.json`` and ``coincidence_check.md`` to OUT (docs/baseline/after_CT1, or
+docs/baseline/after_R4F with ``--r4f``; fixed folders of the repository); no ENSDF data is copied.
 """
 from __future__ import annotations
 
@@ -47,6 +47,7 @@ LEVEL_TOL = 0.6
 LONG_LIVED_S = 1.0e-6
 GROUP_KEV = 0.06
 OUT = Path(__file__).resolve().parents[2] / "docs" / "baseline" / "after_CT1"
+OUT_R4F = OUT.parent / "after_R4F"
 
 
 def raw_folder(arg=None) -> Path:
@@ -348,14 +349,14 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--raw", default=None)
     ap.add_argument("--old", default=None, help="previous coincidence table, for the coverage comparison")
-    ap.add_argument("--out", default=None, help=f"output folder (default {OUT})")
+    ap.add_argument("--r4f", action="store_true", help=f"write to {OUT_R4F} instead of {OUT}")
     a = ap.parse_args(argv)
     raw = raw_folder(a.raw)
     if not (raw / "decay_rads_g").is_dir():
         print(f"no LiveChart files in {raw}", file=sys.stderr)
         return 2
     res = run(raw, a.old)
-    out = Path(a.out) if a.out else OUT
+    out = OUT_R4F if a.r4f else OUT
     out.mkdir(parents=True, exist_ok=True)
     (out / "coincidence_check.json").write_text(json.dumps(res, indent=1), encoding="utf-8", newline="\n")
     write_md(res, out / "coincidence_check.md")

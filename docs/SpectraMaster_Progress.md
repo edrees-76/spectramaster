@@ -1208,7 +1208,7 @@ Protocol `docs/baseline/round4_validation_protocol.md` (registered before the ru
 - **Monte Carlo check of the coincidence table, both directions (Codex).** The check compared only
   P(j | i) down the cascade. It now also compares the upward P(i | j) = I_i P(j | i) / I_j and the
   two-way probability `Transition.coincident` that the correction uses
-  (`coincidence_ensdf_check --out`). Results are in `docs/baseline/after_R4F/`.
+  (`coincidence_ensdf_check --r4f`). Results are in `docs/baseline/after_R4F/`.
 - **Wording of the coincidence protocol (Gemini).** A dated correction is appended to
   `ensdf_coincidence_protocol.md`. "Every transition checked" meant only the 18 nuclides of the Monte
   Carlo.

@@ -113,3 +113,8 @@ on the key lines 911.2 and 969.0 keV.
 intensities or the level balance, is a question about ENSDF data. A rule for imbalanced levels (for
 example, capping the two-way probability at 1, or taking the upward term from the level balance)
 needs its own protocol.
+
+**Deviation after the run (implementation, no effect on results).** SonarCloud rated the `--out DIR`
+argument of the protocol as a path-traversal risk (S8707), as in R4-C. It was replaced by `--r4f`,
+which writes to the fixed folder `docs/baseline/after_R4F`. The outputs are unchanged; the command
+is `python -m spectramaster.validation.coincidence_ensdf_check --r4f`.
