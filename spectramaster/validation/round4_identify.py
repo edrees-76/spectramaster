@@ -300,10 +300,9 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--data", default=None)
     ap.add_argument("--skip-crm", action="store_true")
-    ap.add_argument("--out", default=str(OUT))
     a = ap.parse_args(argv)
     res = run(a.data, a.skip_crm)
-    out = Path(a.out)
+    out = OUT              # fixed output folder: the results belong to the protocol
     out.mkdir(parents=True, exist_ok=True)
     if BEFORE_JSON.exists():
         res["criteria"] = criteria(res, json.loads(BEFORE_JSON.read_text(encoding="utf-8")))
