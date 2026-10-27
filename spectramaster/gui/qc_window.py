@@ -68,12 +68,14 @@ def parse_lines(text: str) -> list[qc.MonitoredLine]:
 
 
 def _parse_activity(text: str) -> dict[str, float]:
+    """{nuclide: Bq} of "Cs-137=37000, Co-60=1 uCi": a unit after the number is optional (Bq)."""
+    from .activity_input import parse_activity
     out = {}
     for part in re.split(r"[,;\n]+", text):
         if "=" in part:
             k, v = part.split("=", 1)
             if k.strip() and v.strip():
-                out[k.strip()] = float(v)
+                out[k.strip()] = parse_activity(v)
     return out
 
 

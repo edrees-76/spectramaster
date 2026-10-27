@@ -1238,3 +1238,23 @@ Protocol `docs/baseline/round4_primary_protocol.md` (registered before the chang
   The signed-primary harness and the benchmark are unchanged.
 - Manuals AR/EN: the primary result row says how lines are combined.
 
+## Detector acceptance test, chi-square counting test and activity units (2026-10-27)
+
+Protocols `docs/baseline/detector_acceptance_protocol.md` and
+`detector_acceptance_amendment_protocol.md` (both registered before the change); engine 1.20.0.
+
+- **Acceptance test** (`analysis/detector_test.py`, Tools > Detector Acceptance Test...): FWHM, FWTM
+  and FWTM/FWHM of the Co-60 1332.5 keV peak (and of Co-57 122 keV when a spectrum is given),
+  peak-to-Compton (1040-1096 keV), and the relative efficiency against the 3x3 inch NaI value 1.2e-3
+  at 25 cm, with decay correction and its uncertainty. The standard geometry is stated, not checked.
+- **Chi-square counting test** (Tools > Chi-Square Counting Test...): chi^2 of repeated counts with the
+  5 % and 95 % points (TECDOC-1599).
+- **Result:** first run 5 PASS / 2 FAIL (`after_DA1`: FWTM +5.7 % by linear interpolation at 3.6
+  channels per FWHM). Amendment 1 measures the crossings by a parabola through the logarithms of three
+  channels: 7 PASS / 0 FAIL and DA.C8 PASS (`after_DA2`). Full suite 1479 passed, 69 skipped, 1 failed on the first run: the dialogs' attribute `result` hid `QDialog.result()` (`tests/test_widget_attribute_shadowing.py`); renamed `outcome`, that test and the dialog tests then passed (1480 passed in all); benchmark 154 PASS /
+  13 FAIL unchanged.
+- **Activity units.** Source activities can be entered and shown in Bq, kBq, MBq, GBq, TBq, Ci, mCi,
+  µCi, nCi or pCi (acceptance dialog, efficiency certificate table, QC reference activity, e.g.
+  `Cs-137=1 µCi`). Values are kept in Bq; the conversion factors are those of the decay calculator.
+- Manuals AR/EN: sections 12.5 and 12.6, the Tools table, the certificate unit and the QC unit hint.
+- Limitations: synthetic spectra only; no laboratory Co-60 spectrum at 25 cm with a known activity.

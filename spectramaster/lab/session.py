@@ -92,7 +92,9 @@ SCHEMA_VERSION = 1
 #          positive and not decreasing; manual fit of a net spectrum with its variance
 #   1.19.0 2026-10-27 round-4 review (round4_primary_protocol.md): signed primary result of a nuclide
 #          not detected combined like the activity; an unusable key line replaced by a usable line
-ENGINE_VERSION = "1.19.0"
+#   1.20.0 2026-10-27 detector acceptance test (FWHM, FWTM, peak-to-Compton, relative efficiency) and
+#          chi-square counting test (detector_acceptance_protocol.md and its amendment)
+ENGINE_VERSION = "1.20.0"
 
 
 class SessionSchemaError(ValueError):

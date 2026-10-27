@@ -153,7 +153,7 @@ a calibration spectrum (Eu-152, Aptec S0) on a logarithmic scale.</figcaption></
   <tr><td>View</td><td>Preferences, Color, QA bar, split display, scales, marker and window movement, ROI stepping,
       spectrum and ROI drawing options, <i>More View Options</i> (zoom, Go to, overlays, panels), language
       (section <a href="#aptec-view">7.6</a>).</td></tr>
-  <tr><td>Tools</td><td>Detector QC (chapter <a href="#ch-qc">12</a>).</td></tr>
+  <tr><td>Tools</td><td>Detector QC, acceptance test, chi-square counting test (chapter <a href="#ch-qc">12</a>).</td></tr>
   <tr><td>Help</td><td>User Manual (Arabic / English, <kbd>F1</kbd>), Mouse &amp; Keyboard Shortcuts,
       GammaVision / MAESTRO Integration, splash-screen option, About SpectraMaster (version, analysis engine
       version, designer, data sources and the full list of formats).</td></tr>
@@ -785,8 +785,9 @@ validated by the laboratory.</div>
 <p><span class="menu">Setup › Advanced Calibration Tools › Efficiency Calibration…</span> works in four tabs.</p>
 <ol class="steps">
   <li><b>1. Certificate.</b> Open the standard spectrum (here <code>QCY48CAL.S0</code>, 10 ml bottle at 10 cm, HPGe)
-      or <b>Use displayed spectrum</b>; optionally a <b>background spectrum</b>. One row per nuclide: activity (Bq),
-      uncertainty %, reference date, half-life (s) and optionally the lines <code>keV:yield%</code> (empty = library
+      or <b>Use displayed spectrum</b>; optionally a <b>background spectrum</b>. One row per nuclide: activity (in the
+      <b>Activity unit</b> chosen above the table: Bq, kBq, MBq, GBq, TBq, Ci, mCi, µCi, nCi or pCi; changing it
+      converts the column, and the calibration always uses Bq), uncertainty %, reference date, half-life (s) and optionally the lines <code>keV:yield%</code> (empty = library
       values). Fill it from the <b>Aptec records</b> (the source records stored in Aptec <code>.S0</code> files), a
       <b>Preset</b> (QCY48, QCRB1241, Eu-152 point source), <b>Import CSV…</b> or by typing. A <b>common standard
       uncertainty</b> shared by all nuclides (e.g. gravimetric preparation) can be given once.</li>
@@ -1112,7 +1113,8 @@ tolerance lines, violations labelled.</figcaption></figure>
   <li><b>monitored lines</b> — from a preset (Cs-137, Co-60, Cs-137 + Co-60, Eu-152, Ba-133, Am-241, Na-22,
       Background) or typed as <code>keV[:nuclide[:FWHM max]]</code>, e.g.
       <code>661.657:Cs-137, 1332.492:Co-60:2.0</code>;</li>
-  <li>reference date and reference activity (for decay correction), peak match tolerance;</li>
+  <li>reference date and reference activity (for decay correction; a unit may follow the number, e.g.
+      <code>Cs-137=1 µCi</code>, Bq when none), peak match tolerance;</li>
   <li><b>centroid energy from</b> each file's calibration, or a <b>fixed reference calibration</b> — the
       latter shows real gain drift even when each spectrum was recalibrated;</li>
   <li>background window, <b>baseline</b> (first N points or a period), the <b>Westgard rules</b> to apply and
@@ -1152,6 +1154,33 @@ gives N, mean, SD, CV % and the trend per year for each line and quantity.</p>
 violations, and <b>PDF Report…</b> a complete QC report (track settings, summary, charts, statistics,
 measurements, violations and a signature line) in the interface language. Tracks are stored as JSON files in
 <code>%APPDATA%\SpectraMaster\qc\</code>.</p>
+
+<h3 id="qc-accept">12.5 Detector acceptance test (Co-60)</h3>
+<p><span class="menu">Tools › Detector Acceptance Test…</span> uses the displayed spectrum of a Co-60 point source
+at 25 cm on the detector axis (IEEE Std 325, the test of the detector's data sheet):</p>
+<table>
+  <tr><th>Result</th><th>How it is obtained</th></tr>
+  <tr><td>FWHM, FWTM and FWTM / FWHM at 1332.5 keV</td><td>Net counts of a ±3 FWHM region (straight background
+      between its end points); half and tenth maximum located by a parabola through the logarithms of three
+      channels, exact for a Gaussian peak. A Gaussian gives FWTM / FWHM = 1.82; a larger value shows a tail.
+      With a Co-57 spectrum the same is given at 122.1 keV.</td></tr>
+  <tr><td>Peak-to-Compton ratio</td><td>The highest channel of the 1332.5 keV peak divided by the mean counts per
+      channel between 1040 and 1096 keV.</td></tr>
+  <tr><td>Relative efficiency</td><td>With the source activity (any unit of the list, Bq to TBq or Ci to pCi;
+      the activity at the start is shown in Bq and in that unit), its uncertainty and reference date: net area /
+      (live time × activity at the start × 0.9998), divided by 1.2×10<sup>−3</sup> (a 3×3 inch NaI detector in
+      the same geometry), in percent. No coincidence-summing correction, as in the standard test.</td></tr>
+</table>
+<p>The widths need at least 3 channels in the FWHM (a note is shown otherwise). <b>Copy</b> puts the table on
+the clipboard.</p>
+
+<h3 id="qc-chi2">12.6 Chi-square counting test</h3>
+<p><span class="menu">Tools › Chi-Square Counting Test…</span> checks that repeated counts of the same source
+scatter as Poisson statistics predict (IAEA-TECDOC-1599). Type or paste the counts, one per line (10 or 20).
+χ² = Σ(x − x̄)² / x̄ is accepted between the 5 % and 95 % points of the chi-square distribution with n − 1
+degrees of freedom: 3.325 – 16.919 for 10 counts, 10.117 – 30.144 for 20. A value above the range shows extra
+scatter (unstable electronics, high voltage, source position); a value below it shows too little scatter
+(for example counts that are not independent).</p>
 
 <!-- ================================================================== 13 -->
 <h2 id="ch-faq">13. Troubleshooting and FAQ</h2>

@@ -342,6 +342,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         install_archive_search(self)
         from .qc_window import install_qc_menu    # Tools > Detector QC...
         install_qc_menu(self)
+        from .detector_test_dialog import install_detector_test_menu    # Tools > acceptance, chi-square
+        install_detector_test_menu(self)
         self._rebuild_overlay_menu()
 
     def _create_toolbar(self) -> None:
@@ -498,6 +500,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         retranslate_archive_search(self)
         from .qc_window import retranslate_qc_menu
         retranslate_qc_menu(self)
+        from .detector_test_dialog import retranslate_detector_test_menu
+        retranslate_detector_test_menu(self)
         from .manual import retranslate_manual_menu
         retranslate_manual_menu(self)
         from .calibration_dialog import retranslate_calibration_actions
