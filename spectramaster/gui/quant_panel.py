@@ -112,6 +112,7 @@ class ActivityDialog(QDialog):
         self.background = None
         self.blank = None                              # reagent blank spectrum (None: no correction)
         self._calc_pending = None                      # calculation running on a worker thread
+        self.measuring_reference = False               # reference spectrum read on a worker thread
         self.results: Optional[act.QuantResults] = None
         self.concentration: Optional[dict] = None      # activity.concentrations() of the results
         self.sample_info = None                        # lab.sample.SampleInfo used for it
@@ -423,6 +424,7 @@ class ActivityDialog(QDialog):
         b = QPushButton(qtr("act_ref_measure"))
         b.setToolTip(qtr("act_ref_measure_tip"))
         b.clicked.connect(self.browse_reference_spectrum)
+        self.btn_ref_measure = b
         row.addWidget(b)
         row.addStretch(1)
         fl.addRow(qtr("act_ref_energy"), row)
@@ -515,21 +517,43 @@ class ActivityDialog(QDialog):
             self.measure_reference(path)
 
     def measure_reference(self, path) -> bool:
-        """Rate of the reference peak in a low-rate reference measurement (activity.reference_rate);
-        fills the rate, its uncertainty and the rate date (the measurement start)."""
+        """Rate of the reference peak in a low-rate reference measurement (activity.reference_rate),
+        read and fitted on a worker thread; then fills the rate, its uncertainty and the rate date
+        (the measurement start).  Calculate waits meanwhile.  Returns True when started."""
         from ..convert import read_spectra
-        try:
-            spectra, _f = read_spectra(Path(path))
-            s = spectra[0]
-            rate, u = act.reference_rate(s, self.refpk_energy.value())
-        except Exception as exc:
-            QMessageBox.warning(self, qtr("act_title"), qtr("act_failed", msg=str(exc)))
+        from .worker import start_call
+        if self.measuring_reference or self.busy:
             return False
+        energy = self.refpk_energy.value()
+
+        def work():
+            s = read_spectra(Path(path))[0][0]
+            rate, u = act.reference_rate(s, energy)
+            return rate, u, s.start_time
+
+        self.measuring_reference = True
+        self.btn_ref_measure.setEnabled(False)
+        self.btn_calc.setEnabled(False)
+        start_call(self, work, self._reference_measured, self._reference_failed)
+        return True
+
+    def _reference_done(self) -> None:
+        self.measuring_reference = False
+        self.btn_ref_measure.setEnabled(True)
+        self.btn_calc.setEnabled(not self.busy)
+
+    def _reference_measured(self, result) -> None:
+        rate, u, start = result
+        self._reference_done()
         self.refpk_rate.setValue(rate)
         self.refpk_unc.setValue(100.0 * u / rate)
-        if s.start_time is not None:
-            self.refpk_date.setDateTime(QDateTime(s.start_time))
-        return True
+        if start is not None:
+            self.refpk_date.setDateTime(QDateTime(start))
+
+    def _reference_failed(self, msg: str) -> None:
+        self._reference_done()
+        text = msg.split(": ", 1)[1] if ": " in msg else msg
+        QMessageBox.warning(self, qtr("act_title"), qtr("act_failed", msg=text))
 
     def reference_peak(self) -> Optional[dict]:
         """ActivityOptions.reference_peak from the box (None: not applied)."""

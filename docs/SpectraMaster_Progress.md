@@ -1140,3 +1140,22 @@ Protocol `docs/baseline/round4_calibration_protocol.md` (committed before the ch
   Combine, Normalize and Shift set or propagate it; the fit-inspection window passes it to refit, add
   and remove. Synthetic case: u 83.19 with the not-Poisson note -> 59.15, equal to the explicit S + k^2 B.
 - Benchmark 154 / 13 / 60 unchanged.
+
+## Round-4 external review: interface thread R4-E (2026-10-27)
+
+Timed before the change (Codex M6, Gemini H5):
+
+| operation | time | change |
+|---|---|---|
+| searching a folder for spectra (drop on the main window, Batch Analysis > Add Folder, Print Reports for Multiple Files > Add Folder): lab archive, 18394 files with spectrum extensions | 0.8 s | worker thread |
+| the same, a mixed folder of 6240 files (content of every file of unknown extension read) | 80.9 s | worker thread |
+| Activity dialog: measure the reference peak (read the spectrum and fit the peak) | 0.08 s for 1024 channels, plus the file reading | worker thread |
+| Aptec analysis window operations | 0.02-0.22 s each (2026-10-22) | none, as before |
+
+- The main window shows "Looking for spectra in the folder..." in the status bar and opens the batch
+  window when the search ends; files dropped alone open at once, as before.
+- Batch Analysis and Print Reports for Multiple Files disable their add and start buttons during the
+  search and refuse a second one.
+- The reference-peak measurement disables Measure and Calculate until it ends; an unreadable file or a
+  missing peak is reported as before.
+- No change to the analysis engine (engine 1.18.0). Tests `tests/test_round4_ui_thread.py`.

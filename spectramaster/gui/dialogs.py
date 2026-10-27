@@ -185,6 +185,19 @@ def scan_spectrum_files(root: Path, recursive: bool) -> list[Path]:
             if p.suffix.lower() in exts or detect_format(p) is not None]
 
 
+def expand_spectrum_paths(paths: Sequence[Path], recursive: bool = True) -> list[Path]:
+    """`paths` in order, each folder replaced by its spectrum files (:func:`scan_spectrum_files`).
+    Reading the content of every file of unknown extension can take a minute on a large mixed
+    folder: call it on a worker thread (gui.worker.start_call)."""
+    out: list[Path] = []
+    for p in (Path(x) for x in paths):
+        if p.is_dir():
+            out.extend(scan_spectrum_files(p, recursive))
+        elif p.is_file():
+            out.append(p)
+    return out
+
+
 class BatchDialog(QDialog):
     """Converts many files in a background thread.
 

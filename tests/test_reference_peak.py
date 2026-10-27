@@ -102,6 +102,14 @@ def test_activity_dialog_reference_peak(cal_curve, qapp, gui_settings, tmp_path)
         ad.refpk_box.setChecked(True)
         ad.refpk_energy.setValue(PULSER_KEV)
         assert ad.measure_reference(str(ref_spec))                # rate measured in a reference spectrum
+        assert not ad.btn_calc.isEnabled()                        # on a worker thread: Calculate waits
+        import time
+        from PySide6.QtWidgets import QApplication
+        end = time.monotonic() + 60
+        while ad.measuring_reference and time.monotonic() < end:
+            QApplication.processEvents()
+            time.sleep(0.01)
+        assert not ad.measuring_reference and ad.btn_calc.isEnabled()
         assert ad.refpk_rate.value() == pytest.approx(PULSER_CPS, rel=0.005) and ad.refpk_unc.value() > 0
         res = ad.calculate()
         assert res.reference_factor == pytest.approx(1 / 0.9, rel=0.005)

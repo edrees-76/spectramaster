@@ -119,6 +119,7 @@ STRINGS: dict[str, dict[str, str]] = {
         # batch dialog
         "batch_title": "Convert Files",
         "batch_files": "{n} file(s) selected",
+        "scan_folder_running": "Looking for spectra in the folder...",
         "batch_input_fmt": "Input format:",
         "batch_out_fmt": "Output format:",
         "batch_out_dir": "Output folder:",
@@ -278,6 +279,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "drop_many_text": "تم إفلات {n} ملفات. هل تريد تحويلها؟",
         "batch_title": "تحويل ملفات",
         "batch_files": "عدد الملفات المحددة: {n}",
+        "scan_folder_running": "جارٍ البحث عن الأطياف في المجلد...",
         "batch_input_fmt": "صيغة الإدخال:",
         "batch_out_fmt": "صيغة الإخراج:",
         "batch_out_dir": "مجلد الإخراج:",
