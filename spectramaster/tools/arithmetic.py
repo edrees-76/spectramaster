@@ -197,8 +197,10 @@ def subtract_background(sample: Spectrum, background: Spectrum, scale: Optional[
     extra["operation"] = "background subtracted"
     extra["background_source"] = background.source_path or background.sample_id or "?"
     extra["background_scale"] = float(scale)
-    return (replace(sample, counts=[float(x) for x in net], extra=extra, source_path="", source_format=""),
-            [float(x) for x in sigma])
+    out = replace(sample, counts=[float(x) for x in net], extra=extra, source_path="", source_format="")
+    from ..analysis.background import set_channel_variance
+    set_channel_variance(out, sigma * sigma)          # S + k^2 B, for the manual fit
+    return out, [float(x) for x in sigma]
 
 
 def scale_spectrum(spec: Spectrum, factor: float, scale_times: bool = False) -> Spectrum:

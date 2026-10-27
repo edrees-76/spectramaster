@@ -62,14 +62,29 @@ def is_poisson(spec: Spectrum) -> bool:
     return str(spec.extra.get("counts_are_poisson", "yes")) != "no"
 
 
-def _result(spec: Spectrum, counts, entry: str, poisson: bool, **changes) -> Spectrum:
+def _result(spec: Spectrum, counts, entry: str, poisson: bool, variance=None, **changes) -> Spectrum:
+    """The changed spectrum; `variance` is its per-channel variance when the operation propagates
+    it (otherwise it is unknown: docs/baseline/round4_calibration_protocol.md)."""
+    from ..analysis.background import set_channel_variance
     extra = dict(spec.extra)
     extra["aptec_status"] = "; ".join(status_of(spec) + [entry])
     if not poisson:
         extra["counts_are_poisson"] = "no"
     extra.update(changes.pop("extra_items", {}))
-    return replace(spec, counts=[float(x) for x in counts], extra=extra, source_path="", source_format="",
-                   **changes)
+    out = replace(spec, counts=[float(x) for x in counts], extra=extra, source_path="", source_format="",
+                  **changes)
+    set_channel_variance(out, variance)
+    return out
+
+
+def _variance(spec: Spectrum):
+    from ..analysis.background import known_variance
+    return known_variance(spec)
+
+
+def _sum_variance(a: Spectrum, b: Spectrum):
+    va, vb = _variance(a), _variance(b)
+    return None if va is None or vb is None else va + vb
 
 
 def _counts(spec: Spectrum) -> np.ndarray:
@@ -111,8 +126,9 @@ def normalize(spec: Spectrum, factor: float) -> Spectrum:
                 extra[key] = float(spec.extra[key]) * a
             except (TypeError, ValueError):
                 pass
+    v = _variance(spec)
     return _result(spec, _counts(spec) * f, f"Normalized x{_num(f)}", poisson=(f == 1.0) and is_poisson(spec),
-                   live_time=lt, real_time=rt, extra_items=extra)
+                   variance=None if v is None else v * (f * f), live_time=lt, real_time=rt, extra_items=extra)
 
 
 def shift(spec: Spectrum, channels: int) -> Spectrum:
@@ -122,18 +138,24 @@ def shift(spec: Spectrum, channels: int) -> Spectrum:
         raise ValueError("the shift must be a whole number of channels")
     c = _counts(spec)
     out = np.zeros_like(c)
+    v = _variance(spec)
+    var = None if v is None else np.zeros_like(c)
     m = len(c)
     if abs(n) < m:
         if n >= 0:
             out[n:] = c[:m - n]
+            if var is not None:
+                var[n:] = v[:m - n]
             lost = c[m - n:].sum() if n else 0.0
         else:
             out[:m + n] = c[-n:]
+            if var is not None:
+                var[:m + n] = v[-n:]
             lost = c[:-n].sum()
     else:
         lost = c.sum()
     name = "RightShifted" if n >= 0 else "LeftShifted"
-    return _result(spec, out, f"{name} {abs(n)}", poisson=is_poisson(spec),
+    return _result(spec, out, f"{name} {abs(n)}", poisson=is_poisson(spec), variance=var,
                    extra_items={"shift_counts_lost": _num(float(lost))})
 
 
@@ -238,8 +260,8 @@ def combine(active: Spectrum, compare: Spectrum) -> Spectrum:
     if not same_calibration(active, compare):
         extra["combine_warning"] = "the energy calibrations differ: channels were added as they are"
     return _result(active, _counts(active) + _counts(compare), "Combined",
-                   poisson=is_poisson(active) and is_poisson(compare), live_time=lt, real_time=rt,
-                   extra_items=extra)
+                   poisson=is_poisson(active) and is_poisson(compare), variance=_sum_variance(active, compare),
+                   live_time=lt, real_time=rt, extra_items=extra)
 
 
 def strip(active: Spectrum, compare: Spectrum) -> Spectrum:
@@ -255,4 +277,5 @@ def strip(active: Spectrum, compare: Spectrum) -> Spectrum:
                                             "counts were subtracted without live-time scaling")
     if not same_calibration(active, compare):
         extra["strip_warning"] = "the energy calibrations differ: channels were subtracted as they are"
-    return _result(active, _counts(active) - _counts(compare), "Stripped", poisson=False, extra_items=extra)
+    return _result(active, _counts(active) - _counts(compare), "Stripped", poisson=False,
+                   variance=_sum_variance(active, compare), extra_items=extra)

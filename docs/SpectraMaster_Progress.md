@@ -1122,3 +1122,21 @@ Protocol `docs/baseline/round4_formats_protocol.md` (committed before the change
   real time kept); a TKA file with another extension is ambiguous (TKA / one-column ASCII) instead
   of one-column ASCII with the times as counts.
 - Benchmark 154 / 13 / 60 unchanged.
+
+## Round-4 external review: calibration and manual-fit findings R4-D (2026-10-27)
+
+Protocol `docs/baseline/round4_calibration_protocol.md` (committed before the change), results in
+`docs/baseline/after_R4D/`, engine 1.18.0, 4 PASS / 0 FAIL at the first run:
+
+- **FWHM calibration in the calibration dialog (Gemini H4.1).** The measured width of every matched
+  line is kept with the proposal; after an exclusion or an order change the dialog fits the FWHM
+  calibration again through the widths of the lines still used (no peak refitted) and applies that one.
+- **Positive, non-decreasing FWHM (Gemini H4.2).** Order 2 must also be positive over the whole
+  spectrum, order 1 must not fall and must stay positive; otherwise no FWHM calibration, with a note
+  (Gemini's doublet case: -25 keV at the end of the spectrum before). The 20 source calibrations of the
+  IAEA 2002 and synthetic checks are unchanged.
+- **Manual fit of a net spectrum (Codex M1, Gemini H1.2).** A spectrum carries its per-channel variance
+  in memory, tied to its counts by SHA-256: background subtraction and the Aptec operations Strip,
+  Combine, Normalize and Shift set or propagate it; the fit-inspection window passes it to refit, add
+  and remove. Synthetic case: u 83.19 with the not-Poisson note -> 59.15, equal to the explicit S + k^2 B.
+- Benchmark 154 / 13 / 60 unchanged.

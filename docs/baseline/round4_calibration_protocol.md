@@ -67,3 +67,17 @@ GUI: that changes its results and is left for a separate protocol.
   not-Poisson note.
 - RD.C1 checks the engine functions the dialog calls; the dialog itself is checked by the GUI tests
   of RD.C5.
+
+---
+
+## Results (after_R4D)
+
+**First run: 4 PASS / 0 FAIL** (`after_R4D/round4_calibration.md`), engine 1.18.0:
+
+| ID | result | key numbers |
+|---|---|---|
+| RD.C1 | PASS | 3 Eu-152 spectra: the refit without exclusion gives the proposal's FWHM calibration; after excluding the line with the largest width residual (Eu-152 1112.08, 1112.08, 1085.84 keV) the FWHM calibration is fitted through the 6 or 7 remaining widths and differs from the proposal |
+| RD.C2 | PASS | Gemini's pair: no FWHM calibration, note "decrease with energy ... 6.389 keV at channel 0, -25.47 keV at channel 8191" (before: FWHM = 6.389 - 0.00389 ch accepted); rising pair unchanged; four widths: order 1, 0.25 to 6.80 keV over 0-8191 (before: order 2, -1.43 to 2.51 keV) |
+| RD.C3 | PASS | 20 source calibrations (10 IAEA 2002 test spectra, 10 synthetic): energy and FWHM calibrations identical, no change |
+| RD.C4 | PASS | net spectrum: manual fit u 59.147, the same as with the explicit variance S + k^2 B (before: 83.188 with the not-Poisson note, the region clipped); Aptec Strip of the normalized background: u 59.147; after Smooth or a channel edited by hand no variance is passed; raw spectrum fitted as before |
+| RD.C5 | PASS | GUI tests: the calibration dialog applies the FWHM calibration recomputed after an exclusion and the proposal's when the line is used again; the fit-inspection window passes the variance of a net spectrum (edit recorded with `variance: explicit`) and none for a raw spectrum. Full suite 1464 passed, 69 skipped; benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed status (`after_R4D/baseline.md`) |
