@@ -1054,6 +1054,22 @@ class MainWindow(ReportActionsMixin, QMainWindow):
     def analysis_running(self) -> bool:
         return self._ana_thread is not None
 
+    def _sampling_date(self, spec):
+        """End (else start) of sampling of the session's sample information, None if unknown or
+        after the acquisition start (identify would refuse it)."""
+        from datetime import datetime
+        ctl = getattr(self, "session_ctl", None)
+        s = ctl.session_for(spec) if ctl is not None else None
+        sample = (s.sample or {}) if s is not None else {}
+        value = sample.get("sampling_end") or sample.get("sampling_start")
+        if not value:
+            return None
+        try:
+            d = datetime.fromisoformat(str(value))
+        except ValueError:
+            return None
+        return None if spec.start_time is not None and d > spec.start_time else d
+
     def run_analysis(self, silent: bool = False) -> bool:
         spec = self.current_spectrum()
         if spec is None:
@@ -1070,7 +1086,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         self._ana_silent = silent
         thread = QThread(self)
         self._ana_application = self.analysis_panel.application()
-        worker = AnalysisWorker(spec, self._ana_token, application=self._ana_application)
+        worker = AnalysisWorker(spec, self._ana_token, application=self._ana_application,
+                                sampled=self._sampling_date(spec))
         worker.moveToThread(thread)
         thread.started.connect(worker.run)
         worker.done.connect(self._on_analysis_done)

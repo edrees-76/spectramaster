@@ -337,7 +337,15 @@ def cmd_peaks(args) -> int:
 
 
 def cmd_identify(args) -> int:
+    from datetime import datetime
     from .analysis import find_peaks, identify
+    sampled = None
+    if args.sampled:
+        try:
+            sampled = datetime.fromisoformat(args.sampled)
+        except ValueError:
+            _err(f"error: --sampled {args.sampled!r} is not an ISO date/time (e.g. 2024-03-01T10:00)")
+            return 2
     status = 0
     for path, title, s in _analysis_targets(args):
         if s is None:
@@ -350,8 +358,12 @@ def cmd_identify(args) -> int:
             print()
             continue
         peaks = find_peaks(s, min_sig=args.min_sig)
+        if sampled is not None and s.start_time is not None and sampled > s.start_time:
+            _err(f"error: {title}: the sampling date is after the start of the acquisition")
+            status = 1
+            continue
         try:
-            matches = identify(s, peaks, library=args.lib, min_confidence=args.min_conf)
+            matches = identify(s, peaks, library=args.lib, min_confidence=args.min_conf, sampled=sampled)
         except (OSError, ValueError) as exc:
             _err(f"error: cannot use library {args.lib}: {exc}")
             return 2
@@ -468,6 +480,8 @@ def build_parser() -> argparse.ArgumentParser:
                                                  "nuclide,energy_keV,intensity_%%[,half_life,category])")
     idn.add_argument("--min-conf", type=float, default=0.25, help="minimum confidence 0..1 (default 0.25)")
     idn.add_argument("--peaks", action="store_true", help="also print the peak table with assignments")
+    idn.add_argument("--sampled", default=None, help="end of sampling (ISO date/time): nuclides decayed by more "
+                                                     "than 10 half-lives since then get a low plausibility")
     idn.set_defaults(func=cmd_identify)
 
     g = sub.add_parser("gui", help="start the graphical interface")

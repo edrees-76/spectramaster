@@ -83,7 +83,10 @@ SCHEMA_VERSION = 1
 #          reference-peak term linear in the activity (blank + reference peak); coincidence summing of a
 #          self-attenuating sample with its own efficiency; best estimate of nuclides not detected in the
 #          concentration table; constant attenuation together with the self-attenuation model refused
-ENGINE_VERSION = "1.15.0"
+#   1.16.0 2026-10-27 round-4 review (round4_identify_protocol.md): identification FWHM at the absolute
+#          channel; low plausibility for nuclides decayed by > 10 half-lives since sampling; medical
+#          nuclides common only with the medical library; note on single matched lines
+ENGINE_VERSION = "1.16.0"
 
 
 class SessionSchemaError(ValueError):

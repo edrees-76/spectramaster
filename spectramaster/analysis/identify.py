@@ -91,6 +91,8 @@ class _Context:
         self.emax = float(np.nanmax(self.e))
         self.increasing = bool(self.e[-1] > self.e[0])
         self.peaks = peaks
+        self.application = "all"
+        self.decayed: dict = {}        # nuclide -> half-lives elapsed since sampling (penalised only)
         self._ld: dict = {}
         self._fw: dict = {}
         self.pe = np.array([p.energy if p.energy is not None else -1e9 for p in peaks])
@@ -119,7 +121,8 @@ class _Context:
         if self.s.fwhm_coeffs:
             ch = self.channel_of(e)
             if ch is not None:
-                f = float(_poly(self.s.fwhm_coeffs, ch))
+                # the FWHM calibration is a function of the absolute channel, as the energy one
+                f = float(_poly(self.s.fwhm_coeffs, ch + self.s.first_channel))
                 if 0 < f < 0.5 * max(e, 10.0) + 50:
                     return f
         return float(default_fwhm_kev(e, self.det or "HPGe")) * self.fw_scale
@@ -242,6 +245,28 @@ COMMON = {
     "Lu-177", "I-123", "I-125", "Ir-192", "Se-75", "Np-239", "Pu-239", "U-238", "Th-232", "Na-24",
     "Ar-41", "Co-56", "Gd-153", "Ce-143", "Ba-131",
 }
+# radiopharmaceuticals and their generator parents: common only with the medical library
+COMMON_MEDICAL = {"Mo-99", "Tc-99m", "F-18", "Ga-67", "Ga-68", "In-111", "Tl-201", "Lu-177", "I-123", "I-125"}
+COMMON -= COMMON_MEDICAL
+
+DECAYED_HALF_LIVES = 10.0        # more half-lives than this since sampling: activity < 0.1 %
+DECAYED_PRIOR = 0.25
+SINGLE_LINE_MIN_INTENSITY = 1.0  # % : library gamma lines counted by the single-line note
+
+
+def _common(name: str, ctx) -> bool:
+    return name in COMMON or (name in COMMON_MEDICAL and getattr(ctx, "application", "all") == "medical")
+
+
+def decayed_nuclides(libd: dict, elapsed_s: float) -> dict:
+    """Nuclides of `libd` with more than DECAYED_HALF_LIVES half-lives in `elapsed_s` seconds
+    (name -> half-lives).  Members of a natural series and nuclides included by a parent that is
+    itself not decayed (Tc-99m with Mo-99) are supported and left out."""
+    def n_half(nd):
+        return elapsed_s / nd.half_life_s if nd.half_life_s and nd.half_life_s > 0 else 0.0
+    supported = {d for nd in libd.values() if n_half(nd) <= DECAYED_HALF_LIVES for d in (nd.includes or ())}
+    return {n: n_half(nd) for n, nd in libd.items()
+            if n_half(nd) > DECAYED_HALF_LIVES and not nd.series and n not in supported}
 
 
 WEAK_EMITTER_MAX_LINES = 2       # the weak-emitter penalty applies to so few matched gamma lines
@@ -256,14 +281,16 @@ def _prior(nd: NuclideData, ctx: _Context, used: dict, lines: list) -> float:
     coincide with unrelated peaks, but several lines with consistent areas are evidence in
     their own right (e.g. Pu-239: lines of 1e-5 to 1e-4 per decay, very high activity)."""
     f = 1.0
-    if nd.name not in COMMON:
+    if not _common(nd.name, ctx):
         f *= 0.65 if ctx.det == "NaI" else 0.8
     ng = sum(1 for li in used if lines[li].kind == "g")
     gsum = sum(lines[li].intensity for li in used if lines[li].kind == "g")
     if gsum < 10.0 and ng <= WEAK_EMITTER_MAX_LINES:
         f *= (max(gsum, 0.05) / 10.0) ** 0.25
-    if nd.half_life_s and nd.half_life_s < 3600 and not nd.series and nd.name not in COMMON:
+    if nd.half_life_s and nd.half_life_s < 3600 and not nd.series and not _common(nd.name, ctx):
         f *= 0.8
+    if nd.name in getattr(ctx, "decayed", {}):
+        f *= DECAYED_PRIOR
     return f
 
 
@@ -513,9 +540,18 @@ def _calibration_correction(ctx: _Context, accepted: list):
     return lambda e: e + np.polyval(coef, np.clip(e, lo, hi))
 
 
+def _single_line(c, ctx) -> bool:
+    """One gamma line matched although the library has several gamma lines (>= 1 %) in range."""
+    if sum(1 for li in c.matches if c.lines[li].kind == "g") != 1:
+        return False
+    n = sum(1 for ln in c.nd.lines if ln.kind == "g" and ln.intensity >= SINGLE_LINE_MIN_INTENSITY
+            and ctx.emin <= ln.energy <= ctx.emax)
+    return n >= 2
+
+
 def identify(spectrum, peaks: Optional[list[Peak]] = None, library=None, lib=None,
              min_confidence: float = 0.25, include_xrays: bool = True, max_results: int = 40,
-             correct_drift: bool = True, application: str = "all", _debug: bool = False,
+             correct_drift: bool = True, application: str = "all", sampled=None, _debug: bool = False,
              **_ignored) -> list[NuclideMatch]:
     """Identify nuclides. `library`/`lib`: path or parsed library (default: bundled).
 
@@ -526,9 +562,18 @@ def identify(spectrum, peaks: Optional[list[Peak]] = None, library=None, lib=Non
     calibration is never changed (review and apply it with the drift check).
     `application`: the application library searched ("all", "environmental", "calibration",
     "safeguards", "medical"; analysis.library.APPLICATIONS) - as with commercial programs,
-    restricting the candidates to the kind of work avoids coincidental matches."""
+    restricting the candidates to the kind of work avoids coincidental matches.
+    `sampled`: end of sampling (datetime, naive local time like ``Spectrum.start_time``).  A
+    nuclide with more than DECAYED_HALF_LIVES half-lives between it and the acquisition start gets
+    a low plausibility and a note, unless a natural series or a parent of the library supports it
+    (docs/baseline/round4_identify_protocol.md)."""
     if not spectrum.energy_coeffs:
         return []
+    elapsed = None
+    if sampled is not None and spectrum.start_time is not None:
+        elapsed = (spectrum.start_time - sampled).total_seconds()
+        if elapsed < 0:
+            raise ValueError("the sampling date is after the start of the acquisition")
     if peaks is None:
         from .peaks import find_peaks
         peaks = find_peaks(spectrum)
@@ -541,6 +586,9 @@ def identify(spectrum, peaks: Optional[list[Peak]] = None, library=None, lib=Non
     libd = application_library(load_library(library if library is not None else lib), application)
     det = guess_detector(spectrum)
     ctx = _Context(spectrum, cal_peaks, det)
+    ctx.application = application
+    if elapsed is not None:
+        ctx.decayed = decayed_nuclides(libd, elapsed)
 
     _INCLUDES.clear()
     _INCLUDES.update({n: tuple(nd.includes) for n, nd in libd.items() if nd.includes})
@@ -630,6 +678,11 @@ def identify(spectrum, peaks: Optional[list[Peak]] = None, library=None, lib=Non
             notes.append(nd.note)
         if nd.name in extra_note:
             notes.append(extra_note[nd.name])
+        if nd.name in ctx.decayed:
+            notes.append(f"{ctx.decayed[nd.name]:.0f} half-lives since sampling: present only if produced "
+                         "after sampling (check the sampling date)")
+        if _single_line(c, ctx):
+            notes.append("one line matched (the other lines are below the detection limit): confirm")
         if drift_note:
             notes.append(drift_note)
         if _debug:

@@ -62,3 +62,20 @@ stay outside the repository).
   penalised. The note gives the reason.
 - RB.C5 uses one assumed lower bound of the age of public materials, not their sampling dates.
 - The single-line note does not change the identification; the reviewer decides.
+
+---
+
+## Results (2026-10-27)
+
+`python -m spectramaster.validation.round4_identify` (engine 1.16.0), output in
+`docs/baseline/after_R4B/`. **7 PASS / 0 FAIL.**
+
+| ID | result | detail |
+|---|---|---|
+| RB.C1 | PASS | Codex's case 2.0 -> 3.0 keV; FWHM of the cropped spectrum equal to the full one at every energy. Identifications still differ (full: Co-60, Cs-137, K-40, Co-57 0.744; cropped: Co-60 0.974, Cs-137, K-40, Eu-152 0.279): the cropped spectrum has no data below 75 keV, so lines there are not counted |
+| RB.C2 | PASS | 1 h: identical. 3 d: Cs-137, K-40, Mo-99, Tc-99m identical, Mn-56 (28 half-lives) not reported. 30 d: Mn-56, Mo-99, Tc-99m not reported; Cs-137 0.973, K-40 0.976. Date after start refused. (Mo-99 and Tc-99m without a date 0.999 / 0.993 -> 0.799 / 0.794 from change 3.) |
+| RB.C3 | PASS | Co-56 and Ba-133 (one line of several) carry the note; Cs-137, K-40 and Mo-99 do not; confidences identical |
+| RB.C4 | PASS | medical nuclides 0.8 with "all" and "environmental", 1.0 with "medical"; I-131 and Cs-137 1.0 |
+| RB.C5 | PASS | CRM spectra with `sampled` = start - 30 d: short-lived identifications 118 -> 0; long-lived / series identifications lost 3 of 3300 (Rn-219, Th-231, Pa-231: U-235 series members, one each) |
+| RB.C6 | PASS | CRM spectra without a date: medical identifications 41 -> 21; long-lived / series lost 8 of 3303 (Th-234 5, U-235 1, I-125 1, Yb-169 1), gained Th-232 3, Th-230 1, Th-234 1, Cu-67 1; short-lived 118 -> 108; 293 single-line notes |
+| RB.C7 | PASS | benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed status; changed values: IDB implausible identifications per spectrum HPGe 8.19 -> 8.03, CdTe 6.71 -> 5.43, LaBr3 5.61 -> 5.39, CZT 4.85 -> 4.74, and run times. Full test suite 1450 passed, 69 skipped, 0 failed |
