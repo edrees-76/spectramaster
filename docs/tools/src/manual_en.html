@@ -909,7 +909,9 @@ first-order coincidence summing factor (COI), computed from coincidence data and
   <li><b>Coincidence data.</b> The probabilities come from the ENSDF decay schemes of the IAEA (LiveChart of Nuclides):
       for each pair of gamma rays, the probability that the second follows the first in the same decay, from the
       level scheme with the conversion coefficients, isomers ending the cascade; and for each gamma the probability
-      that a positron (two 511 keV photons) comes with it. They were checked against an independent simulation of the
+      that a positron (two 511 keV photons) comes with it. Where a level of the scheme receives more gamma
+      transitions than it emits (the listed intensities do not balance), the probability that a gamma was preceded
+      by another is taken from the level populations of the scheme, so it never exceeds 1. They were checked against an independent simulation of the
       decays (appendix <a href="#app-checks">E</a>). Short-lived daughters folded into a nuclide (Bi-207 → Pb-207m,
       Ce-144 → Pr-144 …) are included.</li>
   <li><b>Peak-to-total.</b> The total efficiency is the peak efficiency divided by the <b>peak-to-total ratio</b>
@@ -1333,7 +1335,7 @@ its owners. They are named only to describe compatibility.</p>
       Cs-137)</td><td>all 19 results within 20 % of the certificate; 6 of 8 criteria pass (Ra-228 and Cs-137 bias
       above 10 %)</td></tr>
   <tr><td>Coincidence table</td><td>independent simulation of the decay cascades of 18 nuclides</td><td>237 of 237
-      probabilities agree</td></tr>
+      probabilities down the cascade, 215 of 215 upward and 448 of 448 in either order agree</td></tr>
   <tr><td>Aptec</td><td>results stored by Aptec in the laboratory archive</td><td>section <a href="#aptec-verify">7.8</a></td></tr>
   </tbody>
 </table>

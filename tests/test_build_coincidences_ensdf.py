@@ -147,3 +147,37 @@ def test_check_compares_upward_and_two_way_probabilities():
     up, both = ck.other_directions([[1000.0, 0.8], [500.0, 1.0]], {(0, 1): 1.0}, cnt, pair, {0, 1})
     assert up[0]["table"] == 0.8 and up[0]["mc"] == 0.5 and not up[0]["ok"]
     assert [r["ok"] for r in both] == [True, False]
+
+
+# ---- levels receiving more than they emit (docs/baseline/ensdf_level_balance_protocol.md)
+
+def test_balanced_scheme_has_no_scheme_intensities(tmp_path):
+    (rec,) = _records(tmp_path, SCHEME)
+    assert "gs" not in rec
+
+
+def test_level_fed_by_more_than_it_emits_bounds_the_upward_probability(tmp_path):
+    # 700 keV feeds the 300 keV level at 0.5 per decay; the 300 keV gamma is listed at 0.495
+    (rec,) = _records(tmp_path, [_g(700.0, 0.5, 1000.0, 300.0), _g(300.0, 0.495, 300.0, 0.0)])
+    e = [x[0] for x in rec["g"]]
+    assert rec["gs"][e.index(300.0)] == pytest.approx(0.5, rel=1e-6)          # populated by its inflow
+    assert rec["gs"][e.index(700.0)] == pytest.approx(0.5, rel=1e-6)
+    g = np.array([x[1] for x in rec["g"]])
+    old = co.Transition(1.0, np.array(e), g, _after(rec))
+    new = co.Transition(1.0, np.array(e), g, _after(rec), scheme=np.array(rec["gs"]))
+    lo, hi = e.index(300.0), e.index(700.0)
+    assert old.coincident[lo, hi] == pytest.approx(0.5 / 0.495, rel=1e-6)    # above 1 with the listed intensity
+    assert new.coincident[lo, hi] == pytest.approx(1.0, rel=1e-6)
+    assert new.coincident[hi, lo] == old.coincident[hi, lo]                  # downward unchanged
+
+
+def test_bundled_table_upward_probabilities_at_most_one():
+    worst = 0.0
+    for name, recs in co._table()["nuclides"].items():
+        for rec in recs:
+            s = np.array(rec.get("gs", [x[1] for x in rec["g"]]), dtype=float)
+            for i, j, p in rec["c"]:
+                worst = max(worst, s[i] * p / s[j])
+    assert worst <= 1.0 + 1e-6
+    (t,) = co.transitions("Co-57")
+    assert t.coincident[t.index(14.4), t.index(122.06)] <= 1.0 + 1e-6

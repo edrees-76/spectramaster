@@ -94,7 +94,9 @@ SCHEMA_VERSION = 1
 #          not detected combined like the activity; an unusable key line replaced by a usable line
 #   1.20.0 2026-10-27 detector acceptance test (FWHM, FWTM, peak-to-Compton, relative efficiency) and
 #          chi-square counting test (detector_acceptance_protocol.md and its amendment)
-ENGINE_VERSION = "1.20.0"
+#   1.21.0 2026-10-27 coincidence correction: upward probabilities from the scheme intensities at ENSDF
+#          levels that receive more than they emit (ensdf_level_balance_protocol.md)
+ENGINE_VERSION = "1.21.0"
 
 
 class SessionSchemaError(ValueError):

@@ -75,3 +75,47 @@ Reported, not judged:
 - The summing-in term still uses the tabulated intensities.
 - Imbalances where out(L) > in(L) are read as direct feeding, as before, whatever the measured beta
   feeding is.
+
+---
+
+## Results (`after_EB1`)
+
+Protocol committed in 78268ad before the change (SHA-256 of the file
+1d05feafeb981c69a6996bbe2494e0d2798ae69ef226d617337ae15cc0197c2d). Engine 1.21.0.
+
+| ID | value | result |
+|---|---|---|
+| EB.C1 | table rebuilt from the same LiveChart files: identical to the previous table once `gs` is removed (all records, `source`, `daughters_listed_by_parent`); 98 records of 95 nuclides get `gs` | PASS |
+| EB.C2 | downward and annihilation rows, single-path cascades and coverage identical to `after_R4F`; upward 215 compared, 0 outside (before 13), largest 0.027, rms of z 0.95; two-way 448 compared, 0 outside (before 13) | PASS |
+| EB.C3 | 25011 pairs of the table: 0 upward probabilities above 1 (before 12; largest Co-57 122.1 given 14.4 keV, 1.018); largest now 1.000 | PASS |
+| EB.C4 | 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against after_DA2 | PASS |
+| EB.C5 | IAEA 2002 (`after_EB1/iaea2002_results.*`): IA.C1-C6 in the same states as `after_CT1`; largest change of a ratio 1.8e-5 (maritsmall60 Co-60). CRM check: its test passes with the recorded values | PASS |
+| EB.C6 | 1483 passed, 69 skipped | PASS |
+
+**Implementation note (before judging EB.C1).** The first build also added `gs_tol` to `source` and a
+sentence on `gs` to `convention`. EB.C1 allows only `gs`, so both were taken out; `gs` is described
+in the builder's docstring and in `analysis/coincidence.py`. The criterion was then judged.
+
+**Changed existing tests (reasons).**
+* `test_coincidence.py::test_cs134_main_cascade`: the reverse probability is now checked against the
+  scheme intensities (Cs-134 has `gs`).
+* `test_iaea2002_validation.py`: the reproduced record is `after_EB1` (engine 1.21.0) instead of
+  `after_CT1`; one Marinelli ratio moves by 4e-6 relative, above the test's 1e-9.
+
+New tests in `test_build_coincidences_ensdf.py`: a balanced scheme gets no `gs`; a level fed by more
+than it emits gives an upward probability of 1 instead of 1.0101, with the downward unchanged; every
+upward probability of the bundled table is at most 1.
+
+**Reported.**
+* Levels with negative implied feeding in the four nuclides that failed in R4-F (P(L) / out(L)):
+  Ac-228 13 levels, among them 328.0 (1.17), 396.1 (1.10), 831.8 (1.11), 1539.2 (1.68), and 938.6 and
+  968.3 keV (25.8 and 10.2: the 214.85 and 674.75 keV gammas, 0.76 % and 2.1 %, are placed into
+  levels whose listed gammas total 0.03 % and 0.25 %; a misplacement in the data is more likely than
+  missing outflow). Ba-133 81.0 keV (1.012), Ir-192 205.8 keV (1.007), Co-57 14.4 keV (1.044).
+* COI with eps_peak(1000 keV) = 0.05 (`coi_change.*`): 1575 lines, 280 changed. For lines with COI
+  of at least 0.8 before and after (75 lines), 6 change by more than 1 %: Th-227 93.9 keV -2.0 %,
+  U-237 26.3 and 59.5 keV -1.5 %, Ac-228 209.3 keV -1.4 %, Th-227 79.7 keV -1.3 %, Ac-228 338.3 keV
+  -1.2 %. Ac-228 270.2 and 328.0 keV: +0.8 % (R4-F estimated at most about 1.4 %). Co-57 14.4 keV
+  +2.2 %. The large relative changes in the table (up to 104 %) are lines whose COI is far below 1
+  in this geometry, mostly below 300 keV where eps_peak exceeds 0.3. The efficiency is a test model,
+  not a laboratory geometry.
