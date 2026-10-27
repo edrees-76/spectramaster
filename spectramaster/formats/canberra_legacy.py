@@ -54,6 +54,7 @@ Code 17 ``eml_sanderson``  EML / C.G. Sanderson PC test spectra *.dat  read-only
 """
 from __future__ import annotations
 
+import math
 import re
 import struct
 from datetime import datetime, timedelta
@@ -235,12 +236,20 @@ def read_sanderson(path: Path) -> list[Spectrum]:
         s.live_time = float(m.group(1))
         s.real_time = s.live_time
         # channels 0 and 1 hold live and real time when channel 0 repeats LT= (EML TEST files,
-        # IAEA ASCII .dat output; docs/baseline/iaea_dat_detection_protocol.md)
+        # IAEA ASCII .dat output; docs/baseline/iaea_dat_detection_protocol.md) and channel 1 is a
+        # possible real time: 0 (not given, as in the EML TEST files) or LT <= RT <= 2 LT
+        # (round4_formats_protocol.md)
         c = s.counts
         if c and c[0] == s.live_time:
-            s.real_time = max(float(c[1]) if len(c) > 1 else 0.0, s.live_time)
-            c[0:2] = [0] * min(2, len(c))
-            s.extra["time_channels"] = True
+            rt = float(c[1]) if len(c) > 1 else float("nan")
+            if math.isclose(rt, 0.0, abs_tol=1e-9) or s.live_time <= rt <= 2.0 * s.live_time:
+                s.real_time = max(rt, s.live_time)
+                c[0:2] = [0, 0]
+                s.extra["time_channels"] = True
+            else:
+                s.extra["time_channels_note"] = (
+                    f"channel 0 equals the live time but channel 1 ({c[1] if len(c) > 1 else 'missing'}) is not "
+                    "a possible real time (0, or LT to 2 LT): channels 0 and 1 read as counts")
     st = _ST_RE.search(header)
     if st:
         try:

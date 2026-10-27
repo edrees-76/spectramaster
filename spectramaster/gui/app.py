@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (QApplication, QComboBox, QDockWidget, QFileDialog
                                QStyle, QStyleFactory, QToolBar, QToolButton, QVBoxLayout, QWidget)
 
 from .. import __version__
-from ..convert import calibration_note, content_note, output_name, read_spectra, write_spectrum
+from ..convert import calibration_note, content_note, nonfinite_channels, output_name, read_spectra, write_spectrum
 from ..formats import get_format, load_all, readable_formats, writable_formats
 from ..formats.base import FormatSpec
 from ..model import Spectrum
@@ -668,7 +668,10 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         QApplication.restoreOverrideCursor()
         self.settings.set_folder("open", path)
         self.display(spectra, used, path)
-        if content_note(spectra, used):
+        n_bad = nonfinite_channels(spectra)
+        if n_bad:
+            self.statusBar().showMessage(tr("counts_nonfinite", n=n_bad), 20000)
+        elif content_note(spectra, used):
             self.statusBar().showMessage(tr("fmt_by_content", name=used.name), 15000)
         elif calibration_note(spectra):
             self.statusBar().showMessage(tr("cal_placeholder"), 15000)

@@ -1104,3 +1104,21 @@ Protocol `docs/baseline/round4_identify_protocol.md` (committed before the chang
 - **Single matched line.** Note "one line matched ... confirm" when a nuclide with several lines is
   found from one.
 - Benchmark 154 / 13 / 60 unchanged; IDB implausible identifications per spectrum slightly lower.
+
+## Round-4 external review: format findings R4-C (2026-10-27)
+
+Protocol `docs/baseline/round4_formats_protocol.md` (committed before the change), results in
+`docs/baseline/after_R4C/`, engine 1.17.0. First run 2 PASS / 2 FAIL from two implementation errors
+(disclosed in the protocol), corrected without changing limits: 4 PASS / 0 FAIL.
+
+- **NaN or infinite counts (Codex M3).** Peak search refuses them with an error naming the channels
+  (before: NaN returned no peaks silently); the GUI status bar and `info` give a note.
+- **Sanderson time channels (Gemini M1).** Channels 0/1 are taken as live/real time only when
+  channel 1 is 0 or between LT and 2 LT; otherwise they stay counts with a note. The 38 EML
+  reference files read as before.
+- **CHN with 1 keV per channel (Gemini M2).** The write check says that 0 + 1 keV per channel reads
+  back as an uncalibrated MCA.
+- **Detection (Codex M4).** SpecUtils TXT `.txt` is no longer read as two-column ASCII (live and
+  real time kept); a TKA file with another extension is ambiguous (TKA / one-column ASCII) instead
+  of one-column ASCII with the times as counts.
+- Benchmark 154 / 13 / 60 unchanged.

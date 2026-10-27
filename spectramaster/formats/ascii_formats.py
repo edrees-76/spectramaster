@@ -262,6 +262,22 @@ def content_ascii1(path: Path, head: bytes) -> bool:
     return len(rows) >= 8 and all(len(r) == 1 for r in rows)
 
 
+def content_tka(path: Path, head: bytes) -> bool:
+    """TKA: live time, real time, then one count per line.  Only the first two values tell it from
+    one-column ASCII (0 < LT <= RT <= 10 LT), so a file passing this test is also one-column ASCII
+    and its format must be chosen (docs/baseline/round4_formats_protocol.md)."""
+    if b"\x00" in head:
+        return False
+    lines = [l for l in _decode(head).splitlines()[:-1] if l.strip()]
+    if len(lines) < 8:
+        return False
+    rows = [_numeric_tokens(l) for l in lines]
+    if any(r is None or len(r) != 1 for r in rows):
+        return False
+    lt, rt = rows[0][0], rows[1][0]
+    return 0.0 < lt <= rt <= 10.0 * lt
+
+
 # ===================================================================== ASCII-2
 def _header_map(line: str) -> Optional[dict]:
     toks = [t.strip().strip('"').lower() for t in _SPLIT.split(line.strip()) if t.strip()]

@@ -39,6 +39,7 @@ from pathlib import Path
 from typing import Optional
 
 from ..model import Spectrum
+from .ascii_formats import content_tka
 from .base import FormatError, FormatSpec, register
 
 try:        # the native library; without it only the pure-Python CHN and CNF code is registered
@@ -935,14 +936,14 @@ _PURE = {_chn_read, _chn_write, _cnf_read, _cnf_write}      # need no SpecUtils
 
 
 def _reg(code, key, name, exts, parser=None, kind=None, sniffer=None, notes="", reader=None,
-         writer=None, aliases=()):
+         writer=None, aliases=(), content_sniffer=None):
     if _SU is None and not (reader in _PURE and writer in _PURE | {None}):
         return
     register(FormatSpec(
         code=code, key=key, name=name, extensions=list(exts),
         reader=reader or (_reader(parser) if parser is not None else None),
         writer=writer or (_writer(kind) if kind is not None else None),
-        sniffer=sniffer, notes=notes, aliases=list(aliases)))
+        sniffer=sniffer, notes=notes, aliases=list(aliases), content_sniffer=content_sniffer))
 
 
 _reg(1, "ortec_chn", "ORTEC ADCAM / MAESTRO", [".chn"], reader=_chn_read, writer=_chn_write,
@@ -968,7 +969,7 @@ _reg(23, "specutils_csv", "SpecUtils CSV (Energy, Data)", [".csv"], reader=_csv_
 _reg(24, "specutils_txt", "SpecUtils TXT", [".txt"], P.TxtOrCsv, W.Txt,
      sniffer=_contains(b"Original File Name:", start=True))
 _reg(25, "tka", "Canberra/Toolkit TKA", [".tka"], P.Tka, W.Tka, aliases=["tka"],
-     notes="Live time, real time, then one count per line; no calibration.")
+     notes="Live time, real time, then one count per line; no calibration.", content_sniffer=content_tka)
 _reg(26, "html_d3", "HTML page (interactive D3 chart)", [".html", ".htm"], kind=W.HtmlD3,
      aliases=["html"])
 _reg(27, "spc_ascii", "ORTEC/IAEA ASCII SPC", [".spc"], P.Spc, W.SpcAscii,

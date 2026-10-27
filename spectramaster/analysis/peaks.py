@@ -829,7 +829,12 @@ def find_peaks(spectrum, min_sig: float = 3.0, fwhm: Optional[float] = None, fit
         if var.shape != y.shape or not np.isfinite(var).all():
             raise ValueError("variance must have one finite value per channel")
         var = np.maximum(var, 0.0)
-    if n < 16 or not np.isfinite(y).all() or (var is None and y.sum() <= 0):
+    bad = np.flatnonzero(~np.isfinite(y))
+    if len(bad):
+        first = ", ".join(str(int(i) + spectrum.first_channel) for i in bad[:5])
+        raise ValueError(f"the spectrum has {len(bad)} non-finite channel contents (NaN or infinity), "
+                         f"channel {first}{' ...' if len(bad) > 5 else ''}: no peak search")
+    if n < 16 or (var is None and y.sum() <= 0):
         return []
     if var is None:
         y = np.maximum(y, 0.0)

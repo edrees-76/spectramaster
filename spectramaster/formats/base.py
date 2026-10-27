@@ -100,17 +100,28 @@ def get_format(key_or_code) -> FormatSpec:
 
 # When several content tests match, the more specific format wins over the more general one.
 CONTENT_PREFERENCE = (("chandata_csv", "ascii2"), ("eml_sanderson", "iaea_ascii_dat"),
-                      ("wallac_ascii", "ascii1"), ("laval_ascii", "ascii1"))
+                      ("wallac_ascii", "ascii1"), ("laval_ascii", "ascii1"), ("laval_ascii", "tka"))
+
+
+# ... and among the usual tests: a SpecUtils TXT file (first line "Original File Name:") also has
+# the numeric lines of the ASCII layouts (docs/baseline/round4_formats_protocol.md)
+USUAL_PREFERENCE = (("specutils_txt", "ascii2"), ("specutils_txt", "ascii1"))
 
 
 def _detect_usual(path: Path, head: bytes) -> Optional[FormatSpec]:
+    found = []
     for f in readable_formats():
         if f.sniffer is not None:
             try:
                 if f.sniffer(path, head):
-                    return f
+                    found.append(f)
             except Exception:
                 pass
+    keys = {f.key for f in found}
+    beaten = {loser for winner, loser in USUAL_PREFERENCE if winner in keys}
+    for f in found:
+        if f.key not in beaten:
+            return f
     # Extension fallback only for formats whose content can't be sniffed: a sniffer
     # that already said "no" (e.g. HyperLab binary .SPE vs IAEA SPE) is trusted.
     ext = path.suffix.lower()
