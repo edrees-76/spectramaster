@@ -1179,7 +1179,21 @@ def _combine(res: NuclideResult, opt: ActivityOptions) -> None:
         used = [l for l in res.lines if any(abs(l.energy - e) < 1e-6 for e in res.used_energies)]
         res.primary_method = "fit" if all(l.peak_found for l in used) else "window"
         return
+    # not detected: the window results combined like the activity, key line or weighted mean of the
+    # usable lines; an unusable key line is replaced by the usable line of smallest MDA
+    # (docs/baseline/round4_primary_protocol.md)
     k = res.key_line if res.key_energy is not None else None
+    usable = [l for l in res.lines if l.mda > 0 and l.primary is not None and l.primary_method == "window"]
+    if opt.method == "mean" and len(usable) > 1:
+        res.primary, res.primary_u = _weighted_primary(usable, opt)
+        res.primary_method = "window"
+        return
+    if usable and (k is None or k.primary_method != "window"):
+        alt = usable[0] if opt.method == "mean" else min(usable, key=lambda l: l.mda)
+        if k is not None and alt is not k:
+            res.note = (res.note + f"; primary result from the {alt.energy:.1f} keV line (key line "
+                                   f"{k.energy:.1f} keV: {k.primary_method or 'none'})").strip("; ")
+        k = alt
     if k is None or k.primary is None:
         return
     a, aa = k.primary, abs(k.primary)
@@ -1188,6 +1202,24 @@ def _combine(res: NuclideResult, opt: ActivityOptions) -> None:
                               + (aa * opt.intensity_rel_unc) ** 2 + (aa * k.int_rel_unc) ** 2
                               + (aa * _att_rel_unc(opt)) ** 2 + k.ref_unc_bq ** 2
                               + (aa * k.coi_rel_unc) ** 2)
+
+
+def _weighted_primary(lines: list, opt: ActivityOptions) -> tuple[float, float]:
+    """(weighted mean, total standard uncertainty) of the lines' window results, with the weights
+    and components of the activity combination (_combine_activity)."""
+    ui = opt.intensity_rel_unc
+    var_unc = [l.primary_u_count ** 2 + (l.primary * ui) ** 2 + (l.primary * l.int_rel_unc) ** 2 for l in lines]
+    wts = [1.0 / v if v > 0 else 0.0 for v in var_unc]
+    sw = sum(wts)
+    a = sum(w * l.primary for w, l in zip(wts, lines)) / sw
+    uc = math.sqrt(sum((w * l.primary_u_count) ** 2 for w, l in zip(wts, lines))) / sw
+    ul = math.sqrt(sum((w * l.primary * l.int_rel_unc) ** 2 for w, l in zip(wts, lines))) / sw
+    ue = sum(w * abs(l.primary) * l.eff_rel_unc for w, l in zip(wts, lines)) / sw
+    ut = sum(w * abs(l.primary) * l.coi_rel_unc for w, l in zip(wts, lines)) / sw
+    ur = sum(w * l.ref_unc_bq for w, l in zip(wts, lines)) / sw
+    aa = abs(a)
+    return a, math.sqrt(uc ** 2 + ue ** 2 + math.hypot(aa * ui, ul) ** 2 + (aa * _att_rel_unc(opt)) ** 2
+                        + ur ** 2 + ut ** 2)
 
 
 def _att_rel_unc(opt: ActivityOptions) -> float:

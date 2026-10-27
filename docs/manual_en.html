@@ -993,7 +993,9 @@ with the QCY48 curve, peak-by-peak background subtraction and concentrations in 
   <tr><td>Primary result</td><td>For a nuclide <b>not detected</b>, the signed window result G − B (gross minus
       continuum in the line's window), which may be negative. It is given for information; the activity column
       still shows <i>&lt; MDA</i>. Window results next to a found peak (<i>interfered</i>) or on a curved continuum
-      where neither a straight nor a quadratic continuum fits (<i>curved</i>) are flagged and not used.</td></tr>
+      where neither a straight nor a quadratic continuum fits (<i>curved</i>) are flagged and not used. The nuclide's
+      primary result is combined like the activity: the key line, or with <i>weighted mean of lines</i> the weighted mean
+      of the usable lines; when the key line is flagged, the usable line with the smallest MDA is used and named in the note.</td></tr>
   <tr><td>Blank subtracted</td><td>The reagent-blank activity subtracted from the line (section <a href="#q-blank">9.3</a>).</td></tr>
   <tr><td>Budget</td><td>Relative components (k = 1): counting, efficiency, emission probability, quantity,
       attenuation, and, when used, the reagent blank, the reference peak and the summing correction.</td></tr>

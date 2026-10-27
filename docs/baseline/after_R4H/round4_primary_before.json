@@ -1,0 +1,50 @@
+{
+ "HPGe": {
+  "mean": {
+   "n": 200,
+   "mean_z": 0.09243919522649695,
+   "cov2": 0.975,
+   "n_z": 200,
+   "multi_line": 200,
+   "exact": 0,
+   "with_usable": 200,
+   "best_present": 200,
+   "mean_usable_lines": 5.98,
+   "methods": {
+    "window": 197,
+    "fit": 3
+   }
+  },
+  "key": {
+   "n": 100,
+   "eligible": 99,
+   "ok": 0,
+   "mean_z": NaN,
+   "cov2": NaN,
+   "n_z": 0,
+   "methods": {
+    "interfered": 99,
+    "fit": 1
+   }
+  }
+ },
+ "NaI": {
+  "mean": {
+   "n": 200,
+   "mean_z": -0.03132146612746148,
+   "cov2": 0.985,
+   "n_z": 200,
+   "multi_line": 200,
+   "exact": 0,
+   "with_usable": 200,
+   "best_present": 198,
+   "mean_usable_lines": 5.965,
+   "methods": {
+    "window": 197,
+    "interfered": 1,
+    "fit": 1,
+    "curved": 1
+   }
+  }
+ }
+}
