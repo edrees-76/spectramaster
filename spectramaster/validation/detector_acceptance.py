@@ -3,7 +3,8 @@ docs/baseline/detector_acceptance_protocol.md (spectra built here, fixed seeds).
 
     python -m spectramaster.validation.detector_acceptance
 
-Writes ``detector_acceptance.json`` and ``detector_acceptance.md`` to docs/baseline/after_DA1.
+Writes ``detector_acceptance.json`` and ``detector_acceptance.md`` to docs/baseline/after_DA2 (amendment 1,
+docs/baseline/detector_acceptance_amendment_protocol.md; the first run is in after_DA1).
 """
 from __future__ import annotations
 
@@ -19,7 +20,7 @@ from scipy.special import ndtr
 from ..analysis import detector_test as dt
 from ..model import Spectrum
 
-OUT = Path(__file__).resolve().parents[2] / "docs" / "baseline" / "after_DA1"
+OUT = Path(__file__).resolve().parents[2] / "docs" / "baseline" / "after_DA2"     # amendment 1
 FWTM_RATIO = math.sqrt(math.log(10.0) / math.log(2.0))      # Gaussian FWTM / FWHM
 AREA = 1.0e5
 LIVE = 3600.0
@@ -55,7 +56,8 @@ def widths() -> dict:
                          "noiseless_fwhm_dev": w.fwhm_kev / fw - 1.0,
                          "noiseless_fwtm_dev": w.fwtm_kev / (FWTM_RATIO * fw) - 1.0,
                          "poisson_n": len(fh), "poisson_fwhm_dev": float(np.mean(fh)) / fw - 1.0,
-                         "poisson_fwtm_dev": float(np.mean(ft)) / (FWTM_RATIO * fw) - 1.0})
+                         "poisson_fwtm_dev": float(np.mean(ft)) / (FWTM_RATIO * fw) - 1.0,
+                         "linear_crossings": w.linear_crossings + sum(x.linear_crossings for x in ws)})
     return {"rows": rows}
 
 

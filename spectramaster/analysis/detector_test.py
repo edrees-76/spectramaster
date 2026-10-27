@@ -23,6 +23,8 @@ ROI_FWHM = 3.0                       # ROI half-width in FWHM
 MIN_WIDTH_CH = 3.0                   # narrower peaks are sampled too coarsely for the widths
 CHI2_LOW, CHI2_HIGH = 0.05, 0.95     # TECDOC-1599 acceptance points
 CHI2_N = (10, 20)                    # numbers of counts of TECDOC-1599
+GEOMETRY_NOTE = ("relative efficiency for a Co-60 point source at 25 cm on the detector axis "
+                 "(vs 1.2e-3 of a 3 x 3 inch NaI); no coincidence-summing correction")
 
 
 @dataclass
@@ -32,6 +34,7 @@ class PeakWidth:
     fwhm_kev: Optional[float] = None
     fwtm_kev: Optional[float] = None
     roi: Optional[tuple[int, int]] = None          # count indices
+    linear_crossings: int = 0                      # crossings by linear interpolation (fallback)
     note: str = ""
 
     @property
@@ -98,9 +101,45 @@ def _roi(spectrum, energy: float) -> Optional[tuple[int, int, float]]:
     return lo, hi, w
 
 
+def _log_parabola(net: np.ndarray, below: int, above: int, inner: int, level: float) -> Optional[float]:
+    """Crossing of `level` between channels `below` and `above` by the parabola through the logarithms
+    of the net counts at below, above and inner (exact for a Gaussian); None when not usable."""
+    xs = np.array([below, above, inner], dtype=float)
+    ys = net[[below, above, inner]]
+    if np.any(ys <= 0):
+        return None
+    a, b, c = np.polyfit(xs, np.log(ys), 2)
+    roots = np.roots([a, b, c - math.log(level)]) if a != 0 else np.array([-(c - math.log(level)) / b])
+    lo, hi = min(below, above), max(below, above)
+    ok = [float(r.real) for r in np.atleast_1d(roots) if abs(r.imag) < 1e-12 and lo <= r.real <= hi]
+    return ok[0] if ok else None
+
+
+def _width(net: np.ndarray, rl: int, rh: int, imax: int, level: float) -> tuple[Optional[float], int]:
+    """(width in channels, crossings by linear interpolation) at `level` of the net counts
+    (detector_acceptance_amendment_protocol.md); None when a side does not fall below the level."""
+    i = imax
+    while i > rl and net[i - 1] >= level:
+        i -= 1
+    j = imax
+    while j < rh and net[j + 1] >= level:
+        j += 1
+    if i <= rl or j >= rh:
+        return None, 0
+    lin = 0
+    lo = _log_parabola(net, i - 1, i, i + 1, level) if i + 1 <= rh else None
+    if lo is None:
+        lo, lin = i - 1 + (level - net[i - 1]) / (net[i] - net[i - 1]), lin + 1
+    hi = _log_parabola(net, j + 1, j, j - 1, level) if j - 1 >= rl else None
+    if hi is None:
+        hi, lin = j + (net[j] - level) / (net[j] - net[j + 1]), lin + 1
+    return float(hi - lo), lin
+
+
 def peak_width(spectrum, energy: float = CO60_1332) -> PeakWidth:
-    """FWHM and FWTM (keV) of the peak at `energy` by the Aptec ROI analysis (linear background
-    between the end points, half and tenth maximum interpolated on the net counts)."""
+    """FWHM and FWTM (keV) of the peak at `energy`: the net counts of the Aptec ROI analysis (linear
+    background between the end points), half and tenth maximum crossings by log-parabolic
+    interpolation (detector_acceptance_amendment_protocol.md)."""
     from .aptec_roi import analyze_rois
     out = PeakWidth(energy)
     r = _roi(spectrum, energy)
@@ -113,12 +152,22 @@ def peak_width(spectrum, energy: float = CO60_1332) -> PeakWidth:
     if a.centroid is None or a.fwhm is None:
         out.note = f"no peak at {energy:.1f} keV"
         return out
+    y = np.asarray(spectrum.counts, dtype=float)
+    net = np.zeros_like(y)
+    net[lo:hi + 1] = y[lo:hi + 1] - a.background_at(np.arange(lo, hi + 1))
+    imax = lo + int(np.argmax(net[lo:hi + 1]))
+    fh, n_h = _width(net, lo, hi, imax, net[imax] / 2.0)
+    ft, n_t = _width(net, lo, hi, imax, net[imax] / 10.0)
+    if fh is None:
+        out.note = f"no peak at {energy:.1f} keV"
+        return out
+    out.linear_crossings = n_h + n_t
     k = _kev_per_channel(spectrum, a.centroid)
     out.centroid_kev = float(spectrum.energy_of(a.centroid))
-    out.fwhm_kev = a.fwhm * k
-    out.fwtm_kev = a.fwtm * k if a.fwtm is not None else None
-    if a.fwhm < MIN_WIDTH_CH:
-        out.note = (f"FWHM {a.fwhm:.1f} channels: too few channels for an accurate width "
+    out.fwhm_kev = fh * k
+    out.fwtm_kev = ft * k if ft is not None else None
+    if fh < MIN_WIDTH_CH:
+        out.note = (f"FWHM {fh:.1f} channels: too few channels for an accurate width "
                     f"(at least {MIN_WIDTH_CH:g} needed)")
     return out
 
@@ -215,8 +264,7 @@ def acceptance_test(spectrum, activity_bq: Optional[float] = None, activity_u_bq
         res.relative_efficiency = relative_efficiency(spectrum, activity_bq, activity_u_bq, reference_date)
         if res.relative_efficiency.note:
             res.notes.append(res.relative_efficiency.note)
-        res.notes.append("relative efficiency for a Co-60 point source at 25 cm on the detector axis "
-                         "(vs 1.2e-3 of a 3 x 3 inch NaI); no coincidence-summing correction")
+        res.notes.append(GEOMETRY_NOTE)
     return res
 
 

@@ -36,6 +36,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog,
 
 from ..analysis import efficiency as eff
 from . import i18n
+from .activity_input import UNITS, from_bq, to_bq
 from .geometry_editor import GeometryEditor
 from .i18n import ltr
 from .quant_strings import qtr
@@ -309,6 +310,12 @@ class CertificateEditor(QWidget):
         self.btn_aptec.setToolTip(qtr("tip_eff_aptec"))
         self.btn_aptec.clicked.connect(self.load_aptec_records)
         row.addWidget(self.btn_aptec)
+        row.addWidget(QLabel(qtr("eff_act_unit")))
+        self.unit_combo = QComboBox()                  # unit of the activity column; held in Bq
+        self.unit_combo.addItems(list(UNITS))
+        self._unit = "Bq"
+        self.unit_combo.currentTextChanged.connect(self._unit_changed)
+        row.addWidget(self.unit_combo)
         for key, slot in (("eff_import_csv", self.import_csv), ("eff_export_csv", self.export_csv),
                           ("eff_add", self.add_cert_row), ("eff_remove", self.remove_cert_rows)):
             b = QPushButton(qtr(key))
@@ -318,11 +325,39 @@ class CertificateEditor(QWidget):
         cl.addLayout(row)
         self.cert_table = QTableWidget(0, len(CERT_COLS))
         self.cert_table.setHorizontalHeaderLabels([qtr(k) for k in CERT_COLS])
+        self._header()
         self.cert_table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeToContents)
         self.cert_table.horizontalHeader().setStretchLastSection(True)
         self.cert_table.setSelectionBehavior(QAbstractItemView.SelectRows)
         cl.addWidget(self.cert_table)
         self.update_aptec()
+
+    def _header(self) -> None:
+        self.cert_table.horizontalHeaderItem(1).setText(qtr("eff_col_activity_u", unit=self._unit))
+
+    def activity_unit(self) -> str:
+        return self._unit
+
+    def set_activity_unit(self, unit: str) -> None:
+        self.unit_combo.setCurrentText(unit)
+
+    def _unit_changed(self, unit: str) -> None:
+        """Convert the activity column to the new unit (the certificate itself is in Bq)."""
+        entries = self.certificate_rows()
+        self._unit = unit
+        self._header()
+        for r, bq in entries:
+            if bq is not None:
+                self.cert_table.item(r, 1).setText(f"{from_bq(bq, unit):.6g}")
+
+    def certificate_rows(self) -> list[tuple[int, Optional[float]]]:
+        """(row, activity in Bq or None) of every row, in the unit shown."""
+        out = []
+        for r in range(self.cert_table.rowCount()):
+            it = self.cert_table.item(r, 1)
+            v = _num(it.text().strip()) if it else None
+            out.append((r, to_bq(v, self._unit) if v else None))
+        return out
 
     def update_aptec(self) -> None:
         self.btn_aptec.setEnabled(bool(self._aptec_records()))
@@ -348,7 +383,7 @@ class CertificateEditor(QWidget):
         r = self.cert_table.rowCount()
         self.cert_table.insertRow(r)
         pct = 100.0 * c.activity_unc / c.activity if c.activity else 0.0
-        vals = [c.nuclide, f"{c.activity:.6g}" if c.activity else "", f"{pct:.3g}",
+        vals = [c.nuclide, f"{from_bq(c.activity, self._unit):.6g}" if c.activity else "", f"{pct:.3g}",
                 c.ref_date.strftime("%Y-%m-%d %H:%M") if c.ref_date else "",
                 f"{c.half_life_s:.6g}" if c.half_life_s else "", _lines_text(c.lines)]
         for k, v in enumerate(vals):
@@ -366,6 +401,7 @@ class CertificateEditor(QWidget):
                 return it.text().strip() if it else ""
             name = t(0)
             act = _num(t(1))
+            act = to_bq(act, self._unit) if act else act
             if not name or not act:
                 continue
             pct = _num(t(2), 0.0) or 0.0

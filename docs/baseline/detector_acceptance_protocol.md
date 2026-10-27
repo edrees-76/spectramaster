@@ -74,3 +74,13 @@ module (which has a low-energy tail, so FWTM/FWHM is above 1.8226).
 - The relative efficiency assumes the standard geometry (point source, 25 cm, on the axis); the
   interface states it, it cannot check it.
 - The NaI detector QC of TECDOC-602 (nuclear-medicine instruments) is not part of this work.
+
+---
+
+## Results (first run, `after_DA1`, commit ba60fa7)
+
+**5 PASS / 2 FAIL as registered.** DA.C1 and DA.C2 failed in one case: FWHM 1.8 keV at 0.5 keV per
+channel, where the FWTM by linear interpolation came out 5.7 % above the Gaussian value. DA.C3 to
+DA.C7 passed. The widths are now measured as in `detector_acceptance_amendment_protocol.md`
+(registered before the change); its results are in `after_DA2`. DA.C8 was judged on the final code,
+after the amendment (see there).

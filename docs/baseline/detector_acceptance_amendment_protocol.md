@@ -33,3 +33,32 @@ harness. Also reported: the number of crossings where the linear interpolation w
 ## Outputs
 
 `docs/baseline/after_DA2/detector_acceptance.md` and `.json`; `after_DA2/baseline.md` and `.json`.
+
+---
+
+## Results (`after_DA2`)
+
+**7 PASS / 0 FAIL** for DA.C1 to DA.C7, and DA.C8 PASS.
+
+| ID | value |
+|---|---|
+| DA.C1 | largest deviation FWHM 1.80 %, FWTM 1.78 % (0.5 keV/channel, FWHM 1.8 keV; first run 5.7 %) |
+| DA.C2 | largest mean deviation FWHM 1.74 %, FWTM 1.75 % |
+| DA.C3 | largest deviation 0.000 % |
+| DA.C4 | mean z -0.038, fraction \|z\| <= 2 0.950 (200) |
+| DA.C5 | engine equals the hand value (214.421) |
+| DA.C6 | 10 counts 3.325 / 16.919, 20 counts 10.117 / 30.144 |
+| DA.C7 | Poisson accepted 0.898, extra scatter rejected 0.995 |
+| DA.C8 | dialog tests pass (`tests/test_detector_acceptance.py`); full suite 1479 passed, 69 skipped, 1 failed on the first run: the dialogs' attribute `result` hid `QDialog.result()` (`tests/test_widget_attribute_shadowing.py`); renamed `outcome`, that test and the dialog tests then passed (1480 passed in all); benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against `after_R4H` |
+
+The linear interpolation was not used for any crossing (0 in every case). The remaining deviation at
+3.6 channels per FWHM (+1.8 %) is the channel-integral part named above; at 0.25 keV per channel
+(7.2 and 8.8 channels) the deviations are below 0.5 %.
+
+Reported, not judged (synthetic HPGe Co-60 with a low-energy tail): FWHM 1.795 keV (model 1.770 keV),
+FWTM 3.279 keV, FWTM/FWHM 1.827, P/C 1527.
+
+Added after the criteria were judged, outside this protocol (no change to the engine or the results
+above): the source activity can be entered in Bq, kBq, MBq, GBq, TBq, Ci, mCi, µCi, nCi or pCi in the
+acceptance dialog, the efficiency certificate table and the QC reference activity
+(`gui/activity_input.py`, factors of `analysis/decay_calc.py`; `tests/test_activity_units.py`).
