@@ -1,0 +1,147 @@
+# Detector acceptance test and chi-square counting test
+
+Protocol: `docs/baseline/detector_acceptance_protocol.md`.
+
+| ID | result | value |
+|---|---|---|
+| DA.C1 | FAIL | largest |dev| FWHM 0.0223, FWTM 0.0573 |
+| DA.C2 | FAIL | largest |mean dev| FWHM 0.0232, FWTM 0.0570 |
+| DA.C3 | PASS | largest |dev| 0.00000 |
+| DA.C4 | PASS | mean z -0.038, |z| <= 2 0.950 (n 200) |
+| DA.C5 | PASS | hand 214.421, engine 214.4212523719165 |
+| DA.C6 | PASS | 10: [3.325, 16.919], 20: [10.117, 30.144] |
+| DA.C7 | PASS | Poisson accepted 0.8980, extra scatter rejected 0.9950 |
+
+## Measured
+
+```
+{
+ "widths": {
+  "rows": [
+   {
+    "gain": 0.5,
+    "fwhm_true": 1.8,
+    "fwtm_true": 3.280708311848991,
+    "noiseless_fwhm": 1.8346997538478718,
+    "noiseless_fwtm": 3.4687265231264064,
+    "noiseless_fwhm_dev": 0.01927764102659535,
+    "noiseless_fwtm_dev": 0.0573102493136457,
+    "poisson_n": 50,
+    "poisson_fwhm_dev": 0.01872129654693455,
+    "poisson_fwtm_dev": 0.05700471523067385
+   },
+   {
+    "gain": 0.5,
+    "fwhm_true": 2.2,
+    "fwtm_true": 4.009754603370989,
+    "noiseless_fwhm": 2.2489637919616143,
+    "noiseless_fwtm": 4.087437619065213,
+    "noiseless_fwhm_dev": 0.0222562690734609,
+    "noiseless_fwtm_dev": 0.01937350870023713,
+    "poisson_n": 50,
+    "poisson_fwhm_dev": 0.02321551815356826,
+    "poisson_fwtm_dev": 0.019545292045126228
+   },
+   {
+    "gain": 0.25,
+    "fwhm_true": 1.8,
+    "fwtm_true": 3.280708311848991,
+    "noiseless_fwhm": 1.8134687262238458,
+    "noiseless_fwtm": 3.3270138009388575,
+    "noiseless_fwhm_dev": 0.007482625679914312,
+    "noiseless_fwtm_dev": 0.014114479157633308,
+    "poisson_n": 50,
+    "poisson_fwhm_dev": 0.006275573103329712,
+    "poisson_fwtm_dev": 0.014126613786180409
+   },
+   {
+    "gain": 0.25,
+    "fwhm_true": 2.2,
+    "fwtm_true": 4.009754603370989,
+    "noiseless_fwhm": 2.212307144692204,
+    "noiseless_fwtm": 4.02684770744213,
+    "noiseless_fwhm_dev": 0.005594156678274453,
+    "noiseless_fwtm_dev": 0.004262880341048936,
+    "poisson_n": 50,
+    "poisson_fwhm_dev": 0.0063822181846096004,
+    "poisson_fwtm_dev": 0.005383496909741936
+   }
+  ]
+ },
+ "efficiency": {
+  "rows": [
+   {
+    "R": 20.0,
+    "years": 5.0,
+    "measured": 19.999999999000604,
+    "dev": -4.9969806070748746e-11,
+    "decay_factor": 0.5181481908584502
+   },
+   {
+    "R": 20.0,
+    "years": 0.0,
+    "measured": 19.9999999990006,
+    "dev": -4.997002811535367e-11,
+    "decay_factor": 1.0
+   },
+   {
+    "R": 40.0,
+    "years": 5.0,
+    "measured": 39.99999999800121,
+    "dev": -4.9969806070748746e-11,
+    "decay_factor": 0.5181481908584502
+   },
+   {
+    "R": 40.0,
+    "years": 0.0,
+    "measured": 39.99999999800121,
+    "dev": -4.9969806070748746e-11,
+    "decay_factor": 1.0
+   },
+   {
+    "R": 100.0,
+    "years": 5.0,
+    "measured": 99.99999999500301,
+    "dev": -4.996991709305121e-11,
+    "decay_factor": 0.5181481908584502
+   },
+   {
+    "R": 100.0,
+    "years": 0.0,
+    "measured": 99.99999999500302,
+    "dev": -4.9969806070748746e-11,
+    "decay_factor": 1.0
+   }
+  ],
+  "z_n": 200,
+  "z_mean": -0.0375801793477141,
+  "cov2": 0.95
+ },
+ "p_to_c": {
+  "hand": 214.4212523719165,
+  "engine": 214.4212523719165,
+  "equal": true
+ },
+ "chi_square": {
+  "points": {
+   "10": [
+    3.325,
+    16.919
+   ],
+   "20": [
+    10.117,
+    30.144
+   ]
+  },
+  "poisson_accepted": 0.898,
+  "scatter_rejected": 0.995
+ },
+ "reported": {
+  "fwhm_kev": 1.7988562962061678,
+  "fwtm_kev": 3.4022940536904116,
+  "ratio": 1.8913651195295218,
+  "p_to_c": 1527.379013761468,
+  "model_fwhm_kev": 1.7697421281079344
+ }
+}
+```
