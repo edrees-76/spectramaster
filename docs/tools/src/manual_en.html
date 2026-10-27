@@ -517,8 +517,11 @@ spectrum: one fitted region with data, fit, components and background, and the n
       <b>reason</b>, then <b>Refit Region</b>. <b>Add Peak at Channel</b> and <b>Remove Selected Peak…</b> refit the
       neighbours. <b>Undo</b> / <b>Redo</b> step through the edits; <b>Re-run Automatic Fit</b> starts again (the edits
       stay in the edit log).</li>
-  <li>The edited peaks are used by the activity calculation. A background-subtracted spectrum is refitted with its
-      propagated variance (sample + k² × background), so its negative channels are kept and the uncertainties stay
+  <li>The edited peaks are used by the activity calculation. A spectrum made in this session by background
+      subtraction, or by the Aptec operations Strip, Combine, Normalize or Shift, carries its propagated variance
+      (sample + k² × background) and is refitted with it, so its negative channels are kept and the uncertainties stay
+      valid. Any other change of the counts (Smooth, editing a channel) makes the variance unknown. The variance is
+      not saved in a file: a net spectrum opened from a file is refitted with the note that its uncertainties are not
       valid.</li>
 </ul>
 
@@ -717,7 +720,10 @@ spectrum: 11 lines assigned, order 1, validation passed with two warnings.</figc
   <li>Optionally tick <b>Also apply the FWHM calibration proposed with it</b>. The FWHM calibration is fitted
       through the <b>measured</b> widths of the lines (each line fitted with a free width, its neighbours together):
       the 511 keV annihilation line is left out, outliers more than 10 % off are removed, and a second order is
-      used only if it rises with energy. Fewer than two measured widths give no FWHM calibration.</li>
+      used only if it rises with energy and stays positive over the whole spectrum. A first-order fit that falls with
+      energy or reaches zero (often a doublet among the lines) gives no FWHM calibration; the reason is shown as the
+      tooltip of the FWHM line. Fewer than two measured widths give no FWHM calibration. When you exclude a line or
+      change the order, the FWHM calibration is fitted again through the widths of the lines still used.</li>
   <li><b>Accept and Apply</b>. Nothing is changed before this step.</li>
 </ol>
 

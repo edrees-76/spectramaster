@@ -56,6 +56,11 @@ class Spectrum:
     source_format: str = ""
     """Key of the FormatSpec that produced it (informational)."""
 
+    variance: Optional[tuple] = field(default=None, repr=False, compare=False)
+    """(SHA-256 of the counts, per-channel variance) of a spectrum whose contents are not Poisson
+    counts (a net spectrum); in memory only.  Read it with ``analysis.background.channel_variance``,
+    which ignores it once the counts have changed."""
+
     # ------------------------------------------------------------------ helpers
     @property
     def num_channels(self) -> int:

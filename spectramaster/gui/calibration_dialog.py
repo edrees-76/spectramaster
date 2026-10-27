@@ -121,6 +121,8 @@ class CalibrationDialog(_MessageMixin, QDialog):
         self.points: list[cal.CalibrationPoint] = []
         self.fit: Optional[cal.CalibrationFit] = None
         self.validation: Optional[cal.CalibrationValidation] = None
+        self.fwhm_fit: Optional[cal.CalibrationFit] = None      # follows the review (refit)
+        self.fwhm_note = ""
         self.result_spectrum = None
         self.last_error = ""
         self._base_points: list[cal.CalibrationPoint] = []
@@ -306,6 +308,7 @@ class CalibrationDialog(_MessageMixin, QDialog):
         self._user_excluded = {}
         self._base_points = copy.deepcopy(sc.points)
         self.points, self.fit, self.validation = sc.points, sc.fit, sc.validation
+        self.fwhm_fit, self.fwhm_note = sc.fwhm_fit, sc.fwhm_note
         self.status_label.setText("")
         self._show()
 
@@ -360,15 +363,21 @@ class CalibrationDialog(_MessageMixin, QDialog):
             p.used, p.reason = (False, USER_EXCLUDED + why) if why is not None else (True, "")
             p.loo_residual_kev = None
         det = self.validation.detector_type if self.validation is not None else ""
+        spec = self.spectrum
         try:
             fit, p_test, chi2r = cal.fit_points(pts, order=self.order(), det=det)
-            val = cal.validate_calibration(self.spectrum, fit, pts, self._lines, p_test, chi2r,
-                                           self._fitted_peaks)
+            val = cal.validate_calibration(spec, fit, pts, self._lines, p_test, chi2r, self._fitted_peaks)
+            # the FWHM calibration through the widths of the lines still used, with the new energy
+            # calibration (docs/baseline/round4_calibration_protocol.md); widths are not re-measured
+            fwhm, note = cal.fwhm_from_widths(self.proposal.line_widths,
+                                              [(p.nuclide, p.energy) for p in pts if p.used], fit.coeffs,
+                                              (spec.first_channel, spec.first_channel + spec.num_channels - 1))
         except Exception as exc:
             self.message(ctr("refit_failed", msg=str(exc)))
             self._show()                     # the last valid fit stays displayed
             return False
         self.points, self.fit, self.validation = pts, fit, val
+        self.fwhm_fit, self.fwhm_note = fwhm, note
         self._show()
         return True
 
@@ -407,9 +416,10 @@ class CalibrationDialog(_MessageMixin, QDialog):
             self.energy_label.setText(ctr("cal_energy") + " " + coeffs_text(fit.coeffs))
             self.rms_label.setText(ctr("cal_rms", rms=ltr(_f(fit.rms, ".4f")),
                                        max=ltr(_f(fit.max_abs_residual, ".4f")), dof=ltr(fit.dof)))
-        has_fwhm = sc is not None and sc.fwhm_fit is not None
+        has_fwhm = sc is not None and self.fwhm_fit is not None
         self.fwhm_label.setText(ctr("cal_fwhm") + " "
-                                + (coeffs_text(sc.fwhm_fit.coeffs) if has_fwhm else i18n.tr("none")))
+                                + (coeffs_text(self.fwhm_fit.coeffs) if has_fwhm else i18n.tr("none")))
+        self.fwhm_label.setToolTip(self.fwhm_note or "")
         self.apply_fwhm.setEnabled(has_fwhm)
         if not has_fwhm:
             self.apply_fwhm.setChecked(False)
@@ -449,8 +459,7 @@ class CalibrationDialog(_MessageMixin, QDialog):
             if self.validation is not None and not self.validation.ok:
                 self.message(ctr("val_blocked"))
             return None
-        fwhm = (self.proposal.fwhm_fit.coeffs
-                if self.apply_fwhm.isChecked() and self.proposal.fwhm_fit is not None else None)
+        fwhm = self.fwhm_fit.coeffs if self.apply_fwhm.isChecked() and self.fwhm_fit is not None else None
         new = cal.apply_calibration(self.spectrum, self.fit.coeffs, fwhm, note=self.note())
         new.extra["calibration_validation"] = self.validation.report()
         self.result_spectrum = new

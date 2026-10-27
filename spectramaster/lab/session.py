@@ -88,7 +88,9 @@ SCHEMA_VERSION = 1
 #          nuclides common only with the medical library; note on single matched lines
 #   1.17.0 2026-10-27 round-4 review (round4_formats_protocol.md): peak search refuses non-finite
 #          channel contents; EML/Sanderson time channels only with a possible real time
-ENGINE_VERSION = "1.17.0"
+#   1.18.0 2026-10-27 round-4 review (round4_calibration_protocol.md): source FWHM calibration
+#          positive and not decreasing; manual fit of a net spectrum with its variance
+ENGINE_VERSION = "1.18.0"
 
 
 class SessionSchemaError(ValueError):

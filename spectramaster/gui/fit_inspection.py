@@ -538,6 +538,16 @@ class FitInspectionDialog(QDialog):
         mode = self.width_combo.currentData()
         return float(self.width_spin.value()) if mode == "fixed" else mode
 
+    def fit_options(self) -> dict:
+        """Width and step options, and the per-channel variance of a net spectrum when it is known
+        (docs/baseline/round4_calibration_protocol.md)."""
+        from ..analysis.background import channel_variance
+        opts = {"width": self.width_option(), "step": self.step_check.isChecked()}
+        var = channel_variance(self.spectrum) if self.spectrum is not None else None
+        if var is not None:
+            opts["variance"] = var
+        return opts
+
     def _edit(self, what: str, fn) -> bool:
         if self.session is None or self.spectrum is None or self._busy:
             return False
@@ -555,14 +565,13 @@ class FitInspectionDialog(QDialog):
             return False
         s, spec = self.session, self.spectrum
         lo, hi, reason = self.lo_spin.value(), self.hi_spin.value(), self.reason_edit.text().strip()
-        opts = {"width": self.width_option(), "step": self.step_check.isChecked(),
-                "fix_centroids": fix if any(fix) else None}
+        opts = {**self.fit_options(), "fix_centroids": fix if any(fix) else None}
         return self._edit("refit", lambda: s.refit_region(spec, lo, hi, cents, reason=reason, **opts))
 
     def add_peak(self, channel: Optional[float] = None) -> bool:
         ch = float(self.add_spin.value() if channel is None else channel)
         s, spec, reason = self.session, self.spectrum, self.reason_edit.text().strip()
-        opts = {"width": self.width_option(), "step": self.step_check.isChecked()}
+        opts = self.fit_options()
         return self._edit("add", lambda: s.add_peak_and_refit(spec, ch, reason, **opts))
 
     def selected_peak_index(self) -> Optional[int]:
@@ -585,7 +594,7 @@ class FitInspectionDialog(QDialog):
             self.message(ftr("reason_required"))
             return False
         s, spec = self.session, self.spectrum
-        opts = {"width": self.width_option(), "step": self.step_check.isChecked()}
+        opts = self.fit_options()
         return self._edit("remove", lambda: s.remove_peak_and_refit(spec, index, reason.strip(), **opts))
 
     def _on_edited(self, result) -> None:

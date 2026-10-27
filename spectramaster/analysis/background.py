@@ -72,7 +72,45 @@ def not_poisson_note(spectrum) -> Optional[str]:
             "spectrum (with the background) instead")
 
 
-BACKGROUND_AGE_DAYS = 180         # older backgrounds are reported (shielding/radon conditions change)
+def _counts_sha256(spectrum) -> str:
+    import hashlib
+    return hashlib.sha256(np.ascontiguousarray(np.asarray(spectrum.counts, dtype=float)).tobytes()).hexdigest()
+
+
+def set_channel_variance(spectrum, variance) -> None:
+    """Attach the per-channel variance of `spectrum`'s present counts (in memory only); it is tied
+    to the counts by their SHA-256, so any later change of the counts makes it unknown
+    (docs/baseline/round4_calibration_protocol.md).  None removes it."""
+    if variance is None:
+        spectrum.variance = None
+        return
+    v = np.asarray(variance, dtype=float)
+    if v.shape != (len(spectrum.counts),) or not np.isfinite(v).all():
+        raise ValueError("the variance must have one finite value per channel")
+    spectrum.variance = (_counts_sha256(spectrum), [float(x) for x in v])
+
+
+def channel_variance(spectrum) -> Optional[np.ndarray]:
+    """The variance attached by :func:`set_channel_variance`, or None when there is none or the
+    counts have changed since."""
+    held = getattr(spectrum, "variance", None)
+    if not held or len(held[1]) != len(spectrum.counts) or held[0] != _counts_sha256(spectrum):
+        return None
+    return np.asarray(held[1], dtype=float)
+
+
+def known_variance(spectrum) -> Optional[np.ndarray]:
+    """Variance of each channel when it is known: the attached one, else the counts of a Poisson
+    spectrum (negative contents taken as 0); None when neither applies."""
+    v = channel_variance(spectrum)
+    if v is not None:
+        return v
+    if not_poisson_note(spectrum) is None:
+        return np.maximum(np.asarray(spectrum.counts, dtype=float), 0.0)
+    return None
+
+
+BACKGROUND_AGE_DAYS = 180        # older backgrounds are reported (shielding/radon conditions change)
 
 
 def compatibility(sample, background) -> list[str]:
