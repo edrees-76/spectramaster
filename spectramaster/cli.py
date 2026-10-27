@@ -208,6 +208,9 @@ def cmd_info(args) -> int:
             cal_note = engine.calibration_note([s])
             if cal_note:
                 rows.insert(1, ("Note", cal_note))
+            bad_note = engine.counts_note([s])
+            if bad_note:
+                rows.insert(1, ("Note", bad_note))
             if s.energy_coeffs:
                 e = s.energies() or [0.0]
                 rows.append(("Energy cal.", ", ".join(f"{c:.7g}" for c in s.energy_coeffs)))

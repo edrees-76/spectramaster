@@ -50,6 +50,22 @@ CALIBRATION_NOTE = ("the stored energy calibration E = 0 + 1 x channel is the de
                     "MCA; the spectrum is read without energy calibration (calibrate it first)")
 
 
+COUNTS_NOTE = ("{n} channels hold non-finite values (NaN or infinity): the spectrum can be viewed, but peak "
+               "search and analysis refuse it")
+
+
+def nonfinite_channels(spectra: Sequence[Spectrum]) -> int:
+    """Number of channels holding NaN or infinity."""
+    import math
+    return sum(1 for s in spectra for c in s.counts if not math.isfinite(float(c)))
+
+
+def counts_note(spectra: Sequence[Spectrum]) -> Optional[str]:
+    """The note to show when a spectrum has non-finite channel contents, else None."""
+    n = nonfinite_channels(spectra)
+    return COUNTS_NOTE.format(n=n) if n else None
+
+
 def calibration_note(spectra: Sequence[Spectrum]) -> Optional[str]:
     """The note to show when a stored placeholder calibration was not used, else None."""
     if any(s.extra.get("energy_calibration") == "placeholder" for s in spectra):
@@ -280,7 +296,10 @@ def read_back_differences(spec: Spectrum, path: Path, fmt: FormatSpec) -> list[s
                    f"largest change {float(np.max(np.abs(a - b))):.6g} counts)")
     coeffs = [float(c) for c in spec.energy_coeffs]
     if any(coeffs):
-        if not any(back.energy_coeffs):
+        if not any(back.energy_coeffs) and back.extra.get("energy_calibration") == "placeholder":
+            out.append(f"{tag}: the energy calibration 0 + 1 keV per channel is stored, but it is read back as "
+                       "the default of an uncalibrated MCA (no energy calibration)")
+        elif not any(back.energy_coeffs):
             out.append(f"{tag}: energy calibration not stored")
         else:
             i = np.arange(i0, i1, dtype=float)

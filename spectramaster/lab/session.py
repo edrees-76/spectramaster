@@ -86,7 +86,9 @@ SCHEMA_VERSION = 1
 #   1.16.0 2026-10-27 round-4 review (round4_identify_protocol.md): identification FWHM at the absolute
 #          channel; low plausibility for nuclides decayed by > 10 half-lives since sampling; medical
 #          nuclides common only with the medical library; note on single matched lines
-ENGINE_VERSION = "1.16.0"
+#   1.17.0 2026-10-27 round-4 review (round4_formats_protocol.md): peak search refuses non-finite
+#          channel contents; EML/Sanderson time channels only with a possible real time
+ENGINE_VERSION = "1.17.0"
 
 
 class SessionSchemaError(ValueError):

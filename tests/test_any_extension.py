@@ -85,12 +85,15 @@ def test_unrecognised_file_says_the_format_can_be_chosen(tmp_path):
         read_spectra(p)
 
 
-def test_tka_with_another_extension_is_read_as_ascii1_with_the_note(tmp_path):
-    """Known limit stated in the protocol: TKA cannot be told from ASCII-1 by content."""
+def test_tka_with_another_extension_is_ambiguous(tmp_path):
+    """TKA has a content test since docs/baseline/round4_formats_protocol.md: a TKA file with
+    another extension is ambiguous with ASCII-1 and the user chooses."""
     odd = tmp_path / "a.xyz"
     odd.write_bytes(_write("tka", tmp_path / "a.tka").read_bytes())
-    s, fmt = read_spectra(odd)
-    assert fmt.key == "ascii1" and content_note(s, fmt)
+    with pytest.raises(FormatError, match="choose the input format"):
+        read_spectra(odd)
+    s, fmt = read_spectra(odd, get_format("tka"))
+    assert fmt.key == "tka" and s[0].live_time == 100.0
 
 
 def test_cli_info_shows_the_note(tmp_path, capsys):

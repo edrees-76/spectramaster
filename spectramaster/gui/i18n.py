@@ -85,6 +85,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "status_saved": "Saved {path}",
         "status_out_fmt": "Output format: {name}",
         "fmt_by_content": "Format recognised from the content ({name}); choose the input format if this is wrong.",
+        "counts_nonfinite": "{n} channels hold non-finite values (NaN or infinity): the spectrum can be viewed, but peak search and analysis refuse it.",
         "cal_placeholder": "The stored energy calibration (E = channel) is an uncalibrated default; the spectrum was read without energy calibration. Calibrate it first.",
         # format chooser
         "dlg_input_title": "Open Input Files As",
@@ -247,6 +248,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "status_saved": "تم الحفظ: {path}",
         "status_out_fmt": "صيغة الإخراج: {name}",
         "fmt_by_content": "تم التعرّف على الصيغة من محتوى الملف ({name})؛ اختر صيغة الإدخال إن كان ذلك خطأً.",
+        "counts_nonfinite": "في {n} قناة قيم غير منتهية (NaN أو لانهاية): يمكن عرض الطيف، لكن البحث عن القمم والتحليل يرفضانه.",
         "cal_placeholder": "معايرة الطاقة المخزّنة (الطاقة = رقم القناة) قيمة افتراضية لجهاز لم يُعايَر؛ قُرئ الطيف بلا معايرة طاقة. عايِره أولًا.",
         "dlg_input_title": "فتح ملفات الإدخال بصيغة",
         "dlg_input_prompt": "صيغة ملف الطيف المُدخل:",

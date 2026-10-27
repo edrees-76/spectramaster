@@ -57,3 +57,33 @@ spectrum" - such a table has the layout of a channel/count spectrum and cannot b
   its time channels as counts and says so.
 - A TKA file whose first counts look like live and real time is still ambiguous with one-column
   ASCII; the user chooses.
+
+---
+
+## Results (after_R4C)
+
+**First run: 2 PASS / 2 FAIL** (RC.C1 PASS, RC.C2 FAIL, RC.C3 PASS, RC.C4 FAIL). Both failures were
+errors of the implementation, not of the criteria; the limits were not changed.
+
+- RC.C2 FAIL: all 38 EML/Sanderson files changed, only 2 kept their time channels. In 36 of the
+  EML TEST files channel 0 is the live time and channel 1 is 0 (real time not given), which the rule
+  `LT <= channel 1 <= 2 LT` refused. Correction: channel 1 = 0 is also a time channel (real time
+  taken equal to the live time, as before). This widens change 2 above to `channel 1 = 0, or
+  LT <= channel 1 <= 2 LT`; Gemini's case (channel 1 = 500 with LT 100) is still read as counts.
+- RC.C4 FAIL: the Laval ASCII file written by the program and renamed `.xyz` (or with no extension)
+  became ambiguous between Laval and TKA, because the new TKA content test also matched it (blank
+  lines are skipped). Correction: Laval is preferred over TKA when both content tests match, as it
+  already was over one-column ASCII (`CONTENT_PREFERENCE`).
+
+**Second run, with both corrections: 4 PASS / 0 FAIL** (`after_R4C/round4_formats.md`):
+
+| ID | result | key numbers |
+|---|---|---|
+| RC.C1 | PASS | NaN and infinity: ValueError naming channel 300 (before: NaN returned 0 peaks silently); finite spectrum peaks unchanged; `counts_note` note for NaN, None for finite |
+| RC.C2 | PASS | Gemini's case read as counts 100, 500, real time 100, note naming channel 1 (before: channels zeroed, real time 500); own IAEA .dat RT 1100 as before; 38 EML files identical, 36 with time channels |
+| RC.C3 | PASS | 1 keV/ch: warning that 0 + 1 keV per channel reads back as an uncalibrated MCA; 0.5 keV/ch unchanged |
+| RC.C4 | PASS | SpecUtils TXT `.txt` read as SpecUtils TXT, LT 100 / RT 110 (before: two-column ASCII, no times); TKA `.xyz` ambiguous TKA / one-column ASCII; one-column file starting with zeros still one-column ASCII; no other detection change; negative files detected 0 -> 0 |
+| RC.C5 | PASS | full test suite passed (see below); benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed status (`after_R4C/baseline.md`) |
+
+Engine version 1.17.0 (Sanderson time channels and format detection can change what an existing
+file reads as).
