@@ -128,3 +128,22 @@ def test_check_without_livechart_files_is_refused(tmp_path):
     from spectramaster.validation import coincidence_ensdf_check as ck
     assert ck.OUT.parts[-3:] == ("docs", "baseline", "after_CT1")
     assert ck.main(["--raw", str(tmp_path)]) == 2
+
+
+def test_check_compares_upward_and_two_way_probabilities():
+    """R4-F (round4_validation_protocol.md): the upward P(a | b) = I_a P(b | a) / I_b and the two-way
+    probability the correction uses are compared with the simulated counts."""
+    from collections import defaultdict
+    from spectramaster.validation import coincidence_ensdf_check as ck
+    tab = [[1000.0, 0.5], [500.0, 1.0]]                 # 1000 keV above 500 keV, P(500 | 1000) = 1
+    cnt = {0: 5000, 1: 10000}
+    pair = defaultdict(int, {(0, 1): 5000})
+    up, both = ck.other_directions(tab, {(0, 1): 1.0}, cnt, pair, {0, 1})
+    assert [(r["i"], r["j"], r["table"], r["mc"], r["ok"]) for r in up] == [(1000.0, 500.0, 0.5, 0.5, True)]
+    assert {(r["i"], r["j"]): (r["table"], r["mc"]) for r in both} == {(1000.0, 500.0): (1.0, 1.0),
+                                                                     (500.0, 1000.0): (0.5, 0.5)}
+    assert all(r["ok"] for r in both)
+    # listed intensity of the upper gamma inconsistent with the cascade: the upward row fails
+    up, both = ck.other_directions([[1000.0, 0.8], [500.0, 1.0]], {(0, 1): 1.0}, cnt, pair, {0, 1})
+    assert up[0]["table"] == 0.8 and up[0]["mc"] == 0.5 and not up[0]["ok"]
+    assert [r["ok"] for r in both] == [True, False]

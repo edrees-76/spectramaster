@@ -58,3 +58,58 @@ failure.
   detected; only the builder's arithmetic and the table's consistency are checked.
 - Nuclides outside the 18 of the Monte Carlo set are checked only through the library coverage
   count (CT.C3), as before.
+
+---
+
+## Results (after_R4F)
+
+Run 2026-10-27, engine 1.18.0. The text above the line is unchanged (SHA-256 of the registered file
+77645f0011f39131c5ea361bc450464e49bc121c6b366dcc2ce94588285276bf, commit 49b4f96).
+
+**First run: 2 PASS / 2 FAIL** (`after_R4F/coincidence_check.md`):
+
+| ID | result | key numbers |
+|---|---|---|
+| RF.C1 | PASS | downward rows identical to after_CT1 (237 compared, 0 failed, largest 0.0242) |
+| RF.C2 | **FAIL** | 215 upward rows, 13 outside the limit, largest \|diff\| 0.0947; rms of z 3.39 (limit 1.3) |
+| RF.C3 | **FAIL** | 448 two-way rows, the same 13 outside (the downward part agrees) |
+| RF.C4 | PASS | correction appended to `ensdf_coincidence_protocol.md` (8 lines added, none changed); round-3 record in the progress file; new test `test_check_compares_upward_and_two_way_probabilities` passes; full suite 1468 passed, 69 skipped; benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed status (`after_R4F/baseline.md`) |
+
+**Cause of the failures, checked after the run.** The failures are not errors of the check
+or of the builder's arithmetic. They come from ENSDF level schemes whose intensity balance does not
+close. The table's upward probability uses the listed intensity I_j. The simulation uses the
+emission rate that its cascade walk gives. At a level whose listed inflow exceeds its listed
+outflow, the walk sends the excess through the listed gammas:
+
+* **Ac-228 (10 rows).** The 674.75 keV gamma (2.1 %) feeds the 968.3 keV level, whose listed
+  outflow is 0.22 %. The 214.85 keV gamma (0.76 %) feeds the 938.6 keV level, whose outflow is
+  0.03 %. The excess reaches the 328.0 keV level. In the simulation the 270.2, 328.0, 338.3 and
+  209.3 keV lines come out 9-17 % above their listed intensities, while the 794.9, 911.2 and
+  969.0 keV lines agree within 3 %.
+* **Co-57 (1 row).** The 14.4 keV level receives 4 % more than it emits. The table's
+  P(122.1 | 14.4) is 1.018, a probability above 1; the builder drops a pair only above
+  REVERSE_TOL = 1.02.
+* **Ba-133 81.0 keV, Ir-192 205.8 keV (1 row each).** Imbalances of about 1 %, a difference of
+  0.008 and 0.006 against 4 sigma = 0.007 and 0.005.
+
+**Size of the effect on the correction** (reported, not registered). The summing-out term of a line
+changes by sum_i dP(i | j) eps_t(E_i). The sums of dP over the failing partners are:
+
+| line | sum of dP |
+|---|---|
+| Ac-228 270.2 keV | 0.138 |
+| Ac-228 328.0 keV | 0.132 |
+| Ac-228 209.3 keV | 0.033 |
+| Ac-228 338.3 keV | 0.028 |
+| Co-57 14.4 keV | 0.044 |
+| Ba-133 81.0 keV | 0.011 |
+| Ir-192 205.8 keV | 0.007 |
+
+With a total efficiency of 0.1 for the partners (a close Marinelli geometry), the change is about
+1.4 % at most, on the weak Ac-228 lines at 270 and 328 keV. It is 0.3 % on 338.3 keV and below 0.1 %
+on the key lines 911.2 and 969.0 keV.
+
+**Not changed.** The table and the correction are left as they are; which is right, the listed
+intensities or the level balance, is a question about ENSDF data. A rule for imbalanced levels (for
+example, capping the two-way probability at 1, or taking the upward term from the level balance)
+needs its own protocol.

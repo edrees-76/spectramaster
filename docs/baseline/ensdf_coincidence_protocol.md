@@ -247,3 +247,11 @@ ENSDF level schemes:
 * every transition is checked against an independent simulation;
 * the large SandiaDecay errors (Sc-48, Eu-152 EC and 78 others) are gone;
 * β⁺ summing is resolved for every positron emitter of the library.
+
+**Correction (2026-10-27, round-4 review R4-F, `round4_validation_protocol.md`).** The line "every
+transition is checked against an independent simulation" above overstates the check. The Monte Carlo
+of CT.C2 covers 18 nuclides (20 decay modes) of the table, and in them only the downward probability
+P(j | i), j below i. The single-path cascades of CT.C1 are four. The other transitions of the table
+are checked only by the library coverage count of CT.C3. R4-F added the upward and two-way
+probabilities to the same simulation (`after_R4F/coincidence_check.md`). The lines above are left
+as they were recorded.

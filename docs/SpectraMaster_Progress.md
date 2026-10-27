@@ -1062,6 +1062,46 @@ Timed on 8192-channel HPGe spectra before the change (the operations below 0.3 s
   downloaded data. It is worth doing only with a calibration below about 47 keV.
 
 
+## External review round 3 (2026-10-21/22): record
+
+Reviews: Codex 74, Gemini 90. Every High finding was checked on the code before a change; science
+changes followed a pre-registered protocol in `docs/baseline/` (limits fixed before the run, results
+below its line). The merged pull requests, with the registered result where there is one:
+
+| PR | subject | result (outputs) |
+|---|---|---|
+| #36 | certified reference materials: first real-data concentration check | 6 PASS / 2 FAIL (defects D1, D2) |
+| #37 | gamma-line library: wrong, duplicated and lost lines (D1, Ac-228 674.75 keV) | fixed |
+| #38 | corrections used together: reference peak, background, blank, manual peaks | tests |
+| #39 | manual refits of net spectra: variance and negative channels | tests |
+| #40 | true-coincidence summing: daughters, calibration refit, curves without points | tests |
+| #41 | spectrum writers: no silent change | tests |
+| #42 | efficiency with a background on S - kB; non-Poisson spectra reported | tests |
+| #43 | efficiency model error: outliers limited at 3 x the curve's scatter (D2) | tests |
+| #44 | signed primary result for lines without a search peak (M2, H3b) | tests |
+| #45 | interface: step through found peaks, coloured nuclide lines, maximize buttons | tests |
+| #46 | IAEA 2002 test spectra: certified-activity check | 3 PASS / 4 FAIL as registered |
+| #47 | 511 keV annihilation summing in TCS (F2) | 9 PASS / 0 FAIL (after_AN1, engine 1.8.0) |
+| #48 | reading spectrum files with any extension | 5 PASS / 2 FAIL as registered (after_AX1) |
+| #49 | quadratic continuum for curved NaI windows (item 6b) | 9 PASS / 4 FAIL as registered (after_WP1, engine 1.9.0) |
+| #50 | deterministic benchmark report (ties in name order) | after_TO1 4 / 2, amendment after_TO2 5 / 0 |
+| #51 | EML / IAEA ASCII .dat layout: time channels, one reader under any name | 5 PASS / 0 FAIL (after_ID1) |
+| #52 | implausible FWHM model (F1): rescale to the strongest peaks, with a note | first rule after_FP1 3 / 5, not shipped; amendment after_FP2 8 / 1 (engine 1.10.0) |
+| #53 | placeholder energy calibration E = channel read as uncalibrated | 6 PASS / 0 FAIL (after_PE1) |
+| #54 | self-attenuation correction for sample density (F5) | 5 PASS / 1 FAIL as written (after_SA1, engine 1.11.0) |
+| #55 | close-geometry efficiency curve with cascade emitters (F4) | 6 PASS / 0 FAIL (after_CG1, engine 1.12.0) |
+| #56 | FWHM calibration from a source through measured line widths (MIX) | 6 PASS / 0 FAIL (after_MX1, engine 1.13.0) |
+| #57, #59, #60, #65 | interface: maximize buttons and screen fit, close button fix, modal calibration and fit windows, widget attributes | tests |
+| #58 | installer: SciPy license, unused large packages excluded | installer rebuilt 2026-10-22 |
+| #61 | TCS coincidence table from ENSDF (LiveChart) instead of SandiaDecay (F3, part 1) | 7 PASS (after_CT1, engine 1.14.0); AN.C1 fails as written (Na-22 source difference) |
+| #62, #64 | logo | - |
+| #63 | long operations off the interface thread (section above) | tests |
+| #66 | user manuals AR/EN: full rewrite for release 1.0.0 | - |
+| #67 | laboratory HPGe spectra against GammaVision reports | 4 PASS / 2 FAIL (after_GV1) |
+
+Deferred from this round: X-ray summing (F3, section above).
+
+
 ## Round-4 external review: activity findings R4-A (2026-10-23)
 
 Reviews: Codex 78, Antigravity 82, Gemini 92 (Gemini reviewed 5945b16, before #67). Each finding was
@@ -1159,3 +1199,19 @@ Timed before the change (Codex M6, Gemini H5):
 - The reference-peak measurement disables Measure and Calculate until it ends; an unreadable file or a
   missing peak is reported as before.
 - No change to the analysis engine (engine 1.18.0). Tests `tests/test_round4_ui_thread.py`.
+
+
+## Round-4 external review: validation and documentation R4-F (2026-10-27)
+
+Protocol `docs/baseline/round4_validation_protocol.md` (registered before the run).
+
+- **Monte Carlo check of the coincidence table, both directions (Codex).** The check compared only
+  P(j | i) down the cascade. It now also compares the upward P(i | j) = I_i P(j | i) / I_j and the
+  two-way probability `Transition.coincident` that the correction uses
+  (`coincidence_ensdf_check --out`). Results are in `docs/baseline/after_R4F/`.
+- **Wording of the coincidence protocol (Gemini).** A dated correction is appended to
+  `ensdf_coincidence_protocol.md`. "Every transition checked" meant only the 18 nuclides of the Monte
+  Carlo.
+- **Round-3 record.** The section above lists PRs #36-#67.
+- No change to the analysis engine or the coincidence table (engine 1.18.0).
+- **Result: 2 PASS / 2 FAIL as registered.** The downward rows are unchanged. Upward and two-way rows: 13 outside the limit, from ENSDF levels whose intensity balance does not close (Ac-228 968.3 and 938.6 keV levels, Co-57 14.4 keV). Effect on the correction: at most about 1.4 % on the weak Ac-228 270/328 keV lines in a close geometry. Left for its own protocol.

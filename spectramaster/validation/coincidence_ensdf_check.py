@@ -2,14 +2,16 @@
 ``analysis/data/build_coincidences_ensdf.py``) against a Monte Carlo simulation of the decay
 cascades, written separately from the builder: its own reading of the LiveChart CSV files, level
 feeding from the intensity balance, and a random walk down the levels instead of the analytic
-path sums (docs/baseline/ensdf_coincidence_protocol.md).
+path sums (docs/baseline/ensdf_coincidence_protocol.md).  Besides P(j | i) down the cascade, the
+upward P(i | j) = I_i P(j | i) / I_j and the two-way probability the correction uses
+(``Transition.coincident``) are compared (docs/baseline/round4_validation_protocol.md).
 
-    python -m spectramaster.validation.coincidence_ensdf_check [--raw DIR] [--old OLD_TABLE]
+    python -m spectramaster.validation.coincidence_ensdf_check [--raw DIR] [--old OLD_TABLE] [--out DIR]
 
 ``DIR`` of the LiveChart files: ``SPECTRAMASTER_LIVECHART_DIR`` or
 D:/SpectraMaster_public_data/livechart/raw (kept outside the repository).  Writes
-``coincidence_check.json`` and ``coincidence_check.md`` to OUT (docs/baseline/after_CT1, a fixed
-folder of the repository); no ENSDF data is copied.
+``coincidence_check.json`` and ``coincidence_check.md`` to OUT (docs/baseline/after_CT1 unless
+``--out`` is given); no ENSDF data is copied.
 """
 from __future__ import annotations
 
@@ -22,6 +24,8 @@ import random
 import sys
 from collections import defaultdict
 from pathlib import Path
+
+import numpy as np
 
 from spectramaster.analysis import coincidence as co
 from spectramaster.analysis.library import lines_of
@@ -135,6 +139,37 @@ def simulate(gam, hl, bplus, n: int, rng: random.Random):
     return {"n_g": n_g, "n_pair": n_pair, "n_b": n_b, "scale": scale, "n": n}
 
 
+def _row(pm: float, pt: float, n: int, **keys) -> dict:
+    sig = math.sqrt(max(pm * (1 - pm), 1e-12) / n)
+    return {**keys, "table": pt, "mc": round(pm, 5), "sigma": round(sig, 5),
+            "ok": abs(pt - pm) <= max(ABS_TOL, SIGMAS * sig)}
+
+
+def other_directions(tab, table_c, cnt, pair, strong) -> tuple[list[dict], list[dict]]:
+    """Upward rows, P(a | b) for a above b against I_a P(b | a) / I_b, and two-way rows,
+    P(j | i) in either order against ``Transition.coincident`` built from the record as
+    ``analysis.coincidence.transitions`` builds it.  No random numbers are drawn."""
+    g = np.array(tab, dtype=float).reshape(-1, 2)
+    after = np.zeros((len(g), len(g)))
+    for (a, b), p in table_c.items():
+        after[a, b] = p
+    two = co.Transition(1.0, g[:, 0].copy(), g[:, 1].copy(), after).coincident
+    up, both = [], []
+    for a in sorted(strong):
+        for b in sorted(strong):
+            if a == b:
+                continue
+            pm = pair[(a, b)] / cnt[b]
+            pt = g[a, 1] * after[a, b] / g[b, 1] if g[b, 1] > 0 else 0.0
+            if max(pm, pt) >= MIN_P:
+                up.append(_row(pm, round(float(pt), 6), cnt[b], i=tab[a][0], j=tab[b][0]))
+            pm = (pair[(a, b)] + pair[(b, a)]) / cnt[a]
+            pt = float(two[a, b])
+            if max(pm, pt) >= MIN_P:
+                both.append(_row(pm, round(pt, 6), cnt[a], i=tab[a][0], j=tab[b][0]))
+    return up, both
+
+
 def compare(nuclide: str, raw: Path, rng: random.Random) -> list[dict]:
     out = []
     for rec in co._table()["nuclides"].get(nuclide, []):
@@ -186,8 +221,10 @@ def compare(nuclide: str, raw: Path, rng: random.Random) -> list[dict]:
                 sig = math.sqrt(max(pm * (1 - pm), 1e-12) / cnt[a])
                 anns.append({"i": tab[a][0], "table": pt, "mc": round(pm, 5), "sigma": round(sig, 5),
                              "ok": abs(pt - pm) <= max(ABS_TOL, SIGMAS * sig)})
+        up, both = other_directions(tab, table_c, cnt, pair, strong)
         out.append({"mode": mode, "status": "ok", "pairs": rows, "ann": anns,
-                    "worst": max((abs(r["table"] - r["mc"]) for r in rows + anns), default=0.0)})
+                    "worst": max((abs(r["table"] - r["mc"]) for r in rows + anns), default=0.0),
+                    "up": up, "two_way": both})
     return out
 
 
@@ -235,7 +272,11 @@ def described(table_path=None) -> dict:
 def run(raw: Path, old=None) -> dict:
     rng = random.Random(MC_SEED)
     mc = {n: compare(n, raw, rng) for n in MC_SET}
-    pairs = [r for v in mc.values() for t in v if t["status"] == "ok" for r in t["pairs"] + t["ann"]]
+    ok = [t for v in mc.values() for t in v if t["status"] == "ok"]
+    pairs = [r for t in ok for r in t["pairs"] + t["ann"]]
+    up = [r for t in ok for r in t["up"]]
+    both = [r for t in ok for r in t["two_way"]]
+    z = [(r["table"] - r["mc"]) / r["sigma"] for r in up if r["sigma"] > 1e-5]
     unresolved = sorted(n for n, recs in co._table()["nuclides"].items() for r in recs if r.get("ann_unresolved"))
     new_cov = described()
     res = {"monte_carlo": mc, "analytic": analytic(raw), "coverage": new_cov,
@@ -243,6 +284,11 @@ def run(raw: Path, old=None) -> dict:
            "ann_unresolved": unresolved,
            "summary": {"mc_compared": len(pairs), "mc_failed": sum(not r["ok"] for r in pairs),
                        "mc_worst_abs": max((abs(r["table"] - r["mc"]) for r in pairs), default=0.0),
+                       "up_compared": len(up), "up_failed": sum(not r["ok"] for r in up),
+                       "up_worst_abs": max((abs(r["table"] - r["mc"]) for r in up), default=0.0),
+                       "up_z_rms": math.sqrt(sum(v * v for v in z) / len(z)) if z else 0.0,
+                       "two_way_compared": len(both), "two_way_failed": sum(not r["ok"] for r in both),
+                       "two_way_worst_abs": max((abs(r["table"] - r["mc"]) for r in both), default=0.0),
                        "described": len(new_cov["described"]), "not_described": len(new_cov["not_described"])}}
     if old:
         prev = described(old)
@@ -275,6 +321,17 @@ def write_md(res: dict, path: Path) -> None:
                 continue
             rows = t["pairs"] + t["ann"]
             lines.append(f"| {n} | {t['mode']} | {len(rows)} | {sum(not r['ok'] for r in rows)} | {t['worst']:.4f} |")
+    lines += ["", "## Upward and two-way probabilities", "",
+              f"Upward P(i | j) = I_i P(j | i) / I_j: {s['up_compared']} compared, {s['up_failed']} outside the "
+              f"same limit; largest |table - simulation| {s['up_worst_abs']:.4f}; rms of z {s['up_z_rms']:.2f}.",
+              f"Two-way P(j | i) used by the correction (`Transition.coincident`): {s['two_way_compared']} "
+              f"compared, {s['two_way_failed']} outside; largest {s['two_way_worst_abs']:.4f}.", "",
+              "| Nuclide | mode | upward | failed | two-way | failed |", "|---|---|---|---|---|---|"]
+    for n, recs in res["monte_carlo"].items():
+        for t in recs:
+            if t["status"] == "ok":
+                lines.append(f"| {n} | {t['mode']} | {len(t['up'])} | {sum(not r['ok'] for r in t['up'])} | "
+                             f"{len(t['two_way'])} | {sum(not r['ok'] for r in t['two_way'])} |")
     lines += ["", "## Library coverage", "",
               f"Library gamma lines >= 1 % described: {s['described']}; in the table but not described: "
               f"{s['not_described']} ({', '.join(res['coverage']['not_described'])})."]
@@ -291,15 +348,17 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--raw", default=None)
     ap.add_argument("--old", default=None, help="previous coincidence table, for the coverage comparison")
+    ap.add_argument("--out", default=None, help=f"output folder (default {OUT})")
     a = ap.parse_args(argv)
     raw = raw_folder(a.raw)
     if not (raw / "decay_rads_g").is_dir():
         print(f"no LiveChart files in {raw}", file=sys.stderr)
         return 2
     res = run(raw, a.old)
-    OUT.mkdir(parents=True, exist_ok=True)
-    (OUT / "coincidence_check.json").write_text(json.dumps(res, indent=1), encoding="utf-8", newline="\n")
-    write_md(res, OUT / "coincidence_check.md")
+    out = Path(a.out) if a.out else OUT
+    out.mkdir(parents=True, exist_ok=True)
+    (out / "coincidence_check.json").write_text(json.dumps(res, indent=1), encoding="utf-8", newline="\n")
+    write_md(res, out / "coincidence_check.md")
     print(json.dumps(res["summary"]))
     return 0
 
