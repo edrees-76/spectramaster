@@ -445,6 +445,14 @@ penalties for a missing strongest line or inconsistent area ratios, and a greedy
 Weak lines below the local detection limit are not counted as missing. Results — especially low-confidence
 ones, single-line nuclides and short-lived nuclides in old spectra — <b>must be reviewed by an expert</b>.
 The identification does not replace the laboratory's validated analysis procedure.</div>
+<p><b>Sampling date.</b> When the session's sample information has a sampling date (end, else start;
+section <a href="#q-conc">9.7</a>), a nuclide that has decayed by more than 10 half-lives between sampling and
+the start of the measurement (less than 0.1 % left) gets a low plausibility; if it is still listed, its note
+says how many half-lives have elapsed. Natural-series members and a daughter whose parent is still present
+(Tc-99m with Mo-99) are not affected. Run the analysis again after entering the sample information.
+Radiopharmaceuticals (Mo-99, Tc-99m, F-18, Ga-67, I-123 …) are treated as common nuclides only with the
+<i>medical</i> library. A nuclide found from one line only, although it has other lines in the spectrum's range,
+carries the note <i>one line matched … confirm</i>.</p>
 <p><b>Peak labels</b> (<kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>L</kbd>) write the nuclide names on the plot;
 <b>Export…</b> in the results panel saves peaks, nuclides and spectrum details to Excel or CSV.</p>
 

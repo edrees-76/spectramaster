@@ -1085,3 +1085,22 @@ Protocol `docs/baseline/round4_activity_protocol.md` (committed before the chang
   constant attenuation factor with the self-attenuation model is refused; the model refuses
   non-finite inputs and is described in the notes.
 - **Kept.** The reagent blank is analysed with the sample's options, self-attenuation included.
+
+## Round-4 external review: identification findings R4-B (2026-10-27)
+
+Protocol `docs/baseline/round4_identify_protocol.md` (committed before the change), results in
+`docs/baseline/after_R4B/`, engine 1.16.0:
+
+- **Resolution model with a channel offset (Codex M2).** The identification evaluates the FWHM
+  calibration at the absolute channel: Codex's case 2.0 -> 3.0 keV; a cropped spectrum has the same
+  resolution model as the full one.
+- **Half-life against the time since sampling (Codex 5.9, Gemini M3).** `identify(..., sampled=)`,
+  CLI `identify --sampled`, GUI from the session's sample information: a nuclide decayed by more than
+  10 half-lives gets a prior x 0.25 and a note; natural series and daughters of a parent still
+  present are not affected. On 255 public CRM spectra with a date 30 days before the measurement:
+  short-lived identifications 118 -> 0.
+- **Medical nuclides (Gemini M3).** Mo-99, Tc-99m, F-18, Ga-67 ... common only with the medical
+  library. CRM spectra without a date: medical identifications 41 -> 21.
+- **Single matched line.** Note "one line matched ... confirm" when a nuclide with several lines is
+  found from one.
+- Benchmark 154 / 13 / 60 unchanged; IDB implausible identifications per spectrum slightly lower.
