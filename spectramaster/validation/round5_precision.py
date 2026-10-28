@@ -10,7 +10,6 @@ runs the harness on the current engine and writes ``round5_precision.json`` and
 from __future__ import annotations
 
 import json
-import re
 import sys
 from pathlib import Path
 
@@ -41,7 +40,13 @@ def _printed() -> list[float]:
     """The full-precision values printed in the round-4 protocol's note, in their order."""
     text = R4_PROTOCOL.read_text(encoding="utf-8")
     note = text[text.index("At full precision"):]
-    return [float(v) for v in re.findall(r"\d+\.\d{10,}", note)]
+    out = []
+    for tok in note.split():
+        tok = tok.strip("(),;.")
+        whole, dot, frac = tok.partition(".")
+        if dot and whole.isdigit() and frac.isdigit() and len(frac) >= 10:
+            out.append(float(tok))
+    return out
 
 
 def criteria(cur: dict, r114: dict, r115: dict) -> dict:
