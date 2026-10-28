@@ -722,7 +722,9 @@ def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0,
     set, the user declares the curve free of summing with `declared_free`, or no cascade point).
     Raises ValueError for a curve without calibration points (whether it contains summing losses
     is unknown), a model that cannot be refitted, a cascade point the correction cannot treat, or
-    no convergence (docs/baseline/tcs_fixes_protocol.md)."""
+    no convergence (docs/baseline/tcs_fixes_protocol.md).  Points whose correction is partial
+    (partners below the curve, inconsistent scheme) are corrected and named in the note and the
+    warnings (docs/baseline/round5_tcs_protocol.md)."""
     from . import coincidence
     if curve.summing_corrected or declared_free:
         return curve
@@ -747,7 +749,7 @@ def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0,
                   crossover="auto" if curve.crossover_auto else curve.e_ref)
     meta = {k: getattr(curve, k) for k in ("geometry", "detector", "geometry_record", "validation_status",
                                             "name", "source", "date")}
-    cur, factors, prev, n_iter = curve, {}, None, 0
+    cur, factors, partial, prev, n_iter = curve, {}, {}, None, 0
     for n_iter in range(1, max(int(iterations), 1) + 1):
         def eps(e, c=cur):
             return np.clip(c.efficiency(np.clip(np.asarray(e, dtype=float), c.e_min, c.e_max)), 0.0, 1.0)
@@ -770,6 +772,8 @@ def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0,
                              note=(p.note + f"; summing corrected, COI {c.factor:.4f}").strip("; "))
             if abs(c.factor - 1.0) > 1e-4:
                 factors[(p.nuclide, round(p.energy, 1))] = c.factor
+            if c.partial:
+                partial[(p.nuclide, round(p.energy, 1))] = c.partial_reason
         if bad:
             raise ValueError("calibration points of cascade emitters that the true-coincidence summing correction "
                              "cannot treat: " + "; ".join(bad) + ". Exclude them from the calibration, or the "
@@ -790,6 +794,9 @@ def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0,
     what = (f"cascade-emitter calibration points ({nucs}) corrected for true-coincidence summing (lowest COI "
             f"{worst:.4f}, {n_iter} refits)" if factors else
             "cascade-emitter calibration points checked for true-coincidence summing: no factor differs from 1")
+    if partial:
+        what += ", partial correction for " + ", ".join(f"{n} {e:g} keV" for n, e in sorted(partial))
+        cur.warnings.extend(f"{n} {e:g} keV: {why}" for (n, e), why in sorted(partial.items()))
     cur.note = (curve.note + "; " + what).strip("; ")
     return cur
 
