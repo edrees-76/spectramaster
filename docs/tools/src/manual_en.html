@@ -927,11 +927,16 @@ first-order coincidence summing factor (COI), computed from coincidence data and
       model (orders, crossover) is chosen again on the corrected points. A curve without points (an imported Aptec
       ln-ln polynomial) is refused unless you declare it free of summing; the declaration is recorded in the notes.</li>
   <li><b>Limits.</b> A line that the coincidence data do not describe is not corrected, and the note says why. A
-      partner photon far below the calibrated range (under 0.8 × its lowest energy) is left out and reported. A line
+      partner photon far below the calibrated range (under 0.8 × its lowest energy) is left out: its loss is not
+      corrected, because its efficiency is unknown. When such partners make up more than 1 % of the decays, or when the
+      decay scheme's level intensities disagree with the line intensities enough to change the factor by 1 % or more,
+      the correction is marked <b>partial</b>: the line's note gives the reason, the nuclide's note names the lines,
+      and a calibration curve corrected with such points names them in its note and warnings. A partial correction is
+      applied as computed; it is not a complete one. A line
       whose first-order factor is outside its validity gives no result; a summing-out loss above 10 % is noted,
       because the first-order correction degrades in very close geometries.</li>
-  <li><b>Not included:</b> X-ray – gamma summing (EC nuclides such as Ba-133 and Eu-152; it matters only with an
-      efficiency curve that reaches the K X-ray energies, 30–50 keV) and angular correlation. The session records
+  <li><b>Not included:</b> X-ray – gamma summing (EC nuclides such as Ba-133 and Eu-152: the coincidence table has no
+      X-rays, so this loss is not corrected whatever the range of the efficiency curve) and angular correlation. The session records
       the coincidence table with its SHA-256 fingerprint.</li>
 </ul>
 <p>Command line: <code>--tcs-pt A,B</code>, <code>--tcs-pt-unc</code> and <code>--tcs-curve-summing-free</code>;

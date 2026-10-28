@@ -169,3 +169,27 @@ contains "partial correction" and names Ba-133, and its warnings name each Ba-13
 53.2 keV and Eu-152 only: identical to before (==), note included. RE3.C6 is RE.C6 (benchmark against
 `after_R5D`, IAEA 2002 check against its run before the change, full suite with changed tests
 listed).
+
+## Results, second amendment (`after_R5E3`)
+
+Second amendment committed in ef63971 before its implementation (SHA-256 of the file
+56a2a6d36a484234d960bbecdaf932afbc2662a5e42fca44f84826f6f80c9a56). Engine 1.24.0.
+
+**Run: 6 PASS / 0 FAIL.**
+
+| ID | value | result |
+|---|---|---|
+| RE3.C1 | as RE.C1 | PASS |
+| RE3.C2 | as RE2.C2 | PASS |
+| RE3.C3 | 29228 evaluations, correction changed for 0; 3865 partial | PASS |
+| RE3.C4 | from 121.8 keV: corrected, points, efficiency at 500 keV and lowest limit identical to before; note "... (lowest COI 0.8230, 6 refits), partial correction for Ba-133 276.4 keV, Ba-133 302.9 keV, Ba-133 356 keV, Ba-133 383.8 keV", a warning for each; from 53.2 keV and Eu-152 only identical to before | PASS |
+| RE3.C5 | activity values identical; from 122 keV the four lines partial and named in the nuclide note; from 50 keV none | PASS |
+| RE3.C6 | benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against `after_R5D`; IAEA 2002 check: criteria and activities identical to the run before the change (differences: engine version, and one warning on each calibration curve, Co-57 122.1 keV partial, partner 14.4 keV below the curve); full suite 1506 passed, 69 skipped; no existing test changed | PASS |
+
+Also changed: the manuals (sources), TCS limits: the partial state, and the X-ray sentence (the
+table has no X-rays, so that loss is not corrected whatever the range of the curve; the previous
+wording said it mattered only with a curve reaching the K X-rays).
+
+**Summary of the three runs.** First rule 3 / 2 and amendment 5 / 1, neither shipped; the second
+amendment is shipped. The two amendments were written after seeing the failures they address; their
+limits (1 %) were not changed.

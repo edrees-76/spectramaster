@@ -1,12 +1,13 @@
 """Round-5 review, H5/H6: partial true-coincidence summing corrections
-(docs/baseline/round5_tcs_protocol.md, with its amendment).
+(docs/baseline/round5_tcs_protocol.md, with its second amendment).
 
     python -m spectramaster.validation.round5_tcs [--collect]
 
 Synthetic data and the bundled coincidence table only.  ``--collect`` writes the raw observations
 to ``docs/baseline/after_R5E/round5_tcs_before.json`` (the "before" values); without it the
-criteria of the amendment are evaluated against that file and ``round5_tcs.json`` /
-``round5_tcs.md`` are written to ``after_R5E2`` (the first rule's run is kept in ``after_R5E``).
+criteria of the second amendment are evaluated against that file and ``round5_tcs.json`` /
+``round5_tcs.md`` are written to ``after_R5E3`` (the earlier runs are kept in ``after_R5E`` and
+``after_R5E2``).
 """
 from __future__ import annotations
 
@@ -27,7 +28,7 @@ from spectramaster.model import Spectrum
 
 REPO = Path(__file__).resolve().parents[2]
 BEFORE_JSON = REPO / "docs" / "baseline" / "after_R5E" / "round5_tcs_before.json"
-OUT = REPO / "docs" / "baseline" / "after_R5E2"
+OUT = REPO / "docs" / "baseline" / "after_R5E3"
 PT = (0.24, 0.0)
 GAIN, NCH, LIVE = 0.25, 12000, 20000.0
 START = datetime(2024, 3, 1, 10, 0, 0)
@@ -115,7 +116,7 @@ def _cal_points(lines: dict, nuc: str) -> list:
     return out
 
 
-def _calibration() -> dict:
+def _calibration(warnings: dict | None = None) -> dict:
     ba_high = {e: i for e, i in BA.items() if e > 200}
     cases = {"eu152_ba133_from_121.8": _cal_points(EU, "Eu-152") + _cal_points(ba_high, "Ba-133"),
              "eu152_ba133_from_53.2": _cal_points(EU, "Eu-152") + _cal_points(BA, "Ba-133"),
@@ -128,6 +129,8 @@ def _calibration() -> dict:
         except ValueError as exc:
             out[name] = {"error": str(exc)}
             continue
+        if warnings is not None:
+            warnings[name] = list(free.warnings)
         out[name] = {"e_min": free.e_min, "points": [[p.nuclide, p.energy, p.efficiency, p.unc] for p in free.points],
                      "eps_500": float(free.efficiency(500.0)), "note": free.note}
     return out
@@ -164,8 +167,9 @@ def _activity() -> dict:
 
 def collect() -> dict:
     from spectramaster.lab.session import ENGINE_VERSION
+    warnings = {}
     return {"engine": ENGINE_VERSION, "examples": _examples(), "lines": _all_lines(),
-            "calibration": _calibration(), "activity": _activity()}
+            "calibration": _calibration(warnings), "calibration_warnings": warnings, "activity": _activity()}
 
 
 def _same_values(a: list, b: list) -> bool:
@@ -181,7 +185,7 @@ def criteria(res: dict, before: dict) -> dict:
     ok = (hi[8] is True and lo[8] is False and _same_values(hi, xb["Ba-133 356.0129 e_min 122"])
           and _same_values(lo, xb["Ba-133 356.0129 e_min 50"]) and "below the efficiency curve" in hi[10]
           and not lo[10])
-    c["RE2.C1"] = (ok, f"Ba-133 356 keV, e_min 122: partial {hi[8]}, ignored {hi[3]:.6f}, factor {hi[0]:.7f}, "
+    c["RE3.C1"] = (ok, f"Ba-133 356 keV, e_min 122: partial {hi[8]}, ignored {hi[3]:.6f}, factor {hi[0]:.7f}, "
                       f"text '{hi[10]}'; e_min 50: partial {lo[8]}, factor {lo[0]:.7f}")
     part = {k: v for k, v in x.items() if k.startswith("Ac-228")}
     ind = {k: v for k, v in x.items() if k.startswith("inconsistent ")}
@@ -189,24 +193,28 @@ def criteria(res: dict, before: dict) -> dict:
           and part["Ac-228 911.204"][8] is False and part["Ac-228 968.971"][8] is False
           and all(_same_values(v, xb[k]) for k, v in part.items())
           and all(a is not None and (a == b or abs(a - b) <= 1e-12 * abs(b)) for a, b in ind.values()))
-    c["RE2.C2"] = (ok, "; ".join(f"{k}: partial {v[8]}, inconsistent {v[9]:.6g}, factor {v[0]:.7f}"
+    c["RE3.C2"] = (ok, "; ".join(f"{k}: partial {v[8]}, inconsistent {v[9]:.6g}, factor {v[0]:.7f}"
                                  for k, v in part.items())
                    + "; engine / independent: " + ", ".join(f"{k[13:]} {a:.6g}/{b:.6g}" for k, (a, b) in ind.items()))
     la, lb = res["lines"], before["lines"]
     diff = sorted(k for k in set(la) | set(lb) if k not in la or k not in lb or not _same_values(la[k], lb[k]))
     n_part = sum(1 for v in la.values() if v[8])
     n_found = sum(1 for v in la.values() if v[4])
-    c["RE2.C3"] = (not diff, f"{len(la)} line evaluations: correction changed for {len(diff)} {diff[:5]}; "
+    c["RE3.C3"] = (not diff, f"{len(la)} line evaluations: correction changed for {len(diff)} {diff[:5]}; "
                             f"partial {n_part} of {n_found} corrected")
     ca, cb = res["calibration"], before["calibration"]
-    refused = ca["eu152_ba133_from_121.8"]
-    ok = ("error" in refused and "partial" in refused["error"] and "Ba-133" in refused["error"]
+    part, pb = ca["eu152_ba133_from_121.8"], cb["eu152_ba133_from_121.8"]
+    warn = res["calibration_warnings"].get("eu152_ba133_from_121.8", [])
+    ba = [e for e in BA if e > 200]
+    ok = ("error" not in part and all(part[k] == pb[k] for k in ("e_min", "points", "eps_500"))
+          and "partial correction" in part["note"] and "Ba-133" in part["note"]
+          and all(any(w.startswith(f"Ba-133 {round(e, 1):g} keV") for w in warn) for e in ba)
           and ca["eu152_ba133_from_53.2"] == cb["eu152_ba133_from_53.2"] and ca["eu152_only"] == cb["eu152_only"])
-    c["RE2.C4"] = (ok, f"curve from 121.8 keV with Ba-133 points: {refused.get('error', 'not refused')[:300]} "
-                      f"(before: {str(cb['eu152_ba133_from_121.8'].get('error', 'corrected'))[:80]}); "
-                      f"from 53.2 keV and Eu-152 only identical to before: "
-                      f"{ca['eu152_ba133_from_53.2'] == cb['eu152_ba133_from_53.2']}, "
-                      f"{ca['eu152_only'] == cb['eu152_only']}")
+    c["RE3.C4"] = (ok, f"curve from 121.8 keV with Ba-133 points: {part.get('error') or 'corrected'}, points, "
+                       f"eps(500) and e_min identical: {all(part.get(k) == pb[k] for k in ('e_min', 'points', 'eps_500'))}; "
+                       f"note '{part.get('note', '')}'; {len(warn)} warnings; from 53.2 keV and Eu-152 only "
+                       f"identical to before: {ca['eu152_ba133_from_53.2'] == cb['eu152_ba133_from_53.2']}, "
+                       f"{ca['eu152_only'] == cb['eu152_only']}")
     aa, ab = res["activity"], before["activity"]
     ok = True
     for k in aa:
@@ -217,7 +225,7 @@ def criteria(res: dict, before: dict) -> dict:
     ok &= (all(l[6] is True and "partial" in l[5] for l in hi_lines)
            and all(l[6] is False for l in lo_lines) and "partial" in aa["e_min 122"]["note"]
            and "partial" not in aa["e_min 50"]["note"])
-    c["RE2.C5"] = (ok, f"e_min 122: activity {aa['e_min 122']['activity']:.6g} +- {aa['e_min 122']['u']:.4g} Bq "
+    c["RE3.C5"] = (ok, f"e_min 122: activity {aa['e_min 122']['activity']:.6g} +- {aa['e_min 122']['u']:.4g} Bq "
                       f"(before {ab['e_min 122']['activity']:.6g}), partial lines "
                       f"{[l[0] for l in hi_lines if l[6]]}, note '{aa['e_min 122']['note']}'; e_min 50: "
                       f"partial lines {[l[0] for l in lo_lines if l[6]]}")
@@ -238,8 +246,8 @@ def main(argv=None) -> int:
     c = criteria(res, before)
     (OUT / "round5_tcs.json").write_text(json.dumps({"result": res, "criteria": c}, indent=1, ensure_ascii=False,
                                                     default=str), encoding="utf-8")
-    lines = ["# Round-5 review, H5/H6: partial true-coincidence summing corrections (amendment)", "",
-             "Protocol: `docs/baseline/round5_tcs_protocol.md`, amendment.", "", "| ID | result | value |", "|---|---|---|"]
+    lines = ["# Round-5 review, H5/H6: partial true-coincidence summing corrections (second amendment)", "",
+             "Protocol: `docs/baseline/round5_tcs_protocol.md`, second amendment.", "", "| ID | result | value |", "|---|---|---|"]
     lines += [f"| {k} | {'PASS' if ok else 'FAIL'} | {v} |" for k, (ok, v) in c.items()]
     (OUT / "round5_tcs.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(", ".join(f"{k}:{'PASS' if ok else 'FAIL'}" for k, (ok, _v) in c.items()))

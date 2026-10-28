@@ -1336,3 +1336,23 @@ Protocol `docs/baseline/round5_tka_protocol.md` (registered before the change); 
   and the input format must be chosen.
 - **Result:** 6 PASS / 0 FAIL at the first run (`after_R5D`); 190 `.txt` and 319 control files
   unchanged; benchmark 154 / 13 unchanged; full suite 1499 passed, 69 skipped.
+
+## Round-5 external review: partial true-coincidence summing corrections, H5/H6 (2026-10-28)
+
+Protocol `docs/baseline/round5_tcs_protocol.md` (registered before the change, two amendments
+registered after failed runs); engine 1.24.0.
+
+- **H5, confirmed.** Partners below the efficiency curve were left out without the correction being
+  marked incomplete; a calibration with such points was labelled summing-corrected.
+- **H6, confirmed.** Where the scheme intensities differ from the line intensities, the upward
+  coincidence probabilities depend on the set used (Ac-228 880.76 keV: summing-out 10 % apart).
+- **Change.** A partial state (`Coi.partial_reason`, `LineResult.coi_partial`): partners below the
+  curve above 1 % of decays, or a summing-out that changes by 1 % or more between the intensity
+  sets. Lines and nuclides name it; a calibration corrected with such points names them in its note
+  and warnings. No factor or activity changes.
+- **Result:** first rule 3 / 2 and amendment 5 / 1 (not shipped); second amendment 6 / 0
+  (`after_R5E3`); benchmark 154 / 13 unchanged; IAEA 2002 check unchanged; full suite 1506 passed,
+  69 skipped.
+- **Remaining:** the missing loss of a partial correction is not estimated; X-ray coincidences are
+  not in the table.
+

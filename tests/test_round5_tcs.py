@@ -33,12 +33,13 @@ def test_ba133_81kev_is_not_partial_for_a_negligible_effect():
     assert not c.partial and 0 < c.inconsistent < co.PARTIAL_LIMIT
 
 
-def test_calibration_with_partial_points_is_refused():
+def test_calibration_with_partial_points_is_corrected_and_named():
     pts = r5._cal_points(r5.EU, "Eu-152") + r5._cal_points({e: i for e, i in r5.BA.items() if e > 200}, "Ba-133")
-    with pytest.raises(ValueError, match="partial"):
-        ef.summing_free_curve(ef.fit_efficiency(pts, "loglog", order=2), r5._pt, 0.1)
+    free = ef.summing_free_curve(ef.fit_efficiency(pts, "loglog", order=2), r5._pt, 0.1)
+    assert free.summing_corrected and "partial correction for Ba-133" in free.note
+    assert sum(w.startswith("Ba-133") and "partial" in w for w in free.warnings) == 4
     full = r5._cal_points(r5.EU, "Eu-152") + r5._cal_points(r5.BA, "Ba-133")
-    assert ef.summing_free_curve(ef.fit_efficiency(full, "loglog", order=2), r5._pt, 0.1).summing_corrected
+    assert "partial" not in ef.summing_free_curve(ef.fit_efficiency(full, "loglog", order=2), r5._pt, 0.1).note
 
 
 def test_activity_marks_partial_lines_without_changing_values():
