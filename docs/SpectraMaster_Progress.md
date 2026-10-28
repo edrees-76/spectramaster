@@ -1478,3 +1478,19 @@ No science change (engine 1.26.0 kept), so no protocol.
   exports are no longer synchronous). Full suite 1579 passed, 69 skipped, 1 failed:
   `test_timing_16k_channels` over its 1 s bound on a busy machine (code not touched); passed 3 of 3 runs
   alone.
+
+
+## Round-6 external review: channel binning bias of the acceptance test widths, Gemini M3 (2026-10-29)
+
+Protocol `docs/baseline/round6_fwhm_protocol.md`, committed before the change (f16f812).
+Engine 1.26.0 (unchanged).
+
+- **Confirmed, and larger than reported.** The FWHM and FWTM of the detector acceptance test, from the
+  channel contents, overestimate a narrow Gaussian: +1.45 % at 4 channels per FWHM when the centroid is
+  on a channel (Gemini), but +4.49 % when it is between two (+7.87 % at 3 channels, +2.0 % at 6).
+- **Decision: noted, not corrected.** `PeakWidth.fwhm_bin_bias` / `fwtm_bin_bias` give the range (centroid
+  on a channel to between two), from the Gaussian whose binned width is the measured one; the note
+  states it when the upper FWHM value reaches 1 %. The manuals no longer call the method exact.
+- **Result (`after_R6G`):** 5 PASS / 0 FAIL at the first run; benchmark 154 / 13 / 60 unchanged against
+  `after_R6E`; full suite 1583 passed, 69 skipped; one existing test changed (an 8-channel peak now
+  carries the note).

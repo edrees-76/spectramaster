@@ -69,3 +69,23 @@ Before the change: RG.C1 to RG.C3 fail (no fields, no note); RG.C4 is the contro
   are not examined here.
 
 ---
+
+## Results (`after_R6G`)
+
+Protocol committed in f16f812 before the change (SHA-256 of the file
+b151fae2ae31d47693b6f442a20fa40299694c46d1ecb686c6d4a0749f189717). Engine 1.26.0 (unchanged).
+
+**First run: 5 PASS / 0 FAIL.**
+
+| ID | value | result |
+|---|---|---|
+| RG.C1 | the measured FWHM overestimate of the 30 cases (up to 7.87 %) inside `fwhm_bin_bias` within 0.05 percentage points | PASS |
+| RG.C2 | the measured FWTM overestimate inside `fwtm_bin_bias` within 0.05 percentage points | PASS |
+| RG.C3 | note present exactly when the upper FWHM value is >= 1 %, also in the acceptance notes of the two `round5_acceptance` spectra ("FWHM by 1.5 to 4.8 %, FWTM by 1.4 to 2.4 %" at 4.1 channels); absent at 12 channels | PASS |
+| RG.C4 | centroids, FWHM, FWTM and P/C of the 35 cases and the two `round5_acceptance` spectra identical to before and to the recorded values | PASS |
+| RG.C5 | benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against `after_R6E`; full suite 1583 passed, 69 skipped; one existing test changed: `test_widths_of_a_gaussian_peak` asserted no note for an 8-channel peak, whose upper FWHM value is 1.15 %, so it now carries the binning note as registered | PASS |
+
+RG.C5 is evaluated outside the harness (benchmark compared criterion by criterion with `after_R6E`).
+
+Also changed: the manuals (sources), detector acceptance test: the sentence "exact for a Gaussian peak"
+removed; the binning overestimate, its dependence on the centroid position and the note described.

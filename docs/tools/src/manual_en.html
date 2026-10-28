@@ -1181,8 +1181,12 @@ at 25 cm on the detector axis (IEEE Std 325, the test of the detector's data she
   <tr><th>Result</th><th>How it is obtained</th></tr>
   <tr><td>FWHM, FWTM and FWTM / FWHM at 1332.5 keV</td><td>Net counts of a ±3 FWHM region (straight background
       between its end points); half and tenth maximum located by a parabola through the logarithms of three
-      channels, exact for a Gaussian peak. A Gaussian gives FWTM / FWHM = 1.82; a larger value shows a tail.
-      With a Co-57 spectrum the same is given at 122.1 keV.</td></tr>
+      channels. A Gaussian gives FWTM / FWHM = 1.82; a larger value shows a tail.
+      With a Co-57 spectrum the same is given at 122.1 keV. Each channel counts the peak over its whole width, so a
+      narrow peak appears wider than it is: about +1.5 to +4.5 % at 4 channels per FWHM, +0.5 to +1.5 % at 7, the
+      larger value when the centroid falls between two channels. The widths are given as measured, not corrected;
+      when the overestimate can reach 1 % the notes give its range for the FWHM and the FWTM, so that a detector
+      close to its specification can be judged (below 3 channels the widths are marked as inaccurate).</td></tr>
   <tr><td>Peak-to-Compton ratio</td><td>The highest channel of the 1332.5 keV peak divided by the mean counts per
       channel between 1040 and 1096 keV.</td></tr>
   <tr><td>Relative efficiency</td><td>With the source activity (any unit of the list, Bq to TBq or Ci to pCi;

@@ -21,6 +21,7 @@ COMPTON_KEV = (1040.0, 1096.0)
 NAI_REF_EFFICIENCY = 1.2e-3          # 3 x 3 inch NaI, Co-60 1332.5 keV, point source at 25 cm
 ROI_FWHM = 3.0                       # ROI half-width in FWHM
 MIN_WIDTH_CH = 3.0                   # narrower peaks are sampled too coarsely for the widths
+BIN_NOTE_BIAS = 0.01                 # the channel binning overestimate of the widths is noted from 1 %
 CHI2_LOW, CHI2_HIGH = 0.05, 0.95     # TECDOC-1599 acceptance points
 CHI2_N = (10, 20)                    # numbers of counts of TECDOC-1599
 GEOMETRY_NOTE = ("relative efficiency for a Co-60 point source at 25 cm on the detector axis "
@@ -36,6 +37,10 @@ class PeakWidth:
     roi: Optional[tuple[int, int]] = None          # count indices
     linear_crossings: int = 0                      # crossings by linear interpolation (fallback)
     note: str = ""
+    # relative overestimate by the channel binning (centroid on a channel, between two), not corrected
+    # (round6_fwhm_protocol.md); None below MIN_WIDTH_CH
+    fwhm_bin_bias: Optional[tuple[float, float]] = None
+    fwtm_bin_bias: Optional[tuple[float, float]] = None
 
     @property
     def ratio(self) -> Optional[float]:
@@ -136,6 +141,39 @@ def _width(net: np.ndarray, rl: int, rh: int, imax: int, level: float) -> tuple[
     return float(hi - lo), lin
 
 
+def _binned_width(w: float, frac: float, level: float) -> Optional[float]:
+    """Width (channels) that :func:`_width` gives at `level` (fraction of the maximum) for a Gaussian
+    of FWHM `w` channels integrated over each channel, centroid `frac` channel from a channel centre."""
+    from scipy.special import ndtr
+    s = w / (2.0 * math.sqrt(2.0 * math.log(2.0)))
+    n = int(math.ceil(4.0 * w)) + 3
+    i = np.arange(-n, n + 1, dtype=float)
+    net = ndtr((i + 0.5 - frac) / s) - ndtr((i - 0.5 - frac) / s)
+    imax = int(np.argmax(net))
+    return _width(net, 0, len(net) - 1, imax, float(net[imax]) * level)[0]
+
+
+def binning_bias(width_ch: float, level: float) -> Optional[tuple[float, float]]:
+    """Relative overestimate of a width of `width_ch` channels measured at `level` of the maximum, for
+    a Gaussian centred on a channel and between two (round6_fwhm_protocol.md): the Gaussian whose
+    binned width is the measured one, by fixed-point iteration."""
+    r = math.sqrt(math.log(1.0 / level) / math.log(2.0))      # width at `level` / FWHM of a Gaussian
+    out = []
+    for frac in (0.0, 0.5):
+        w = width_ch / r
+        for _ in range(60):
+            m = _binned_width(w, frac, level)
+            if not m:
+                return None
+            w_new = w * width_ch / m
+            done = abs(w_new / w - 1.0) < 1e-12
+            w = w_new
+            if done:
+                break
+        out.append(width_ch / (w * r) - 1.0)
+    return out[0], out[1]
+
+
 def peak_width(spectrum, energy: float = CO60_1332) -> PeakWidth:
     """FWHM and FWTM (keV) of the peak at `energy`: the net counts of the Aptec ROI analysis (linear
     background between the end points), half and tenth maximum crossings by log-parabolic
@@ -170,6 +208,16 @@ def peak_width(spectrum, energy: float = CO60_1332) -> PeakWidth:
     if fh < MIN_WIDTH_CH:
         out.note = (f"FWHM {fh:.1f} channels: too few channels for an accurate width "
                     f"(at least {MIN_WIDTH_CH:g} needed)")
+        return out
+    out.fwhm_bin_bias = binning_bias(fh, 0.5)
+    out.fwtm_bin_bias = binning_bias(ft, 0.1) if ft is not None else None
+    if out.fwhm_bin_bias and max(out.fwhm_bin_bias) >= BIN_NOTE_BIAS:
+        def rng(b):
+            return f"{100 * min(b):.1f} to {100 * max(b):.1f} %"
+        out.note = (f"FWHM {fh:.1f} channels: the widths from the channel contents are overestimated by the "
+                    f"channel binning, FWHM by {rng(out.fwhm_bin_bias)}"
+                    + (f", FWTM by {rng(out.fwtm_bin_bias)}" if out.fwtm_bin_bias else "")
+                    + " (centroid on a channel to between two); not corrected")
     return out
 
 
