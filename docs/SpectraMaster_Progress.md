@@ -1387,3 +1387,20 @@ Codex round 6 (76/100), Gemini round 6 (88/100). No change to the analysis engin
   starts (also with its window closed and deleted) and ends with exit code 0, nothing left running;
   `quit_on` stops a thread while the GUI thread is blocked in `wait()`. Full suite 1512 passed,
   69 skipped.
+
+
+## Round-6 external review: Laval and Wallac files named .txt, H2 (2026-10-28)
+
+Protocol `docs/baseline/round6_laval_wallac_protocol.md`, committed before the change (089e337).
+No change to the analysis engine (engine 1.24.0).
+
+- **Confirmed.** A Laval or Wallac file named `.txt` was read as one-column ASCII without a note:
+  Laval 1023 channels, sum 496726.5 (header lines counted), no times or calibration; Wallac 1025
+  channels, no time.
+- **Fix.** `USUAL_AMBIGUOUS` also holds ASCII-1/Laval and ASCII-1/Wallac: such a file is ambiguous
+  and the input format is chosen; read as chosen it is identical to its reading under its own
+  extension. Price: a one-column `.txt` with a six-digit 4th count or exactly 1027 counts also
+  becomes ambiguous (as ASCII-1 it reads as before); none among the files at hand.
+- **Result (`after_R6B`):** 6 PASS / 0 FAIL at the first run, laboratory `.txt` files unchanged
+  (counts only); benchmark 154 / 13 / 60 unchanged against `after_R5E3`; full suite 1515 passed,
+  69 skipped. Manual sources: the Laval/Wallac case added to reading by content.
