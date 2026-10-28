@@ -151,3 +151,21 @@ Amendment committed in 37b52b2 before its implementation (SHA-256 of the file
 **Cause.** Change 3 refuses the whole calibration, and so every sample analysis with TCS on, for one
 point with a partner that no gamma calibration reaches (Co-57 14.4 keV). The partial state itself
 (RE2.C1-C5) behaves as registered.
+
+## Second amendment (registered after the amendment's run, before its implementation)
+
+Written after the run above; both earlier runs stay as recorded.
+
+**Change of change 3 only.** `summing_free_curve` does not refuse a cascade point whose correction is
+partial: it corrects it as before (same factor, same efficiencies), and the curve says so: its note
+reads "partial correction for <nuclide> <energy> keV ..." and each such point gets a warning with
+the reason. The curve is labelled summing-corrected with the partial points named, not as fully
+corrected. Rules 1 (as amended), 2 and 4 unchanged.
+
+**Criteria (output `after_R5E3`, before values unchanged).** RE3.C1, RE3.C2, RE3.C3 and RE3.C5 are
+RE2.C1, RE2.C2, RE2.C3 and RE2.C5. RE3.C4: the calibration from 121.8 keV with Ba-133 is corrected,
+its corrected points, efficiency at 500 keV and lowest limit identical to before (==), its note
+contains "partial correction" and names Ba-133, and its warnings name each Ba-133 point; from
+53.2 keV and Eu-152 only: identical to before (==), note included. RE3.C6 is RE.C6 (benchmark against
+`after_R5D`, IAEA 2002 check against its run before the change, full suite with changed tests
+listed).
