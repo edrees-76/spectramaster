@@ -19,7 +19,7 @@ from ..formats.base import FormatSpec
 from .i18n import bidi_path, tr
 from .icon import app_icon, designer_pixmap, logo_pixmap
 from .settings import AUTO, Settings
-from .worker import BatchWorker
+from .worker import BatchWorker, quit_on
 
 
 # ======================================================================= format chooser
@@ -457,7 +457,7 @@ class BatchDialog(QDialog):
         self._thread.started.connect(self._worker.run)
         self._worker.progress.connect(self._on_progress)
         self._worker.finished.connect(self._on_finished)
-        self._worker.finished.connect(self._thread.quit)
+        quit_on(self._thread, self._worker.finished)
         self._thread.finished.connect(self._cleanup_thread)
         self._thread.start()
 
@@ -507,10 +507,11 @@ class BatchDialog(QDialog):
             self._worker.cancel()
             self.cancel_btn.setEnabled(False)
 
-    def wait(self, ms: int = 30000) -> None:
-        """Block until the worker thread is done (used on close and in tests)."""
+    def wait(self, ms: Optional[int] = None) -> None:
+        """Block until the worker thread is done (used on close and in tests); no ``ms``: until it
+        ends, a running thread is never destroyed."""
         if self._thread is not None:
-            self._thread.wait(ms)
+            self._thread.wait() if ms is None else self._thread.wait(ms)
             QApplication.processEvents()
 
     def open_output_folder(self) -> None:

@@ -153,9 +153,24 @@ def running_calls() -> int:
     return len(_RUNNING)
 
 
-def _wait_all(ms: int = 30000) -> None:
-    for thread, _worker in list(_RUNNING):
-        thread.wait(ms)
+def quit_on(thread, *signals) -> None:
+    """Stop ``thread`` when any of ``signals`` (emitted by its worker) fires.
+
+    The call is direct, in the worker's thread (QThread.quit is thread-safe): a queued call would
+    need the GUI thread, which is the one blocked in ``wait()`` when a window closes or the
+    application quits, so the wait timed out and the running thread was then destroyed (round-6
+    review C1)."""
+    from PySide6.QtCore import Qt
+    for sig in signals:
+        sig.connect(thread.quit, Qt.DirectConnection)
+
+
+def _wait_all() -> None:
+    """On quit: wait for every running call to end (never destroy a running thread)."""
+    for thread, worker in list(_RUNNING):
+        thread.wait()
+        if (thread, worker) in _RUNNING:
+            _RUNNING.remove((thread, worker))
 
 
 def start_call(owner, fn, on_done, on_failed):
@@ -179,8 +194,7 @@ def start_call(owner, fn, on_done, on_failed):
     thread.started.connect(worker.run)
     worker.done.connect(on_done)
     worker.failed.connect(on_failed)
-    worker.done.connect(thread.quit)
-    worker.failed.connect(thread.quit)
+    quit_on(thread, worker.done, worker.failed)
     keep = owner.__dict__.setdefault("_call_threads", [])
     keep.append((thread, worker))
     _RUNNING.append((thread, worker))
