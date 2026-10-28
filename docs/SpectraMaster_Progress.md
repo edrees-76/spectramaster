@@ -1368,6 +1368,7 @@ Protocol `docs/baseline/round5_precision_protocol.md` (registered before the cha
 - **Result:** 5 PASS / 0 FAIL; the 12 values are identical in every digit on 1.14.0, 1.15.0 and
   1.24.0; full suite 1508 passed, 69 skipped. Round-5 batches R5-A to R5-F are done.
 
+
 ## Round-6 external review: quitting while a worker runs, C1 (2026-10-28)
 
 Codex round 6 (76/100), Gemini round 6 (88/100). No change to the analysis engine (engine 1.24.0).
