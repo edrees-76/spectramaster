@@ -83,3 +83,28 @@ So RC.C1-C3 fail before the change; RC.C4 and RC.C5 are the controls.
   that of the mean of the selected lines; the selection itself is not propagated.
 - Counting covariance between lines (a shared continuum or overlapping windows) is not modelled, as
   in the activity combination.
+
+---
+
+## Results (`after_R5C`)
+
+Protocol committed in 6fc92af before the change (SHA-256 of the file
+813d0b3da888a00a9c24d3f033d0cf777a7fa426e3209d6c9a0fb436c03012b5). Engine 1.23.0.
+
+**First run: 6 PASS / 0 FAIL.**
+
+| ID | value | result |
+|---|---|---|
+| RC.C1 | threshold equal to the independent one: `co60_iso` 0.298760, `co60_currie` 0.298760, `ba133_iso_blank` 0.614935 Bq (before 0.217599, 0.217599, 0.585883) | PASS |
+| RC.C2 | detection limit equal to the independent one: 0.611489, 0.610521, 1.253079 Bq (before: min of the lines 0.625243, 0.624253, 1.268805) | PASS |
+| RC.C3 | false-positive fraction 0.04994, 0.04994, 0.04990 against alpha 0.04998 (before 0.1155, 0.1155, 0.0582) | PASS |
+| RC.C4 | activity, uncertainty, budget and lines used identical to 1.22.0 | PASS |
+| RC.C5 | "key" method identical to 1.22.0; `combined_limits` of one line equal to its own limits | PASS |
+| RC.C6 | benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against `after_R5B`; full suite 1497 passed, 69 skipped; no existing test changed | PASS |
+
+In these cases the detection limit of the mean is slightly lower than the smallest line limit
+(by 1.2-2.2 %): the second line adds information. `detected` did not change in any case (all
+activities far above the thresholds).
+
+Also changed: the manuals (sources) say that, with the weighted mean of lines, the decision threshold
+and the MDA are those of the mean itself.

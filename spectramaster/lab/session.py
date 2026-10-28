@@ -98,7 +98,9 @@ SCHEMA_VERSION = 1
 #          levels that receive more than they emit (ensdf_level_balance_protocol.md)
 #   1.22.0 2026-10-28 round-5 review (round5_acceptance_protocol.md): detector acceptance test at the
 #          absolute channel (first_channel), peak-to-Compton only with the whole 1040-1096 keV window
-ENGINE_VERSION = "1.22.0"
+#   1.23.0 2026-10-28 weighted mean of lines: decision threshold and detection limit of the mean with
+#          its own weights (round5_combined_protocol.md)
+ENGINE_VERSION = "1.23.0"
 
 
 class SessionSchemaError(ValueError):
