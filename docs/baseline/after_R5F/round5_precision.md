@@ -1,0 +1,25 @@
+# Round-5 review, M4: full-precision proof of the round-4 activity criteria
+
+Protocol: `docs/baseline/round5_precision_protocol.md`.
+
+| ID | result | value |
+|---|---|---|
+| RF.C1 | PASS | engine 1.15.0 against 1.14.0: largest relative difference 0 over 12 values; RA.C1 detection limit 28.19756 -> 31.46646 Bq |
+| RF.C2 | PASS | engine 1.24.0 against 1.14.0: largest relative difference 0 |
+| RF.C3 | PASS | 10 printed values, equal to the 1.14.0 run: True |
+| RF.C4 | PASS | RA.C1 PASS, RA.C2 PASS, RA.C3 PASS, RA.C4 PASS, RA.C5 PASS, RA.C6 PASS |
+
+| quantity | 1.14.0 | 1.15.0 | 1.24.0 |
+|---|---|---|---|
+| RA.C1 threshold | 13.70672112504547 | 13.70672112504547 | 13.70672112504547 |
+| RA.C2 no blank threshold | 0.3301648007063946 | 0.3301648007063946 | 0.3301648007063946 |
+| RA.C2 no blank limit | 0.6951983605985783 | 0.6951983605985783 | 0.6951983605985783 |
+| RA.C2 no reference threshold | 1.0213540011406923 | 1.0213540011406923 | 1.0213540011406923 |
+| RA.C2 no reference limit | 2.0590138394020925 | 2.0590138394020925 | 2.0590138394020925 |
+| RA.C3 Currie threshold | 13.70672112504547 | 13.70672112504547 | 13.70672112504547 |
+| RA.C3 Currie limit | 27.42937167849215 | 27.42937167849215 | 27.42937167849215 |
+| RA.C4 COI Co-60 1173 | 0.9564104332800208 | 0.9564104332800208 | 0.9564104332800208 |
+| RA.C4 COI Co-60 1332 | 0.958093894653114 | 0.958093894653114 | 0.958093894653114 |
+| RA.C4 COI Ba-133 356 | 0.9936321659398546 | 0.9936321659398546 | 0.9936321659398546 |
+| RA.C4 COI Ba-133 303 | 0.9918828563428237 | 0.9918828563428237 | 0.9918828563428237 |
+| RA.C6 Cs-137 best | 58.754835617189386 | 58.754835617189386 | 58.754835617189386 |
