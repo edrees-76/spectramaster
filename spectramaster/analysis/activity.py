@@ -168,6 +168,10 @@ class LineResult:
     ld_counts: float = 0.0
     decision_threshold: float = 0.0        # Bq (parent)
     mda: float = 0.0                       # Bq (parent)
+    # of the detection limit: the variance term linear in the activity (Bq per count, plus the
+    # reference-peak term) and the reference peak's relative uncertainty, for combined_limits
+    limit_slope: float = 0.0
+    ref_rel_unc: float = 0.0
     detected: bool = False
     peak_found: bool = False
     in_range: bool = True
@@ -504,6 +508,33 @@ def iso11929_limits(sigma0: float, w: float, w_rel_unc: float, k_alpha: float = 
     return ys, yd
 
 
+def combined_limits(lines: list, weights: list, opt: "ActivityOptions") -> tuple[float, float]:
+    """(decision threshold y*, detection limit y#) in Bq of the weighted mean sum(weights_i a_i) of
+    lines counted independently, the weights held fixed (round5_combined_protocol.md).
+
+    u^2(y) = sum(w_i^2 c_i) y + S0^2 + y^2 R^2, S0^2 = sum(w_i^2 s0_i^2), with each line's
+    s0_i = y*_i / k_alpha and c_i = ``limit_slope``; R combines the relative components as the
+    activity budget does (efficiency, summing and reference peak correlated between lines).
+    Currie: R = 0.  y# is the larger root of the quadratic of iso11929_limits."""
+    s0sq = sum((w * l.decision_threshold / opt.k_alpha) ** 2 for w, l in zip(weights, lines))
+    slope = sum(w * w * l.limit_slope for w, l in zip(weights, lines))
+    r = 0.0
+    if opt.mda_method == "iso11929":
+        eff = sum(w * l.eff_rel_unc for w, l in zip(weights, lines))
+        coi = sum(w * l.coi_rel_unc for w, l in zip(weights, lines))
+        ref = sum(w * l.ref_rel_unc for w, l in zip(weights, lines))
+        intens = math.hypot(opt.intensity_rel_unc,
+                            math.sqrt(sum((w * l.int_rel_unc) ** 2 for w, l in zip(weights, lines))))
+        r = math.sqrt(eff ** 2 + intens ** 2 + _att_rel_unc(opt) ** 2 + ref ** 2 + coi ** 2)
+    ys = opt.k_alpha * math.sqrt(s0sq)
+    a = 1.0 - (opt.k_beta * r) ** 2
+    if a <= 0:
+        return ys, float("inf")
+    b = 2.0 * ys + opt.k_beta ** 2 * slope
+    c = ys * ys - opt.k_beta ** 2 * s0sq
+    return ys, (b + math.sqrt(max(b * b - 4.0 * a * c, 0.0))) / (2.0 * a)
+
+
 def iso11929_best_estimate(y: Optional[float], u: Optional[float], coverage: float = 0.95
                            ) -> Optional[tuple[float, float, float, float]]:
     """(best estimate, its standard uncertainty, lower, upper) of a non-negative measurand from
@@ -832,6 +863,9 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                 lc, ld = currie_limits(sigma0, opt.k_alpha, opt.k_beta)
                 return lc, ld, lc * w / fwin, ld * w / fwin
             lr.lc_counts, lr.ld_counts, lr.decision_threshold, lr.mda = limits(var0)
+            iso = opt.mda_method == "iso11929"
+            lr.limit_slope = w / fwin + (ref_lin if iso else 0.0)
+            lr.ref_rel_unc = ref_u if iso else 0.0
 
             def quad_limits(s_term, b_term, var0=var0, lin_sample=lin_sample, lin_bkg=lin_bkg, limits=limits):
                 """Limits of the quadratic window: the linear sample (and spectrum-mode background)
@@ -1279,10 +1313,8 @@ def _combine_activity(res: NuclideResult, opt: ActivityOptions) -> None:
         ue = sum(w * abs(l.activity) * l.eff_rel_unc for w, l in zip(wts, cand)) / sw
         ut = sum(w * abs(l.activity) * l.coi_rel_unc for w, l in zip(wts, cand)) / sw   # P/T: correlated
         ur = sum(w * l.ref_unc_bq for w, l in zip(wts, cand)) / sw                      # reference: correlated
-        # decision threshold of the combination
-        s0 = [l.decision_threshold / opt.k_alpha for l in cand]
-        res.decision_threshold = opt.k_alpha / math.sqrt(sum(1.0 / (s * s) for s in s0 if s > 0))
-        res.mda = min(l.mda for l in cand)
+        # limits of this weighted mean, with its own weights (round5_combined_protocol.md)
+        res.decision_threshold, res.mda = combined_limits(cand, [w / sw for w in wts], opt)
         res.detected = a > res.decision_threshold
         chi2 = sum((l.activity - a) ** 2 / v for l, v in zip(cand, var_unc) if v > 0)
         if chi2 / (len(cand) - 1) > 4.0:

@@ -1311,3 +1311,17 @@ Protocol `docs/baseline/round5_acceptance_protocol.md` (registered before the ch
 - **Result:** first run 4 PASS / 2 FAIL from a harness error (peak at 1332.492 instead of the
   protocol's 1332.5 keV); corrected run 6 PASS / 0 FAIL and RB.C7 PASS (`after_R5B`). Benchmark
   154 / 13 unchanged; full suite 1490 passed, 69 skipped.
+
+## Round-5 external review: limits of the weighted mean of lines, H1 (2026-10-28)
+
+Protocol `docs/baseline/round5_combined_protocol.md` (registered before the change); engine 1.23.0.
+
+- **H1, confirmed.** With the "mean" method the decision threshold was that of an inverse-variance
+  mean with the zero-activity weights, not of the reported mean (0.218 instead of 0.299 Bq in the
+  harness case; false positives 11.6 % instead of 5 %), and the MDA was the smallest line MDA.
+  Both are now computed for the reported weighted mean with its own weights (`combined_limits`).
+  Activities, uncertainties and the key-line method are unchanged.
+- **Result:** 6 PASS / 0 FAIL at the first run (`after_R5C`); benchmark 154 / 13 unchanged; full
+  suite 1497 passed, 69 skipped.
+- **Remaining:** the weights depend on the observed activities and the lines are selected after
+  detection; neither is propagated into the limits (stated in the protocol).
