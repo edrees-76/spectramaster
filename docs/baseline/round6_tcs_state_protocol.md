@@ -73,3 +73,25 @@ corrects), RE.C3 and RE.C4 fail; RE.C5 is the control.
 - `round5_tcs` outputs containing the partial reason change wording (only the text).
 
 ---
+
+## Results (`after_R6E`)
+
+Protocol committed in fb3f5c8 before the change (SHA-256 of the file
+d5a40154e15df3259e8309ea26af38213ff3268f6699782517ce1815776e2c88). Engine 1.26.0.
+
+**First run: 6 PASS / 0 FAIL.**
+
+| ID | value | result |
+|---|---|---|
+| RE.C1 | Ba-133 276.4, 302.9, 356 and 383.8 keV, the same as the partial warnings; equal after save and load and from a file without the key; empty for the uncorrected and the Eu-only curves (before: no field) | PASS |
+| RE.C2 | the four cases carry `curve_tcs_partial`, each point named in one result note, the Cs-137 note names the partial correction; controls unchanged (before: named only in the call that corrects) | PASS |
+| RE.C3 | report results carry the list, calibration summaries of the saved curves the list, note and warnings; one review status names the four points; controls without them | PASS |
+| RE.C4 | "coincident photons below the efficiency curve left out (on average 0.37 per emission of this line)", ignored 0.369959, factor 1 as before (before: "37 % of decays") | PASS |
+| RE.C5 | activities, uncertainties, limits, detection, COI factors and efficiencies of all cases and curves, round-5 calibration points and Ba-133 activities identical to before | PASS |
+| RE.C6 | benchmark (engine 1.26.0) 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against `after_R6D`; full suite 1577 passed, 69 skipped; no existing test changed | PASS |
+
+RE.C6 is evaluated outside the harness (benchmark compared criterion by criterion with `after_R6D`).
+
+Also changed: the manuals (sources): the partial points stay with a saved curve and reach the results,
+the report and the review; the partner photons below the curve are an average number per emission,
+not a fraction of decays (the same wording defect as L1).

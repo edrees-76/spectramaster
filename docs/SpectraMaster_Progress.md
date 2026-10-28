@@ -1442,3 +1442,21 @@ Engine 1.25.0.
   (`ref_g0`, `ref_dg`); `combined_limits` adds their cross terms. Without a blank nothing changes.
 - **Result (`after_R6D`):** 6 PASS / 0 FAIL at the first run (false-positive rates 4.99 %); benchmark
   154 / 13 / 60 unchanged against `after_R6C`; full suite 1573 passed, 69 skipped.
+
+
+## Round-6 external review: partial summing correction state of the efficiency curve, Codex H3 and L1 (2026-10-29)
+
+Protocol `docs/baseline/round6_tcs_state_protocol.md`, committed before the change (fb3f5c8).
+Engine 1.26.0.
+
+- **Confirmed.** The partial true-coincidence summing correction of calibration points was only text in
+  the curve's note and warnings: a corrected curve saved and loaded again gave results whose notes did
+  not mention it, and the report's calibration summary carried neither note nor warnings (Eu/Ba curve
+  from 121.8 keV, four Ba-133 points). The partial reason called an expected number of partner photons
+  per emission a "% of decays" (L1).
+- **Fix.** `EfficiencyCurve.tcs_partial` ([nuclide, keV, reason]) saved with the curve (recovered from
+  the text of older files); the results gain `curve_tcs_partial`, one note and a note per nuclide; the
+  report gains the list, note and warnings; the review one warning. Wording "on average x per emission
+  of this line". No number changes.
+- **Result (`after_R6E`):** 6 PASS / 0 FAIL at the first run; benchmark 154 / 13 / 60 unchanged against
+  `after_R6D`; full suite 1577 passed, 69 skipped.
