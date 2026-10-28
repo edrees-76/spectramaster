@@ -8,7 +8,8 @@ from pathlib import Path
 import pytest
 
 from spectramaster.formats import ascii_formats as A
-from spectramaster.formats.base import FormatError, detect_format, get_format
+from spectramaster.formats import load_all
+from spectramaster.formats.base import FormatError, detect, detect_format, get_format
 from spectramaster.model import Spectrum
 
 from _legacy_helpers import (G1_ASC, LAB_IEC, TECDOC_ASC, copy_to, genie_to_cnf, synthetic)
@@ -38,7 +39,11 @@ def test_ascii1_roundtrip(tmp_path):
     assert p.read_bytes().count(b"\r\n") == len(s.counts)
     r = A.read_ascii1(p)[0]
     assert r.counts == s.counts
-    assert detect_format(p).key == "ascii1"
+    load_all()     # TKA is registered by the SpecUtils bridge
+    # its first two counts (50, 53) could be a live and a real time: ambiguous with TKA
+    # (round5_tka_protocol.md)
+    assert detect_format(p) is None
+    assert {f.key for f in detect(p)[2]} == {"ascii1", "tka"}
 
 
 def test_ascii1_tolerates_headers_and_blanks(tmp_path):

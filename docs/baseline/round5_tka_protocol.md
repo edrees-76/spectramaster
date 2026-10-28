@@ -46,3 +46,29 @@ protocol.
 Before the change: RD.C1 fails (usual ASCII-1, 1026 channels, sum 15555, no times) and RD.C3 fails
 (usual ASCII-1); RD.C2, RD.C4 and RD.C5 are the controls. Of the 190 `.txt` files, 1 is detected as
 ASCII-1 (usual) and 189 are not spectra (no format); none passes the TKA test.
+
+---
+
+## Results (`after_R5D`)
+
+Protocol committed in e792104 before the change (SHA-256 of the file
+c53843e0e1d2d2db11f3f2871e924eddae7ed37af0cd1fad82fa68f97261515d). Engine 1.23.0 (unchanged).
+
+**First run: 6 PASS / 0 FAIL.**
+
+| ID | value | result |
+|---|---|---|
+| RD.C1 | TKA named `.txt`: ambiguous {ASCII-1, TKA}; without a format: "could be any of: ...; choose the input format"; as TKA: 1024 channels, sum 15345, LT 100, RT 110 (before: ASCII-1, 1026 channels, sum 15555, no times) | PASS |
+| RD.C2 | `.tka` and one-column `.txt` starting with zeros: identical to before | PASS |
+| RD.C3 | one-column `.txt` starting 1, 2: ambiguous; as ASCII-1 identical to before (1024 channels, sum 16369) | PASS |
+| RD.C4 | 190 `.txt` files: detection changed for 0 | PASS |
+| RD.C5 | 319 files of the `any_extension` collection: changed 0 | PASS |
+| RD.C6 | benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against `after_R5C`; full suite 1499 passed, 69 skipped | PASS |
+
+**Changed existing test (reason).** `test_ascii_formats.py::test_ascii1_roundtrip` expected a
+one-column `.txt` whose first counts are 50 and 53 to be detected as ASCII-1; it is now ambiguous
+with TKA, as registered (change 1). The test now also loads all formats, since TKA is registered by
+the SpecUtils bridge: without it the result depended on the order of the tests.
+
+Also changed: the manuals (sources), section on reading by content: the TKA/ASCII ambiguity also
+applies to `.txt`.

@@ -1325,3 +1325,14 @@ Protocol `docs/baseline/round5_combined_protocol.md` (registered before the chan
   suite 1497 passed, 69 skipped.
 - **Remaining:** the weights depend on the observed activities and the lines are selected after
   detection; neither is propagated into the limits (stated in the protocol).
+
+## Round-5 external review: a TKA file named .txt, H4 (2026-10-28)
+
+Protocol `docs/baseline/round5_tka_protocol.md` (registered before the change); engine unchanged.
+
+- **H4, confirmed.** A TKA file named `.txt` was read as one-column ASCII by the usual `.txt` test
+  (1026 channels instead of 1024, the two times counted, live and real time lost), without a note.
+  When the usual test chose ASCII-1 and the TKA content test also matches, the file is now ambiguous
+  and the input format must be chosen.
+- **Result:** 6 PASS / 0 FAIL at the first run (`after_R5D`); 190 `.txt` and 319 control files
+  unchanged; benchmark 154 / 13 unchanged; full suite 1499 passed, 69 skipped.
