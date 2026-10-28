@@ -1279,3 +1279,18 @@ Protocol `docs/baseline/ensdf_level_balance_protocol.md` (registered before the 
   10 times what they emit, more likely a misplaced gamma in the data. The lines affected are weak
   (at most 0.15 %).
 - Manuals AR/EN: the coincidence data paragraph and appendix E.
+
+## Round-5 external review: worker threads outliving their dialog, C1 (2026-10-28)
+
+Codex round 5 (75/100). No change to the analysis engine (engine 1.21.0).
+
+- **Confirmed.** A dialog deleted on close (Reports > several spectra) owned the QThread of its
+  `start_call`. Closing it during a folder scan deleted a running thread, and the process ended
+  ("QThread: Destroyed while thread is still running"; exit code 3221226505, reproduced).
+- **Fix.** `gui/worker.start_call` gives the thread to the application instead of the dialog. The
+  dialog's callbacks are disconnected with it, so the result is dropped. The application waits for
+  running calls when it quits. `running_calls()` counts them. The dialogs that run their own
+  QThread already wait in `closeEvent`.
+- **Tests:** `tests/test_round5_worker_lifetime.py` (in a separate process): closing the owner during
+  the call does not end the process and drops the result; with the owner open, the result arrives.
+
