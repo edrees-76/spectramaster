@@ -1,11 +1,11 @@
 """Round-5 review, H4: a TKA file named .txt (docs/baseline/round5_tka_protocol.md).
 
-    python -m spectramaster.validation.round5_tka [--collect FILE]
+    python -m spectramaster.validation.round5_tka [--collect]
 
 Synthetic files, the test corpus and, when present, the public spectra
-(D:/SpectraMaster_public_data): only file names, formats and sums are written.  ``--collect FILE``
-writes the raw observations only (used for the "before" values); without it the criteria are
-evaluated against ``docs/baseline/after_R5D/round5_tka_before.json``.
+(D:/SpectraMaster_public_data): only file names, formats and sums are written.  ``--collect``
+writes the raw observations only, to ``docs/baseline/after_R5D/round5_tka_before.json`` (the
+"before" values); without it the criteria are evaluated against that file.
 """
 from __future__ import annotations
 
@@ -118,11 +118,12 @@ def criteria(res: dict, before: dict) -> dict:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--collect")
+    ap.add_argument("--collect", action="store_true", help="write the before values (fixed file)")
     a = ap.parse_args(argv)
     res = collect()
     if a.collect:
-        Path(a.collect).write_text(json.dumps(res, indent=1, ensure_ascii=False, default=str), encoding="utf-8")
+        OUT.mkdir(parents=True, exist_ok=True)
+        BEFORE_JSON.write_text(json.dumps(res, indent=1, ensure_ascii=False, default=str), encoding="utf-8")
         return 0
     before = json.loads(BEFORE_JSON.read_text(encoding="utf-8"))
     c = criteria(res, before)

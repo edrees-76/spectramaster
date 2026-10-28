@@ -72,3 +72,7 @@ the SpecUtils bridge: without it the result depended on the order of the tests.
 
 Also changed: the manuals (sources), section on reading by content: the TKA/ASCII ambiguity also
 applies to `.txt`.
+
+**Harness (after the run, SonarCloud S8707).** `--collect` no longer takes a file path; it writes
+the fixed `after_R5D/round5_tka_before.json`. Criteria rerun: 5 / 5 PASS, results unchanged (the
+negative list of the control collection now also holds the two `after_R5D` reports).
