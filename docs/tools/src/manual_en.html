@@ -1116,7 +1116,8 @@ tolerance lines, violations labelled.</figcaption></figure>
       Background) or typed as <code>keV[:nuclide[:FWHM max]]</code>, e.g.
       <code>661.657:Cs-137, 1332.492:Co-60:2.0</code>;</li>
   <li>reference date and reference activity (for decay correction; a unit may follow the number, e.g.
-      <code>Cs-137=1 µCi</code>, Bq when none), peak match tolerance;</li>
+      <code>Cs-137=1 µCi</code>, Bq when none; nuclides separated by <code>;</code>, a new line or a comma; a point for
+      decimals and no thousands separator, so <code>1,000</code> is refused), peak match tolerance;</li>
   <li><b>centroid energy from</b> each file's calibration, or a <b>fixed reference calibration</b> — the
       latter shows real gain drift even when each spectrum was recalibrated;</li>
   <li>background window, <b>baseline</b> (first N points or a period), the <b>Westgard rules</b> to apply and

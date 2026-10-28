@@ -341,6 +341,30 @@ class CertificateEditor(QWidget):
     def set_activity_unit(self, unit: str) -> None:
         self.unit_combo.setCurrentText(unit)
 
+    # Each activity cell keeps (Bq, text shown) in Qt.UserRole, the uncertainty cell (Bq, text): a unit
+    # change rewrites the text from the exact value, and an unedited text gives the exact value back
+    # (round5_acceptance_protocol.md, M1).
+    def _set_activity(self, r: int, bq: Optional[float]) -> None:
+        text = f"{from_bq(bq, self._unit):.6g}" if bq else ""
+        it = self.cert_table.item(r, 1)
+        if it is None:
+            it = QTableWidgetItem()
+            self.cert_table.setItem(r, 1, it)
+        it.setText(text)
+        it.setData(Qt.UserRole, (float(bq), text) if bq else None)
+
+    def _cell_bq(self, r: int) -> Optional[float]:
+        """Activity of row `r` in Bq: the exact value while its text is unedited, else text x unit."""
+        it = self.cert_table.item(r, 1)
+        if it is None:
+            return None
+        text = it.text().strip()
+        kept = it.data(Qt.UserRole)
+        if kept and text == kept[1]:
+            return kept[0]
+        v = _num(text)
+        return to_bq(v, self._unit) if v else None
+
     def _unit_changed(self, unit: str) -> None:
         """Convert the activity column to the new unit (the certificate itself is in Bq)."""
         entries = self.certificate_rows()
@@ -348,16 +372,11 @@ class CertificateEditor(QWidget):
         self._header()
         for r, bq in entries:
             if bq is not None:
-                self.cert_table.item(r, 1).setText(f"{from_bq(bq, unit):.6g}")
+                self._set_activity(r, bq)
 
     def certificate_rows(self) -> list[tuple[int, Optional[float]]]:
-        """(row, activity in Bq or None) of every row, in the unit shown."""
-        out = []
-        for r in range(self.cert_table.rowCount()):
-            it = self.cert_table.item(r, 1)
-            v = _num(it.text().strip()) if it else None
-            out.append((r, to_bq(v, self._unit) if v else None))
-        return out
+        """(row, activity in Bq or None) of every row."""
+        return [(r, self._cell_bq(r)) for r in range(self.cert_table.rowCount())]
 
     def update_aptec(self) -> None:
         self.btn_aptec.setEnabled(bool(self._aptec_records()))
@@ -383,11 +402,14 @@ class CertificateEditor(QWidget):
         r = self.cert_table.rowCount()
         self.cert_table.insertRow(r)
         pct = 100.0 * c.activity_unc / c.activity if c.activity else 0.0
-        vals = [c.nuclide, f"{from_bq(c.activity, self._unit):.6g}" if c.activity else "", f"{pct:.3g}",
+        vals = [c.nuclide, "", f"{pct:.3g}",
                 c.ref_date.strftime("%Y-%m-%d %H:%M") if c.ref_date else "",
                 f"{c.half_life_s:.6g}" if c.half_life_s else "", _lines_text(c.lines)]
         for k, v in enumerate(vals):
             self.cert_table.setItem(r, k, QTableWidgetItem(v))
+        self._set_activity(r, c.activity)
+        if c.activity:
+            self.cert_table.item(r, 2).setData(Qt.UserRole, (float(c.activity_unc), vals[2]))
 
     def remove_cert_rows(self) -> None:
         for r in sorted({i.row() for i in self.cert_table.selectedIndexes()}, reverse=True):
@@ -400,12 +422,16 @@ class CertificateEditor(QWidget):
                 it = self.cert_table.item(r, k)
                 return it.text().strip() if it else ""
             name = t(0)
-            act = _num(t(1))
-            act = to_bq(act, self._unit) if act else act
+            act = self._cell_bq(r)
             if not name or not act:
                 continue
-            pct = _num(t(2), 0.0) or 0.0
-            out.append(eff.CertNuclide(name, act, act * pct / 100.0, eff.parse_date(t(3)) if t(3) else None,
+            a_it, u_it = self.cert_table.item(r, 1), self.cert_table.item(r, 2)
+            a_kept, u_kept = a_it.data(Qt.UserRole), (u_it.data(Qt.UserRole) if u_it else None)
+            if a_kept and u_kept and a_it.text().strip() == a_kept[1] and t(2) == u_kept[1]:
+                u = u_kept[0]                     # neither edited: the exact uncertainty
+            else:
+                u = act * (_num(t(2), 0.0) or 0.0) / 100.0
+            out.append(eff.CertNuclide(name, act, u, eff.parse_date(t(3)) if t(3) else None,
                                        _num(t(4)), _parse_lines(t(5))))
         return out
 

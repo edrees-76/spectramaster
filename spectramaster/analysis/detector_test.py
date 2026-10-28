@@ -162,8 +162,9 @@ def peak_width(spectrum, energy: float = CO60_1332) -> PeakWidth:
         out.note = f"no peak at {energy:.1f} keV"
         return out
     out.linear_crossings = n_h + n_t
-    k = _kev_per_channel(spectrum, a.centroid)
-    out.centroid_kev = float(spectrum.energy_of(a.centroid))
+    c_abs = int(spectrum.first_channel or 0) + a.centroid     # energy_of takes the absolute channel
+    k = _kev_per_channel(spectrum, c_abs)
+    out.centroid_kev = float(spectrum.energy_of(c_abs))
     out.fwhm_kev = fh * k
     out.fwtm_kev = ft * k if ft is not None else None
     if fh < MIN_WIDTH_CH:
@@ -174,7 +175,8 @@ def peak_width(spectrum, energy: float = CO60_1332) -> PeakWidth:
 
 def peak_to_compton(spectrum, roi: Optional[tuple[int, int]] = None) -> Optional[float]:
     """Highest gross count among the channels of the 1332.5 keV ROI divided by the mean gross
-    counts of the channels whose energy lies in 1040-1096 keV (IEEE Std 325)."""
+    counts of the channels whose energy lies in 1040-1096 keV (IEEE Std 325); None when the
+    spectrum does not reach both ends of that window."""
     y = np.asarray(spectrum.counts, dtype=float)
     if roi is None:
         r = _roi(spectrum, CO60_1332)
@@ -182,6 +184,8 @@ def peak_to_compton(spectrum, roi: Optional[tuple[int, int]] = None) -> Optional
             return None
         roi = r[:2]
     e = np.asarray(spectrum.energies(), dtype=float)
+    if e.min() > COMPTON_KEV[0] or e.max() < COMPTON_KEV[1]:
+        return None
     sel = (e >= COMPTON_KEV[0]) & (e <= COMPTON_KEV[1])
     if not sel.any():
         return None
@@ -217,11 +221,13 @@ def _co60():
 def relative_efficiency(spectrum, activity_bq: float, activity_u_bq: float = 0.0,
                         reference_date: Optional[datetime] = None) -> RelativeEfficiency:
     """Relative efficiency (%) at 1332.5 keV of a Co-60 point source at 25 cm on the axis."""
-    if not activity_bq or activity_bq <= 0:
-        raise ValueError("the source activity must be positive")
+    if not activity_bq or not math.isfinite(activity_bq) or activity_bq <= 0:
+        raise ValueError("the source activity must be a positive number")
+    if not math.isfinite(activity_u_bq or 0.0) or (activity_u_bq or 0.0) < 0:
+        raise ValueError("the activity uncertainty must be a non-negative number")
     t = float(spectrum.live_time or 0.0)
-    if t <= 0:
-        raise ValueError("the spectrum has no live time")
+    if not math.isfinite(t) or t <= 0:
+        raise ValueError("the spectrum has no valid live time")
     na = net_area(spectrum)
     if na is None:
         raise ValueError("the 1332.5 keV peak is outside the spectrum or its energy calibration")
@@ -255,7 +261,8 @@ def acceptance_test(spectrum, activity_bq: Optional[float] = None, activity_u_bq
     if w.fwhm_kev is not None:
         res.peak_to_compton = peak_to_compton(spectrum, w.roi)
         if res.peak_to_compton is None:
-            res.notes.append("1040-1096 keV outside the spectrum: no peak-to-Compton ratio")
+            res.notes.append("the 1040-1096 keV Compton window is not fully inside the spectrum: "
+                             "no peak-to-Compton ratio")
     if co57_spectrum is not None:
         res.width_122 = peak_width(co57_spectrum, CO57_122)
         if res.width_122.note:

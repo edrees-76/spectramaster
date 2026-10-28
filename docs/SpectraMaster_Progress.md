@@ -1294,3 +1294,20 @@ Codex round 5 (75/100). No change to the analysis engine (engine 1.21.0).
 - **Tests:** `tests/test_round5_worker_lifetime.py` (in a separate process): closing the owner during
   the call does not end the process and drops the result; with the owner open, the result arrives.
 
+## Round-5 external review: detector acceptance test and activity entry, H2 H3 M1 M2 M3 (2026-10-28)
+
+Protocol `docs/baseline/round5_acceptance_protocol.md` (registered before the change); engine 1.22.0.
+
+- **H2, confirmed.** The acceptance test evaluated the energy at the ROI's local channel: with
+  `first_channel` != 0 the centroid was wrong (832.5 instead of 1332.5 keV) and, with a non-linear
+  calibration, the widths too. It now uses the absolute channel.
+- **M3.** Peak-to-Compton only when the spectrum covers the whole 1040-1096 keV window, else a note.
+- **H3.** QC reference activity: `Cs-137=1,000 Bq` gave 1 Bq. Records are now split at `;`, a new
+  line, or a comma before the next `nuclide=`; a record that cannot be read is an error, not dropped.
+- **M2.** A comma inside a number and a value that is not finite are refused; the relative efficiency
+  checks the activity and the live time.
+- **M1.** The certificate table keeps each activity in Bq, so a unit change no longer rounds it to 6
+  digits.
+- **Result:** first run 4 PASS / 2 FAIL from a harness error (peak at 1332.492 instead of the
+  protocol's 1332.5 keV); corrected run 6 PASS / 0 FAIL and RB.C7 PASS (`after_R5B`). Benchmark
+  154 / 13 unchanged; full suite 1490 passed, 69 skipped.
