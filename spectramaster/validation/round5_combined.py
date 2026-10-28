@@ -238,7 +238,7 @@ def main(argv=None) -> int:
     lines.append(f"\nalpha = {alpha:.5f}")
     (OUT / "round5_combined.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(", ".join(f"{k}:{'PASS' if v else 'FAIL'}" for k, v in c.items()))
-    return 0
+    return 0 if all(c.values()) else 1
 
 
 if __name__ == "__main__":
