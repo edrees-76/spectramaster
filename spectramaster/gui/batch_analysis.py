@@ -471,9 +471,8 @@ class BatchAnalysisDialog(QDialog):
 
     def wait(self, ms: Optional[int] = None) -> None:
         """No ``ms``: until every thread ends (a running thread is never destroyed)."""
-        threads = [t for t, _w in self.__dict__.get("_call_threads", [])]
-        for t in threads + ([self._thread] if self._thread is not None else []):
-            t.wait() if ms is None else t.wait(ms)
+        from .worker import wait_threads
+        wait_threads(self, self._thread, ms)
 
     def _on_progress(self, i: int, n: int) -> None:
         self.progress.setValue(i)

@@ -173,6 +173,15 @@ def _wait_all() -> None:
             _RUNNING.remove((thread, worker))
 
 
+def wait_threads(owner, thread=None, ms: Optional[int] = None) -> bool:
+    """Wait for `owner`'s start_call threads and `thread` (no ``ms``: until they end, a running
+    thread is never destroyed).  True when there was something to wait for."""
+    threads = [t for t, _w in owner.__dict__.get("_call_threads", [])] + ([thread] if thread is not None else [])
+    for t in threads:
+        t.wait() if ms is None else t.wait(ms)
+    return bool(threads)
+
+
 def start_call(owner, fn, on_done, on_failed):
     """Run ``fn`` on a new QThread; `on_done(result)` / `on_failed(message)` are called in the GUI
     thread (bound methods of `owner`, a QObject).  Returns the QThread (kept on

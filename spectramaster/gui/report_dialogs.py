@@ -788,10 +788,8 @@ class ReportBatchDialog(QDialog):
 
     def wait(self, ms: Optional[int] = None) -> None:
         """No ``ms``: until the threads end (a running thread is never destroyed)."""
-        threads = [t for t, _w in self.__dict__.get("_call_threads", [])]
-        for t in threads + ([self._thread] if self._thread is not None else []):
-            t.wait() if ms is None else t.wait(ms)
-        if threads or self._thread is not None:
+        from .worker import wait_threads
+        if wait_threads(self, self._thread, ms):
             QApplication.processEvents()
 
     def closeEvent(self, ev):

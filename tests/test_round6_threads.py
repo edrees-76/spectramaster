@@ -3,39 +3,13 @@ search before they close."""
 from __future__ import annotations
 
 import threading
-import time
 
 import pytest
 
 pytest.importorskip("PySide6")
 
-from PySide6.QtCore import QSettings
-from PySide6.QtWidgets import QApplication
-
-from spectramaster.gui import dialogs, i18n
-
-
-@pytest.fixture(scope="module")
-def qapp():
-    from spectramaster.gui.app import create_app
-    return create_app(["test"])
-
-
-@pytest.fixture()
-def settings(tmp_path):
-    from spectramaster.gui.settings import Settings
-    i18n.set_language("en")
-    return Settings(QSettings(str(tmp_path / "s.ini"), QSettings.IniFormat))
-
-
-def wait_until(cond, timeout=60.0) -> bool:
-    end = time.monotonic() + timeout
-    while time.monotonic() < end:
-        QApplication.processEvents()
-        if cond():
-            return True
-        time.sleep(0.01)
-    return False
+from spectramaster.gui import dialogs
+from test_round4_ui_thread import qapp, settings, wait_until  # noqa: F401
 
 
 def _gated(monkeypatch, name):

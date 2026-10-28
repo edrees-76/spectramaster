@@ -538,10 +538,8 @@ class BatchDialog(QDialog):
     def wait(self, ms: Optional[int] = None) -> None:
         """Block until the worker thread is done (used on close and in tests); no ``ms``: until it
         ends, a running thread is never destroyed."""
-        threads = [t for t, _w in self.__dict__.get("_call_threads", [])]
-        for t in threads + ([self._thread] if self._thread is not None else []):
-            t.wait() if ms is None else t.wait(ms)
-        if threads or self._thread is not None:
+        from .worker import wait_threads
+        if wait_threads(self, self._thread, ms):
             QApplication.processEvents()
 
     def open_output_folder(self) -> None:
