@@ -60,3 +60,25 @@ reference peak (threshold, limit); RA.C3 Currie (threshold, limit); RA.C4 four C
   platform can differ in the last digits.
 - It proves the registered criteria, nothing beyond them (RA.C5 and the Co-60 part of RA.C6 were
   already full-precision comparisons in the harness).
+
+---
+
+## Results (`after_R5F`)
+
+Protocol committed in 095f851 before the change (SHA-256 of the file
+5381b187d76832dd65397867f55a3ed7a71d8c58a63482a3584337e26b86d475). Engine 1.24.0 (unchanged).
+
+| ID | value | result |
+|---|---|---|
+**Run: 5 PASS / 0 FAIL.**
+
+| RF.C1 | engine 1.15.0 against 1.14.0: largest relative difference 0 (all values identical); RA.C1 detection limit 28.19756 -> 31.46646 Bq | PASS |
+| RF.C2 | engine 1.24.0 against 1.14.0: largest relative difference 0 | PASS |
+| RF.C3 | the 10 values printed in the round-4 note equal the 1.14.0 run | PASS |
+| RF.C4 | RA.C1-C6 PASS at the registered limits with the full-precision values | PASS |
+| RF.C5 | full test suite 1508 passed, 69 skipped; no existing test changed (`test_self_attenuation.py::test_round4_activity_criteria` now runs the criteria at 1e-9, unchanged) | PASS |
+
+**Counting error in the protocol, disclosed.** The protocol says "11 quantities"; its own list has
+12 values (the Currie threshold and limit are two). The harness checks all 12.
+
+The values table (all 12, three engines) is in `after_R5F/round5_precision.md`.

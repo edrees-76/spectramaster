@@ -27,10 +27,20 @@ GAIN, NCH, LIVE = 0.25, 12000, 20000.0
 START = datetime(2024, 3, 1, 10, 0, 0)
 CS, REF_KEV = 661.657, 1950.0
 CODEX_LD = 31.461            # Codex, round-4 review, independent solution (Bq)
-# engine 1.14.0 (a8d5346), before the change: the protocol's reference values
-BEFORE = {"C1_threshold": 13.706721, "C2_no_blank": (0.330165, 0.695198),
-          "C2_no_reference": (1.021354, 2.059014), "C3_currie": (13.706721, 27.429372),
-          "C4": (0.956410, 0.958094, 0.993632, 0.991883), "C6_cs_best": 58.754836}
+BEFORE_RUN = (Path(__file__).resolve().parents[2] / "docs" / "baseline" / "after_R5F"
+              / "round4_activity_engine_1.14.0_a8d5346.json")
+
+
+def _before() -> dict:
+    """The protocol's reference values at full precision: this harness run on engine 1.14.0
+    (a8d5346), before the change (docs/baseline/round5_precision_protocol.md)."""
+    b = json.loads(BEFORE_RUN.read_text(encoding="utf-8"))
+    return {"C1_threshold": b["C1"]["decision_threshold"], "C2_no_blank": tuple(b["C2"]["no_blank"]),
+            "C2_no_reference": tuple(b["C2"]["no_reference"]), "C3_currie": tuple(b["C3"]["currie"]),
+            "C4": tuple(x[2] for x in b["C4"]["same_matrix"]), "C6_cs_best": b["C6"]["cs_row"]["best"]}
+
+
+BEFORE = _before()
 SA_SAME = SelfAttenuation("water", 1.0, "water", 1.0, 50.0)
 SA_SOIL = SelfAttenuation("mineral", 1.6, "water", 1.0, 50.0)
 PT = (0.25, -0.3)
@@ -145,21 +155,21 @@ def _close(a, b, rel) -> bool:
 
 
 def criteria(res: dict) -> dict:
-    """PASS / FAIL of RA.C1-C6.  The reference values have 6 or 7 significant digits, so "as
-    before" is checked to the rounding of the protocol (relative 1e-6) where it gives 1e-9."""
+    """PASS / FAIL of RA.C1-C6, "as before" against the full-precision values of engine 1.14.0 at
+    the protocol's limits (relative 1e-6 for the RA.C1 threshold, 1e-9 otherwise)."""
     c = {}
     c1 = res["C1"]
     c["RA.C1"] = (abs(c1["rel_to_codex"]) <= 0.01 and _close(c1["decision_threshold"], BEFORE["C1_threshold"], 1e-6),
                   f"y# {c1['detection_limit']:.4f} Bq ({100 * c1['rel_to_codex']:+.3f} % from Codex), "
                   f"y* {c1['decision_threshold']:.6f} Bq")
     pairs = [(res["C2"]["no_blank"], BEFORE["C2_no_blank"]), (res["C2"]["no_reference"], BEFORE["C2_no_reference"])]
-    ok = all(_close(a, b, 1e-6) for got, ref in pairs for a, b in zip(got, ref))
+    ok = all(_close(a, b, 1e-9) for got, ref in pairs for a, b in zip(got, ref))
     c["RA.C2"] = (ok, "no blank {:.6f} / {:.6f}, no reference {:.6f} / {:.6f} Bq".format(*pairs[0][0], *pairs[1][0]))
     got = res["C3"]["currie"]
-    c["RA.C3"] = (all(_close(a, b, 1e-6) for a, b in zip(got, BEFORE["C3_currie"])),
+    c["RA.C3"] = (all(_close(a, b, 1e-9) for a, b in zip(got, BEFORE["C3_currie"])),
                   "{:.6f} / {:.6f} Bq".format(*got))
     cois = [x[2] for x in res["C4"]["same_matrix"]]
-    c["RA.C4"] = (all(_close(a, b, 1e-6) for a, b in zip(cois, BEFORE["C4"]))
+    c["RA.C4"] = (all(_close(a, b, 1e-9) for a, b in zip(cois, BEFORE["C4"]))
                   and cois == [x[2] for x in res["C4"]["no_self_attenuation"]],
                   "COI " + ", ".join(f"{v:.6f}" for v in cois))
     ok = all(_close(r["summing_out_program"], r["summing_out_independent"], 1e-9)
@@ -170,7 +180,7 @@ def criteria(res: dict) -> dict:
     co, exp = res["C6"]["co_row"], res["C6"]["co_expected"]
     ok = exp is not None and all(_close(co.get(k), v, 1e-12) for k, v in
                                  zip(("best", "best_u", "coverage_low", "coverage_high"), exp))
-    ok = ok and _close(res["C6"]["cs_row"].get("best"), BEFORE["C6_cs_best"], 1e-6)
+    ok = ok and _close(res["C6"]["cs_row"].get("best"), BEFORE["C6_cs_best"], 1e-9)
     c["RA.C6"] = (ok, f"Co-60 not detected: best {co.get('best')}, interval [{co.get('coverage_low')}, "
                       f"{co.get('coverage_high')}] Bq/kg; Cs-137 best {res['C6']['cs_row'].get('best'):.6f}")
     return {k: {"pass": bool(v[0]), "detail": v[1]} for k, v in c.items()}

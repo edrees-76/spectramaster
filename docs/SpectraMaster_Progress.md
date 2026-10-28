@@ -1356,3 +1356,15 @@ registered after failed runs); engine 1.24.0.
 - **Remaining:** the missing loss of a partial correction is not estimated; X-ray coincidences are
   not in the table.
 
+## Round-5 external review: full-precision proof of the round-4 activity criteria, M4 (2026-10-28)
+
+Protocol `docs/baseline/round5_precision_protocol.md` (registered before the change); engine unchanged.
+
+- **M4, confirmed.** The round-4 activity harness compared with values printed to 6-7 digits
+  (relative 1e-6) where the protocol registered 1e-9.
+- **Change.** The R4-A harness was run unchanged on engines 1.14.0 (a8d5346) and 1.15.0 (c892145);
+  both runs are committed (`after_R5F`). `round4_activity` now compares with the 1.14.0 values at
+  the registered limits.
+- **Result:** 5 PASS / 0 FAIL; the 12 values are identical in every digit on 1.14.0, 1.15.0 and
+  1.24.0; full suite 1508 passed, 69 skipped. Round-5 batches R5-A to R5-F are done.
+
