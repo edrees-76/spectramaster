@@ -108,6 +108,11 @@ CONTENT_PREFERENCE = (("chandata_csv", "ascii2"), ("eml_sanderson", "iaea_ascii_
 USUAL_PREFERENCE = (("specutils_txt", "ascii2"), ("specutils_txt", "ascii1"))
 
 
+# A usual match that stays ambiguous when the other format's content test also matches: a TKA file
+# named .txt is also one-column ASCII (docs/baseline/round5_tka_protocol.md)
+USUAL_AMBIGUOUS = (("ascii1", "tka"),)
+
+
 def _detect_usual(path: Path, head: bytes) -> Optional[FormatSpec]:
     found = []
     for f in readable_formats():
@@ -158,6 +163,11 @@ def detect(path: Path) -> tuple[Optional[FormatSpec], str, list[FormatSpec]]:
         return None, "none", []
     f = _detect_usual(path, head)
     if f is not None:
+        rivals = {o for u, o in USUAL_AMBIGUOUS if u == f.key}
+        if rivals:
+            also = [c for c in content_candidates(path, head) if c.key in rivals]
+            if also:
+                return None, "ambiguous", [f] + also
         return f, "usual", [f]
     cands = content_candidates(path, head)
     if len(cands) == 1:
