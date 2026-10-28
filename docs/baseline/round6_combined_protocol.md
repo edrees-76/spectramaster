@@ -71,3 +71,22 @@ case without a blank; RD.C4 and RD.C5 are the controls.
   correlated); not changed here.
 
 ---
+
+## Results (`after_R6D`)
+
+Protocol committed in 43810f8 before the change (SHA-256 of the file
+f13e959c811d5015aad73d25d435dcbb7b56176bee4e12f2e7c66f6c78d3abfd). Engine 1.25.0.
+
+**First run: 6 PASS / 0 FAIL.**
+
+| ID | value | result |
+|---|---|---|
+| RD.C1 | thresholds 11.6600, 11.6600, 7.7929, 0.29876 Bq, equal to the full-covariance computation (before 8.2576, 8.2576, 5.5293, 0.29876) | PASS |
+| RD.C2 | detection limits 26.8031, 23.3267, 16.4472, 0.628524 Bq, equal to the independent root (before 18.4036, 16.5220, 11.5284, 0.628524) | PASS |
+| RD.C3 | false-positive rates 4.986 %, 4.986 %, 4.988 %, 5.030 % (before 12.19 %, 12.19 %, 12.14 %, 5.030 %) | PASS |
+| RD.C4 | activity, uncertainty, lines used, detection and each line's limits as before | PASS |
+| RD.C5 | round-5 cases and one-line results identical | PASS |
+| RD.C6 | benchmark (engine 1.25.0) 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against `after_R6C`; full suite 1573 passed, 69 skipped; no existing test changed | PASS |
+
+Also changed: the manuals (sources), limits of the weighted mean: with a reagent blank the shared
+reference peak corrections are counted as correlated.

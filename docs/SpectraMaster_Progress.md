@@ -1425,3 +1425,20 @@ No change to the analysis engine for valid inputs (engine 1.24.0).
   JSON lists; values equal), kept as `round6_inputs_run1.md`; second run 8 PASS / 0 FAIL. Benchmark
   154 / 13 / 60 unchanged against `after_R6B`; full suite 1568 passed, 69 skipped. A manual
   efficiency point typed with a decimal comma is no longer read (keeps its values).
+
+
+## Round-6 external review: combined limits with a blank and a reference peak, Codex H1 (2026-10-28)
+
+Protocol `docs/baseline/round6_combined_protocol.md`, committed before the change (43810f8).
+Engine 1.25.0.
+
+- **Confirmed.** The weighted mean's decision threshold and detection limit (`combined_limits`,
+  round 5) assumed independent lines. With a reagent blank and a reference peak correction, the
+  corrections shared by the lines make them covary at zero net activity (Ab_i Ab_j times the
+  reference variances) and in the term linear in y. Co-60, blank 50 Bq per line, reference peaks to
+  10 %: threshold 8.26 instead of 11.66 Bq, detection limit 18.40 instead of 26.80 Bq, false-positive
+  rate 12.2 % instead of 5 %.
+- **Fix.** Each line with a blank records its reference-peak part over the shared variables
+  (`ref_g0`, `ref_dg`); `combined_limits` adds their cross terms. Without a blank nothing changes.
+- **Result (`after_R6D`):** 6 PASS / 0 FAIL at the first run (false-positive rates 4.99 %); benchmark
+  154 / 13 / 60 unchanged against `after_R6C`; full suite 1573 passed, 69 skipped.
