@@ -39,6 +39,7 @@ QC_STRINGS: dict[str, dict[str, str]] = {
         "qc_import_done": "{added} added, {dup} duplicate(s), {err} error(s).",
         "qc_importing": "Analysing QC spectra...",
         "qc_saved": "Saved: {path}",
+        "qc_exporting": "Writing {path} ...",
         "qc_status_summary": "{n} measurements — OK {ok}, warning {warn}, out of control {fail}, excluded {excl}",
         # track dialog
         "qc_track_dialog": "QC track",
@@ -99,6 +100,7 @@ QC_STRINGS: dict[str, dict[str, str]] = {
         "qc_import_done": "أضيف {added}، مكرر {dup}، أخطاء {err}.",
         "qc_importing": "جارٍ تحليل أطياف المراقبة...",
         "qc_saved": "حُفظ: {path}",
+        "qc_exporting": "جارٍ كتابة {path} ...",
         "qc_status_summary": "{n} قياس — سليم {ok}، تحذير {warn}، خارج التحكم {fail}، مستبعد {excl}",
         "qc_track_dialog": "سجل مراقبة الجودة",
         "qc_f_name": "الاسم:", "qc_f_detector": "الكاشف:", "qc_f_dettype": "نوع الكاشف:",

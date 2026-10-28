@@ -218,6 +218,8 @@ class BatchDialog(QDialog):
         self._thread: Optional[QThread] = None
         self._worker: Optional[BatchWorker] = None
         self._last_out_dir: Optional[Path] = None
+        self.scanning = False           # a folder search runs on a worker thread
+        self._rescan = False            # the folder or the options changed meanwhile
         self.in_fmt = self.settings.input_format()
 
         lay = QVBoxLayout(self)
@@ -378,26 +380,51 @@ class BatchDialog(QDialog):
         return exts or None
 
     def scan(self) -> None:
-        if not self.folder_mode or self.is_running():
+        """Search the input folder on a worker thread (round-6 review, Gemini M1); a change made
+        meanwhile searches again when it ends."""
+        from .worker import start_call
+        if not self.folder_mode or self._thread is not None:
+            return
+        if self.scanning:
+            self._rescan = True
             return
         text = self.folder_edit.text().strip()
         if not text or not Path(text).is_dir():
             self.model.set_files([])
             self._update_count()
             return
+        self.scanning = True
+        self._scan_text = text
         self.count_label.setText(tr("folder_scanning"))
-        QApplication.setOverrideCursor(Qt.WaitCursor)
-        try:
-            QApplication.processEvents()
-            files = scan_folder(Path(text), self.recursive_cb.isChecked(), self.input_extensions())
-        finally:
-            QApplication.restoreOverrideCursor()
+        self.start_btn.setEnabled(False)
+        root, recursive, exts = Path(text), self.recursive_cb.isChecked(), self.input_extensions()
+        start_call(self, lambda: scan_folder(root, recursive, exts), self._folder_scanned, self._folder_scan_failed)
+
+    def _scan_ended(self) -> bool:
+        """Clear the search state; True when a newer search was asked for (and is started)."""
+        self.scanning = False
+        if self._rescan:
+            self._rescan = False
+            self.scan()
+            return True
+        return False
+
+    def _folder_scanned(self, files) -> None:
+        if self._scan_ended():
+            return
         self.model.set_files(files)
         self._update_count()
         if not files:
-            self.summary.setText(tr("err_no_files_found", path=text).replace("\n", " "))
+            self.summary.setText(tr("err_no_files_found", path=self._scan_text).replace("\n", " "))
         else:
             self.summary.setText(" ")
+
+    def _folder_scan_failed(self, msg: str) -> None:
+        if self._scan_ended():
+            return
+        self.model.set_files([])
+        self._update_count()
+        QMessageBox.warning(self, tr("err_title"), msg)
 
     def selected_out_format(self) -> Optional[FormatSpec]:
         key = self.out_combo.currentData()
@@ -407,7 +434,8 @@ class BatchDialog(QDialog):
         return None
 
     def is_running(self) -> bool:
-        return self._thread is not None
+        """A conversion or a folder search is in progress."""
+        return self._thread is not None or self.scanning
 
     # ----------------------------------------------------------- running
     def start(self) -> None:
@@ -510,8 +538,10 @@ class BatchDialog(QDialog):
     def wait(self, ms: Optional[int] = None) -> None:
         """Block until the worker thread is done (used on close and in tests); no ``ms``: until it
         ends, a running thread is never destroyed."""
-        if self._thread is not None:
-            self._thread.wait() if ms is None else self._thread.wait(ms)
+        threads = [t for t, _w in self.__dict__.get("_call_threads", [])]
+        for t in threads + ([self._thread] if self._thread is not None else []):
+            t.wait() if ms is None else t.wait(ms)
+        if threads or self._thread is not None:
             QApplication.processEvents()
 
     def open_output_folder(self) -> None:
@@ -519,12 +549,13 @@ class BatchDialog(QDialog):
             QDesktopServices.openUrl(QUrl.fromLocalFile(str(self._last_out_dir)))
 
     def closeEvent(self, ev):
-        if self.is_running():
+        if self._thread is not None:
             if QMessageBox.question(self, tr("err_title"), tr("batch_confirm_cancel")) != QMessageBox.Yes:
                 ev.ignore()
                 return
             self.cancel()
-            self.wait()
+        if self.is_running():
+            self.wait()                 # a folder search ends by itself
         super().closeEvent(ev)
 
     def reject(self):

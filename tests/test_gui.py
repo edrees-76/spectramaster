@@ -353,11 +353,14 @@ def test_folder_dialog_recursive_keep_tree(window, tmp_path, fake_format):
     make_file(root / "sub" / "deeper", "c.fak")
     (root / "notes.unknownext").write_text("x", encoding="utf-8")
     window.settings.set_output_format(fake_format)
-    dlg = window.convert_folder(root)
+    dlg = window.convert_folder(root)                    # the folder is searched on a worker thread
+    assert wait_until(lambda: not dlg.is_running())
     assert dlg.model.rowCount() == 3                     # extension filter applied
     dlg.recursive_cb.setChecked(False)
+    assert wait_until(lambda: not dlg.is_running())
     assert dlg.model.rowCount() == 1
     dlg.recursive_cb.setChecked(True)
+    assert wait_until(lambda: not dlg.is_running())
     dlg.same_dir_cb.setChecked(False)
     dlg.out_edit.setText(str(tmp_path / "mirror"))
     dlg.keep_tree_cb.setChecked(True)
