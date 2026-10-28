@@ -4,14 +4,17 @@ cascades, written separately from the builder: its own reading of the LiveChart 
 feeding from the intensity balance, and a random walk down the levels instead of the analytic
 path sums (docs/baseline/ensdf_coincidence_protocol.md).  Besides P(j | i) down the cascade, the
 upward P(i | j) = I_i P(j | i) / I_j and the two-way probability the correction uses
-(``Transition.coincident``) are compared (docs/baseline/round4_validation_protocol.md).
+(``Transition.coincident``) are compared (docs/baseline/round4_validation_protocol.md); I is the
+record's scheme intensity ``gs`` when it has one (docs/baseline/ensdf_level_balance_protocol.md).
+``--eb1`` also writes the change of the COI factors against OLD_TABLE (``coi_change.*``).
 
-    python -m spectramaster.validation.coincidence_ensdf_check [--raw DIR] [--old OLD_TABLE] [--r4f]
+    python -m spectramaster.validation.coincidence_ensdf_check [--raw DIR] [--old OLD_TABLE] [--r4f | --eb1]
 
 ``DIR`` of the LiveChart files: ``SPECTRAMASTER_LIVECHART_DIR`` or
 D:/SpectraMaster_public_data/livechart/raw (kept outside the repository).  Writes
 ``coincidence_check.json`` and ``coincidence_check.md`` to OUT (docs/baseline/after_CT1, or
-docs/baseline/after_R4F with ``--r4f``; fixed folders of the repository); no ENSDF data is copied.
+docs/baseline/after_R4F with ``--r4f``, docs/baseline/after_EB1 with ``--eb1``; fixed folders of the
+repository); no ENSDF data is copied.
 """
 from __future__ import annotations
 
@@ -48,6 +51,7 @@ LONG_LIVED_S = 1.0e-6
 GROUP_KEV = 0.06
 OUT = Path(__file__).resolve().parents[2] / "docs" / "baseline" / "after_CT1"
 OUT_R4F = OUT.parent / "after_R4F"
+OUT_EB1 = OUT.parent / "after_EB1"
 
 
 def raw_folder(arg=None) -> Path:
@@ -146,7 +150,7 @@ def _row(pm: float, pt: float, n: int, **keys) -> dict:
             "ok": abs(pt - pm) <= max(ABS_TOL, SIGMAS * sig)}
 
 
-def other_directions(tab, table_c, cnt, pair, strong) -> tuple[list[dict], list[dict]]:
+def other_directions(tab, table_c, cnt, pair, strong, gs=None) -> tuple[list[dict], list[dict]]:
     """Upward rows, P(a | b) for a above b against I_a P(b | a) / I_b, and two-way rows,
     P(j | i) in either order against ``Transition.coincident`` built from the record as
     ``analysis.coincidence.transitions`` builds it.  No random numbers are drawn."""
@@ -154,14 +158,15 @@ def other_directions(tab, table_c, cnt, pair, strong) -> tuple[list[dict], list[
     after = np.zeros((len(g), len(g)))
     for (a, b), p in table_c.items():
         after[a, b] = p
-    two = co.Transition(1.0, g[:, 0].copy(), g[:, 1].copy(), after).coincident
+    s = g[:, 1].copy() if gs is None else np.array(gs, dtype=float)
+    two = co.Transition(1.0, g[:, 0].copy(), g[:, 1].copy(), after, scheme=None if gs is None else s).coincident
     up, both = [], []
     for a in sorted(strong):
         for b in sorted(strong):
             if a == b:
                 continue
             pm = pair[(a, b)] / cnt[b]
-            pt = g[a, 1] * after[a, b] / g[b, 1] if g[b, 1] > 0 else 0.0
+            pt = s[a] * after[a, b] / s[b] if s[b] > 0 else 0.0
             if max(pm, pt) >= MIN_P:
                 up.append(_row(pm, round(float(pt), 6), cnt[b], i=tab[a][0], j=tab[b][0]))
             pm = (pair[(a, b)] + pair[(b, a)]) / cnt[a]
@@ -222,7 +227,7 @@ def compare(nuclide: str, raw: Path, rng: random.Random) -> list[dict]:
                 sig = math.sqrt(max(pm * (1 - pm), 1e-12) / cnt[a])
                 anns.append({"i": tab[a][0], "table": pt, "mc": round(pm, 5), "sigma": round(sig, 5),
                              "ok": abs(pt - pm) <= max(ABS_TOL, SIGMAS * sig)})
-        up, both = other_directions(tab, table_c, cnt, pair, strong)
+        up, both = other_directions(tab, table_c, cnt, pair, strong, rec.get("gs"))
         out.append({"mode": mode, "status": "ok", "pairs": rows, "ann": anns,
                     "worst": max((abs(r["table"] - r["mc"]) for r in rows + anns), default=0.0),
                     "up": up, "two_way": both})
@@ -349,15 +354,20 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--raw", default=None)
     ap.add_argument("--old", default=None, help="previous coincidence table, for the coverage comparison")
-    ap.add_argument("--r4f", action="store_true", help=f"write to {OUT_R4F} instead of {OUT}")
+    g = ap.add_mutually_exclusive_group()
+    g.add_argument("--r4f", action="store_true", help=f"write to {OUT_R4F} instead of {OUT}")
+    g.add_argument("--eb1", action="store_true", help=f"write to {OUT_EB1}, with the COI change against --old")
     a = ap.parse_args(argv)
     raw = raw_folder(a.raw)
     if not (raw / "decay_rads_g").is_dir():
         print(f"no LiveChart files in {raw}", file=sys.stderr)
         return 2
     res = run(raw, a.old)
-    out = OUT_R4F if a.r4f else OUT
+    out = OUT_R4F if a.r4f else OUT_EB1 if a.eb1 else OUT
     out.mkdir(parents=True, exist_ok=True)
+    if a.eb1:
+        from .coi_change import write as write_coi
+        write_coi(a.old, out)
     (out / "coincidence_check.json").write_text(json.dumps(res, indent=1), encoding="utf-8", newline="\n")
     write_md(res, out / "coincidence_check.md")
     print(json.dumps(res["summary"]))

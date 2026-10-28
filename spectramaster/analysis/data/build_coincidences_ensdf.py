@@ -28,7 +28,12 @@ Method, per parent (ground state or isomer) and decay mode (``B-``, ``EC+B+``, `
   depend on how the levels are fed;
 * annihilation: ``P(beta+ | i) = sum_L f_L reach_i(L) / (1 + a_i) / I_i`` with f_L the beta+
   intensity feeding level L (``decay_rads_bp``); probabilities above ANN_MAX (inconsistent
-  intensities) leave the transition ``ann_unresolved``.
+  intensities) leave the transition ``ann_unresolved``;
+* scheme intensities (docs/baseline/ensdf_level_balance_protocol.md): level populations from the
+  direct feeding max(0, out - in) and the gamma inflow, top down; ``I^s_k = I_k P(S_k) / out(S_k)``.
+  Where a level receives more than it emits (negative implied feeding), I^s exceeds I.  Stored as
+  ``gs`` when some line differs from ``g`` by more than GS_TOL; the upward probability of the
+  correction is ``I^s_i P(j | i) / I^s_j``.
 
 Output: the format of ``build_coincidences.py`` (format 1); ``br`` is the decay mode's branching,
 ``g`` the gammas per decay of that mode.  Gammas below MIN_GAMMA per decay and coincidences below
@@ -59,6 +64,7 @@ ANN_MAX = 1.001
 HALF_LIFE_TOL = 0.05        # isomer parent: ENSDF half-life within 5 % of the library's
 MERGE_KEV = 0.05            # gammas this close (same tabulated energy) are one spectral line
 MODES = ("B-", "EC+B+", "EC", "IT", "A")       # the names used by LiveChart
+GS_TOL = 1.0e-4             # relative difference of a scheme intensity from the tabulated one to store gs
 
 
 def fnum(s):
@@ -154,6 +160,24 @@ class Scheme:
             self._memo[key] = p
         return self._memo[key]
 
+    def populations(self) -> dict:
+        """{start level: P(L) / out(L)}: population from the direct feeding max(0, out - in) and the
+        gamma inflow, top down, over the emission rate the tabulated intensities give (1 when the
+        level is fed at least as fast as it de-excites, which the whole scheme then shares)."""
+        out = {s: sum(self.g[k]["T"] for k in ks) for s, ks in self.out.items()}
+        into = defaultdict(list)
+        for k, x in enumerate(self.g):
+            lv = self.level(x["L"])
+            if x["S"] is not None and lv is not None and lv < x["S"]:
+                into[lv].append(k)
+        pop = {}
+        for s in sorted(out, reverse=True):
+            inflow = sum(self.g[k]["T"] for k in into[s])
+            fed = sum(pop[self.g[k]["S"]] * self.g[k]["T"] / out[self.g[k]["S"]]
+                      for k in into[s] if out.get(self.g[k]["S"], 0.0) > 0)
+            pop[s] = max(out[s] - inflow, 0.0) + fed
+        return {s: (pop[s] / out[s] if out[s] > 0 else 1.0) for s in out}
+
     def after(self, i: int, j: int) -> float:
         """P(gamma j | gamma i), j below i."""
         xi, xj = self.g[i], self.g[j]
@@ -232,6 +256,10 @@ def mode_records(gdir: Path, bpdir: Path, nuclide: str, half_life_s) -> list[dic
         energy = [sum(gam[k]["E"] * gam[k]["I"] for k in grp) / inten[n] for n, grp in enumerate(groups)]
         rec = {"br": round(br, 6), "mode": mode,
                "g": [[round(energy[n], 4), float(f"{inten[n] / br:.6g}")] for n in range(len(groups))], "c": pairs}
+        ratio = sch.populations()
+        gs = [sum(gam[k]["I"] * ratio.get(gam[k]["S"], 1.0) for k in grp) for grp in groups]
+        if any(abs(gs[n] / inten[n] - 1.0) > GS_TOL for n in range(len(groups))):
+            rec["gs"] = [float(f"{gs[n] / br:.6g}") for n in range(len(groups))]
         if dropped:
             rec["dropped"] = dropped
         a_m = [[n, round(sum(gam[k]["I"] * ann.get(k, 0.0) for k in grp) / inten[n], 6)]

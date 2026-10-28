@@ -46,10 +46,14 @@ class Transition:
     dropped: int = 0                # inconsistent source pairs left out
     ann: np.ndarray = None          # ann[i] = P(beta+ in the same decay | gamma i), zeros when none
     ann_unresolved: bool = False    # beta+ feeding of this transition not reconstructed
+    scheme: np.ndarray = None       # scheme intensities (levels fed by their gamma inflow); None: intensities
     coincident: np.ndarray = field(init=False)   # coincident[i, j] = P(j | i) in either order
 
     def __post_init__(self):
-        rev = (self.intensities[:, None] * self.after / np.where(self.intensities > 0, self.intensities, 1.0)[None, :]).T
+        # upward P(i | j) = I_i P(j | i) / I_j with the scheme intensities, so that a level receiving more
+        # than it emits does not give probabilities above 1 (docs/baseline/ensdf_level_balance_protocol.md)
+        s = self.intensities if self.scheme is None else self.scheme
+        rev = (s[:, None] * self.after / np.where(s > 0, s, 1.0)[None, :]).T
         self.coincident = self.after + rev
         if self.ann is None:
             self.ann = np.zeros(len(self.energies))
@@ -106,8 +110,9 @@ def transitions(nuclide: str) -> list[Transition]:
             ann = np.zeros(len(g))
             for i, p in rec.get("ann", []):
                 ann[int(i)] = float(p)
+            gs = np.array(rec["gs"], dtype=float) if "gs" in rec else None
             out.append(Transition(f * float(rec["br"]), g[:, 0].copy(), g[:, 1].copy(), after,
-                                  int(rec.get("dropped", 0)), ann, bool(rec.get("ann_unresolved", False))))
+                                  int(rec.get("dropped", 0)), ann, bool(rec.get("ann_unresolved", False)), gs))
     return out
 
 

@@ -26,7 +26,8 @@ def test_cs134_main_cascade():
     t = co.transitions("Cs-134")[0]
     a, b = t.index(795.8), t.index(604.7)
     assert t.coincident[a, b] == pytest.approx(0.994, abs=1e-3)
-    assert t.coincident[b, a] == pytest.approx(t.intensities[a] * t.coincident[a, b] / t.intensities[b], rel=1e-9)
+    s = t.intensities if t.scheme is None else t.scheme       # scheme intensities (ensdf_level_balance_protocol.md)
+    assert t.coincident[b, a] == pytest.approx(s[a] * t.coincident[a, b] / s[b], rel=1e-9)
     assert t.coincident[b, a] == pytest.approx(0.8544 * 0.994 / 0.9756, rel=0.01)
     assert t.index(2000.0) is None
 

@@ -1258,3 +1258,24 @@ Protocols `docs/baseline/detector_acceptance_protocol.md` and
   `Cs-137=1 µCi`). Values are kept in Bq; the conversion factors are those of the decay calculator.
 - Manuals AR/EN: sections 12.5 and 12.6, the Tools table, the certificate unit and the QC unit hint.
 - Limitations: synthetic spectra only; no laboratory Co-60 spectrum at 25 cm with a known activity.
+
+## Coincidence table: ENSDF levels whose intensity balance does not close (2026-10-27)
+
+Protocol `docs/baseline/ensdf_level_balance_protocol.md` (registered before the change); engine 1.21.0.
+
+- **Problem (from R4-F).** The upward probability P(i | j) = I_i P(j | i) / I_j used the tabulated
+  intensities. At levels that receive more gamma transitions than they emit, it came out too large:
+  13 upward rows failed the Monte Carlo check, and Co-57 122.1 given 14.4 keV was 1.018.
+- **Change.** The builder computes level populations from the direct feeding max(0, out - in) and
+  the gamma inflow, and stores the scheme intensities (`gs`) for 98 records. The correction uses them
+  for the upward direction only. The downward probabilities, the annihilation probabilities, the line
+  matching and the summing-in term are unchanged.
+- **Result: 6 PASS / 0 FAIL.** Upward 215/215 and two-way 448/448 now agree with the simulation
+  (before 13 and 13 failed); no upward probability above 1. Benchmark: 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against after_DA2; IAEA 2002 states
+  unchanged. Full suite: 1483 passed, 69 skipped.
+- **Effect.** At eps_peak(1000 keV) = 0.05, lines with COI of at least 0.8: at most 2 % (Th-227
+  93.9 keV); Ac-228 270/328 keV +0.8 %.
+- **Limitation.** The rule follows the scheme. In Ac-228 the 938.6 and 968.3 keV levels receive 25 and
+  10 times what they emit, more likely a misplaced gamma in the data. The lines affected are weak
+  (at most 0.15 %).
+- Manuals AR/EN: the coincidence data paragraph and appendix E.
