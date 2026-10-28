@@ -108,3 +108,26 @@ intensity sets, above the limit 0.01 on that probability. The survey written in 
 98 records) did not include this line; the criteria expected the 53.2 keV calibration unchanged. The
 rule as written refuses a Ba-133 calibration with its 81 keV point for a dependence of the factor of
 about 0.1 % (0.0118 x total efficiency 0.083 in the flat case).
+
+## Amendment (registered after the first run, before its implementation)
+
+Written after the first run and its cause above; the first rule's results stay as recorded.
+
+**Change of rule 1 only.** `inconsistent` becomes the effect of the intensity set on the line's
+summing-out: emission-weighted sum over the upward partners j of
+|P(j | i) with `gs` - P(j | i) with `g`| x eps_t(E_j), with the same total efficiency as the
+correction (partners below 0.8 x e_min at 0). Partial when it exceeds PARTIAL_LIMIT 0.01, i.e. the
+factor changes by about 1 % or more between the two intensity sets. `ignored` stays a probability
+(the efficiency of those partners is unknown). Everything else as registered.
+
+Values of this measure computed before registering it (disclosed; flat 0.02 / close geometry, P/T 0.24,
+e_min 40): Ba-133 81.0 keV 0.00098 / 0.00279; Ac-228 880.76 0.10038 / 0.19333; Ac-228 338.32
+0.00926 / 0.01415; Ac-228 911.204 0.0 / 2e-5. Lines above 0.01 among 7307 gammas: 130 / 268.
+
+**Criteria (output `after_R5E2`, before values unchanged: `after_R5E/round5_tcs_before.json`).**
+RE2.C1, RE2.C3, RE2.C4, RE2.C5 and RE2.C6 are RE.C1, RE.C3, RE.C4, RE.C5 and RE.C6 as registered.
+RE2.C2: Ac-228 880.76 keV partial, its reason names the intensities; 911.204 and 968.971 keV not
+partial; 338.32 keV reported (0.00926 in this flat case, under the limit, so its expectation of the
+first rule is dropped); correction values of the five lines identical to before (==); `inconsistent`
+of the five lines, flat and close geometry, equal to a computation in the harness from the table
+records (relative difference <= 1e-12).
