@@ -85,3 +85,26 @@ Before the change: RE.C1, RE.C2, RE.C4 and RE.C5 fail (no partial state; the cal
   schemes themselves are not audited here.
 - The 1 % limit is a reporting threshold on probabilities, not on the effect on the activity (that
   is the probability times an unknown total efficiency).
+
+---
+
+## Results, first rule (`after_R5E`)
+
+Protocol committed in d6d51cc before the change (SHA-256 of the file
+ad52468e8b5917d0cb568dd43ff47d1bb121b3850f1e6fe6bacc99d1bf8b6c46). Engine 1.24.0.
+
+**First run: 3 PASS / 2 FAIL (RE.C6 not evaluated). The first rule is not shipped.**
+
+| ID | value | result |
+|---|---|---|
+| RE.C1 | Ba-133 356 keV, e_min 122: partial, "coincident photons below the efficiency curve left out (37 % of decays)", factor 1.0; e_min 50: not partial, factor 0.9703591; values identical to before | PASS |
+| RE.C2 | Ac-228 880.76 partial (`inconsistent` 1.2049), 338.32 partial (0.1112), 911.204 and 968.971 not partial (5.8e-5); values identical | PASS |
+| RE.C3 | 29228 evaluations, correction changed for 0; 4646 partial | PASS |
+| RE.C4 | from 121.8 keV with Ba-133: refused as registered; but from 53.2 keV also refused (before: corrected): Ba-133 81.0 keV `inconsistent` 0.0118 | FAIL |
+| RE.C5 | values identical; from 122 keV all four lines partial and named; but from 50 keV the Ba-133 81.0 keV line (no peak) partial | FAIL |
+
+**Cause.** Ba-133 81.0 keV: its upward coincidence probability is 0.0118 apart between the two
+intensity sets, above the limit 0.01 on that probability. The survey written in the protocol (65 of
+98 records) did not include this line; the criteria expected the 53.2 keV calibration unchanged. The
+rule as written refuses a Ba-133 calibration with its 81 keV point for a dependence of the factor of
+about 0.1 % (0.0118 x total efficiency 0.083 in the flat case).

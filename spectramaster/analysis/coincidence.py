@@ -138,10 +138,19 @@ class Coi:
     reason: str = ""             # why a cascade line is not corrected
     annihilation: float = 0.0    # part of summing_out from 511 keV photons: P(beta+|i) 2 eps_t(511)
     note: str = ""               # what the correction leaves out (ANN_UNRESOLVED_NOTE)
+    inconsistent: float = 0.0    # sum_j |P(j|i) with scheme intensities - with line intensities|, upward j
+    partial_reason: str = ""     # why the correction is incomplete (empty: complete)
+
+    @property
+    def partial(self) -> bool:
+        """The first-order correction leaves out partners or depends on the intensity set
+        (docs/baseline/round5_tcs_protocol.md)."""
+        return bool(self.partial_reason)
 
 
 INTENSITY_RANGE = (0.75, 1.33)   # table / library emission probability for the table to describe the line
 BELOW_CURVE = 0.8                # partners below BELOW_CURVE x e_min are left out (eps = 0)
+PARTIAL_LIMIT = 0.01             # ignored or inconsistent probability above which the correction is partial
 
 
 def coi(nuclide: str, energy: float, eps_peak, pt, e_min: float | None = None,
@@ -165,8 +174,13 @@ def coi(nuclide: str, energy: float, eps_peak, pt, e_min: float | None = None,
     point.  Partners just below e_min keep the clamped efficiency.  ``intensity``: the library
     emission probability of the line (fraction).  When the table's (sum over transitions of
     br I) is outside INTENSITY_RANGE times it, the table does not describe that line (a weak
-    neighbour within LINE_TOL_KEV, a dropped branch) and the line is not corrected."""
-    num_out = num_in = num_ign = num_ann = wsum = 0.0
+    neighbour within LINE_TOL_KEV, a dropped branch) and the line is not corrected.
+
+    The correction is partial (``partial_reason``, docs/baseline/round5_tcs_protocol.md) when
+    ``ignored`` or ``inconsistent`` exceeds PARTIAL_LIMIT: ``inconsistent`` is how much the line's
+    upward coincidence probabilities change between the scheme intensities (``Transition.scheme``)
+    and the line intensities.  The factor is the same; it is incomplete."""
+    num_out = num_in = num_ign = num_ann = num_inc = wsum = 0.0
     unresolved = False
     for t in transitions(nuclide):
         i = t.index(energy, LINE_TOL_KEV)
@@ -197,6 +211,10 @@ def coi(nuclide: str, energy: float, eps_peak, pt, e_min: float | None = None,
         num_ann += w * ann
         num_in += t.br * gain / ep[i] if ep[i] > 0 else 0.0
         num_ign += w * float(t.coincident[i] @ low)
+        if t.scheme is not None:
+            s, g = t.scheme, t.intensities
+            up_s = s * t.after[:, i] / s[i] if s[i] > 0 else np.zeros(len(s))
+            num_inc += w * float(np.abs(up_s - g * t.after[:, i] / g[i]).sum())
         wsum += w
     if wsum <= 0:
         return Coi()
@@ -205,6 +223,13 @@ def coi(nuclide: str, energy: float, eps_peak, pt, e_min: float | None = None,
         if not INTENSITY_RANGE[0] <= r <= INTENSITY_RANGE[1]:
             return Coi(reason=f"the coincidence data do not describe this line (emission probability "
                               f"{100 * wsum:.3g} % in the table, {100 * intensity:.3g} % in the library)")
-    so, si = num_out / wsum, num_in / wsum
-    return Coi(1.0 - so + si, so, si, True, num_ign / wsum, annihilation=num_ann / wsum,
-               note=ANN_UNRESOLVED_NOTE if unresolved else "")
+    so, si, ign, inc = num_out / wsum, num_in / wsum, num_ign / wsum, num_inc / wsum
+    why = []
+    if ign > PARTIAL_LIMIT:
+        why.append(f"coincident photons below the efficiency curve left out ({100 * ign:.0f} % of decays)")
+    if inc > PARTIAL_LIMIT:
+        why.append(f"the decay scheme's level intensities disagree with the line intensities (upward "
+                   f"coincidence probability {inc:.3g} apart)")
+    return Coi(1.0 - so + si, so, si, True, ign, annihilation=num_ann / wsum,
+               note=ANN_UNRESOLVED_NOTE if unresolved else "", inconsistent=inc,
+               partial_reason=("partial true-coincidence summing correction: " + "; ".join(why)) if why else "")

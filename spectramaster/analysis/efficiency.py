@@ -721,8 +721,9 @@ def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0,
     component.  Returns the same object when there is nothing to correct (``summing_corrected``
     set, the user declares the curve free of summing with `declared_free`, or no cascade point).
     Raises ValueError for a curve without calibration points (whether it contains summing losses
-    is unknown), a model that cannot be refitted, a cascade point the correction cannot treat, or
-    no convergence (docs/baseline/tcs_fixes_protocol.md)."""
+    is unknown), a model that cannot be refitted, a cascade point the correction cannot treat or
+    treats only partly (docs/baseline/round5_tcs_protocol.md), or no convergence
+    (docs/baseline/tcs_fixes_protocol.md)."""
     from . import coincidence
     if curve.summing_corrected or declared_free:
         return curve
@@ -761,6 +762,9 @@ def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0,
                 continue
             if not c.found:
                 continue
+            if c.partial:
+                bad.append(f"{p.nuclide} {p.energy:.1f} keV ({c.partial_reason})")
+                continue
             if c.factor <= 0:
                 raise ValueError(f"{p.nuclide} {p.energy:.1f} keV calibration point: true-coincidence summing "
                                  f"correction outside its validity (COI = {c.factor:.3g})")
@@ -772,8 +776,9 @@ def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0,
                 factors[(p.nuclide, round(p.energy, 1))] = c.factor
         if bad:
             raise ValueError("calibration points of cascade emitters that the true-coincidence summing correction "
-                             "cannot treat: " + "; ".join(bad) + ". Exclude them from the calibration, or the "
-                             "summing correction of the sample would count their losses twice")
+                             "cannot treat: " + "; ".join(bad) + ". Exclude them from the calibration (or, for a "
+                             "partial correction, extend the calibration to lower energies), or the summing "
+                             "correction of the sample would count their losses twice")
         now = np.array([pts[i].efficiency for i in cascade])
         cur = fit_efficiency(pts, curve.model, **kw, **meta)
         if not (curve.orders_auto or curve.crossover_auto):

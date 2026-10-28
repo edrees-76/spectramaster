@@ -180,6 +180,7 @@ class LineResult:
     coi_rel_unc: float = 0.0
     self_attenuation: float = 1.0      # density/matrix correction factor of this line (1 = none)
     coi_applied: bool = False    # the line was corrected for true-coincidence summing
+    coi_partial: bool = False    # that correction is partial (partners left out, inconsistent scheme)
     blank_activity: Optional[float] = None  # reagent blank subtracted, Bq (parent) at the reference date
     blank_unc: float = 0.0                  # its counting standard uncertainty, Bq
     gross_activity: Optional[float] = None  # activity before the blank correction
@@ -794,9 +795,9 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                     if c.summing_out > TCS_FIRST_ORDER_LIMIT:
                         lr.note = (lr.note + f"; large summing loss ({100 * c.summing_out:.0f} %): the first-order "
                                    "correction loses accuracy (higher orders neglected)").strip("; ")
-                    if c.ignored > 0.01:
-                        lr.note = (lr.note + f"; coincident photons below the efficiency curve left out "
-                                   f"({100 * c.ignored:.0f} % of decays)").strip("; ")
+                    if c.partial:
+                        lr.coi_partial = True
+                        lr.note = (lr.note + "; " + c.partial_reason).strip("; ")
                     if c.note:
                         lr.note = (lr.note + "; " + c.note).strip("; ")
             # blank (continuum) under the expected peak
@@ -925,6 +926,10 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             k = r.key_line
             r.note = (r.note + "; true-coincidence summing corrected"
                       + (f" (COI {k.coi:.4f} at {k.energy:g} keV)" if k is not None and k.coi_applied else "")).strip("; ")
+            partial = [l for l in corrected if l.coi_partial]
+            if partial:
+                r.note = (r.note + "; partial correction for " + ", ".join(f"{l.energy:g}" for l in partial)
+                          + " keV").strip("; ")
         elif r.nuclide in TCS_NUCLIDES:
             r.note = (r.note + "; true-coincidence summing not corrected").strip("; ")
         if q and q > 0:
