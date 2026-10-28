@@ -145,7 +145,8 @@ def criteria(m: dict) -> list[dict]:
     c5 = (all(v is None for v in q["refused"].values()) and all(x["got"] == x["expected"] for x in q["read"])
           and all(q["relative_efficiency_raises"].values()))
     r6 = m["C6"]
-    c6_ok = r6["round_trip"] == [12345.678, 246.91356] and r6["edited_bq"] == 2000.0
+    exact = [(r6["round_trip"][0], 12345.678), (r6["round_trip"][1], 246.91356), (r6["edited_bq"], 2000.0)]
+    c6_ok = all(math.isclose(a, b, rel_tol=0.0, abs_tol=0.0) for a, b in exact)    # exact, as registered
     fmt = lambda k: max(v[k] for v in a.values())   # noqa: E731
     return [
         {"id": "RB.C1", "pass": c1, "value": f"largest relative difference cut / full {fmt('cut_vs_full'):.3g}"},

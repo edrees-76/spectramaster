@@ -69,7 +69,7 @@ def parse_lines(text: str) -> list[qc.MonitoredLine]:
 
 # records: a semicolon, a new line, or a comma followed by the next "nuclide=" (a comma inside a number
 # is refused by parse_activity, round5_acceptance_protocol.md)
-_ACT_SPLIT = re.compile(r";|\n|,(?=\s*[A-Za-z]{1,2}-\d+[A-Za-z0-9]*\s*=)")
+_ACT_SPLIT = re.compile(r";|\n|,(?=\s*[A-Za-z]{1,2}-\d[A-Za-z0-9]*\s*=)")
 
 
 def _parse_activity(text: str) -> dict[str, float]:
