@@ -144,12 +144,36 @@ class CallWorker(QObject):
         self.done.emit(result)
 
 
+_RUNNING: list = []          # (thread, worker) of every start_call still running, in any owner
+_QUIT_HOOKED = False
+
+
+def running_calls() -> int:
+    """Number of ``start_call`` threads still running."""
+    return len(_RUNNING)
+
+
+def _wait_all(ms: int = 30000) -> None:
+    for thread, _worker in list(_RUNNING):
+        thread.wait(ms)
+
+
 def start_call(owner, fn, on_done, on_failed):
-    """Run ``fn`` on a new QThread owned by `owner` (a QObject); `on_done(result)` /
-    `on_failed(message)` are called in the GUI thread (bound methods of `owner`).
-    Returns the QThread (kept on ``owner._call_threads`` until it finishes)."""
-    from PySide6.QtCore import QThread
-    thread = QThread(owner)
+    """Run ``fn`` on a new QThread; `on_done(result)` / `on_failed(message)` are called in the GUI
+    thread (bound methods of `owner`, a QObject).  Returns the QThread (kept on
+    ``owner._call_threads`` until it finishes).
+
+    The thread belongs to the application, not to `owner`: a dialog closed and deleted while the
+    call runs would otherwise delete a running QThread, which ends the process (round-5 review
+    C1).  Its callbacks are disconnected with it and the result is dropped; the application waits
+    for running calls when it quits."""
+    global _QUIT_HOOKED
+    from PySide6.QtCore import QCoreApplication, QThread
+    app = QCoreApplication.instance()
+    if app is not None and not _QUIT_HOOKED:
+        app.aboutToQuit.connect(_wait_all)
+        _QUIT_HOOKED = True
+    thread = QThread(app)
     worker = CallWorker(fn)
     worker.moveToThread(thread)
     thread.started.connect(worker.run)
@@ -159,10 +183,12 @@ def start_call(owner, fn, on_done, on_failed):
     worker.failed.connect(thread.quit)
     keep = owner.__dict__.setdefault("_call_threads", [])
     keep.append((thread, worker))
+    _RUNNING.append((thread, worker))
 
     def _finished():
-        if (thread, worker) in keep:
-            keep.remove((thread, worker))
+        for lst in (keep, _RUNNING):
+            if (thread, worker) in lst:
+                lst.remove((thread, worker))
         worker.deleteLater()
         thread.deleteLater()
     thread.finished.connect(_finished)
