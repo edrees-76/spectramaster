@@ -1,0 +1,286 @@
+{
+ "measured": {
+  "engine": "1.24.0",
+  "C1": {
+   "edited": [
+    [
+     "Cs-137",
+     2000.0,
+     40.0,
+     null,
+     null
+    ]
+   ],
+   "edited_then_kBq": [
+    [
+     "Cs-137",
+     2000.0,
+     40.0,
+     null,
+     null
+    ]
+   ],
+   "round_trip": [
+    [
+     "Cs-137",
+     12345.678,
+     246.91356,
+     null,
+     null
+    ]
+   ]
+  },
+  "C2": {
+   "col1=1e309": "ValueError: Certificate, row 1, Activity (Bq): '1e309' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative, lines as energy:intensity).",
+   "col1=nan": "ValueError: Certificate, row 1, Activity (Bq): 'nan' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative, lines as energy:intensity).",
+   "col1=inf": "ValueError: Certificate, row 1, Activity (Bq): 'inf' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative, lines as energy:intensity).",
+   "col1=-5": "ValueError: Certificate, row 1, Activity (Bq): '-5' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative, lines as energy:intensity).",
+   "col1=0": "ValueError: Certificate, row 1, Activity (Bq): '0' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative, lines as energy:intensity).",
+   "col1=1,5": "ValueError: Certificate, row 1, Activity (Bq): '1,5' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative, lines as energy:intensity).",
+   "col1=1,000": "ValueError: Certificate, row 1, Activity (Bq): '1,000' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative, lines as energy:intensity).",
+   "col2=1e309": "ValueError: Certificate, row 1, Unc. %: '1e309' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative, lines as energy:intensity).",
+   "col2=-1": "ValueError: Certificate, row 1, Unc. %: '-1' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative, lines as energy:intensity).",
+   "col2=nan": "ValueError: Certificate, row 1, Unc. %: 'nan' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative, lines as energy:intensity).",
+   "col4=inf": "ValueError: Certificate, row 1, Half-life (s): 'inf' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative, lines as energy:intensity).",
+   "col4=-3": "ValueError: Certificate, row 1, Half-life (s): '-3' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative, lines as energy:intensity).",
+   "col4=0": "ValueError: Certificate, row 1, Half-life (s): '0' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative, lines as energy:intensity).",
+   "col4=nan": "ValueError: Certificate, row 1, Half-life (s): 'nan' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative, lines as energy:intensity).",
+   "col5=661.657:85,1": "ValueError: Certificate, row 1, Lines keV:yield% (empty = library): '661.657:85,1' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative,",
+   "col5=661.657:inf": "ValueError: Certificate, row 1, Lines keV:yield% (empty = library): '661.657:inf' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative, ",
+   "col5=inf:85.1": "ValueError: Certificate, row 1, Lines keV:yield% (empty = library): 'inf:85.1' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative, lin",
+   "col5=661.657:-85.1": "ValueError: Certificate, row 1, Lines keV:yield% (empty = library): '661.657:-85.1' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative",
+   "col5=661.657:0": "ValueError: Certificate, row 1, Lines keV:yield% (empty = library): '661.657:0' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative, li",
+   "col5=661.657": "ValueError: Certificate, row 1, Lines keV:yield% (empty = library): '661.657' is not accepted (a finite number with a point for decimals; activity and half-life above 0, uncertainty not negative, line",
+   "typed valid": [
+    [
+     "Co-60",
+     1000.0,
+     20.0,
+     166000000.0,
+     [
+      [
+       1173.228,
+       0.9984999999999999
+      ],
+      [
+       1332.492,
+       0.9998260000000001
+      ]
+     ]
+    ]
+   ]
+  },
+  "C3": {
+   "good": [
+    [
+     "Cs-137",
+     1000.0,
+     20.0,
+     "2020-01-01 12:00:00",
+     949000000.0,
+     [
+      [
+       661.657,
+       0.851
+      ]
+     ]
+    ],
+    [
+     "Co-60",
+     2000.0,
+     30.0,
+     "2020-01-01 12:00:00",
+     166300000.0,
+     null
+    ]
+   ],
+   "inf activity": "ValueError: certificate CSV, row 1: activity_bq 'inf' is not a number above 0",
+   "nan activity": "ValueError: certificate CSV, row 1: activity_bq 'nan' is not a number above 0",
+   "1e309 activity": "ValueError: certificate CSV, row 1: activity_bq '1e309' is not a number above 0",
+   "negative activity": "ValueError: certificate CSV, row 1: activity_bq '-1000' is not a number above 0",
+   "zero activity": "ValueError: certificate CSV, row 1: activity_bq '0' is not a number above 0",
+   "negative uncertainty": "ValueError: certificate CSV, row 1: unc_percent '-2' is not a non-negative number",
+   "nan uncertainty": "ValueError: certificate CSV, row 1: unc_percent 'nan' is not a non-negative number",
+   "inf half-life": "ValueError: certificate CSV, row 1: half_life_s 'inf' is not a number above 0",
+   "negative half-life": "ValueError: certificate CSV, row 1: half_life_s '-5' is not a number above 0",
+   "inf energy": "ValueError: certificate CSV, row 1: energy_kev 'inf' is not a number above 0",
+   "inf intensity": "ValueError: certificate CSV, row 1: intensity_percent 'inf' is not a number above 0",
+   "negative intensity": "ValueError: certificate CSV, row 1: intensity_percent '-85.1' is not a number above 0"
+  },
+  "C4": {
+   "good": [
+    [
+     661.657,
+     0.007099522018689009,
+     0.00015211640546723614,
+     true,
+     ""
+    ]
+   ],
+   "nan activity": "ValueError: certificate line Cs-137 661.657 keV: the activity (nan Bq) must be a finite number above 0",
+   "inf activity": "ValueError: certificate line Cs-137 661.657 keV: the activity (inf Bq) must be a finite number above 0",
+   "negative activity": "ValueError: certificate line Cs-137 661.657 keV: the activity (-1000.0 Bq) must be a finite number above 0",
+   "nan uncertainty": "ValueError: certificate line Cs-137 661.657 keV: the activity uncertainty (nan Bq) must be a finite number, not negative",
+   "negative uncertainty": "ValueError: certificate line Cs-137 661.657 keV: the activity uncertainty (-20.0 Bq) must be a finite number, not negative",
+   "nan intensity": "ValueError: certificate line Cs-137 661.657 keV: the emission probability (nan +- 0.002) must be finite and above 0",
+   "inf intensity": "ValueError: certificate line Cs-137 661.657 keV: the emission probability (inf +- 0.002) must be finite and above 0",
+   "nan half-life": "ValueError: certificate line Cs-137 661.657 keV: the half-life (nan s) must be a finite number above 0",
+   "zero half-life": "ValueError: certificate line Cs-137 661.657 keV: the half-life (0.0 s) must be a finite number above 0",
+   "negative half-life": "ValueError: certificate line Cs-137 661.657 keV: the half-life (-949000000.0 s) must be a finite number above 0"
+  },
+  "C5": {
+   "clean": {
+    "peak_width": [
+     1332.5000000000002,
+     2.00001702625309,
+     3.645262487172431,
+     ""
+    ],
+    "peak_to_compton": 239.04178880000342,
+    "net_area": [
+     99999.99999731506,
+     329.1197635436593
+    ],
+    "relative_efficiency": 62.57507757639808
+   },
+   "nan in the 1332 ROI": {
+    "peak_width": "ValueError: the spectrum has 1 channels that are not numbers (first: 2666)",
+    "peak_to_compton": "ValueError: the spectrum has 1 channels that are not numbers (first: 2666)",
+    "net_area": "ValueError: the spectrum has 1 channels that are not numbers (first: 2666)",
+    "relative_efficiency": "ValueError: the spectrum has 1 channels that are not numbers (first: 2666)"
+   },
+   "nan in the Compton window": {
+    "peak_width": "ValueError: the spectrum has 1 channels that are not numbers (first: 2120)",
+    "peak_to_compton": "ValueError: the spectrum has 1 channels that are not numbers (first: 2120)",
+    "net_area": "ValueError: the spectrum has 1 channels that are not numbers (first: 2120)",
+    "relative_efficiency": "ValueError: the spectrum has 1 channels that are not numbers (first: 2120)"
+   },
+   "inf in the 1332 ROI": {
+    "peak_width": "ValueError: the spectrum has 1 channels that are not numbers (first: 2664)",
+    "peak_to_compton": "ValueError: the spectrum has 1 channels that are not numbers (first: 2664)",
+    "net_area": "ValueError: the spectrum has 1 channels that are not numbers (first: 2664)",
+    "relative_efficiency": "ValueError: the spectrum has 1 channels that are not numbers (first: 2664)"
+   }
+  },
+  "C678": {
+   "counts": {
+    "bad": {
+     "100\n1,5\n": "ValueError: Line 2 is not a finite number (a point for decimals, no thousands separator): 1,5",
+     "100\n1,000\n": "ValueError: Line 2 is not a finite number (a point for decimals, no thousands separator): 1,000",
+     "100\ninf\n": "ValueError: Line 2 is not a finite number (a point for decimals, no thousands separator): inf",
+     "100\nnan\n": "ValueError: Line 2 is not a finite number (a point for decimals, no thousands separator): nan",
+     "100\n1e309\n": "ValueError: Line 2 is not a finite number (a point for decimals, no thousands separator): 1e309"
+    },
+    "good": [
+     100.0,
+     105.0,
+     98.5,
+     100.0,
+     -3.0
+    ]
+   },
+   "qc": {
+    "bad": {
+     "Cs-137=-1000": "ValueError: the activity must be above 0: 'Cs-137=-1000'",
+     "Cs-137=0": "ValueError: the activity must be above 0: 'Cs-137=0'",
+     "Cs-137=-1 uCi": "ValueError: the activity must be above 0: 'Cs-137=-1 uCi'"
+    },
+    "read": [
+     [
+      "Cs-137=37000",
+      {
+       "Cs-137": 37000.0
+      }
+     ],
+     [
+      "Cs-137=37000, Co-60=1 uCi",
+      {
+       "Cs-137": 37000.0,
+       "Co-60": 37000.0
+      }
+     ],
+     [
+      "Cs-137=1 µCi; Co-60=2 kBq",
+      {
+       "Cs-137": 37000.0,
+       "Co-60": 2000.0
+      }
+     ],
+     [
+      "Cs137=37000, Co60=1 uCi",
+      {
+       "Cs-137": 37000.0,
+       "Co-60": 37000.0
+      }
+     ],
+     [
+      "cs137=37000; Am241=500",
+      {
+       "Cs-137": 37000.0,
+       "Am-241": 500.0
+      }
+     ]
+    ],
+    "refused": {
+     "Cs-137=1,000 Bq": "ValueError: not an activity: '1,000 Bq' (use a point for decimals, no thousands separator)",
+     "Cs-137=1,5 Bq": "ValueError: not an activity: '1,5 Bq' (use a point for decimals, no thousands separator)",
+     "Cs-137=1e309": "ValueError: not a finite activity: '1e309'",
+     "Cs-137=abc": "ValueError: not an activity: 'abc' (use a point for decimals, no thousands separator)",
+     "Cs-137": "ValueError: not nuclide=activity: 'Cs-137'"
+    }
+   },
+   "set_bq": {
+    "inf": "ValueError: not a finite activity: inf Bq",
+    "nan": "ValueError: not a finite activity: nan Bq",
+    "-inf": "ValueError: not a finite activity: -inf Bq",
+    "12345.678": 12345.678,
+    "0": [
+     0.0,
+     ""
+    ]
+   }
+  }
+ },
+ "criteria": [
+  {
+   "id": "RC.C1",
+   "pass": true,
+   "value": "edited [['Cs-137', 2000.0, 40.0, None, None]]; then kBq [['Cs-137', 2000.0, 40.0, None, None]]; round trip [['Cs-137', 12345.678, 246.91356, None, None]]"
+  },
+  {
+   "id": "RC.C2",
+   "pass": true,
+   "value": "refused 20 of 20 (not: []); typed valid row [['Co-60', 1000.0, 20.0, 166000000.0, [[1173.228, 0.9984999999999999], [1332.492, 0.9998260000000001]]]]"
+  },
+  {
+   "id": "RC.C3",
+   "pass": true,
+   "value": "refused 12 of 12 (not: []); valid file as before: True"
+  },
+  {
+   "id": "RC.C4",
+   "pass": true,
+   "value": "refused 10 of 10 (not: []); valid line as before: True"
+  },
+  {
+   "id": "RC.C5",
+   "pass": true,
+   "value": "not refused: []; clean spectrum as before: True"
+  },
+  {
+   "id": "RC.C6",
+   "pass": true,
+   "value": "refused 5 of 5; valid text [100.0, 105.0, 98.5, 100.0, -3.0]"
+  },
+  {
+   "id": "RC.C7",
+   "pass": true,
+   "value": "refused 3 of 3; read as registered 5 of 5; round-5 refusals kept: True"
+  },
+  {
+   "id": "RC.C8",
+   "pass": true,
+   "value": "set_bq: {'inf': 'ValueError: not a finite activity: inf Bq', 'nan': 'ValueError: not a finite activity: nan Bq', '-inf': 'ValueError: not a finite activity: -inf Bq', '12345.678': 12345.678, '0': [0.0, '']}"
+  }
+ ]
+}

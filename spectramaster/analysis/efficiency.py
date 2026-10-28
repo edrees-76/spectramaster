@@ -205,21 +205,36 @@ def read_certificate_csv(path) -> list[CertNuclide]:
     except (ValueError, IndexError):
         header = [h.lower().replace(" ", "_") for h in rows.pop(0)]
     by: dict[str, CertNuclide] = {}
-    for r in rows:
+    for n, r in enumerate(rows, 1):
         d = {header[i]: r[i] for i in range(min(len(header), len(r)))}
+
+        def num(key, positive=True):
+            # a finite number > 0 (>= 0 for an uncertainty), else ValueError naming the row
+            # (round6_inputs_protocol.md)
+            try:
+                v = float(d[key])
+            except ValueError:
+                v = math.nan
+            if not math.isfinite(v) or v < 0 or (positive and v == 0):
+                raise ValueError(f"certificate CSV, row {n}: {key} {d[key]!r} is not "
+                                 f"{'a number above 0' if positive else 'a non-negative number'}")
+            return v
         name = d.get("nuclide", "")
-        act = float(d.get("activity_bq") or d.get("activity") or 0)
+        key = "activity_bq" if d.get("activity_bq") else "activity"
+        d.setdefault(key, "")
+        act = num(key)
         if d.get("unc_bq"):
-            unc = float(d["unc_bq"])
+            unc = num("unc_bq", positive=False)
+        elif d.get("unc_percent") or d.get("unc_%"):
+            unc = act * num("unc_percent" if d.get("unc_percent") else "unc_%", positive=False) / 100.0
         else:
-            unc = act * float(d.get("unc_percent") or d.get("unc_%") or 0) / 100.0
+            unc = 0.0
         c = by.get(name)
         if c is None:
-            hl = d.get("half_life_s")
             c = by[name] = CertNuclide(name, act, unc, parse_date(d.get("ref_date")),
-                                       float(hl) if hl else None)
+                                       num("half_life_s") if d.get("half_life_s") else None)
         if d.get("energy_kev") and d.get("intensity_percent"):
-            c.lines = (c.lines or []) + [(float(d["energy_kev"]), float(d["intensity_percent"]) / 100.0)]
+            c.lines = (c.lines or []) + [(num("energy_kev"), num("intensity_percent") / 100.0)]
     return list(by.values())
 
 
@@ -400,6 +415,25 @@ def match_peak(peaks, energy: float, used: Optional[set] = None):
     return best
 
 
+def check_cert_line(ln: CertLine) -> None:
+    """Refuse a certified line a calculation cannot use: activity or intensity not finite and > 0,
+    an uncertainty not finite and >= 0, a half-life given and not finite and > 0
+    (round6_inputs_protocol.md)."""
+    def ok(v, positive=True):
+        return v is not None and math.isfinite(v) and (v > 0 if positive else v >= 0)
+    what = f"certificate line {ln.nuclide} {ln.energy:g} keV"
+    if not ok(ln.activity):
+        raise ValueError(f"{what}: the activity ({ln.activity!r} Bq) must be a finite number above 0")
+    if not ok(ln.activity_unc, positive=False):
+        raise ValueError(f"{what}: the activity uncertainty ({ln.activity_unc!r} Bq) must be a finite "
+                         f"number, not negative")
+    if not ok(ln.intensity) or not ok(ln.intensity_unc, positive=False):
+        raise ValueError(f"{what}: the emission probability ({ln.intensity!r} +- {ln.intensity_unc!r}) "
+                         f"must be finite and above 0")
+    if ln.half_life_s is not None and not ok(ln.half_life_s):
+        raise ValueError(f"{what}: the half-life ({ln.half_life_s!r} s) must be a finite number above 0")
+
+
 def measure_efficiency(spectrum, cert: Sequence[CertLine], peaks=None,
                        background=None, min_sig: float = 3.0) -> list[EfficiencyPoint]:
     """Measured FEP efficiency points of the certified lines found in `spectrum`.
@@ -435,6 +469,7 @@ def measure_efficiency(spectrum, cert: Sequence[CertLine], peaks=None,
     for ln in cert:
         if not ln.use:
             continue
+        check_cert_line(ln)
         p = match_peak(peaks, ln.energy)
         if p is None:
             continue

@@ -791,7 +791,10 @@ validated by the laboratory.</div>
       converts the column, and the calibration always uses Bq), uncertainty %, reference date, half-life (s) and optionally the lines <code>keV:yield%</code> (empty = library
       values). Fill it from the <b>Aptec records</b> (the source records stored in Aptec <code>.S0</code> files), a
       <b>Preset</b> (QCY48, QCRB1241, Eu-152 point source), <b>Import CSV…</b> or by typing. A <b>common standard
-      uncertainty</b> shared by all nuclides (e.g. gravimetric preparation) can be given once.</li>
+      uncertainty</b> shared by all nuclides (e.g. gravimetric preparation) can be given once. Numbers take a point
+      for decimals and no thousands separator; an activity or half-life that is not above 0, a negative uncertainty,
+      a value that is not finite or a line that is not <code>keV:yield%</code> stops with a message naming the row
+      and column (the same limits apply to an imported CSV).</li>
   <li><b>2. Detector and geometry.</b> The detector profile and the geometry of the standard: kind (Marinelli,
       point source, cylinder / bottle, air filter), container, volumes, diameters, fill height, matrix, density,
       distance to the end cap, filter dimensions and position. Unknown values stay empty — they are never taken as
@@ -1125,7 +1128,8 @@ tolerance lines, violations labelled.</figcaption></figure>
       <code>661.657:Cs-137, 1332.492:Co-60:2.0</code>;</li>
   <li>reference date and reference activity (for decay correction; a unit may follow the number, e.g.
       <code>Cs-137=1 µCi</code>, Bq when none; nuclides separated by <code>;</code>, a new line or a comma; a point for
-      decimals and no thousands separator, so <code>1,000</code> is refused), peak match tolerance;</li>
+      decimals and no thousands separator, so <code>1,000</code> is refused; an activity must be above 0; a name such
+      as <code>Cs137</code> is stored as <code>Cs-137</code>), peak match tolerance;</li>
   <li><b>centroid energy from</b> each file's calibration, or a <b>fixed reference calibration</b> — the
       latter shows real gain drift even when each spectrum was recalibrated;</li>
   <li>background window, <b>baseline</b> (first N points or a period), the <b>Westgard rules</b> to apply and
@@ -1187,7 +1191,7 @@ the clipboard.</p>
 
 <h3 id="qc-chi2">12.6 Chi-square counting test</h3>
 <p><span class="menu">Tools › Chi-Square Counting Test…</span> checks that repeated counts of the same source
-scatter as Poisson statistics predict (IAEA-TECDOC-1599). Type or paste the counts, one per line (10 or 20).
+scatter as Poisson statistics predict (IAEA-TECDOC-1599). Type or paste the counts, one per line (10 or 20; a point for decimals, no thousands separator).
 χ² = Σ(x − x̄)² / x̄ is accepted between the 5 % and 95 % points of the chi-square distribution with n − 1
 degrees of freedom: 3.325 – 16.919 for 10 counts, 10.117 – 30.144 for 20. A value above the range shows extra
 scatter (unstable electronics, high voltage, source position); a value below it shows too little scatter

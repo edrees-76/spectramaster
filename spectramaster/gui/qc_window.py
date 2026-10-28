@@ -68,14 +68,17 @@ def parse_lines(text: str) -> list[qc.MonitoredLine]:
     return sorted(out, key=lambda l: l.energy)
 
 
-# records: a semicolon, a new line, or a comma followed by the next "nuclide=" (a comma inside a number
-# is refused by parse_activity, round5_acceptance_protocol.md)
-_ACT_SPLIT = re.compile(r";|\n|,(?=\s*[A-Za-z]{1,2}-\d[A-Za-z0-9]*\s*=)")
+# records: a semicolon, a new line, or a comma followed by the next "name=" (a comma inside a number
+# is refused by parse_activity, round5_acceptance_protocol.md; names without a hyphen,
+# round6_inputs_protocol.md)
+_ACT_SPLIT = re.compile(r";|\n|,(?=\s*[A-Za-z][^=,;\n]*=)")
 
 
 def _parse_activity(text: str) -> dict[str, float]:
-    """{nuclide: Bq} of "Cs-137=37000, Co-60=1 uCi": a unit after the number is optional (Bq).
-    A record that is not "nuclide=activity" raises ValueError."""
+    """{nuclide: Bq} of "Cs-137=37000, Co-60=1 uCi": a unit after the number is optional (Bq); the
+    nuclide in the library spelling ("Cs137" -> "Cs-137").  A record that is not "nuclide=activity",
+    or an activity not above 0, raises ValueError."""
+    from ..tools.archive_db import canonical_nuclide
     from .activity_input import parse_activity
     out = {}
     for part in _ACT_SPLIT.split(text):
@@ -84,7 +87,10 @@ def _parse_activity(text: str) -> dict[str, float]:
         k, sep, v = part.partition("=")
         if not sep or not k.strip() or not v.strip():
             raise ValueError(f"not nuclide=activity: {part.strip()!r}")
-        out[k.strip()] = parse_activity(v)
+        bq = parse_activity(v)
+        if bq <= 0:
+            raise ValueError(f"the activity must be above 0: {part.strip()!r}")
+        out[canonical_nuclide(k.strip())] = bq
     return out
 
 

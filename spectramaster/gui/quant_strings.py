@@ -299,6 +299,9 @@ EN.update({
     "tip_eff_u_common": "Enters the covariance of the points once; leave empty when the certificate does not state it",
     "eff_not_stated": "not stated",
     "eff_bad_u_common": "Common standard uncertainty: '{text}' is not a percentage between 0 and 100.",
+    "eff_bad_cert_cell": ("Certificate, row {row}, {col}: '{text}' is not accepted (a finite number with a "
+                          "point for decimals; activity and half-life above 0, uncertainty not negative, "
+                          "lines as energy:intensity)."),
     "eff_step_geo_intro": "Describe the measurement geometry of the standard. It is stored with the curve and "
                           "checked against the sample geometry when activities are calculated. Leave unknown "
                           "values empty: they are never taken as zero.",
@@ -417,6 +420,8 @@ AR.update({
     "eff_u_common_hint": "ارتياب مشترك بين جميع نويدات المصدر (مثل التحضير الوزني) إذا نصّت عليه الشهادة",
     "tip_eff_u_common": "يدخل مصفوفة تغاير النقاط مرة واحدة؛ اتركه فارغًا إذا لم تنص عليه الشهادة",
     "eff_not_stated": "غير مذكور",
+    "eff_bad_cert_cell": ("الشهادة، الصف {row}، {col}: ‏'{text}' غير مقبول (رقم منتهٍ بنقطة عشرية؛ "
+                          "النشاط وعمر النصف أكبر من صفر، والارتياب غير سالب، والخطوط بالشكل طاقة:شدة)."),
     "eff_bad_u_common": "الارتياب المعياري المشترك: ‏'{text}' ليس نسبة مئوية بين 0 و100.",
     "eff_step_geo_intro": "صِف هندسة قياس المصدر المعياري. تُحفظ مع المنحنى وتُقارن بهندسة العينة عند حساب "
                           "النشاط. اترك القيم المجهولة فارغة: لا تُعامل أبدًا على أنها صفر.",
