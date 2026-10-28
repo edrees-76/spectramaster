@@ -109,8 +109,9 @@ USUAL_PREFERENCE = (("specutils_txt", "ascii2"), ("specutils_txt", "ascii1"))
 
 
 # A usual match that stays ambiguous when the other format's content test also matches: a TKA file
-# named .txt is also one-column ASCII (docs/baseline/round5_tka_protocol.md)
-USUAL_AMBIGUOUS = (("ascii1", "tka"),)
+# named .txt is also one-column ASCII (docs/baseline/round5_tka_protocol.md); so are Laval and
+# Wallac files (docs/baseline/round6_laval_wallac_protocol.md)
+USUAL_AMBIGUOUS = (("ascii1", "tka"), ("ascii1", "laval_ascii"), ("ascii1", "wallac_ascii"))
 
 
 def _detect_usual(path: Path, head: bytes) -> Optional[FormatSpec]:
