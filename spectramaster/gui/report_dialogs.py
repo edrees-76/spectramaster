@@ -705,7 +705,9 @@ class ReportBatchDialog(QDialog):
 
     # ----------------------------------------------------------- running
     def is_running(self) -> bool:
-        return self._thread is not None
+        """Reports being written or a folder being searched (a search cannot be cancelled, only
+        waited for: round-6 review, Gemini M1)."""
+        return self._thread is not None or self.scanning
 
     def start(self) -> bool:
         if self.is_running() or not self.files:
@@ -785,9 +787,9 @@ class ReportBatchDialog(QDialog):
             self.cancel_btn.setEnabled(False)
 
     def wait(self, ms: Optional[int] = None) -> None:
-        """No ``ms``: until the thread ends (a running thread is never destroyed)."""
-        if self._thread is not None:
-            self._thread.wait() if ms is None else self._thread.wait(ms)
+        """No ``ms``: until the threads end (a running thread is never destroyed)."""
+        from .worker import wait_threads
+        if wait_threads(self, self._thread, ms):
             QApplication.processEvents()
 
     def closeEvent(self, ev):

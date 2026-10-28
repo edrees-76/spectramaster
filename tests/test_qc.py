@@ -302,6 +302,16 @@ def qapp():
     return create_app(["test"])
 
 
+def _wait(cond, timeout=60.0):
+    import time
+    from PySide6.QtWidgets import QApplication
+    end = time.monotonic() + timeout
+    while not cond() and time.monotonic() < end:
+        QApplication.processEvents()
+        time.sleep(0.01)
+    assert cond()
+
+
 def test_qc_window_offscreen_and_exports(qapp, tmp_path):
     from spectramaster.gui.qc_charts import chart_image, paint_qc_report
     from spectramaster.gui.qc_window import QCWindow, parse_lines, lines_to_text
@@ -332,9 +342,11 @@ def test_qc_window_offscreen_and_exports(qapp, tmp_path):
         w.line_combo.setCurrentIndex(2)
         assert w.charts["centroid"].series.line.energy == 1332.492
         w.grab()                                           # paints the charts
-        pdf = w.export_pdf(tmp_path / "out" / "report.pdf")
-        assert pdf.exists() and pdf.read_bytes()[:4] == b"%PDF" and pdf.stat().st_size > 5000
+        pdf = w.export_pdf(tmp_path / "out" / "report.pdf")      # written on a worker thread
         xl = w.export_excel(tmp_path / "out" / "qc.xlsx")
+        assert w.exports_running()
+        _wait(lambda: not w.exports_running())
+        assert pdf.exists() and pdf.read_bytes()[:4] == b"%PDF" and pdf.stat().st_size > 5000
         assert xl.exists()
         pngs = w.export_charts(tmp_path / "png", "png")
         svgs = w.export_charts(tmp_path / "svg", "svg")

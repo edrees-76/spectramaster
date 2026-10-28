@@ -1460,3 +1460,21 @@ Engine 1.26.0.
   of this line". No number changes.
 - **Result (`after_R6E`):** 6 PASS / 0 FAIL at the first run; benchmark 154 / 13 / 60 unchanged against
   `after_R6D`; full suite 1577 passed, 69 skipped.
+
+
+## Round-6 external review: folder searches and QC exports off the GUI thread, Gemini M1 (2026-10-29)
+
+No science change (engine 1.26.0 kept), so no protocol.
+
+- **Confirmed.** `ReportBatchDialog.is_running` ignored a running folder search (Esc closed the dialog
+  during it); the folder search of *Convert Folder...* (`BatchDialog.scan`) and the QC window's PDF /
+  Excel exports ran on the GUI thread.
+- **Fix.** The report dialog counts a search as running and waits for it on close; `BatchDialog.scan`
+  runs on `start_call` (a change made meanwhile searches again at the end; closing waits, without the
+  cancel question); the QC exports run on `start_call` from copies of the track and its evaluation,
+  errors in a message box.
+- **Tests.** New `tests/test_round6_threads.py`; two existing tests now wait for the background work
+  (`test_folder_dialog_recursive_keep_tree`, `test_qc_window_offscreen_and_exports`: the search and the
+  exports are no longer synchronous). Full suite 1579 passed, 69 skipped, 1 failed:
+  `test_timing_16k_channels` over its 1 s bound on a busy machine (code not touched); passed 3 of 3 runs
+  alone.

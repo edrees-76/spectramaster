@@ -783,25 +783,43 @@ class QCWindow(QMainWindow):
         self.statusBar().showMessage(tr("qc_saved", path=folder), 8000)
         return out
 
+    def _export(self, fn, path) -> Path:
+        """Write `path` with fn(track, path, ev) on a worker thread, from copies of the track and
+        its evaluation (edits made meanwhile do not reach the file; round-6 review, Gemini M1)."""
+        import copy
+        from .worker import start_call
+        track, ev, path = copy.deepcopy(self.track), copy.deepcopy(self.ev), Path(path)
+        self.statusBar().showMessage(tr("qc_exporting", path=path))
+        start_call(self, lambda: fn(track, path, ev), self._exported, self._export_failed)
+        return path
+
+    def _exported(self, path) -> None:
+        self.statusBar().showMessage(tr("qc_saved", path=path), 8000)
+
+    def _export_failed(self, msg: str) -> None:
+        self.statusBar().clearMessage()
+        QMessageBox.warning(self, tr("qc_title"), msg)
+
+    def exports_running(self) -> bool:
+        return bool(self.__dict__.get("_call_threads"))
+
     def export_excel(self, path=None) -> Optional[Path]:
+        """The workbook path; it is written on a worker thread (see :meth:`exports_running`)."""
         if not self._need_track():
             return None
         path = path or self._ask_save(tr("qc_export_xlsx"), "Excel (*.xlsx)", f"{self._safe_name()}_QC.xlsx")
         if not path:
             return None
-        p = qc.export_track_xlsx(self.track, path, self.ev)
-        self.statusBar().showMessage(tr("qc_saved", path=p), 8000)
-        return p
+        return self._export(qc.export_track_xlsx, path)
 
     def export_pdf(self, path=None) -> Optional[Path]:
+        """The PDF path; it is written on a worker thread (see :meth:`exports_running`)."""
         if not self._need_track():
             return None
         path = path or self._ask_save(tr("qc_export_pdf"), "PDF (*.pdf)", f"{self._safe_name()}_QC.pdf")
         if not path:
             return None
-        p = export_qc_pdf(self.track, path, self.ev)
-        self.statusBar().showMessage(tr("qc_saved", path=p), 8000)
-        return p
+        return self._export(export_qc_pdf, path)
 
     def closeEvent(self, ev):
         if self._thread is not None and self._thread.isRunning():
