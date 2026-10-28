@@ -278,6 +278,8 @@ def main(argv=None) -> int:
         BEFORE_JSON.write_text(json.dumps(m, indent=1, ensure_ascii=False, default=str), encoding="utf-8", newline="\n")
         return 0
     b = json.loads(BEFORE_JSON.read_text(encoding="utf-8"))
+    # compare as stored: tuples become lists, as in the before file (first run: 3 false FAILs)
+    m = json.loads(json.dumps(m, ensure_ascii=False, default=str))
     cs = criteria(m, b)
     (OUT / "round6_inputs.json").write_text(json.dumps({"measured": m, "criteria": cs}, indent=1, ensure_ascii=False,
                                                        default=str), encoding="utf-8", newline="\n")

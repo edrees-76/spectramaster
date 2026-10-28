@@ -55,10 +55,13 @@ OK_COLOR = QColor(46, 125, 50)
 
 
 def _num(text: str, default: Optional[float] = None) -> Optional[float]:
+    """A finite number, else `default`: a comma (thousands separator or decimal comma: ambiguous)
+    and a value that is not finite are not read (round6_inputs_protocol.md)."""
     try:
-        return float(str(text).replace(",", ".").strip())
+        v = float(str(text).strip())
     except (TypeError, ValueError):
         return default
+    return v if math.isfinite(v) else default
 
 
 def _lines_text(lines) -> str:
@@ -66,13 +69,17 @@ def _lines_text(lines) -> str:
 
 
 def _parse_lines(text: str):
+    """[(keV, fraction)] of "661.657:85.1; 32.19:3.6"; ValueError naming an entry that is not
+    energy:intensity with both > 0."""
     out = []
     for part in (text or "").replace(",", ";").split(";"):
-        if ":" in part:
-            e, i = part.split(":", 1)
-            ev, iv = _num(e), _num(i)
-            if ev and iv:
-                out.append((ev, iv / 100.0))
+        if not part.strip():
+            continue
+        e, sep, i = part.partition(":")
+        ev, iv = _num(e), _num(i)
+        if not sep or ev is None or iv is None or ev <= 0 or iv <= 0:
+            raise ValueError(part.strip())
+        out.append((ev, iv / 100.0))
     return out or None
 
 
@@ -365,14 +372,41 @@ class CertificateEditor(QWidget):
         v = _num(text)
         return to_bq(v, self._unit) if v else None
 
+    def _row_unc(self, r: int, act: float) -> float:
+        """Uncertainty of row `r` in Bq: the exact value while neither the activity nor the
+        percentage was edited, else activity x percentage; ValueError for an invalid percentage."""
+        a_it, u_it = self.cert_table.item(r, 1), self.cert_table.item(r, 2)
+        text = u_it.text().strip() if u_it else ""
+        a_kept, u_kept = a_it.data(Qt.UserRole), (u_it.data(Qt.UserRole) if u_it else None)
+        if a_kept and u_kept and a_it.text().strip() == a_kept[1] and text == u_kept[1]:
+            return u_kept[0]                      # neither edited: the exact uncertainty
+        if not text:
+            return 0.0
+        pct = _num(text)
+        if pct is None or pct < 0:
+            raise ValueError(text)
+        return act * pct / 100.0
+
     def _unit_changed(self, unit: str) -> None:
-        """Convert the activity column to the new unit (the certificate itself is in Bq)."""
-        entries = self.certificate_rows()
+        """Convert the activity column to the new unit (the certificate itself is in Bq).  The
+        uncertainty each row had is kept with the rewritten activity (round6_inputs_protocol.md)."""
+        entries = []
+        for r, bq in self.certificate_rows():
+            u = None
+            if bq is not None:
+                try:
+                    u = self._row_unc(r, bq)
+                except ValueError:
+                    pass
+            entries.append((r, bq, u))
         self._unit = unit
         self._header()
-        for r, bq in entries:
+        for r, bq, u in entries:
             if bq is not None:
                 self._set_activity(r, bq)
+                u_it = self.cert_table.item(r, 2)
+                if u_it is not None:
+                    u_it.setData(Qt.UserRole, (u, u_it.text().strip()) if u is not None else None)
 
     def certificate_rows(self) -> list[tuple[int, Optional[float]]]:
         """(row, activity in Bq or None) of every row."""
@@ -415,24 +449,40 @@ class CertificateEditor(QWidget):
         for r in sorted({i.row() for i in self.cert_table.selectedIndexes()}, reverse=True):
             self.cert_table.removeRow(r)
 
+    def _bad_cell(self, r: int, k: int, text: str) -> ValueError:
+        head = self.cert_table.horizontalHeaderItem(k)
+        return ValueError(qtr("eff_bad_cert_cell", row=r + 1, col=head.text() if head else str(k + 1), text=text))
+
     def certificate(self) -> list[eff.CertNuclide]:
+        """The named rows with an activity; ValueError naming the row and column of a value that is
+        not acceptable (activity, half-life > 0, uncertainty >= 0, finite; round6_inputs_protocol.md)."""
         out = []
         for r in range(self.cert_table.rowCount()):
             def t(k):
                 it = self.cert_table.item(r, k)
                 return it.text().strip() if it else ""
             name = t(0)
-            act = self._cell_bq(r)
-            if not name or not act:
+            if not name or not t(1):              # a row being filled in
                 continue
-            a_it, u_it = self.cert_table.item(r, 1), self.cert_table.item(r, 2)
-            a_kept, u_kept = a_it.data(Qt.UserRole), (u_it.data(Qt.UserRole) if u_it else None)
-            if a_kept and u_kept and a_it.text().strip() == a_kept[1] and t(2) == u_kept[1]:
-                u = u_kept[0]                     # neither edited: the exact uncertainty
-            else:
-                u = act * (_num(t(2), 0.0) or 0.0) / 100.0
-            out.append(eff.CertNuclide(name, act, u, eff.parse_date(t(3)) if t(3) else None,
-                                       _num(t(4)), _parse_lines(t(5))))
+            act = self._cell_bq(r)
+            if act is None or not math.isfinite(act) or act <= 0:
+                raise self._bad_cell(r, 1, t(1))
+            try:
+                u = self._row_unc(r, act)
+            except ValueError:
+                raise self._bad_cell(r, 2, t(2)) from None
+            if not math.isfinite(u):
+                raise self._bad_cell(r, 2, t(2))
+            hl = None
+            if t(4):
+                hl = _num(t(4))
+                if hl is None or hl <= 0:
+                    raise self._bad_cell(r, 4, t(4))
+            try:
+                lines = _parse_lines(t(5))
+            except ValueError:
+                raise self._bad_cell(r, 5, t(5)) from None
+            out.append(eff.CertNuclide(name, act, u, eff.parse_date(t(3)) if t(3) else None, hl, lines))
         return out
 
     def apply_preset(self) -> None:
@@ -468,7 +518,10 @@ class CertificateEditor(QWidget):
         if not path:
             path, _ = QFileDialog.getSaveFileName(self, qtr("eff_export_csv"), self._folder("effcal"), "CSV (*.csv)")
         if path:
-            eff.write_certificate_csv(path, self.certificate())
+            try:
+                eff.write_certificate_csv(path, self.certificate())
+            except ValueError as exc:
+                self._msg(str(exc))
 
 
 # ===================================================================== wizard
@@ -976,7 +1029,11 @@ class EfficiencyDialog(QDialog):
         if self.spectrum is None:
             self._msg(qtr("eff_no_spectrum"))
             return False
-        cert = self.certificate()
+        try:
+            cert = self.certificate()
+        except ValueError as exc:
+            self._msg(str(exc))
+            return False
         if not cert:
             self._msg(qtr("eff_no_cert"))
             return False
@@ -1252,7 +1309,11 @@ class EfficiencyDialog(QDialog):
         if self.val_spectrum is None:
             self._msg(qtr("eff_val_no_spectrum"))
             return False
-        cert = self.val_cert.certificate()
+        try:
+            cert = self.val_cert.certificate()
+        except ValueError as exc:
+            self._msg(str(exc))
+            return False
         if not cert:
             self._msg(qtr("eff_no_cert"))
             return False

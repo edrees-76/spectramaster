@@ -3,6 +3,7 @@ analysis/detector_test.py; docs/baseline/detector_acceptance_protocol.md).  Both
 well under 0.1 s and run on the interface thread."""
 from __future__ import annotations
 
+import math
 from pathlib import Path
 from typing import Optional
 
@@ -44,7 +45,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "c2_n": "Number of counts", "c2_mean": "Mean", "c2_chi2": "Chi-square", "c2_dof": "Degrees of freedom",
         "c2_limits": "Acceptance range (5 % - 95 %)", "c2_range": "{low} to {high}", "c2_result": "Result",
         "c2_pass": "PASS: the counting system behaves statistically", "c2_fail": "FAIL: outside the acceptance range",
-        "c2_bad_input": "Line {n} is not a number: {text}",
+        "c2_bad_input": "Line {n} is not a finite number (a point for decimals, no thousands separator): {text}",
         "da_notes": "Notes",
     },
     "ar": {
@@ -72,7 +73,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "c2_n": "عدد القراءات", "c2_mean": "المتوسط", "c2_chi2": "مربع كاي", "c2_dof": "درجات الحرية",
         "c2_limits": "مجال القبول (من 5 % إلى 95 %)", "c2_range": "من {low} إلى {high}", "c2_result": "النتيجة",
         "c2_pass": "ناجح: نظام العدّ يتصرّف إحصائيًا كما يُتوقَّع", "c2_fail": "مخفق: خارج مجال القبول",
-        "c2_bad_input": "السطر {n} ليس رقمًا: {text}",
+        "c2_bad_input": "السطر {n} ليس رقمًا منتهيًا (نقطة للكسور العشرية، دون فاصل للآلاف): {text}",
         "da_notes": "ملاحظات",
     },
 }
@@ -217,15 +218,20 @@ class AcceptanceDialog(QDialog):
 
 
 def parse_counts(text: str) -> list[float]:
+    """One count per line; a comma (thousands separator or decimal comma: ambiguous) or a value
+    that is not finite is an error naming the line (round6_inputs_protocol.md)."""
     out = []
     for n, line in enumerate(text.splitlines(), 1):
-        s = line.strip().replace(",", "")
+        s = line.strip()
         if not s:
             continue
         try:
-            out.append(float(s))
+            v = float(s)
         except ValueError:
-            raise ValueError(tr("c2_bad_input", n=n, text=line.strip())) from None
+            v = math.nan
+        if not math.isfinite(v):
+            raise ValueError(tr("c2_bad_input", n=n, text=s))
+        out.append(v)
     return out
 
 

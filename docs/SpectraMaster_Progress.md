@@ -1404,3 +1404,24 @@ No change to the analysis engine (engine 1.24.0).
 - **Result (`after_R6B`):** 6 PASS / 0 FAIL at the first run, laboratory `.txt` files unchanged
   (counts only); benchmark 154 / 13 / 60 unchanged against `after_R5E3`; full suite 1515 passed,
   69 skipped. Manual sources: the Laval/Wallac case added to reading by content.
+
+
+## Round-6 external review: input validation, Codex H2 / M1, Gemini H1 / M2 (2026-10-28)
+
+Protocol `docs/baseline/round6_inputs_protocol.md`, committed before the change (2f14de2).
+No change to the analysis engine for valid inputs (engine 1.24.0).
+
+- **Confirmed.** Certificate table: after an edited activity a unit change brought back the old
+  absolute uncertainty (2000 +- 40 became 2000 +- 20). The table, the certificate CSV and
+  `measure_efficiency` accepted infinite, NaN, negative or zero activities, uncertainties,
+  half-lives and intensities (NaN efficiency points used); `1,000` was read as 1. The detector test
+  (`net_area`, `peak_to_compton`, `relative_efficiency`) did not check the counts. The chi-square
+  input turned `1,5` into 15; the QC reference activity accepted -1000 Bq; `set_bq(inf)` was kept.
+- **Fix.** The uncertainty of each row is kept across a unit change; invalid cells, CSV rows and
+  certificate lines raise an error naming the row (or nuclide and energy); a comma in a number is
+  refused, as in round 5; the detector test refuses non-finite counts; QC activities must be above 0
+  and names are stored in the library spelling (`Cs137` -> `Cs-137`).
+- **Result (`after_R6C`):** first run 5 PASS / 3 FAIL from a harness error (tuples compared with
+  JSON lists; values equal), kept as `round6_inputs_run1.md`; second run 8 PASS / 0 FAIL. Benchmark
+  154 / 13 / 60 unchanged against `after_R6B`; full suite 1568 passed, 69 skipped. A manual
+  efficiency point typed with a decimal comma is no longer read (keeps its values).

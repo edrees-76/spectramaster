@@ -71,3 +71,35 @@ Before the change: RC.C1-C8 fail (except the parts measured as controls).
   range and finiteness) keeps reading a comma as a decimal point; it is not changed here.
 
 ---
+
+## Results (`after_R6C`)
+
+Protocol committed in 2f14de2 before the change (SHA-256 of the file
+cf9ad35fcc41a982c8b279d72b4d9650c33b30b0b05c2a9e676de03c9977cc1e). Engine 1.24.0 (unchanged).
+
+**First run: 5 PASS / 3 FAIL, a harness error.** RC.C2, RC.C3 and RC.C5 compared the values just
+measured (Python tuples) with the before file (JSON lists), so equal values compared unequal. The
+harness now passes the measured values through JSON before comparing; no value and no limit changed.
+The first run's report is kept as `after_R6C/round6_inputs_run1.md`.
+
+**Second run: 8 PASS / 0 FAIL.**
+
+| ID | value | result |
+|---|---|---|
+| RC.C1 | edited 2000 +- 40 Bq; after kBq 2000 +- 40 (before: +- 20); round trip 12345.678 +- 246.91356 exact | PASS |
+| RC.C2 | 20 of 20 invalid cells refused with the row and column; the typed Co-60 row as before | PASS |
+| RC.C3 | 12 of 12 invalid CSV rows refused with the row; the valid file as before | PASS |
+| RC.C4 | 10 of 10 invalid certificate lines refused; the valid point identical to before | PASS |
+| RC.C5 | NaN / inf in the ROI or the Compton window: the four functions refuse; clean values identical | PASS |
+| RC.C6 | 5 of 5 counts texts refused; the valid text as before | PASS |
+| RC.C7 | 3 of 3 refused; 5 of 5 read in the library spelling; round-5 refusals kept | PASS |
+| RC.C8 | `set_bq` of inf, NaN, -inf refused; 12345.678 exact; 0 as before | PASS |
+| RC.C9 | benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against `after_R6B`; full suite 1568 passed, 69 skipped; no existing test changed | PASS |
+
+**Consequence not named in the protocol.** The efficiency points table of the wizard reads a manual
+point's energy, efficiency and uncertainty with the same `_num`: a value typed with a decimal comma
+(`0,005`) was read as 0.005 and is now not read, so the point keeps its previous values. No result of
+a valid (point-decimal) entry changes.
+
+Also changed: the manuals (sources), efficiency certificate step, chi-square counting test and QC
+reference activity.

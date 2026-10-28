@@ -177,7 +177,9 @@ def peak_to_compton(spectrum, roi: Optional[tuple[int, int]] = None) -> Optional
     """Highest gross count among the channels of the 1332.5 keV ROI divided by the mean gross
     counts of the channels whose energy lies in 1040-1096 keV (IEEE Std 325); None when the
     spectrum does not reach both ends of that window."""
+    from .aptec_roi import check_finite
     y = np.asarray(spectrum.counts, dtype=float)
+    check_finite(y)                               # round6_inputs_protocol.md
     if roi is None:
         r = _roi(spectrum, CO60_1332)
         if r is None:
@@ -196,11 +198,13 @@ def peak_to_compton(spectrum, roi: Optional[tuple[int, int]] = None) -> Optional
 def net_area(spectrum, energy: float = CO60_1332) -> Optional[tuple[float, float]]:
     """(net counts, standard uncertainty) of the ROI at `energy`: gross minus a straight
     continuum through the means of FWHM-wide side regions; variance G + (n / 2m)^2 (S_L + S_R)."""
+    from .aptec_roi import check_finite
+    y = np.asarray(spectrum.counts, dtype=float)
+    check_finite(y)                               # round6_inputs_protocol.md
     r = _roi(spectrum, energy)
     if r is None:
         return None
     lo, hi, w = r
-    y = np.asarray(spectrum.counts, dtype=float)
     m = max(3, int(math.ceil(w)))
     if lo - m < 0 or hi + m >= len(y):
         return None
