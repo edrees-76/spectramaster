@@ -18,10 +18,11 @@ def test_conversion_and_parsing():
     assert ai.from_bq(3.7e7, "mCi") == pytest.approx(1.0)
     assert ai.to_bq(2.5, "kBq") == 2500.0
     for text, bq in (("37000", 37000.0), ("37 kBq", 37000.0), ("1uCi", 37000.0), ("1 µCi", 37000.0),
-                     ("3.7e4", 37000.0), ("1,000 Bq", 1000.0), ("0.5 MBq", 5e5)):
+                     ("3.7e4", 37000.0), ("0.5 MBq", 5e5)):
         assert ai.parse_activity(text) == pytest.approx(bq), text
-    with pytest.raises(ValueError):
-        ai.parse_activity("1 furlong")
+    for bad in ("1 furlong", "1,000 Bq"):         # a comma in the number is ambiguous (round5_acceptance_protocol.md)
+        with pytest.raises(ValueError):
+            ai.parse_activity(bad)
     assert ai.other_units(37000.0, "µCi") == "37000 Bq = 1 µCi"
 
 

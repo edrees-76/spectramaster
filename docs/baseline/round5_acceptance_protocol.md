@@ -54,3 +54,41 @@ Harness `validation/round5_acceptance.py`, fixed output folder `after_R5B`.
 
 - Synthetic spectra only, as in `detector_acceptance_protocol.md`.
 - The decimal comma is refused, not read: a user typing `1,5` gets an error and must type `1.5`.
+
+---
+
+## Results (`after_R5B`)
+
+Protocol committed in f0f7f1d before the change (SHA-256 of the file
+6e4319459bae11a48ce44645353da0a6752d63fd8d85d9d17ca29b9b6bb9d386). Engine 1.22.0.
+
+**First run: 4 PASS / 2 FAIL, from a harness error.** The harness built its peak at `CO60_1332`
+(1332.492 keV), while the values "before" (commit 865c1ec, recorded before the change) were taken
+with a peak at 1332.5 keV, as the protocol states. RB.C2 then compared two different spectra
+(largest difference 0.00155) and RB.C1 came out at 1.0e-9. The engine was not the cause: the script
+that recorded "before", run on the changed code, gives the recorded values bit for bit. The harness
+now builds the peak at 1332.5 keV (`PEAK_KEV`).
+
+**Corrected run: 6 PASS / 0 FAIL, and RB.C7 PASS.**
+
+| ID | value | result |
+|---|---|---|
+| RB.C1 | cut (first_channel 1000) against full: largest relative difference 9.6e-10 (FWTM/FWHM, quadratic calibration); centroid 1332.5 keV (before the fix 832.5 keV) | PASS |
+| RB.C2 | full spectra against 865c1ec: 0; DA.C1-C7 equal to `after_DA2` | PASS |
+| RB.C3 | spectrum from 1060 keV: no P/C, with the note; from 1030 keV: equal to the full spectrum (235.6498) | PASS |
+| RB.C4 | 8 of 8 QC texts as registered (the five wrong ones refused with a message) | PASS |
+| RB.C5 | 5 of 5 texts refused, 5 of 5 read as before; relative efficiency refuses inf / NaN activity and inf live time | PASS |
+| RB.C6 | 12345.678 +- 246.91356 Bq after Bq -> Ci -> µCi -> Bq; 2000 Bq after typing 2 in kBq | PASS |
+| RB.C7 | benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against `after_EB1`; full suite 1490 passed, 69 skipped | PASS |
+
+**Margin of RB.C1.** The differences of 4e-10 to 1e-9 between the cut and the full spectrum come
+from the log-parabola fit (`np.polyfit`) on channel numbers near 1665 and 2665: the same
+arithmetic at different offsets. They are rounding, not a remaining dependence on `first_channel`;
+the margin to the limit is small.
+
+**Changed existing test (reason).** `test_activity_units.py::test_conversion_and_parsing` read
+`1,000 Bq` as 1000; a comma in the number is now refused, as registered (change 4).
+
+Also changed: the QC hint and manuals (sections on the QC reference activity): nuclides separated by
+`;`, a new line or a comma, a point for decimals, no thousands separator. The number field of
+`ActivityInput` uses the C locale and refuses group separators.

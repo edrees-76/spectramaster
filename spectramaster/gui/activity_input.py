@@ -2,10 +2,11 @@
 The conversion factors are those of analysis/decay_calc.py (1 Ci = 3.7e10 Bq)."""
 from __future__ import annotations
 
+import math
 import re
 from typing import Optional
 
-from PySide6.QtCore import Signal
+from PySide6.QtCore import QLocale, Signal
 from PySide6.QtGui import QDoubleValidator
 from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLineEdit, QWidget
 
@@ -37,11 +38,15 @@ _NUM_UNIT = re.compile(r"([-+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][-+]?\d+)?)(?:\s*([
 
 
 def parse_activity(text: str, default_unit: str = "Bq") -> float:
-    """Bq of "37000", "37 kBq", "1uCi", "1 µCi" ..."""
-    m = _NUM_UNIT.fullmatch(text.replace(",", "").strip())
+    """Bq of "37000", "37 kBq", "1uCi", "1 µCi" ...  A comma in the number (thousands separator or
+    decimal comma: ambiguous) and a value that is not finite are refused."""
+    m = _NUM_UNIT.fullmatch(text.strip())
     if m is None:
-        raise ValueError(f"not an activity: {text!r}")
-    return to_bq(float(m.group(1)), m.group(2) or default_unit)
+        raise ValueError(f"not an activity: {text!r} (use a point for decimals, no thousands separator)")
+    bq = to_bq(float(m.group(1)), m.group(2) or default_unit)
+    if not math.isfinite(bq):
+        raise ValueError(f"not a finite activity: {text!r}")
+    return bq
 
 
 def format_activity(bq: float, unit: str = "Bq", digits: int = 5) -> str:
@@ -61,6 +66,9 @@ class ActivityInput(QWidget):
         self.number = QLineEdit()
         v = QDoubleValidator(0.0, 1e18, 12, self.number)
         v.setNotation(QDoubleValidator.ScientificNotation)
+        loc = QLocale.c()                                     # a point for decimals, no thousands separator
+        loc.setNumberOptions(QLocale.RejectGroupSeparator)
+        v.setLocale(loc)
         self.number.setValidator(v)
         self.unit = QComboBox()
         self.unit.addItems(list(UNITS))
@@ -74,15 +82,18 @@ class ActivityInput(QWidget):
         self.number.textChanged.connect(lambda _t: self.changed.emit())
 
     def _number(self) -> float:
+        """The number typed; 0 for an empty field or a text that is not a finite number."""
         try:
-            return float(self.number.text().replace(",", "") or 0.0)
+            x = float(self.number.text() or 0.0)
         except ValueError:
             return 0.0
+        return x if math.isfinite(x) else 0.0
 
     def value_bq(self) -> float:
         if self.number.text() == self._shown[1]:          # not edited since set: the exact value
             return self._shown[0]
-        return to_bq(self._number(), self._unit)
+        bq = to_bq(self._number(), self._unit)
+        return bq if math.isfinite(bq) else 0.0
 
     def set_bq(self, bq: float) -> None:
         text = f"{from_bq(bq, self._unit):.6g}" if bq else ""

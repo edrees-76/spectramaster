@@ -96,7 +96,9 @@ SCHEMA_VERSION = 1
 #          chi-square counting test (detector_acceptance_protocol.md and its amendment)
 #   1.21.0 2026-10-27 coincidence correction: upward probabilities from the scheme intensities at ENSDF
 #          levels that receive more than they emit (ensdf_level_balance_protocol.md)
-ENGINE_VERSION = "1.21.0"
+#   1.22.0 2026-10-28 round-5 review (round5_acceptance_protocol.md): detector acceptance test at the
+#          absolute channel (first_channel), peak-to-Compton only with the whole 1040-1096 keV window
+ENGINE_VERSION = "1.22.0"
 
 
 class SessionSchemaError(ValueError):
