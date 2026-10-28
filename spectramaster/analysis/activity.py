@@ -172,6 +172,11 @@ class LineResult:
     # reference-peak term) and the reference peak's relative uncertainty, for combined_limits
     limit_slope: float = 0.0
     ref_rel_unc: float = 0.0
+    # with a blank line: the reference-peak part of the zero-activity uncertainty over the shared
+    # variables (sample's peak, blank's peak, expected rate), Bq, and its derivative in the net
+    # activity; their cross products are the covariance of two lines (round6_combined_protocol.md)
+    ref_g0: Optional[list] = None
+    ref_dg: Optional[list] = None
     detected: bool = False
     peak_found: bool = False
     in_range: bool = True
@@ -516,9 +521,22 @@ def combined_limits(lines: list, weights: list, opt: "ActivityOptions") -> tuple
     u^2(y) = sum(w_i^2 c_i) y + S0^2 + y^2 R^2, S0^2 = sum(w_i^2 s0_i^2), with each line's
     s0_i = y*_i / k_alpha and c_i = ``limit_slope``; R combines the relative components as the
     activity budget does (efficiency, summing and reference peak correlated between lines).
-    Currie: R = 0.  y# is the larger root of the quadratic of iso11929_limits."""
+    Currie: R = 0.  y# is the larger root of the quadratic of iso11929_limits.
+
+    With a blank, the shared reference peak corrections make the lines covary: the cross terms of
+    ``ref_g0`` (zero activity) and ``ref_dg`` (linear in y, ISO 11929) are added
+    (round6_combined_protocol.md)."""
     s0sq = sum((w * l.decision_threshold / opt.k_alpha) ** 2 for w, l in zip(weights, lines))
     slope = sum(w * w * l.limit_slope for w, l in zip(weights, lines))
+
+    def dot(a, b):
+        return sum(x * y for x, y in zip(a, b)) if a and b else 0.0
+    for i, (wi, li) in enumerate(zip(weights, lines)):
+        for j, (wj, lj) in enumerate(zip(weights, lines)):
+            if i != j and li.ref_g0 and lj.ref_g0:
+                s0sq += wi * wj * dot(li.ref_g0, lj.ref_g0)
+                if opt.mda_method == "iso11929":
+                    slope += wi * wj * (dot(li.ref_dg, lj.ref_g0) + dot(li.ref_g0, lj.ref_dg))
     r = 0.0
     if opt.mda_method == "iso11929":
         eff = sum(w * l.eff_rel_unc for w, l in zip(weights, lines))
@@ -843,6 +861,8 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                     u_ref0 = math.sqrt((ab0 * ref_uc) ** 2 + (ab0 * bl_uc) ** 2 + (ab0 * (ref_ur - bl_ur)) ** 2)
                     var0 += (u_ref0 * fwin / w) ** 2
                     ref_lin = 2.0 * ab0 * (ref_uc ** 2 + ref_ur * (ref_ur - bl_ur))
+                    lr.ref_g0 = [ab0 * ref_uc, ab0 * bl_uc, ab0 * (ref_ur - bl_ur)]
+                    lr.ref_dg = [ref_uc, 0.0, ref_ur]
             lin_sample, lin_bkg = B * (1.0 + n / (2.0 * m)), 0.0   # linear terms, replaced for a quadratic window
             if bcounts is not None:
                 cb = continuum_under(spectrum, e, fw_ch, counts=bcounts)
