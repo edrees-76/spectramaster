@@ -38,6 +38,7 @@ from spectramaster.formats import all_formats, load_all  # noqa: E402
 PDF_NAMES = {"ar": "SpectraMaster_User_Manual_AR.pdf", "en": "SpectraMaster_User_Manual_EN.pdf"}
 CHROME_CANDIDATES = [
     os.environ.get("SM_CHROME", ""),
+    os.path.join(os.environ.get("LOCALAPPDATA", ""), r"Google\Chrome\Application\chrome.exe"),
     r"C:\Program Files\Google\Chrome\Application\chrome.exe",
     r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
     r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
