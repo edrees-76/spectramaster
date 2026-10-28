@@ -227,7 +227,9 @@ def coi(nuclide: str, energy: float, eps_peak, pt, e_min: float | None = None,
     so, si, ign, inc = num_out / wsum, num_in / wsum, num_ign / wsum, num_inc / wsum
     why = []
     if ign > PARTIAL_LIMIT:
-        why.append(f"coincident photons below the efficiency curve left out ({100 * ign:.0f} % of decays)")
+        # an expected number of partner photons per emission (it can exceed 1), not a fraction of decays
+        why.append(f"coincident photons below the efficiency curve left out (on average {ign:.2g} per "
+                   "emission of this line)")
     if inc > PARTIAL_LIMIT:
         why.append(f"the decay scheme's level intensities disagree with the line intensities (summing-out "
                    f"{100 * inc:.2g} % apart)")

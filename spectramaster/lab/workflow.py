@@ -12,7 +12,8 @@ code                       level    meaning
 calibration_required       error    no energy calibration / no efficiency calibration recorded
 incompatible_calibration   error    efficiency calibration of another detector or geometry
 outside_validated_scope    warning  unvalidated calibration, extrapolated efficiency, geometry
-                                    or sample information not recorded
+                                    or sample information not recorded, partial summing
+                                    correction of the efficiency curve
 results_stale              warning  inputs changed after the results were computed
 no_results                 info     nothing computed yet
 not_reviewed               warning  automatic analysis not yet reviewed by a person
@@ -45,6 +46,15 @@ class WorkflowStatus:
 
 def _efficiency_records(session) -> list[dict]:
     return [c for c in (session.calibrations or []) if c.get("kind") == "efficiency"]
+
+
+def _tcs_partial(rec: dict) -> list:
+    """Partial summing points of an efficiency calibration record (round6_tcs_state_protocol.md)."""
+    payload = rec.get("payload") or {}
+    if "tcs_partial" in payload:
+        return payload["tcs_partial"] or []
+    from ..analysis.efficiency import legacy_tcs_partial
+    return legacy_tcs_partial(payload)
 
 
 def workflow_status(session, spectrum=None, needs_activity: bool = True) -> list[WorkflowStatus]:
@@ -82,6 +92,11 @@ def workflow_status(session, spectrum=None, needs_activity: bool = True) -> list
     if session.sample is None:
         add("outside_validated_scope", "warning", "sample information not recorded: no concentration")
     quant = (session.results or {}).get("quant") or {}
+    partial = quant.get("curve_tcs_partial") or next((p for p in (_tcs_partial(r) for r in effs) if p), [])
+    if partial:
+        add("outside_validated_scope", "warning",
+            "efficiency curve with a partial true-coincidence summing correction at "
+            + ", ".join(f"{n} {e:g} keV" for n, e, *_w in partial) + ": the summing loss left out is not estimated")
     extrap = sorted({ln.get("energy") for r in quant.get("nuclides", []) for ln in r.get("lines", [])
                      if "extrapolated" in (ln.get("note") or "")} - {None})
     if extrap:
@@ -126,7 +141,9 @@ def report_record(session, concentrations: Optional[dict] = None, spectrum=None)
         cal.append({k: c.get(k) for k in ("id", "kind", "name", "model", "source", "validation_status",
                                           "validation_note", "energy_range", "detector_id", "geometry_id",
                                           "content_hash", "created")}
-                   | {"selection": payload.get("selection"), "u_model_rel": payload.get("u_model_rel")})
+                   | {"selection": payload.get("selection"), "u_model_rel": payload.get("u_model_rel")}
+                   | ({"note": payload.get("note", ""), "warnings": payload.get("warnings") or [],
+                       "tcs_partial": _tcs_partial(c)} if c.get("kind") == "efficiency" else {}))
     edits = [{"kind": op.kind, "target": op.target, "reason": op.reason, "user": op.user,
               "time": op.timestamp, "undone": op.undone}
              for op in getattr(session.history, "ops", [])]
@@ -152,6 +169,7 @@ def report_record(session, concentrations: Optional[dict] = None, spectrum=None)
             "nuclides": (session.results or {}).get("nuclide_matches", []),
             "activities": quant.get("nuclides", []),
             "notes": quant.get("notes", []),
+            "curve_tcs_partial": quant.get("curve_tcs_partial", []),
             "concentrations": concentrations,
         },
         "conventions": {

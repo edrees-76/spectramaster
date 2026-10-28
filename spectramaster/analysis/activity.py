@@ -321,6 +321,8 @@ class QuantResults:
     reference_u_rel: float = 0.0                # u_rel(K), both parts below
     reference_u_count_rel: float = 0.0          # counting of the measured reference peak (this spectrum)
     reference_u_rate_rel: float = 0.0           # the expected rate (common to sample and blank)
+    curve_tcs_partial: list = field(default_factory=list)   # the curve's partial summing points
+    #                                                         ([nuclide, keV, reason], round6_tcs_state_protocol.md)
 
     def rows(self) -> list[dict]:
         return [result_row(r) for r in self.nuclides]
@@ -733,8 +735,9 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
         if opt.tcs.get("curve_summing_free") and not curve.summing_corrected:
             notes.append("efficiency curve declared free of true-coincidence summing by the user (not checked)")
         if free is not curve:
-            notes.append(f"efficiency curve: {free.note.split('; ')[-1]} with the same peak-to-total, so the "
-                         "summing is not counted twice")
+            # its partial points are named below, as for a curve loaded already corrected
+            done = free.note.split("; ")[-1].split(", partial correction for ")[0]
+            notes.append(f"efficiency curve: {done} with the same peak-to-total, so the summing is not counted twice")
             curve = free
         eps_peak = lambda en: np.clip(curve.efficiency(np.clip(np.asarray(en, dtype=float),     # noqa: E731
                                                                curve.e_min, curve.e_max)), 0.0, 1.0)
@@ -751,6 +754,12 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                      f"order, gamma-gamma, no angular correlation): peak-to-total PT(E) = min(1, {pa:g} "
                      f"(E/1000 keV)^{pb:g}) +- {100 * tcs_u:g} % (assumed), efficiencies of the curve clamped "
                      f"to its range, coincident photons below {coincidence.BELOW_CURVE * curve.e_min:.4g} keV left out")
+    # the curve's own state, whether corrected in this call or loaded already corrected
+    tcs_partial = [list(t) for t in getattr(curve, "tcs_partial", None) or []]
+    if tcs_partial:
+        notes.append("efficiency curve with a partial true-coincidence summing correction at its calibration "
+                     "points " + ", ".join(f"{n} {e:g} keV" for n, e, _w in tcs_partial) + ": the summing loss "
+                     "left out there is not estimated; review the curve before reporting")
     blank_dt = 0.0          # seconds from the blank's reference date to the sample's
     bl_uc = bl_ur = 0.0     # the blank's own reference peak correction: counting, expected rate
     if blank is not None:
@@ -952,6 +961,8 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                           + " keV").strip("; ")
         elif r.nuclide in TCS_NUCLIDES:
             r.note = (r.note + "; true-coincidence summing not corrected").strip("; ")
+        if tcs_partial:
+            r.note = (r.note + "; efficiency curve with a partial true-coincidence summing correction").strip("; ")
         if q and q > 0:
             qb = q * UNIT_FACTORS.get((opt.quantity_unit or "").lower(), 1.0)
             r.unit = f"Bq/{unit}"
@@ -994,7 +1005,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                         background=(background.source_path or background.sample_id) if background is not None else "",
                         options=opt, nuclides=results, notes=notes, blank=blank_name,
                         reference_factor=ref_k if opt.reference_peak else None, reference_u_rel=ref_u,
-                        reference_u_count_rel=ref_uc, reference_u_rate_rel=ref_ur)
+                        reference_u_count_rel=ref_uc, reference_u_rate_rel=ref_ur, curve_tcs_partial=tcs_partial)
 
 
 def reference_rate(spectrum, energy: float, min_sig: float = 3.0) -> tuple[float, float]:

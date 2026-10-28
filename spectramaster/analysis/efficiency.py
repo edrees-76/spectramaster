@@ -544,6 +544,8 @@ class EfficiencyCurve:
     #                                  (corrected, or measured where summing is negligible)
     orders_auto: bool = False        # orders chosen by cross-validation (chosen again by summing_free_curve)
     crossover_auto: bool = False     # two_branch crossover chosen automatically (likewise)
+    tcs_partial: list = field(default_factory=list)   # [nuclide, keV, reason] of the points whose summing
+    #                                  correction is partial (round6_tcs_state_protocol.md)
 
     # --- evaluation
     def _design(self, e) -> np.ndarray:
@@ -608,6 +610,8 @@ class EfficiencyCurve:
     # --- persistence
     def to_dict(self) -> dict:
         d = asdict(self)
+        if not d["tcs_partial"]:          # curves without it keep their content (and hash)
+            d.pop("tcs_partial")
         d["format"] = "spectramaster-efficiency-1"
         return d
 
@@ -616,6 +620,8 @@ class EfficiencyCurve:
         d = dict(d)
         d.pop("format", None)
         pts = [EfficiencyPoint(**p) for p in d.pop("points", [])]
+        if "tcs_partial" not in d:
+            d["tcs_partial"] = legacy_tcs_partial(d)
         known = {f for f in cls.__dataclass_fields__}
         c = cls(**{k: v for k, v in d.items() if k in known})
         c.points = pts
@@ -626,6 +632,24 @@ class EfficiencyCurve:
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(self.to_dict(), indent=1, ensure_ascii=False), encoding="utf-8")
         return path
+
+
+def legacy_tcs_partial(d: dict) -> list:
+    """[nuclide, keV, reason] of the partial summing points of a curve saved without `tcs_partial`
+    (engine 1.25.0 and earlier), read from its note and warnings as summing_free_curve wrote them."""
+    note = d.get("note") or ""
+    if not d.get("summing_corrected") or "partial correction for " not in note:
+        return []
+    out = []
+    for item in note.split("partial correction for ", 1)[1].split(";")[0].split(", "):
+        nuc, _sp, rest = item.strip().partition(" ")
+        try:
+            e = float(rest.removesuffix(" keV"))
+        except ValueError:
+            continue
+        why = next((w.split(": ", 1)[1] for w in d.get("warnings") or [] if w.startswith(f"{nuc} {e:g} keV: ")), "")
+        out.append([nuc, e, why])
+    return out
 
 
 def load_curve(path) -> EfficiencyCurve:
@@ -832,6 +856,7 @@ def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0,
     if partial:
         what += ", partial correction for " + ", ".join(f"{n} {e:g} keV" for n, e in sorted(partial))
         cur.warnings.extend(f"{n} {e:g} keV: {why}" for (n, e), why in sorted(partial.items()))
+        cur.tcs_partial = [[n, e, why] for (n, e), why in sorted(partial.items())]
     cur.note = (curve.note + "; " + what).strip("; ")
     return cur
 
