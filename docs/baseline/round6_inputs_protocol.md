@@ -103,3 +103,5 @@ a valid (point-decimal) entry changes.
 
 Also changed: the manuals (sources), efficiency certificate step, chi-square counting test and QC
 reference activity.
+
+**Harness (after the run, SonarCloud S1244).** RC.C8 compares 12345.678 with `math.isclose(rel_tol=0, abs_tol=0)` instead of `==` (the same exact test). Criteria rerun: 8 / 8 PASS, reports unchanged.

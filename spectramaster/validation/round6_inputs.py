@@ -246,7 +246,8 @@ def criteria(m: dict, b: dict) -> list[dict]:
     read_ok = [t for (t, got), (_t, exp) in zip(qc["read"], QC_READ) if got == exp]
     c7_ok = (not bad7 and len(read_ok) == len(QC_READ) and all(_refused(v) for v in qc["refused"].values()))
     sb = q["set_bq"]
-    c8_ok = (all(_refused(sb[k]) for k in ("inf", "nan", "-inf")) and sb["12345.678"] == 12345.678
+    c8_ok = (all(_refused(sb[k]) for k in ("inf", "nan", "-inf")) and isinstance(sb["12345.678"], float)
+             and math.isclose(sb["12345.678"], 12345.678, rel_tol=0.0, abs_tol=0.0)      # exact, as registered
              and sb["0"] == b["C678"]["set_bq"]["0"])
     return [
         {"id": "RC.C1", "pass": exact, "value": f"edited {r1['edited']}; then kBq {r1['edited_then_kBq']}; "
