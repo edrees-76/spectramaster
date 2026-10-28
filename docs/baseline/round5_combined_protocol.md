@@ -106,5 +106,11 @@ In these cases the detection limit of the mean is slightly lower than the smalle
 (by 1.2-2.2 %): the second line adds information. `detected` did not change in any case (all
 activities far above the thresholds).
 
+**CI (Linux), disclosed.** The unit test first ran the harness criteria as they are and failed RC.C4
+on GitHub: the values "before" were recorded on this Windows machine, and the efficiency fit differs
+in the last digits on another platform. RC.C4 and RC.C5 as registered (==) were evaluated here, on
+the machine that recorded "before", and pass. The unit test now checks RC.C1-C3 as registered and
+compares with "before" within a relative 1e-12; the criteria are unchanged.
+
 Also changed: the manuals (sources) say that, with the weighted mean of lines, the decision threshold
 and the MDA are those of the mean itself.

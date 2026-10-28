@@ -6,8 +6,17 @@ from spectramaster.validation import round5_combined as r5
 
 
 def test_criteria_pass():
-    c, _alpha = r5.criteria(r5.measure())
-    assert all(c.values()), c
+    m = r5.measure()
+    c, _alpha = r5.criteria(m)
+    assert c["RC.C1"] and c["RC.C2"] and c["RC.C3"], c
+    # RC.C4 / RC.C5 compare bit for bit (==) with values recorded on the registered Windows machine;
+    # other platforms differ in the last digits of the efficiency fit, so the test allows 1e-12
+    for n, b in r5.BEFORE.items():
+        for k in ("activity", "u", "threshold", "mda") if n.startswith("key_") else ("activity", "u"):
+            assert m[n][k] == pytest.approx(b[k], rel=1e-12), (n, k)
+        if not n.startswith("key_"):
+            assert m[n]["used"] == b["used"]
+            assert m[n]["budget"] == pytest.approx(b["budget"], rel=1e-12)
 
 
 @pytest.mark.parametrize("mda", ["iso11929", "currie"])
