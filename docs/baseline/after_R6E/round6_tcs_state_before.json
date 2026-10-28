@@ -1,0 +1,888 @@
+{
+ "engine": "1.25.0",
+ "curves": {
+  "eu_ba_121.8": {
+   "raw": {
+    "tcs_partial": null,
+    "warnings": [],
+    "note": "",
+    "summing_corrected": false,
+    "eps_500": 0.020981045712432842
+   },
+   "free": {
+    "tcs_partial": null,
+    "warnings": [
+     "Eu-152 244.7 keV: +18.6 % from the curve (+6.7 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 344.3 keV: +4.6 % from the curve (+4.0 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 778.9 keV: +11.3 % from the curve (+6.5 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 964.1 keV: +13.4 % from the curve (+6.6 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 1085.8 keV: -4.8 % from the curve (-5.3 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 1112.1 keV: +10.2 % from the curve (+5.6 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 1408.0 keV: +9.3 % from the curve (+5.2 sigma) - check interferences, summing and the peak fit",
+     "Ba-133 276.4 keV: partial true-coincidence summing correction: coincident photons below the efficiency curve left out (66 % of decays)",
+     "Ba-133 302.9 keV: partial true-coincidence summing correction: coincident photons below the efficiency curve left out (44 % of decays)",
+     "Ba-133 356 keV: partial true-coincidence summing correction: coincident photons below the efficiency curve left out (37 % of decays)",
+     "Ba-133 383.8 keV: partial true-coincidence summing correction: coincident photons below the efficiency curve left out (7 % of decays)"
+    ],
+    "note": "cascade-emitter calibration points (Ba-133, Eu-152) corrected for true-coincidence summing (lowest COI 0.8230, 6 refits), partial correction for Ba-133 276.4 keV, Ba-133 302.9 keV, Ba-133 356 keV, Ba-133 383.8 keV",
+    "summing_corrected": true,
+    "eps_500": 0.021040495775174778
+   },
+   "loaded": {
+    "tcs_partial": null,
+    "warnings": [
+     "Eu-152 244.7 keV: +18.6 % from the curve (+6.7 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 344.3 keV: +4.6 % from the curve (+4.0 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 778.9 keV: +11.3 % from the curve (+6.5 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 964.1 keV: +13.4 % from the curve (+6.6 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 1085.8 keV: -4.8 % from the curve (-5.3 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 1112.1 keV: +10.2 % from the curve (+5.6 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 1408.0 keV: +9.3 % from the curve (+5.2 sigma) - check interferences, summing and the peak fit",
+     "Ba-133 276.4 keV: partial true-coincidence summing correction: coincident photons below the efficiency curve left out (66 % of decays)",
+     "Ba-133 302.9 keV: partial true-coincidence summing correction: coincident photons below the efficiency curve left out (44 % of decays)",
+     "Ba-133 356 keV: partial true-coincidence summing correction: coincident photons below the efficiency curve left out (37 % of decays)",
+     "Ba-133 383.8 keV: partial true-coincidence summing correction: coincident photons below the efficiency curve left out (7 % of decays)"
+    ],
+    "note": "cascade-emitter calibration points (Ba-133, Eu-152) corrected for true-coincidence summing (lowest COI 0.8230, 6 refits), partial correction for Ba-133 276.4 keV, Ba-133 302.9 keV, Ba-133 356 keV, Ba-133 383.8 keV",
+    "summing_corrected": true,
+    "eps_500": 0.021040495775174778
+   },
+   "legacy": {
+    "tcs_partial": null,
+    "warnings": [
+     "Eu-152 244.7 keV: +18.6 % from the curve (+6.7 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 344.3 keV: +4.6 % from the curve (+4.0 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 778.9 keV: +11.3 % from the curve (+6.5 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 964.1 keV: +13.4 % from the curve (+6.6 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 1085.8 keV: -4.8 % from the curve (-5.3 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 1112.1 keV: +10.2 % from the curve (+5.6 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 1408.0 keV: +9.3 % from the curve (+5.2 sigma) - check interferences, summing and the peak fit",
+     "Ba-133 276.4 keV: partial true-coincidence summing correction: coincident photons below the efficiency curve left out (66 % of decays)",
+     "Ba-133 302.9 keV: partial true-coincidence summing correction: coincident photons below the efficiency curve left out (44 % of decays)",
+     "Ba-133 356 keV: partial true-coincidence summing correction: coincident photons below the efficiency curve left out (37 % of decays)",
+     "Ba-133 383.8 keV: partial true-coincidence summing correction: coincident photons below the efficiency curve left out (7 % of decays)"
+    ],
+    "note": "cascade-emitter calibration points (Ba-133, Eu-152) corrected for true-coincidence summing (lowest COI 0.8230, 6 refits), partial correction for Ba-133 276.4 keV, Ba-133 302.9 keV, Ba-133 356 keV, Ba-133 383.8 keV",
+    "summing_corrected": true,
+    "eps_500": 0.021040495775174778
+   }
+  },
+  "eu_only": {
+   "raw": {
+    "tcs_partial": null,
+    "warnings": [],
+    "note": "",
+    "summing_corrected": false,
+    "eps_500": 0.020981045712432863
+   },
+   "free": {
+    "tcs_partial": null,
+    "warnings": [
+     "Eu-152 244.7 keV: +12.9 % from the curve (+4.8 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 778.9 keV: +8.9 % from the curve (+5.0 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 964.1 keV: +12.1 % from the curve (+6.0 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 1085.8 keV: -4.9 % from the curve (-5.4 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 1112.1 keV: +10.4 % from the curve (+5.6 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 1408.0 keV: +12.5 % from the curve (+6.8 sigma) - check interferences, summing and the peak fit"
+    ],
+    "note": "cascade-emitter calibration points (Eu-152) corrected for true-coincidence summing (lowest COI 0.8210, 6 refits)",
+    "summing_corrected": true,
+    "eps_500": 0.0221738769007944
+   },
+   "loaded": {
+    "tcs_partial": null,
+    "warnings": [
+     "Eu-152 244.7 keV: +12.9 % from the curve (+4.8 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 778.9 keV: +8.9 % from the curve (+5.0 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 964.1 keV: +12.1 % from the curve (+6.0 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 1085.8 keV: -4.9 % from the curve (-5.4 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 1112.1 keV: +10.4 % from the curve (+5.6 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 1408.0 keV: +12.5 % from the curve (+6.8 sigma) - check interferences, summing and the peak fit"
+    ],
+    "note": "cascade-emitter calibration points (Eu-152) corrected for true-coincidence summing (lowest COI 0.8210, 6 refits)",
+    "summing_corrected": true,
+    "eps_500": 0.0221738769007944
+   },
+   "legacy": {
+    "tcs_partial": null,
+    "warnings": [
+     "Eu-152 244.7 keV: +12.9 % from the curve (+4.8 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 778.9 keV: +8.9 % from the curve (+5.0 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 964.1 keV: +12.1 % from the curve (+6.0 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 1085.8 keV: -4.9 % from the curve (-5.4 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 1112.1 keV: +10.4 % from the curve (+5.6 sigma) - check interferences, summing and the peak fit",
+     "Eu-152 1408.0 keV: +12.5 % from the curve (+6.8 sigma) - check interferences, summing and the peak fit"
+    ],
+    "note": "cascade-emitter calibration points (Eu-152) corrected for true-coincidence summing (lowest COI 0.8210, 6 refits)",
+    "summing_corrected": true,
+    "eps_500": 0.0221738769007944
+   }
+  }
+ },
+ "cases": {
+  "fresh_tcs": {
+   "activity": 67.8843789554262,
+   "u": 5.821722823249186,
+   "mda": 0.3906693276365116,
+   "decision_threshold": 0.1907335133649704,
+   "detected": true,
+   "nuclide_note": "",
+   "notes": [
+    "efficiency calibration unvalidated: not independently validated",
+    "efficiency curve: cascade-emitter calibration points (Ba-133, Eu-152) corrected for true-coincidence summing (lowest COI 0.8230, 6 refits), partial correction for Ba-133 276.4 keV, Ba-133 302.9 keV, Ba-133 356 keV, Ba-133 383.8 keV with the same peak-to-total, so the summing is not counted twice",
+    "true-coincidence summing corrected where the coincidence data describe the line (first order, gamma-gamma, no angular correlation): peak-to-total PT(E) = min(1, 0.24 (E/1000 keV)^0) +- 10 % (assumed), efficiencies of the curve clamped to its range, coincident photons below 97.43 keV left out",
+    "decision rule: a search peak above the decision threshold"
+   ],
+   "curve_tcs_partial": null,
+   "lines": [
+    [
+     661.657,
+     1.0,
+     false,
+     0.017310266815807118,
+     67.8843789554262,
+     ""
+    ]
+   ],
+   "report_calibration": {
+    "id": "7141f283-edd3-47d1-90b3-04610c320178",
+    "kind": "efficiency",
+    "name": "",
+    "model": "loglog",
+    "source": "imported",
+    "validation_status": "unvalidated",
+    "validation_note": "",
+    "energy_range": [
+     121.7817,
+     1408.013
+    ],
+    "detector_id": null,
+    "geometry_id": null,
+    "content_hash": "9ce3990c5e1082c48b5ca92b784d350364378fdf25250325fd698f1ffd7f769a",
+    "created": "2026-10-28T21:30:01.100266+00:00",
+    "selection": "",
+    "u_model_rel": 0.0
+   },
+   "report_statuses": [
+    {
+     "code": "outside_validated_scope",
+     "level": "warning",
+     "message": "efficiency calibration '7141f283-edd3-47d1-90b3-04610c320178' is unvalidated"
+    },
+    {
+     "code": "outside_validated_scope",
+     "level": "warning",
+     "message": "measurement geometry not recorded: compatibility not checked"
+    },
+    {
+     "code": "outside_validated_scope",
+     "level": "warning",
+     "message": "sample information not recorded: no concentration"
+    },
+    {
+     "code": "not_reviewed",
+     "level": "warning",
+     "message": "automatic analysis not yet reviewed"
+    }
+   ],
+   "report_notes": [
+    "efficiency calibration unvalidated: not independently validated",
+    "efficiency curve: cascade-emitter calibration points (Ba-133, Eu-152) corrected for true-coincidence summing (lowest COI 0.8230, 6 refits), partial correction for Ba-133 276.4 keV, Ba-133 302.9 keV, Ba-133 356 keV, Ba-133 383.8 keV with the same peak-to-total, so the summing is not counted twice",
+    "true-coincidence summing corrected where the coincidence data describe the line (first order, gamma-gamma, no angular correlation): peak-to-total PT(E) = min(1, 0.24 (E/1000 keV)^0) +- 10 % (assumed), efficiencies of the curve clamped to its range, coincident photons below 97.43 keV left out",
+    "decision rule: a search peak above the decision threshold"
+   ],
+   "report_tcs_partial": null
+  },
+  "loaded_tcs": {
+   "activity": 67.8843789554262,
+   "u": 5.821722823249186,
+   "mda": 0.3906693276365116,
+   "decision_threshold": 0.1907335133649704,
+   "detected": true,
+   "nuclide_note": "",
+   "notes": [
+    "efficiency calibration unvalidated: not independently validated",
+    "true-coincidence summing corrected where the coincidence data describe the line (first order, gamma-gamma, no angular correlation): peak-to-total PT(E) = min(1, 0.24 (E/1000 keV)^0) +- 10 % (assumed), efficiencies of the curve clamped to its range, coincident photons below 97.43 keV left out",
+    "decision rule: a search peak above the decision threshold"
+   ],
+   "curve_tcs_partial": null,
+   "lines": [
+    [
+     661.657,
+     1.0,
+     false,
+     0.017310266815807118,
+     67.8843789554262,
+     ""
+    ]
+   ],
+   "report_calibration": {
+    "id": "7ee55863-23de-48c2-a1dd-48259cb1c5be",
+    "kind": "efficiency",
+    "name": "",
+    "model": "loglog",
+    "source": "imported",
+    "validation_status": "unvalidated",
+    "validation_note": "",
+    "energy_range": [
+     121.7817,
+     1408.013
+    ],
+    "detector_id": null,
+    "geometry_id": null,
+    "content_hash": "6da344339d67c7e9460a752f6ac32ffe2cb6b3d4f0e07828ebd16112e38f6b3b",
+    "created": "2026-10-28T21:30:01.127577+00:00",
+    "selection": "",
+    "u_model_rel": 0.08253327157335875
+   },
+   "report_statuses": [
+    {
+     "code": "outside_validated_scope",
+     "level": "warning",
+     "message": "efficiency calibration '7ee55863-23de-48c2-a1dd-48259cb1c5be' is unvalidated"
+    },
+    {
+     "code": "outside_validated_scope",
+     "level": "warning",
+     "message": "measurement geometry not recorded: compatibility not checked"
+    },
+    {
+     "code": "outside_validated_scope",
+     "level": "warning",
+     "message": "sample information not recorded: no concentration"
+    },
+    {
+     "code": "not_reviewed",
+     "level": "warning",
+     "message": "automatic analysis not yet reviewed"
+    }
+   ],
+   "report_notes": [
+    "efficiency calibration unvalidated: not independently validated",
+    "true-coincidence summing corrected where the coincidence data describe the line (first order, gamma-gamma, no angular correlation): peak-to-total PT(E) = min(1, 0.24 (E/1000 keV)^0) +- 10 % (assumed), efficiencies of the curve clamped to its range, coincident photons below 97.43 keV left out",
+    "decision rule: a search peak above the decision threshold"
+   ],
+   "report_tcs_partial": null
+  },
+  "loaded_no_tcs": {
+   "activity": 67.8843789554262,
+   "u": 5.821722823249186,
+   "mda": 0.3906693276365116,
+   "decision_threshold": 0.1907335133649704,
+   "detected": true,
+   "nuclide_note": "",
+   "notes": [
+    "efficiency calibration unvalidated: not independently validated",
+    "decision rule: a search peak above the decision threshold"
+   ],
+   "curve_tcs_partial": null,
+   "lines": [
+    [
+     661.657,
+     1.0,
+     false,
+     0.017310266815807118,
+     67.8843789554262,
+     ""
+    ]
+   ],
+   "report_calibration": {
+    "id": "d4994435-52e4-4023-bde5-7ba26fc0b5f4",
+    "kind": "efficiency",
+    "name": "",
+    "model": "loglog",
+    "source": "imported",
+    "validation_status": "unvalidated",
+    "validation_note": "",
+    "energy_range": [
+     121.7817,
+     1408.013
+    ],
+    "detector_id": null,
+    "geometry_id": null,
+    "content_hash": "6da344339d67c7e9460a752f6ac32ffe2cb6b3d4f0e07828ebd16112e38f6b3b",
+    "created": "2026-10-28T21:30:01.157057+00:00",
+    "selection": "",
+    "u_model_rel": 0.08253327157335875
+   },
+   "report_statuses": [
+    {
+     "code": "outside_validated_scope",
+     "level": "warning",
+     "message": "efficiency calibration 'd4994435-52e4-4023-bde5-7ba26fc0b5f4' is unvalidated"
+    },
+    {
+     "code": "outside_validated_scope",
+     "level": "warning",
+     "message": "measurement geometry not recorded: compatibility not checked"
+    },
+    {
+     "code": "outside_validated_scope",
+     "level": "warning",
+     "message": "sample information not recorded: no concentration"
+    },
+    {
+     "code": "not_reviewed",
+     "level": "warning",
+     "message": "automatic analysis not yet reviewed"
+    }
+   ],
+   "report_notes": [
+    "efficiency calibration unvalidated: not independently validated",
+    "decision rule: a search peak above the decision threshold"
+   ],
+   "report_tcs_partial": null
+  },
+  "legacy_no_tcs": {
+   "activity": 67.8843789554262,
+   "u": 5.821722823249186,
+   "mda": 0.3906693276365116,
+   "decision_threshold": 0.1907335133649704,
+   "detected": true,
+   "nuclide_note": "",
+   "notes": [
+    "efficiency calibration unvalidated: not independently validated",
+    "decision rule: a search peak above the decision threshold"
+   ],
+   "curve_tcs_partial": null,
+   "lines": [
+    [
+     661.657,
+     1.0,
+     false,
+     0.017310266815807118,
+     67.8843789554262,
+     ""
+    ]
+   ],
+   "report_calibration": {
+    "id": "74c8aa17-b667-4da4-9054-09904db616ef",
+    "kind": "efficiency",
+    "name": "",
+    "model": "loglog",
+    "source": "imported",
+    "validation_status": "unvalidated",
+    "validation_note": "",
+    "energy_range": [
+     121.7817,
+     1408.013
+    ],
+    "detector_id": null,
+    "geometry_id": null,
+    "content_hash": "6da344339d67c7e9460a752f6ac32ffe2cb6b3d4f0e07828ebd16112e38f6b3b",
+    "created": "2026-10-28T21:30:01.182858+00:00",
+    "selection": "",
+    "u_model_rel": 0.08253327157335875
+   },
+   "report_statuses": [
+    {
+     "code": "outside_validated_scope",
+     "level": "warning",
+     "message": "efficiency calibration '74c8aa17-b667-4da4-9054-09904db616ef' is unvalidated"
+    },
+    {
+     "code": "outside_validated_scope",
+     "level": "warning",
+     "message": "measurement geometry not recorded: compatibility not checked"
+    },
+    {
+     "code": "outside_validated_scope",
+     "level": "warning",
+     "message": "sample information not recorded: no concentration"
+    },
+    {
+     "code": "not_reviewed",
+     "level": "warning",
+     "message": "automatic analysis not yet reviewed"
+    }
+   ],
+   "report_notes": [
+    "efficiency calibration unvalidated: not independently validated",
+    "decision rule: a search peak above the decision threshold"
+   ],
+   "report_tcs_partial": null
+  },
+  "control_fresh_tcs": {
+   "activity": 65.21008371790009,
+   "u": 8.665364167992813,
+   "mda": 0.3752789662835432,
+   "decision_threshold": 0.18321959434151597,
+   "detected": true,
+   "nuclide_note": "",
+   "notes": [
+    "efficiency calibration unvalidated: not independently validated",
+    "efficiency curve: cascade-emitter calibration points (Eu-152) corrected for true-coincidence summing (lowest COI 0.8210, 6 refits) with the same peak-to-total, so the summing is not counted twice",
+    "true-coincidence summing corrected where the coincidence data describe the line (first order, gamma-gamma, no angular correlation): peak-to-total PT(E) = min(1, 0.24 (E/1000 keV)^0) +- 10 % (assumed), efficiencies of the curve clamped to its range, coincident photons below 97.43 keV left out",
+    "decision rule: a search peak above the decision threshold"
+   ],
+   "curve_tcs_partial": null,
+   "lines": [
+    [
+     661.657,
+     1.0,
+     false,
+     0.01802016874303179,
+     65.21008371790009,
+     ""
+    ]
+   ],
+   "report_calibration": {
+    "id": "f0bccf8c-02c0-41dc-9ecd-2bfcdda48c15",
+    "kind": "efficiency",
+    "name": "",
+    "model": "loglog",
+    "source": "imported",
+    "validation_status": "unvalidated",
+    "validation_note": "",
+    "energy_range": [
+     121.7817,
+     1408.013
+    ],
+    "detector_id": null,
+    "geometry_id": null,
+    "content_hash": "e30b5733c868719066a2bddb0ada8a567b3abea9e8ce478e4619cecb4eb33f5e",
+    "created": "2026-10-28T21:30:01.347582+00:00",
+    "selection": "",
+    "u_model_rel": 0.0
+   },
+   "report_statuses": [
+    {
+     "code": "outside_validated_scope",
+     "level": "warning",
+     "message": "efficiency calibration 'f0bccf8c-02c0-41dc-9ecd-2bfcdda48c15' is unvalidated"
+    },
+    {
+     "code": "outside_validated_scope",
+     "level": "warning",
+     "message": "measurement geometry not recorded: compatibility not checked"
+    },
+    {
+     "code": "outside_validated_scope",
+     "level": "warning",
+     "message": "sample information not recorded: no concentration"
+    },
+    {
+     "code": "not_reviewed",
+     "level": "warning",
+     "message": "automatic analysis not yet reviewed"
+    }
+   ],
+   "report_notes": [
+    "efficiency calibration unvalidated: not independently validated",
+    "efficiency curve: cascade-emitter calibration points (Eu-152) corrected for true-coincidence summing (lowest COI 0.8210, 6 refits) with the same peak-to-total, so the summing is not counted twice",
+    "true-coincidence summing corrected where the coincidence data describe the line (first order, gamma-gamma, no angular correlation): peak-to-total PT(E) = min(1, 0.24 (E/1000 keV)^0) +- 10 % (assumed), efficiencies of the curve clamped to its range, coincident photons below 97.43 keV left out",
+    "decision rule: a search peak above the decision threshold"
+   ],
+   "report_tcs_partial": null
+  },
+  "control_loaded_no_tcs": {
+   "activity": 65.21008371790009,
+   "u": 8.665364167992813,
+   "mda": 0.3752789662835432,
+   "decision_threshold": 0.18321959434151597,
+   "detected": true,
+   "nuclide_note": "",
+   "notes": [
+    "efficiency calibration unvalidated: not independently validated",
+    "decision rule: a search peak above the decision threshold"
+   ],
+   "curve_tcs_partial": null,
+   "lines": [
+    [
+     661.657,
+     1.0,
+     false,
+     0.01802016874303179,
+     65.21008371790009,
+     ""
+    ]
+   ],
+   "report_calibration": {
+    "id": "c0f7606a-b7be-4dd6-ac21-adb62c834c10",
+    "kind": "efficiency",
+    "name": "",
+    "model": "loglog",
+    "source": "imported",
+    "validation_status": "unvalidated",
+    "validation_note": "",
+    "energy_range": [
+     121.7817,
+     1408.013
+    ],
+    "detector_id": null,
+    "geometry_id": null,
+    "content_hash": "6ead502fa874eb41cd1517ef6c66cba9979112134033081050e93c858017a0fe",
+    "created": "2026-10-28T21:30:01.375514+00:00",
+    "selection": "",
+    "u_model_rel": 0.12497654030433834
+   },
+   "report_statuses": [
+    {
+     "code": "outside_validated_scope",
+     "level": "warning",
+     "message": "efficiency calibration 'c0f7606a-b7be-4dd6-ac21-adb62c834c10' is unvalidated"
+    },
+    {
+     "code": "outside_validated_scope",
+     "level": "warning",
+     "message": "measurement geometry not recorded: compatibility not checked"
+    },
+    {
+     "code": "outside_validated_scope",
+     "level": "warning",
+     "message": "sample information not recorded: no concentration"
+    },
+    {
+     "code": "not_reviewed",
+     "level": "warning",
+     "message": "automatic analysis not yet reviewed"
+    }
+   ],
+   "report_notes": [
+    "efficiency calibration unvalidated: not independently validated",
+    "decision rule: a search peak above the decision threshold"
+   ],
+   "report_tcs_partial": null
+  }
+ },
+ "wording": {
+  "ignored": 0.369959,
+  "partial_reason": "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (37 % of decays)",
+  "factor": 1.0
+ },
+ "round5": {
+  "calibration": {
+   "eu152_ba133_from_121.8": {
+    "e_min": 121.7817,
+    "points": [
+     [
+      "Eu-152",
+      121.7817,
+      0.06083660712247679,
+      0.0007480519105627888
+     ],
+     [
+      "Eu-152",
+      244.6974,
+      0.0420395091625434,
+      0.000987203495192947
+     ],
+     [
+      "Eu-152",
+      344.2785,
+      0.028762330891667857,
+      0.00031515927665256026
+     ],
+     [
+      "Eu-152",
+      778.904,
+      0.017245505894436543,
+      0.00026871202022366763
+     ],
+     [
+      "Eu-152",
+      964.079,
+      0.015223222032142289,
+      0.0002700100813439846
+     ],
+     [
+      "Eu-152",
+      1085.837,
+      0.011824274548929186,
+      0.00011251902429094106
+     ],
+     [
+      "Eu-152",
+      1112.076,
+      0.01347294337518604,
+      0.00022397906800522847
+     ],
+     [
+      "Eu-152",
+      1408.013,
+      0.011478420140290503,
+      0.00018731704053034776
+     ],
+     [
+      "Ba-133",
+      276.3989,
+      0.032285739632409514,
+      0.0003090422164997635
+     ],
+     [
+      "Ba-133",
+      302.8508,
+      0.029802042201795286,
+      0.00028115190382849137
+     ],
+     [
+      "Ba-133",
+      356.0129,
+      0.02661215955901671,
+      0.0002510586111630435
+     ],
+     [
+      "Ba-133",
+      383.8485,
+      0.02523878266104187,
+      0.00023810219942034636
+     ]
+    ],
+    "eps_500": 0.021040495775174778,
+    "note": "cascade-emitter calibration points (Ba-133, Eu-152) corrected for true-coincidence summing (lowest COI 0.8230, 6 refits), partial correction for Ba-133 276.4 keV, Ba-133 302.9 keV, Ba-133 356 keV, Ba-133 383.8 keV"
+   },
+   "eu152_ba133_from_53.2": {
+    "e_min": 53.1622,
+    "points": [
+     [
+      "Eu-152",
+      121.7817,
+      0.06086012421415287,
+      0.0007499714927372444
+     ],
+     [
+      "Eu-152",
+      244.6974,
+      0.04219829495977594,
+      0.0010086967512246215
+     ],
+     [
+      "Eu-152",
+      344.2785,
+      0.028774565432027253,
+      0.00031595257065959416
+     ],
+     [
+      "Eu-152",
+      778.904,
+      0.017285586705644403,
+      0.00027307086193235284
+     ],
+     [
+      "Eu-152",
+      964.079,
+      0.015276156918396627,
+      0.000276191194033074
+     ],
+     [
+      "Eu-152",
+      1085.837,
+      0.011812837256361206,
+      0.00011243870350723077
+     ],
+     [
+      "Eu-152",
+      1112.076,
+      0.01351221296506492,
+      0.00022876331481427292
+     ],
+     [
+      "Eu-152",
+      1408.013,
+      0.011514256848422236,
+      0.0001913393081902813
+     ],
+     [
+      "Ba-133",
+      53.1622,
+      0.12777178930505192,
+      0.00363488187330921
+     ],
+     [
+      "Ba-133",
+      80.9979,
+      0.086662150370216,
+      0.0015739432339373612
+     ],
+     [
+      "Ba-133",
+      276.3989,
+      0.04265108880030799,
+      0.0015187824202134157
+     ],
+     [
+      "Ba-133",
+      302.8508,
+      0.03595913688339432,
+      0.0008202165528689105
+     ],
+     [
+      "Ba-133",
+      356.0129,
+      0.03047772906250797,
+      0.0005486678300835729
+     ],
+     [
+      "Ba-133",
+      383.8485,
+      0.024260310488156574,
+      0.000245618643220906
+     ]
+    ],
+    "eps_500": 0.021339581204317296,
+    "note": "cascade-emitter calibration points (Ba-133, Eu-152) corrected for true-coincidence summing (lowest COI 0.7449, 7 refits)"
+   },
+   "eu152_only": {
+    "e_min": 121.7817,
+    "points": [
+     [
+      "Eu-152",
+      121.7817,
+      0.06091501843012344,
+      0.0007544766877133393
+     ],
+     [
+      "Eu-152",
+      244.6974,
+      0.04214502564037977,
+      0.0010014647086529923
+     ],
+     [
+      "Eu-152",
+      344.2785,
+      0.028816064011306874,
+      0.0003186764905265367
+     ],
+     [
+      "Eu-152",
+      778.904,
+      0.01736895516780829,
+      0.00028226248686688305
+     ],
+     [
+      "Eu-152",
+      964.079,
+      0.015247149629587193,
+      0.00027287187512242
+     ],
+     [
+      "Eu-152",
+      1085.837,
+      0.011823533422021677,
+      0.00011262183282666682
+     ],
+     [
+      "Eu-152",
+      1112.076,
+      0.01347356283800153,
+      0.00022517788180929438
+     ],
+     [
+      "Eu-152",
+      1408.013,
+      0.011483350850560242,
+      0.00018821538650401088
+     ]
+    ],
+    "eps_500": 0.0221738769007944,
+    "note": "cascade-emitter calibration points (Eu-152) corrected for true-coincidence summing (lowest COI 0.8210, 6 refits)"
+   }
+  },
+  "activity": {
+   "e_min 50": {
+    "activity": 40.52009025984285,
+    "u": 0.7769865968381711,
+    "note": "lines inconsistent (chi2/dof = 4.4); true-coincidence summing corrected (COI 0.9852 at 356.013 keV)",
+    "lines": [
+     [
+      356.013,
+      0.9851795554315675,
+      true,
+      0.001564685163059509,
+      40.897039709521636,
+      "",
+      false
+     ],
+     [
+      80.998,
+      0.9577598991941351,
+      true,
+      0.00441030166761064,
+      null,
+      "no peak",
+      false
+     ],
+     [
+      302.851,
+      0.9815627795208743,
+      true,
+      0.001886520999298699,
+      41.66322569977637,
+      "",
+      false
+     ],
+     [
+      383.849,
+      1.0045237564324436,
+      true,
+      0.00030884637896216486,
+      33.40662215049048,
+      "",
+      false
+     ],
+     [
+      276.399,
+      0.9694138096131895,
+      true,
+      0.0031599809454839387,
+      43.22231970513544,
+      "",
+      false
+     ],
+     [
+      79.614,
+      0.9455419383823858,
+      true,
+      0.00575945491225698,
+      null,
+      "no peak",
+      false
+     ]
+    ]
+   },
+   "e_min 122": {
+    "activity": 39.94332269367495,
+    "u": 0.7707060213541631,
+    "note": "true-coincidence summing corrected (COI 1.0000 at 356.013 keV); partial correction for 356.013, 302.851, 383.849, 276.399 keV",
+    "lines": [
+     [
+      356.013,
+      1.0,
+      true,
+      0.0,
+      40.290927399493725,
+      "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (37 % of decays)",
+      true
+     ],
+     [
+      302.851,
+      1.0,
+      true,
+      0.0,
+      40.89507162167805,
+      "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (44 % of decays)",
+      true
+     ],
+     [
+      383.849,
+      1.0000395785856298,
+      true,
+      0.0,
+      33.55641745678827,
+      "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (7 % of decays)",
+      true
+     ],
+     [
+      276.399,
+      0.9967447083333333,
+      true,
+      0.00032659231992411314,
+      42.037156811934864,
+      "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (66 % of decays)",
+      true
+     ]
+    ]
+   }
+  }
+ }
+}
