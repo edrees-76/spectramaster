@@ -1,0 +1,636 @@
+{
+ "engine": "1.24.0",
+ "C1": {
+  "edited": [
+   [
+    "Cs-137",
+    2000.0,
+    40.0,
+    null,
+    null
+   ]
+  ],
+  "edited_then_kBq": [
+   [
+    "Cs-137",
+    2000.0,
+    20.0,
+    null,
+    null
+   ]
+  ],
+  "round_trip": [
+   [
+    "Cs-137",
+    12345.678,
+    246.91356,
+    null,
+    null
+   ]
+  ]
+ },
+ "C2": {
+  "col1=1e309": [
+   [
+    "Cs-137",
+    Infinity,
+    Infinity,
+    949000000.0,
+    null
+   ]
+  ],
+  "col1=nan": [
+   [
+    "Cs-137",
+    NaN,
+    NaN,
+    949000000.0,
+    null
+   ]
+  ],
+  "col1=inf": [
+   [
+    "Cs-137",
+    Infinity,
+    Infinity,
+    949000000.0,
+    null
+   ]
+  ],
+  "col1=-5": [
+   [
+    "Cs-137",
+    -5.0,
+    -0.1,
+    949000000.0,
+    null
+   ]
+  ],
+  "col1=0": [],
+  "col1=1,5": [
+   [
+    "Cs-137",
+    1.5,
+    0.03,
+    949000000.0,
+    null
+   ]
+  ],
+  "col1=1,000": [
+   [
+    "Cs-137",
+    1.0,
+    0.02,
+    949000000.0,
+    null
+   ]
+  ],
+  "col2=1e309": [
+   [
+    "Cs-137",
+    1000.0,
+    Infinity,
+    949000000.0,
+    null
+   ]
+  ],
+  "col2=-1": [
+   [
+    "Cs-137",
+    1000.0,
+    -10.0,
+    949000000.0,
+    null
+   ]
+  ],
+  "col2=nan": [
+   [
+    "Cs-137",
+    1000.0,
+    NaN,
+    949000000.0,
+    null
+   ]
+  ],
+  "col4=inf": [
+   [
+    "Cs-137",
+    1000.0,
+    20.0,
+    Infinity,
+    null
+   ]
+  ],
+  "col4=-3": [
+   [
+    "Cs-137",
+    1000.0,
+    20.0,
+    -3.0,
+    null
+   ]
+  ],
+  "col4=0": [
+   [
+    "Cs-137",
+    1000.0,
+    20.0,
+    0.0,
+    null
+   ]
+  ],
+  "col4=nan": [
+   [
+    "Cs-137",
+    1000.0,
+    20.0,
+    NaN,
+    null
+   ]
+  ],
+  "col5=661.657:85,1": [
+   [
+    "Cs-137",
+    1000.0,
+    20.0,
+    949000000.0,
+    [
+     [
+      661.657,
+      0.85
+     ]
+    ]
+   ]
+  ],
+  "col5=661.657:inf": [
+   [
+    "Cs-137",
+    1000.0,
+    20.0,
+    949000000.0,
+    [
+     [
+      661.657,
+      Infinity
+     ]
+    ]
+   ]
+  ],
+  "col5=inf:85.1": [
+   [
+    "Cs-137",
+    1000.0,
+    20.0,
+    949000000.0,
+    [
+     [
+      Infinity,
+      0.851
+     ]
+    ]
+   ]
+  ],
+  "col5=661.657:-85.1": [
+   [
+    "Cs-137",
+    1000.0,
+    20.0,
+    949000000.0,
+    [
+     [
+      661.657,
+      -0.851
+     ]
+    ]
+   ]
+  ],
+  "col5=661.657:0": [
+   [
+    "Cs-137",
+    1000.0,
+    20.0,
+    949000000.0,
+    null
+   ]
+  ],
+  "col5=661.657": [
+   [
+    "Cs-137",
+    1000.0,
+    20.0,
+    949000000.0,
+    null
+   ]
+  ],
+  "typed valid": [
+   [
+    "Co-60",
+    1000.0,
+    20.0,
+    166000000.0,
+    [
+     [
+      1173.228,
+      0.9984999999999999
+     ],
+     [
+      1332.492,
+      0.9998260000000001
+     ]
+    ]
+   ]
+  ]
+ },
+ "C3": {
+  "good": [
+   [
+    "Cs-137",
+    1000.0,
+    20.0,
+    "2020-01-01 12:00:00",
+    949000000.0,
+    [
+     [
+      661.657,
+      0.851
+     ]
+    ]
+   ],
+   [
+    "Co-60",
+    2000.0,
+    30.0,
+    "2020-01-01 12:00:00",
+    166300000.0,
+    null
+   ]
+  ],
+  "inf activity": [
+   [
+    "Cs-137",
+    Infinity,
+    Infinity,
+    "2020-01-01 00:00:00",
+    949000000.0,
+    null
+   ]
+  ],
+  "nan activity": [
+   [
+    "Cs-137",
+    NaN,
+    NaN,
+    "2020-01-01 00:00:00",
+    949000000.0,
+    null
+   ]
+  ],
+  "1e309 activity": [
+   [
+    "Cs-137",
+    Infinity,
+    Infinity,
+    "2020-01-01 00:00:00",
+    949000000.0,
+    null
+   ]
+  ],
+  "negative activity": [
+   [
+    "Cs-137",
+    -1000.0,
+    -20.0,
+    "2020-01-01 00:00:00",
+    949000000.0,
+    null
+   ]
+  ],
+  "zero activity": [
+   [
+    "Cs-137",
+    0.0,
+    0.0,
+    "2020-01-01 00:00:00",
+    949000000.0,
+    null
+   ]
+  ],
+  "negative uncertainty": [
+   [
+    "Cs-137",
+    1000.0,
+    -20.0,
+    "2020-01-01 00:00:00",
+    949000000.0,
+    null
+   ]
+  ],
+  "nan uncertainty": [
+   [
+    "Cs-137",
+    1000.0,
+    NaN,
+    "2020-01-01 00:00:00",
+    949000000.0,
+    null
+   ]
+  ],
+  "inf half-life": [
+   [
+    "Cs-137",
+    1000.0,
+    20.0,
+    "2020-01-01 00:00:00",
+    Infinity,
+    null
+   ]
+  ],
+  "negative half-life": [
+   [
+    "Cs-137",
+    1000.0,
+    20.0,
+    "2020-01-01 00:00:00",
+    -5.0,
+    null
+   ]
+  ],
+  "inf energy": [
+   [
+    "Cs-137",
+    1000.0,
+    20.0,
+    "2020-01-01 00:00:00",
+    949000000.0,
+    [
+     [
+      Infinity,
+      0.851
+     ]
+    ]
+   ]
+  ],
+  "inf intensity": [
+   [
+    "Cs-137",
+    1000.0,
+    20.0,
+    "2020-01-01 00:00:00",
+    949000000.0,
+    [
+     [
+      661.657,
+      Infinity
+     ]
+    ]
+   ]
+  ],
+  "negative intensity": [
+   [
+    "Cs-137",
+    1000.0,
+    20.0,
+    "2020-01-01 00:00:00",
+    949000000.0,
+    [
+     [
+      661.657,
+      -0.851
+     ]
+    ]
+   ]
+  ]
+ },
+ "C4": {
+  "good": [
+   [
+    661.657,
+    0.007099522018689009,
+    0.00015211640546723614,
+    true,
+    ""
+   ]
+  ],
+  "nan activity": [
+   [
+    661.657,
+    NaN,
+    NaN,
+    true,
+    ""
+   ]
+  ],
+  "inf activity": [
+   [
+    661.657,
+    0.0,
+    0.0,
+    true,
+    ""
+   ]
+  ],
+  "negative activity": [],
+  "nan uncertainty": [
+   [
+    661.657,
+    0.007099522018689009,
+    NaN,
+    true,
+    ""
+   ]
+  ],
+  "negative uncertainty": [
+   [
+    661.657,
+    0.007099522018689009,
+    0.00015211640546723614,
+    true,
+    ""
+   ]
+  ],
+  "nan intensity": [
+   [
+    661.657,
+    NaN,
+    NaN,
+    true,
+    ""
+   ]
+  ],
+  "inf intensity": [
+   [
+    661.657,
+    0.0,
+    0.0,
+    true,
+    ""
+   ]
+  ],
+  "nan half-life": [
+   [
+    661.657,
+    0.006474217687107417,
+    0.0001387184545921082,
+    true,
+    ""
+   ]
+  ],
+  "zero half-life": [
+   [
+    661.657,
+    0.006474217687107417,
+    0.0001387184545921082,
+    true,
+    ""
+   ]
+  ],
+  "negative half-life": [
+   [
+    661.657,
+    0.006474217687107417,
+    0.0001387184545921082,
+    true,
+    ""
+   ]
+  ]
+ },
+ "C5": {
+  "clean": {
+   "peak_width": [
+    1332.5000000000002,
+    2.00001702625309,
+    3.645262487172431,
+    ""
+   ],
+   "peak_to_compton": 239.04178880000342,
+   "net_area": [
+    99999.99999731506,
+    329.1197635436593
+   ],
+   "relative_efficiency": 62.57507757639808
+  },
+  "nan in the 1332 ROI": {
+   "peak_width": "ValueError: the spectrum has 1 channels that are not numbers (first: 2666)",
+   "peak_to_compton": NaN,
+   "net_area": [
+    NaN,
+    NaN
+   ],
+   "relative_efficiency": NaN
+  },
+  "nan in the Compton window": {
+   "peak_width": "ValueError: the spectrum has 1 channels that are not numbers (first: 2120)",
+   "peak_to_compton": null,
+   "net_area": [
+    99999.99999731506,
+    329.1197635436593
+   ],
+   "relative_efficiency": 62.57507757639808
+  },
+  "inf in the 1332 ROI": {
+   "peak_width": "ValueError: the spectrum has 1 channels that are not numbers (first: 2664)",
+   "peak_to_compton": Infinity,
+   "net_area": [
+    Infinity,
+    Infinity
+   ],
+   "relative_efficiency": Infinity
+  }
+ },
+ "C678": {
+  "counts": {
+   "bad": {
+    "100\n1,5\n": [
+     100.0,
+     15.0
+    ],
+    "100\n1,000\n": [
+     100.0,
+     1000.0
+    ],
+    "100\ninf\n": [
+     100.0,
+     Infinity
+    ],
+    "100\nnan\n": [
+     100.0,
+     NaN
+    ],
+    "100\n1e309\n": [
+     100.0,
+     Infinity
+    ]
+   },
+   "good": [
+    100.0,
+    105.0,
+    98.5,
+    100.0,
+    -3.0
+   ]
+  },
+  "qc": {
+   "bad": {
+    "Cs-137=-1000": {
+     "Cs-137": -1000.0
+    },
+    "Cs-137=0": {
+     "Cs-137": 0.0
+    },
+    "Cs-137=-1 uCi": {
+     "Cs-137": -37000.0
+    }
+   },
+   "read": [
+    [
+     "Cs-137=37000",
+     {
+      "Cs-137": 37000.0
+     }
+    ],
+    [
+     "Cs-137=37000, Co-60=1 uCi",
+     {
+      "Cs-137": 37000.0,
+      "Co-60": 37000.0
+     }
+    ],
+    [
+     "Cs-137=1 µCi; Co-60=2 kBq",
+     {
+      "Cs-137": 37000.0,
+      "Co-60": 2000.0
+     }
+    ],
+    [
+     "Cs137=37000, Co60=1 uCi",
+     "ValueError: not an activity: '37000, Co60=1 uCi' (use a point for decimals, no thousands separator)"
+    ],
+    [
+     "cs137=37000; Am241=500",
+     {
+      "cs137": 37000.0,
+      "Am241": 500.0
+     }
+    ]
+   ],
+   "refused": {
+    "Cs-137=1,000 Bq": "ValueError: not an activity: '1,000 Bq' (use a point for decimals, no thousands separator)",
+    "Cs-137=1,5 Bq": "ValueError: not an activity: '1,5 Bq' (use a point for decimals, no thousands separator)",
+    "Cs-137=1e309": "ValueError: not a finite activity: '1e309'",
+    "Cs-137=abc": "ValueError: not an activity: 'abc' (use a point for decimals, no thousands separator)",
+    "Cs-137": "ValueError: not nuclide=activity: 'Cs-137'"
+   }
+  },
+  "set_bq": {
+   "inf": Infinity,
+   "nan": NaN,
+   "-inf": -Infinity,
+   "12345.678": 12345.678,
+   "0": [
+    0.0,
+    ""
+   ]
+  }
+ }
+}
