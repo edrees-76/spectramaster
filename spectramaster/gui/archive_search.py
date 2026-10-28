@@ -967,7 +967,7 @@ class ArchiveSearchWindow(QMainWindow):
             self.cancel_build()
             if self._thread is not None:
                 self._thread.quit()
-                self._thread.wait(60000)
+                self._thread.wait()                # never destroy a running thread
         self._save_settings()
         if self._index is not None:
             self._index.close()

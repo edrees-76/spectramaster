@@ -1368,3 +1368,22 @@ Protocol `docs/baseline/round5_precision_protocol.md` (registered before the cha
 - **Result:** 5 PASS / 0 FAIL; the 12 values are identical in every digit on 1.14.0, 1.15.0 and
   1.24.0; full suite 1508 passed, 69 skipped. Round-5 batches R5-A to R5-F are done.
 
+
+## Round-6 external review: quitting while a worker runs, C1 (2026-10-28)
+
+Codex round 6 (76/100), Gemini round 6 (88/100). No change to the analysis engine (engine 1.24.0).
+
+- **Confirmed.** Every worker thread was stopped by its worker's "finished" signal through a queued
+  call to `QThread.quit`, which runs in the GUI thread. When the application quit, the GUI thread
+  was blocked in `_wait_all` (and a closing window in its `wait()`), so the quit never arrived: the
+  wait timed out after 30 s and the running QThread was then destroyed (exit code 3221226505,
+  reproduced by the new test before the fix in all three cases). The same pattern was in the
+  analysis thread and in the conversion, batch-analysis, report and QC import windows.
+- **Fix.** `gui/worker.quit_on` connects the worker's signals to `QThread.quit` directly (in the
+  worker's thread; `quit` is thread-safe), used by `start_call` and by every window that runs its
+  own QThread. On quit and on close the threads are waited for until they end (no timeout): a
+  running thread is never destroyed.
+- **Tests:** `tests/test_round6_quit.py`: the application quits 100 ms after a call of 1 s or 3 s
+  starts (also with its window closed and deleted) and ends with exit code 0, nothing left running;
+  `quit_on` stops a thread while the GUI thread is blocked in `wait()`. Full suite 1512 passed,
+  69 skipped.

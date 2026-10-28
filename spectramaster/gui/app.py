@@ -34,7 +34,7 @@ from .info_panel import InfoPanel
 from .plot import Highlight, OverviewStrip, SpectrumPlot, Y_LINEAR, Y_LOG, Y_MODES, Y_SQRT
 from .roi_panel import RoiPanel, export_rois_csv
 from .settings import AUTO, Settings
-from .worker import AnalysisWorker
+from .worker import AnalysisWorker, quit_on
 from .report_actions import ReportActionsMixin
 
 UI_FONT_FAMILIES = ["Segoe UI", "Tahoma", "Arial"]
@@ -1099,8 +1099,7 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         thread.started.connect(worker.run)
         worker.done.connect(self._on_analysis_done)
         worker.failed.connect(self._on_analysis_failed)
-        worker.done.connect(thread.quit)
-        worker.failed.connect(thread.quit)
+        quit_on(thread, worker.done, worker.failed)
         thread.finished.connect(self._on_analysis_thread_finished)
         self._ana_thread, self._ana_worker = thread, worker
         self.act_analyze.setEnabled(False)
@@ -1235,7 +1234,7 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         if self._ana_thread is not None:
             self._ana_token += 1
             self._ana_thread.quit()
-            self._ana_thread.wait(5000)
+            self._ana_thread.wait()                    # never destroy a running thread
         from .aptec_view_ui import save_on_exit
         if save_on_exit(self):                                 # View > Save Settings on Exit
             self.settings.set("window/geometry", self.saveGeometry())

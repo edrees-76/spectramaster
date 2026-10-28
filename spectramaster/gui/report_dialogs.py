@@ -17,6 +17,7 @@ from . import i18n
 from . import report as rp
 from .i18n import tr
 from .identification_library import stored_library
+from .worker import quit_on
 from .plot import Y_MODES
 
 MODES = ("print", "preview", "pdf", "batch")
@@ -739,7 +740,7 @@ class ReportBatchDialog(QDialog):
         self._thread.started.connect(self._worker.run)
         self._worker.progress.connect(self._on_progress)
         self._worker.finished.connect(self._on_finished)
-        self._worker.finished.connect(self._thread.quit)
+        quit_on(self._thread, self._worker.finished)
         self._thread.finished.connect(self._cleanup)
         self._thread.start()
         return True
@@ -783,9 +784,10 @@ class ReportBatchDialog(QDialog):
             self._worker.cancel()
             self.cancel_btn.setEnabled(False)
 
-    def wait(self, ms: int = 60000) -> None:
+    def wait(self, ms: Optional[int] = None) -> None:
+        """No ``ms``: until the thread ends (a running thread is never destroyed)."""
         if self._thread is not None:
-            self._thread.wait(ms)
+            self._thread.wait() if ms is None else self._thread.wait(ms)
             QApplication.processEvents()
 
     def closeEvent(self, ev):

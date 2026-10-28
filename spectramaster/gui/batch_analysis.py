@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog,
 
 from . import i18n
 from . import identification_library as idl
-from .worker import start_call
+from .worker import quit_on, start_call
 from .workflow_strings import wtr
 
 
@@ -458,8 +458,7 @@ class BatchAnalysisDialog(QDialog):
         worker.done.connect(self._on_done)
         worker.failed.connect(self._on_failed)
         worker.cancelled.connect(self._on_cancelled)
-        for sig in (worker.done, worker.failed, worker.cancelled):
-            sig.connect(thread.quit)
+        quit_on(thread, worker.done, worker.failed, worker.cancelled)
         thread.finished.connect(self._on_thread_finished)
         self._thread, self._worker = thread, worker
         self._set_busy(True, wtr("batch_running", i=i18n.ltr(0), n=i18n.ltr(total)))
@@ -470,10 +469,11 @@ class BatchAnalysisDialog(QDialog):
         if self._worker is not None:
             self._worker.cancel()
 
-    def wait(self, ms: int = 30000) -> None:
+    def wait(self, ms: Optional[int] = None) -> None:
+        """No ``ms``: until every thread ends (a running thread is never destroyed)."""
         threads = [t for t, _w in self.__dict__.get("_call_threads", [])]
         for t in threads + ([self._thread] if self._thread is not None else []):
-            t.wait(ms)
+            t.wait() if ms is None else t.wait(ms)
 
     def _on_progress(self, i: int, n: int) -> None:
         self.progress.setValue(i)

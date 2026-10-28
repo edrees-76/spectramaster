@@ -22,6 +22,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDateTim
 from ..tools import qc
 from . import qc_i18n  # noqa: F401
 from .i18n import is_rtl, tr
+from .worker import quit_on
 from .qc_charts import (ControlChart, METRIC_ORDER, export_qc_pdf, metric_title, ordered_series,
                         save_chart, _fmt)
 
@@ -499,7 +500,7 @@ class QCWindow(QMainWindow):
         self._thread.started.connect(self._worker.run)
         self._worker.progress.connect(self._on_progress)
         self._worker.finished.connect(self._import_done)
-        self._worker.finished.connect(self._thread.quit)
+        quit_on(self._thread, self._worker.finished)
         self._progress.canceled.connect(self._worker.cancel)
         self._thread.start()
         return None
@@ -801,7 +802,7 @@ class QCWindow(QMainWindow):
             if self._worker is not None:
                 self._worker.cancel()
             self._thread.quit()
-            self._thread.wait(5000)
+            self._thread.wait()                    # never destroy a running thread
         super().closeEvent(ev)
 
 
