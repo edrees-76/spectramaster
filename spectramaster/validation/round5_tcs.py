@@ -1,11 +1,12 @@
 """Round-5 review, H5/H6: partial true-coincidence summing corrections
-(docs/baseline/round5_tcs_protocol.md).
+(docs/baseline/round5_tcs_protocol.md, with its amendment).
 
     python -m spectramaster.validation.round5_tcs [--collect]
 
 Synthetic data and the bundled coincidence table only.  ``--collect`` writes the raw observations
 to ``docs/baseline/after_R5E/round5_tcs_before.json`` (the "before" values); without it the
-criteria are evaluated against that file and ``round5_tcs.json`` / ``round5_tcs.md`` are written.
+criteria of the amendment are evaluated against that file and ``round5_tcs.json`` /
+``round5_tcs.md`` are written to ``after_R5E2`` (the first rule's run is kept in ``after_R5E``).
 """
 from __future__ import annotations
 
@@ -25,8 +26,8 @@ from spectramaster.analysis import efficiency as ef
 from spectramaster.model import Spectrum
 
 REPO = Path(__file__).resolve().parents[2]
-OUT = REPO / "docs" / "baseline" / "after_R5E"
-BEFORE_JSON = OUT / "round5_tcs_before.json"
+BEFORE_JSON = REPO / "docs" / "baseline" / "after_R5E" / "round5_tcs_before.json"
+OUT = REPO / "docs" / "baseline" / "after_R5E2"
 PT = (0.24, 0.0)
 GAIN, NCH, LIVE = 0.25, 12000, 20000.0
 START = datetime(2024, 3, 1, 10, 0, 0)
@@ -61,7 +62,37 @@ def _examples() -> dict:
                                                                e_min=em))
     for e in (880.76, 338.32, 911.204, 968.971, 278.95):
         out[f"Ac-228 {e:g}"] = _coi_row(co.coi("Ac-228", e, _flat(0.02), _flat(0.24), e_min=40.0))
+        for cname, curve in (("flat", _flat(0.02)), ("steep", _steep)):
+            out[f"inconsistent Ac-228 {e:g} {cname}"] = [
+                getattr(co.coi("Ac-228", e, curve, _pt, e_min=40.0), "inconsistent", None),
+                _independent_inconsistent("Ac-228", e, curve, 40.0)]
     return out
+
+
+def _independent_inconsistent(nuc: str, energy: float, eps, e_min: float) -> float:
+    """The amendment's measure from the raw table records, without coincidence.coi or Transition."""
+    num = den = 0.0
+    for rec in co._table()["nuclides"].get(nuc, []):
+        g = np.array(rec["g"], dtype=float).reshape(-1, 2)
+        e, inten = g[:, 0], g[:, 1]
+        k = int(np.argmin(np.abs(e - energy)))
+        if abs(e[k] - energy) > co.LINE_TOL_KEV or inten[k] <= 0:
+            continue
+        w = float(rec["br"]) * inten[k]
+        den += w
+        if "gs" not in rec:
+            continue
+        gs = np.array(rec["gs"], dtype=float)
+        for hi, lo, p in rec["c"]:
+            if int(lo) != k:
+                continue
+            j = int(hi)
+            if e[j] < co.BELOW_CURVE * e_min:
+                continue
+            ep = float(np.ravel(eps(np.array([e[j]])))[0])
+            et = min(ep / float(np.ravel(_pt(np.array([e[j]])))[0]), 1.0)
+            num += w * abs(gs[j] * float(p) / gs[k] - inten[j] * float(p) / inten[k]) * et
+    return num / den if den else 0.0
 
 
 def _all_lines() -> dict:
@@ -145,30 +176,33 @@ def _same_values(a: list, b: list) -> bool:
 def criteria(res: dict, before: dict) -> dict:
     c = {}
     x, xb = res["examples"], before["examples"]
+    xb = {**xb, **{k: v for k, v in x.items() if k.startswith("inconsistent ")}}
     hi, lo = x["Ba-133 356.0129 e_min 122"], x["Ba-133 356.0129 e_min 50"]
     ok = (hi[8] is True and lo[8] is False and _same_values(hi, xb["Ba-133 356.0129 e_min 122"])
           and _same_values(lo, xb["Ba-133 356.0129 e_min 50"]) and "below the efficiency curve" in hi[10]
           and not lo[10])
-    c["RE.C1"] = (ok, f"Ba-133 356 keV, e_min 122: partial {hi[8]}, ignored {hi[3]:.6f}, factor {hi[0]:.7f}, "
+    c["RE2.C1"] = (ok, f"Ba-133 356 keV, e_min 122: partial {hi[8]}, ignored {hi[3]:.6f}, factor {hi[0]:.7f}, "
                       f"text '{hi[10]}'; e_min 50: partial {lo[8]}, factor {lo[0]:.7f}")
     part = {k: v for k, v in x.items() if k.startswith("Ac-228")}
-    ok = (part["Ac-228 880.76"][8] is True and part["Ac-228 338.32"][8] is True
-          and "intensit" in part["Ac-228 880.76"][10]
+    ind = {k: v for k, v in x.items() if k.startswith("inconsistent ")}
+    ok = (part["Ac-228 880.76"][8] is True and "intensit" in part["Ac-228 880.76"][10]
           and part["Ac-228 911.204"][8] is False and part["Ac-228 968.971"][8] is False
-          and all(_same_values(v, xb[k]) for k, v in part.items()))
-    c["RE.C2"] = (ok, "; ".join(f"{k}: partial {v[8]}, inconsistent {v[9]}, factor {v[0]:.7f}"
-                                for k, v in part.items()))
+          and all(_same_values(v, xb[k]) for k, v in part.items())
+          and all(a is not None and (a == b or abs(a - b) <= 1e-12 * abs(b)) for a, b in ind.values()))
+    c["RE2.C2"] = (ok, "; ".join(f"{k}: partial {v[8]}, inconsistent {v[9]:.6g}, factor {v[0]:.7f}"
+                                 for k, v in part.items())
+                   + "; engine / independent: " + ", ".join(f"{k[13:]} {a:.6g}/{b:.6g}" for k, (a, b) in ind.items()))
     la, lb = res["lines"], before["lines"]
     diff = sorted(k for k in set(la) | set(lb) if k not in la or k not in lb or not _same_values(la[k], lb[k]))
     n_part = sum(1 for v in la.values() if v[8])
     n_found = sum(1 for v in la.values() if v[4])
-    c["RE.C3"] = (not diff, f"{len(la)} line evaluations: correction changed for {len(diff)} {diff[:5]}; "
+    c["RE2.C3"] = (not diff, f"{len(la)} line evaluations: correction changed for {len(diff)} {diff[:5]}; "
                             f"partial {n_part} of {n_found} corrected")
     ca, cb = res["calibration"], before["calibration"]
     refused = ca["eu152_ba133_from_121.8"]
     ok = ("error" in refused and "partial" in refused["error"] and "Ba-133" in refused["error"]
           and ca["eu152_ba133_from_53.2"] == cb["eu152_ba133_from_53.2"] and ca["eu152_only"] == cb["eu152_only"])
-    c["RE.C4"] = (ok, f"curve from 121.8 keV with Ba-133 points: {refused.get('error', 'not refused')[:300]} "
+    c["RE2.C4"] = (ok, f"curve from 121.8 keV with Ba-133 points: {refused.get('error', 'not refused')[:300]} "
                       f"(before: {str(cb['eu152_ba133_from_121.8'].get('error', 'corrected'))[:80]}); "
                       f"from 53.2 keV and Eu-152 only identical to before: "
                       f"{ca['eu152_ba133_from_53.2'] == cb['eu152_ba133_from_53.2']}, "
@@ -183,7 +217,7 @@ def criteria(res: dict, before: dict) -> dict:
     ok &= (all(l[6] is True and "partial" in l[5] for l in hi_lines)
            and all(l[6] is False for l in lo_lines) and "partial" in aa["e_min 122"]["note"]
            and "partial" not in aa["e_min 50"]["note"])
-    c["RE.C5"] = (ok, f"e_min 122: activity {aa['e_min 122']['activity']:.6g} +- {aa['e_min 122']['u']:.4g} Bq "
+    c["RE2.C5"] = (ok, f"e_min 122: activity {aa['e_min 122']['activity']:.6g} +- {aa['e_min 122']['u']:.4g} Bq "
                       f"(before {ab['e_min 122']['activity']:.6g}), partial lines "
                       f"{[l[0] for l in hi_lines if l[6]]}, note '{aa['e_min 122']['note']}'; e_min 50: "
                       f"partial lines {[l[0] for l in lo_lines if l[6]]}")
@@ -204,8 +238,8 @@ def main(argv=None) -> int:
     c = criteria(res, before)
     (OUT / "round5_tcs.json").write_text(json.dumps({"result": res, "criteria": c}, indent=1, ensure_ascii=False,
                                                     default=str), encoding="utf-8")
-    lines = ["# Round-5 review, H5/H6: partial true-coincidence summing corrections", "",
-             "Protocol: `docs/baseline/round5_tcs_protocol.md`.", "", "| ID | result | value |", "|---|---|---|"]
+    lines = ["# Round-5 review, H5/H6: partial true-coincidence summing corrections (amendment)", "",
+             "Protocol: `docs/baseline/round5_tcs_protocol.md`, amendment.", "", "| ID | result | value |", "|---|---|---|"]
     lines += [f"| {k} | {'PASS' if ok else 'FAIL'} | {v} |" for k, (ok, v) in c.items()]
     (OUT / "round5_tcs.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(", ".join(f"{k}:{'PASS' if ok else 'FAIL'}" for k, (ok, _v) in c.items()))

@@ -138,7 +138,7 @@ class Coi:
     reason: str = ""             # why a cascade line is not corrected
     annihilation: float = 0.0    # part of summing_out from 511 keV photons: P(beta+|i) 2 eps_t(511)
     note: str = ""               # what the correction leaves out (ANN_UNRESOLVED_NOTE)
-    inconsistent: float = 0.0    # sum_j |P(j|i) with scheme intensities - with line intensities|, upward j
+    inconsistent: float = 0.0    # sum_j |P(j|i) with scheme - with line intensities| eps_t(E_j), upward j
     partial_reason: str = ""     # why the correction is incomplete (empty: complete)
 
     @property
@@ -150,7 +150,7 @@ class Coi:
 
 INTENSITY_RANGE = (0.75, 1.33)   # table / library emission probability for the table to describe the line
 BELOW_CURVE = 0.8                # partners below BELOW_CURVE x e_min are left out (eps = 0)
-PARTIAL_LIMIT = 0.01             # ignored or inconsistent probability above which the correction is partial
+PARTIAL_LIMIT = 0.01             # ignored probability, or inconsistent summing-out, above which the correction is partial
 
 
 def coi(nuclide: str, energy: float, eps_peak, pt, e_min: float | None = None,
@@ -178,8 +178,9 @@ def coi(nuclide: str, energy: float, eps_peak, pt, e_min: float | None = None,
 
     The correction is partial (``partial_reason``, docs/baseline/round5_tcs_protocol.md) when
     ``ignored`` or ``inconsistent`` exceeds PARTIAL_LIMIT: ``inconsistent`` is how much the line's
-    upward coincidence probabilities change between the scheme intensities (``Transition.scheme``)
-    and the line intensities.  The factor is the same; it is incomplete."""
+    summing-out changes when its upward coincidence probabilities use the line intensities instead
+    of the scheme intensities (``Transition.scheme``; amendment of the protocol).  The factor is the
+    same; it is incomplete."""
     num_out = num_in = num_ign = num_ann = num_inc = wsum = 0.0
     unresolved = False
     for t in transitions(nuclide):
@@ -214,7 +215,7 @@ def coi(nuclide: str, energy: float, eps_peak, pt, e_min: float | None = None,
         if t.scheme is not None:
             s, g = t.scheme, t.intensities
             up_s = s * t.after[:, i] / s[i] if s[i] > 0 else np.zeros(len(s))
-            num_inc += w * float(np.abs(up_s - g * t.after[:, i] / g[i]).sum())
+            num_inc += w * float(np.abs(up_s - g * t.after[:, i] / g[i]) @ et)
         wsum += w
     if wsum <= 0:
         return Coi()
@@ -228,8 +229,8 @@ def coi(nuclide: str, energy: float, eps_peak, pt, e_min: float | None = None,
     if ign > PARTIAL_LIMIT:
         why.append(f"coincident photons below the efficiency curve left out ({100 * ign:.0f} % of decays)")
     if inc > PARTIAL_LIMIT:
-        why.append(f"the decay scheme's level intensities disagree with the line intensities (upward "
-                   f"coincidence probability {inc:.3g} apart)")
+        why.append(f"the decay scheme's level intensities disagree with the line intensities (summing-out "
+                   f"{100 * inc:.2g} % apart)")
     return Coi(1.0 - so + si, so, si, True, ign, annihilation=num_ann / wsum,
                note=ANN_UNRESOLVED_NOTE if unresolved else "", inconsistent=inc,
                partial_reason=("partial true-coincidence summing correction: " + "; ".join(why)) if why else "")

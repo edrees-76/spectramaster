@@ -131,3 +131,23 @@ partial; 338.32 keV reported (0.00926 in this flat case, under the limit, so its
 first rule is dropped); correction values of the five lines identical to before (==); `inconsistent`
 of the five lines, flat and close geometry, equal to a computation in the harness from the table
 records (relative difference <= 1e-12).
+
+## Results, amendment (`after_R5E2`)
+
+Amendment committed in 37b52b2 before its implementation (SHA-256 of the file
+927e766b093e52d07ddfd50a721c6984514ec72d895b7605153af25b368464f2).
+
+**Run: 5 PASS / 1 FAIL. The amended rule is not shipped.**
+
+| ID | value | result |
+|---|---|---|
+| RE2.C1 | as RE.C1 | PASS |
+| RE2.C2 | Ac-228 880.76 partial (0.100382, flat), 338.32 not (0.00926), 911.204 / 968.971 not (4.8e-6); engine equal to the harness computation, flat and close geometry | PASS |
+| RE2.C3 | 29228 evaluations, correction changed for 0; 3865 partial | PASS |
+| RE2.C4 | from 121.8 keV refused (Ba-133 276.4 ... 383.8 keV, partners below the curve); from 53.2 keV and Eu-152 only identical to before | PASS |
+| RE2.C5 | values identical; from 122 keV the four lines partial; from 50 keV none | PASS |
+| RE2.C6 | IAEA 2002 check: stops with an error (its calibration has a Co-57 122.1 keV point, partner 14.4 keV below the curve, 11 % of decays: refused by change 3); two existing tests fail for the same reason (`test_tcs.py::test_no_summing_left_alone`, `test_tcs_safety.py::test_calibration_with_cascade_emitters_is_not_corrected_twice`); benchmark and full suite not run | FAIL |
+
+**Cause.** Change 3 refuses the whole calibration, and so every sample analysis with TCS on, for one
+point with a partner that no gamma calibration reaches (Co-57 14.4 keV). The partial state itself
+(RE2.C1-C5) behaves as registered.
