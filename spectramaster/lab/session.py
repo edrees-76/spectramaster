@@ -106,7 +106,9 @@ SCHEMA_VERSION = 1
 #          corrections in its decision threshold and detection limit (round6_combined_protocol.md)
 #   1.26.0 2026-10-28 partial true-coincidence summing state of the efficiency curve kept with it and
 #          carried to the results, the report and the review (round6_tcs_state_protocol.md)
-ENGINE_VERSION = "1.26.0"
+#   1.27.0 2026-10-29 summing state of an efficiency curve kept through a refit, from its points; corrected
+#          and uncorrected cascade points not fitted together (round7_tcs_refit_protocol.md)
+ENGINE_VERSION = "1.27.0"
 
 
 class SessionSchemaError(ValueError):

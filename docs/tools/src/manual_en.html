@@ -929,7 +929,11 @@ first-order coincidence summing factor (COI), computed from coincidence data and
       (for example a mixed standard with Ba-133 and Y-88), its points already contain summing losses. They are
       corrected with the same PT and the curve is refitted until it no longer changes; an automatically chosen
       model (orders, crossover) is chosen again on the corrected points. A curve without points (an imported Aptec
-      ln-ln polynomial) is refused unless you declare it free of summing; the declaration is recorded in the notes.</li>
+      ln-ln polynomial) is refused unless you declare it free of summing; the declaration is recorded in the notes.
+      Each corrected point keeps its factor, so a corrected curve refitted later (<i>Refit</i> after loading it) stays
+      corrected, with its partial points, and is not corrected a second time. A cascade-emitter point that is not
+      corrected cannot be fitted together with corrected ones: exclude it, or fit the calibration again from the
+      measured points.</li>
   <li><b>Limits.</b> A line that the coincidence data do not describe is not corrected, and the note says why. A
       partner photon far below the calibrated range (under 0.8 × its lowest energy) is left out: its loss is not
       corrected, because its efficiency is unknown. When such partners exceed on average 0.01 photons per emission of the

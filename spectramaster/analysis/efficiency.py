@@ -46,6 +46,7 @@ import csv
 import json
 import math
 import os
+import re
 import struct
 from dataclasses import asdict, dataclass, field, replace
 from datetime import datetime
@@ -392,6 +393,10 @@ class EfficiencyPoint:
     u_act_rel: float = 0.0           # certificate activity (shared by the lines of `group`)
     u_int_rel: float = 0.0           # emission probability (independent per line)
     group: str = ""                  # correlation group of the activity component (nuclide)
+    # true-coincidence summing correction of a cascade-emitter point (round7_tcs_refit_protocol.md):
+    # the COI it was divided by (1.0: no coincident partner), and why the correction is partial
+    summing_coi: Optional[float] = None
+    summing_partial: str = ""
 
     @property
     def rel_unc(self) -> float:
@@ -612,6 +617,11 @@ class EfficiencyCurve:
         d = asdict(self)
         if not d["tcs_partial"]:          # curves without it keep their content (and hash)
             d.pop("tcs_partial")
+        for p in d["points"]:             # likewise the summing fields of the points, when not set
+            if p["summing_coi"] is None:
+                p.pop("summing_coi")
+            if not p["summing_partial"]:
+                p.pop("summing_partial")
         d["format"] = "spectramaster-efficiency-1"
         return d
 
@@ -625,6 +635,8 @@ class EfficiencyCurve:
         known = {f for f in cls.__dataclass_fields__}
         c = cls(**{k: v for k, v in d.items() if k in known})
         c.points = pts
+        if c.summing_corrected:
+            _legacy_summing_points(c)
         return c
 
     def save(self, path) -> Path:
@@ -650,6 +662,43 @@ def legacy_tcs_partial(d: dict) -> list:
         why = next((w.split(": ", 1)[1] for w in d.get("warnings") or [] if w.startswith(f"{nuc} {e:g} keV: ")), "")
         out.append([nuc, e, why])
     return out
+
+
+def _cascade_points(points) -> list:
+    """The points the summing correction treats: used, not manual, of a nuclide with cascades."""
+    from . import coincidence
+    return [p for p in points if p.use and not p.manual and coincidence.has_cascades(p.nuclide)]
+
+
+def _legacy_summing_points(curve: "EfficiencyCurve") -> None:
+    """Summing fields of the cascade points of a corrected curve saved by engine 1.26.0 and earlier
+    (round7_tcs_refit_protocol.md): the COI from the point note, 1.0 without one; the partial
+    reason from the curve's ``tcs_partial``."""
+    cas = _cascade_points(curve.points)
+    if not cas or any(p.summing_coi is not None for p in cas):
+        return
+    why = {(n, round(float(e), 1)): r for n, e, r in curve.tcs_partial}
+    for p in cas:
+        m = re.search(r"summing corrected, COI ([0-9.]+)", p.note)
+        p.summing_coi = float(m.group(1)) if m else 1.0
+        p.summing_partial = why.get((p.nuclide, round(p.energy, 1)), "")
+
+
+def _summing_state(points) -> tuple[bool, list]:
+    """(summing_corrected, tcs_partial) of a fit of `points`, from their summing fields; mixed
+    corrected and uncorrected cascade points are refused (round7_tcs_refit_protocol.md)."""
+    cas = _cascade_points(points)
+    done = [p for p in cas if p.summing_coi is not None]
+    if not done:
+        return False, []
+    raw = [p for p in cas if p.summing_coi is None]
+    if raw:
+        raise ValueError("calibration points corrected for true-coincidence summing are fitted together with "
+                         "cascade-emitter points that are not: " + ", ".join(f"{p.nuclide} {p.energy:.1f} keV"
+                                                                             for p in raw)
+                         + ". Exclude them, or fit the calibration again from the measured points")
+    partial = {(p.nuclide, round(p.energy, 1)): p.summing_partial for p in done if p.summing_partial}
+    return True, [[n, e, why] for (n, e), why in sorted(partial.items())]
 
 
 def load_curve(path) -> EfficiencyCurve:
@@ -711,6 +760,7 @@ def fit_efficiency(points: Sequence[EfficiencyPoint], model: str = "loglog", ord
         nhi = len(use) - nlo
         if nlo < order or nhi < order_high:
             raise ValueError(f"crossover {crossover:g} keV leaves {nlo} points below / {nhi} above")
+    summed, partial = _summing_state(points)
     e = np.array([p.energy for p in use])
     y = np.log([p.efficiency for p in use])
     u_common = float(u_sys_rel or 0.0)
@@ -755,6 +805,8 @@ def fit_efficiency(points: Sequence[EfficiencyPoint], model: str = "loglog", ord
         curve.warnings.append(p if isinstance(p, str) else
                               f"{p.nuclide} {p.energy:.1f} keV: leave-one-out prediction error beyond "
                               f"{OUTLIER_Z:g} x the curve's scatter, limited in the model error")
+    curve.summing_corrected, curve.tcs_partial = summed, partial
+    curve.warnings.extend(f"{n} {e:g} keV: {why}" for n, e, why in partial)
     curve.date = meta.pop("date", "") or datetime.now().strftime("%Y-%m-%d %H:%M")
     for k, v in meta.items():
         if hasattr(curve, k):
@@ -821,6 +873,7 @@ def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0,
                 bad.append(f"{p.nuclide} {p.energy:.1f} keV ({c.reason})")
                 continue
             if not c.found:
+                pts[i] = replace(p, summing_coi=1.0, summing_partial="")
                 continue
             if c.factor <= 0:
                 raise ValueError(f"{p.nuclide} {p.energy:.1f} keV calibration point: true-coincidence summing "
@@ -828,7 +881,8 @@ def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0,
             uc = math.hypot(p.u_count_rel, c.summing_out * pt_rel_unc / c.factor)
             e_new = p.efficiency / c.factor
             pts[i] = replace(p, efficiency=e_new, unc=e_new * math.hypot(uc, p.u_ref_rel), u_count_rel=uc,
-                             note=(p.note + f"; summing corrected, COI {c.factor:.4f}").strip("; "))
+                             note=(p.note + f"; summing corrected, COI {c.factor:.4f}").strip("; "),
+                             summing_coi=c.factor, summing_partial=c.partial_reason if c.partial else "")
             if abs(c.factor - 1.0) > 1e-4:
                 factors[(p.nuclide, round(p.energy, 1))] = c.factor
             if c.partial:
@@ -853,10 +907,8 @@ def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0,
     what = (f"cascade-emitter calibration points ({nucs}) corrected for true-coincidence summing (lowest COI "
             f"{worst:.4f}, {n_iter} refits)" if factors else
             "cascade-emitter calibration points checked for true-coincidence summing: no factor differs from 1")
-    if partial:
+    if partial:     # tcs_partial and its warnings: from the points, by fit_efficiency
         what += ", partial correction for " + ", ".join(f"{n} {e:g} keV" for n, e in sorted(partial))
-        cur.warnings.extend(f"{n} {e:g} keV: {why}" for (n, e), why in sorted(partial.items()))
-        cur.tcs_partial = [[n, e, why] for (n, e), why in sorted(partial.items())]
     cur.note = (curve.note + "; " + what).strip("; ")
     return cur
 

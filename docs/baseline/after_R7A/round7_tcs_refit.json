@@ -1,0 +1,1705 @@
+{
+ "results": {
+  "engine": "1.27.0",
+  "curves": {
+   "eu_ba_121.8": {
+    "source": {
+     "summing_corrected": true,
+     "tcs_partial": [
+      [
+       "Ba-133",
+       276.4,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.66 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       302.9,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.44 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       356.0,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.37 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       383.8,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.074 per emission of this line)"
+      ]
+     ],
+     "eps": [
+      0.10927285021215025,
+      0.09398419290714682,
+      0.08100824235426765,
+      0.06997379854862737,
+      0.060572226733478715,
+      0.05254646155558079,
+      0.04568201595000894,
+      0.03979961710245953,
+      0.034749165113569354,
+      0.030404768659536813,
+      0.026660658991219856,
+      0.02342782140058834,
+      0.020631213678841968,
+      0.018207465578044875,
+      0.016102973046300886,
+      0.014272316973014712,
+      0.012676949102873819,
+      0.011284098251158173,
+      0.0100658584554166,
+      0.008998427610889191
+     ]
+    },
+    "refit": {
+     "summing_corrected": true,
+     "tcs_partial": [
+      [
+       "Ba-133",
+       276.4,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.66 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       302.9,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.44 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       356.0,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.37 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       383.8,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.074 per emission of this line)"
+      ]
+     ],
+     "eps": [
+      0.10927285021215025,
+      0.09398419290714682,
+      0.08100824235426765,
+      0.06997379854862737,
+      0.060572226733478715,
+      0.05254646155558079,
+      0.04568201595000894,
+      0.03979961710245953,
+      0.034749165113569354,
+      0.030404768659536813,
+      0.026660658991219856,
+      0.02342782140058834,
+      0.020631213678841968,
+      0.018207465578044875,
+      0.016102973046300886,
+      0.014272316973014712,
+      0.012676949102873819,
+      0.011284098251158173,
+      0.0100658584554166,
+      0.008998427610889191
+     ]
+    }
+   },
+   "eu_only": {
+    "source": {
+     "summing_corrected": true,
+     "tcs_partial": [],
+     "eps": [
+      0.10035471271545757,
+      0.08870760210636652,
+      0.07835291883284738,
+      0.06915455506420903,
+      0.06098986545714459,
+      0.05374843597024941,
+      0.047330954104052275,
+      0.04164817341386182,
+      0.036619965520366504,
+      0.032174453214242865,
+      0.02824721861440779,
+      0.024780580693618923,
+      0.02172293682874645,
+      0.019028163365278822,
+      0.016655070505747573,
+      0.014566907139206064,
+      0.012730911523266816,
+      0.011117904011238371,
+      0.009701918284467955,
+      0.008459867804072489
+     ]
+    },
+    "refit": {
+     "summing_corrected": true,
+     "tcs_partial": [],
+     "eps": [
+      0.10035471271545757,
+      0.08870760210636652,
+      0.07835291883284738,
+      0.06915455506420903,
+      0.06098986545714459,
+      0.05374843597024941,
+      0.047330954104052275,
+      0.04164817341386182,
+      0.036619965520366504,
+      0.032174453214242865,
+      0.02824721861440779,
+      0.024780580693618923,
+      0.02172293682874645,
+      0.019028163365278822,
+      0.016655070505747573,
+      0.014566907139206064,
+      0.012730911523266816,
+      0.011117904011238371,
+      0.009701918284467955,
+      0.008459867804072489
+     ]
+    }
+   }
+  },
+  "quant": {
+   "eu_ba_121.8": {
+    "source_tcs": {
+     "activity": 67.8843789554262,
+     "u": 5.821722823249186,
+     "mda": 0.3906693276365116,
+     "notes": [
+      "efficiency calibration unvalidated: not independently validated",
+      "true-coincidence summing corrected where the coincidence data describe the line (first order, gamma-gamma, no angular correlation): peak-to-total PT(E) = min(1, 0.24 (E/1000 keV)^0) +- 10 % (assumed), efficiencies of the curve clamped to its range, coincident photons below 97.43 keV left out",
+      "efficiency curve with a partial true-coincidence summing correction at its calibration points Ba-133 276.4 keV, Ba-133 302.9 keV, Ba-133 356 keV, Ba-133 383.8 keV: the summing loss left out there is not estimated; review the curve before reporting",
+      "decision rule: a search peak above the decision threshold"
+     ],
+     "nuclide_note": "efficiency curve with a partial true-coincidence summing correction",
+     "curve_tcs_partial": [
+      [
+       "Ba-133",
+       276.4,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.66 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       302.9,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.44 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       356.0,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.37 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       383.8,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.074 per emission of this line)"
+      ]
+     ]
+    },
+    "source_no_tcs": {
+     "activity": 67.8843789554262,
+     "u": 5.821722823249186,
+     "mda": 0.3906693276365116,
+     "notes": [
+      "efficiency calibration unvalidated: not independently validated",
+      "efficiency curve with a partial true-coincidence summing correction at its calibration points Ba-133 276.4 keV, Ba-133 302.9 keV, Ba-133 356 keV, Ba-133 383.8 keV: the summing loss left out there is not estimated; review the curve before reporting",
+      "decision rule: a search peak above the decision threshold"
+     ],
+     "nuclide_note": "efficiency curve with a partial true-coincidence summing correction",
+     "curve_tcs_partial": [
+      [
+       "Ba-133",
+       276.4,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.66 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       302.9,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.44 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       356.0,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.37 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       383.8,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.074 per emission of this line)"
+      ]
+     ]
+    },
+    "refit_tcs": {
+     "activity": 67.8843789554262,
+     "u": 5.821722823249186,
+     "mda": 0.3906693276365116,
+     "notes": [
+      "efficiency calibration unvalidated: not independently validated",
+      "true-coincidence summing corrected where the coincidence data describe the line (first order, gamma-gamma, no angular correlation): peak-to-total PT(E) = min(1, 0.24 (E/1000 keV)^0) +- 10 % (assumed), efficiencies of the curve clamped to its range, coincident photons below 97.43 keV left out",
+      "efficiency curve with a partial true-coincidence summing correction at its calibration points Ba-133 276.4 keV, Ba-133 302.9 keV, Ba-133 356 keV, Ba-133 383.8 keV: the summing loss left out there is not estimated; review the curve before reporting",
+      "decision rule: a search peak above the decision threshold"
+     ],
+     "nuclide_note": "efficiency curve with a partial true-coincidence summing correction",
+     "curve_tcs_partial": [
+      [
+       "Ba-133",
+       276.4,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.66 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       302.9,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.44 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       356.0,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.37 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       383.8,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.074 per emission of this line)"
+      ]
+     ]
+    },
+    "refit_no_tcs": {
+     "activity": 67.8843789554262,
+     "u": 5.821722823249186,
+     "mda": 0.3906693276365116,
+     "notes": [
+      "efficiency calibration unvalidated: not independently validated",
+      "efficiency curve with a partial true-coincidence summing correction at its calibration points Ba-133 276.4 keV, Ba-133 302.9 keV, Ba-133 356 keV, Ba-133 383.8 keV: the summing loss left out there is not estimated; review the curve before reporting",
+      "decision rule: a search peak above the decision threshold"
+     ],
+     "nuclide_note": "efficiency curve with a partial true-coincidence summing correction",
+     "curve_tcs_partial": [
+      [
+       "Ba-133",
+       276.4,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.66 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       302.9,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.44 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       356.0,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.37 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       383.8,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.074 per emission of this line)"
+      ]
+     ]
+    }
+   },
+   "eu_only": {
+    "source_tcs": {
+     "activity": 65.21008371790009,
+     "u": 8.665364167992813,
+     "mda": 0.3752789662835432,
+     "notes": [
+      "efficiency calibration unvalidated: not independently validated",
+      "true-coincidence summing corrected where the coincidence data describe the line (first order, gamma-gamma, no angular correlation): peak-to-total PT(E) = min(1, 0.24 (E/1000 keV)^0) +- 10 % (assumed), efficiencies of the curve clamped to its range, coincident photons below 97.43 keV left out",
+      "decision rule: a search peak above the decision threshold"
+     ],
+     "nuclide_note": "",
+     "curve_tcs_partial": []
+    },
+    "source_no_tcs": {
+     "activity": 65.21008371790009,
+     "u": 8.665364167992813,
+     "mda": 0.3752789662835432,
+     "notes": [
+      "efficiency calibration unvalidated: not independently validated",
+      "decision rule: a search peak above the decision threshold"
+     ],
+     "nuclide_note": "",
+     "curve_tcs_partial": []
+    },
+    "refit_tcs": {
+     "activity": 65.21008371790009,
+     "u": 8.665364167992813,
+     "mda": 0.3752789662835432,
+     "notes": [
+      "efficiency calibration unvalidated: not independently validated",
+      "true-coincidence summing corrected where the coincidence data describe the line (first order, gamma-gamma, no angular correlation): peak-to-total PT(E) = min(1, 0.24 (E/1000 keV)^0) +- 10 % (assumed), efficiencies of the curve clamped to its range, coincident photons below 97.43 keV left out",
+      "decision rule: a search peak above the decision threshold"
+     ],
+     "nuclide_note": "",
+     "curve_tcs_partial": []
+    },
+    "refit_no_tcs": {
+     "activity": 65.21008371790009,
+     "u": 8.665364167992813,
+     "mda": 0.3752789662835432,
+     "notes": [
+      "efficiency calibration unvalidated: not independently validated",
+      "decision rule: a search peak above the decision threshold"
+     ],
+     "nuclide_note": "",
+     "curve_tcs_partial": []
+    }
+   }
+  },
+  "mixed": {
+   "cascade": {
+    "state": null,
+    "error": "calibration points corrected for true-coincidence summing are fitted together with cascade-emitter points that are not: Co-60 1332.5 keV. Exclude them, or fit the calibration again from the measured points"
+   },
+   "non_cascade": {
+    "state": {
+     "summing_corrected": true,
+     "tcs_partial": [
+      [
+       "Ba-133",
+       276.4,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.66 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       302.9,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.44 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       356.0,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.37 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       383.8,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.074 per emission of this line)"
+      ]
+     ],
+     "eps": [
+      0.10927285021214937,
+      0.09398419290714612,
+      0.08100824235426708,
+      0.0699737985486269,
+      0.06057222673347837,
+      0.052546461555580515,
+      0.04568201595000872,
+      0.03979961710245937,
+      0.034749165113569215,
+      0.030404768659536705,
+      0.026660658991219773,
+      0.02342782140058828,
+      0.020631213678841923,
+      0.018207465578044844,
+      0.01610297304630086,
+      0.0142723169730147,
+      0.012676949102873807,
+      0.011284098251158163,
+      0.0100658584554166,
+      0.008998427610889191
+     ]
+    },
+    "error": null
+   }
+  },
+  "files": {
+   "eu_ba_121.8": {
+    "raw": {
+     "model": "loglog",
+     "params": [
+      -4.349338860348138,
+      -0.6999999999999991,
+      -1.1102230246251565e-16
+     ],
+     "cov": [
+      [
+       4.226566952765187e-06,
+       3.5617752165255922e-06,
+       4.4059240186597803e-07
+      ],
+      [
+       3.561775216525604e-06,
+       2.284316007062407e-05,
+       1.2361893577801374e-05
+      ],
+      [
+       4.405924018659855e-07,
+       1.2361893577801375e-05,
+       8.082182409354196e-06
+      ]
+     ],
+     "order": 2,
+     "order_high": 2,
+     "e_ref": 1000.0,
+     "u_sys_rel": 0.0,
+     "u_common_rel": 0.0,
+     "cov_method": "gls",
+     "selection": "",
+     "u_model_rel": 0.0,
+     "warnings": [],
+     "chi2": 2.223047896236262e-24,
+     "dof": 9,
+     "e_min": 121.7817,
+     "e_max": 1408.013,
+     "points": [
+      {
+       "energy": 121.7817,
+       "efficiency": 0.05638956059531433,
+       "unc": 0.0005638956059531434,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.2853,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      },
+      {
+       "energy": 244.6974,
+       "efficiency": 0.03459916235320774,
+       "unc": 0.0003459916235320774,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.0755,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      },
+      {
+       "energy": 344.2785,
+       "efficiency": 0.027243895234634337,
+       "unc": 0.0002724389523463434,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.2659,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      },
+      {
+       "energy": 778.904,
+       "efficiency": 0.015383932976410409,
+       "unc": 0.0001538393297641041,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.1293,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      },
+      {
+       "energy": 964.079,
+       "efficiency": 0.013250348379768528,
+       "unc": 0.00013250348379768528,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.1451,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      },
+      {
+       "energy": 1085.837,
+       "efficiency": 0.012191885846517416,
+       "unc": 0.00012191885846517417,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.1011,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      },
+      {
+       "energy": 1112.076,
+       "efficiency": 0.011989801835988039,
+       "unc": 0.00011989801835988038,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.1367,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      },
+      {
+       "energy": 1408.013,
+       "efficiency": 0.010164393453236114,
+       "unc": 0.00010164393453236114,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.2087,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      },
+      {
+       "energy": 276.3989,
+       "efficiency": 0.03177098765371981,
+       "unc": 0.0003177098765371981,
+       "nuclide": "Ba-133",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.0716,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      },
+      {
+       "energy": 302.8508,
+       "efficiency": 0.029802042201795286,
+       "unc": 0.0002980204220179529,
+       "nuclide": "Ba-133",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.1834,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      },
+      {
+       "energy": 356.0129,
+       "efficiency": 0.02661215955901671,
+       "unc": 0.0002661215955901671,
+       "nuclide": "Ba-133",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.6205,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      },
+      {
+       "energy": 383.8485,
+       "efficiency": 0.025246096595116403,
+       "unc": 0.00025246096595116403,
+       "nuclide": "Ba-133",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.0894,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      }
+     ],
+     "geometry": "",
+     "detector": "",
+     "geometry_record": {},
+     "validation_status": "unvalidated",
+     "date": "2026-10-29 09:12",
+     "name": "",
+     "source": "",
+     "note": "",
+     "knots": [],
+     "summing_corrected": false,
+     "orders_auto": false,
+     "crossover_auto": false,
+     "format": "spectramaster-efficiency-1"
+    },
+    "legacy_corrected": {
+     "model": "loglog",
+     "params": [
+      -4.334578804341707,
+      -0.6595818842169515,
+      0.03347913854419948
+     ],
+     "cov": [
+      [
+       0.000650943301696207,
+       0.0007396718999002434,
+       0.00016995930950961031
+      ],
+      [
+       0.000739671899900246,
+       0.002771146235999395,
+       0.0015344104082015751
+      ],
+      [
+       0.00016995930950961208,
+       0.0015344104082015766,
+       0.0010644004264643242
+      ]
+     ],
+     "order": 2,
+     "order_high": 2,
+     "e_ref": 1000.0,
+     "u_sys_rel": 0.0,
+     "u_common_rel": 0.0,
+     "cov_method": "gls",
+     "selection": "",
+     "u_model_rel": 0.08253327157335875,
+     "warnings": [
+      "Eu-152 244.7 keV: +18.6 % from the curve (+6.7 sigma) - check interferences, summing and the peak fit",
+      "Eu-152 344.3 keV: +4.6 % from the curve (+4.0 sigma) - check interferences, summing and the peak fit",
+      "Eu-152 778.9 keV: +11.3 % from the curve (+6.5 sigma) - check interferences, summing and the peak fit",
+      "Eu-152 964.1 keV: +13.4 % from the curve (+6.6 sigma) - check interferences, summing and the peak fit",
+      "Eu-152 1085.8 keV: -4.8 % from the curve (-5.3 sigma) - check interferences, summing and the peak fit",
+      "Eu-152 1112.1 keV: +10.2 % from the curve (+5.6 sigma) - check interferences, summing and the peak fit",
+      "Eu-152 1408.0 keV: +9.3 % from the curve (+5.2 sigma) - check interferences, summing and the peak fit",
+      "Ba-133 276.4 keV: partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.66 per emission of this line)",
+      "Ba-133 302.9 keV: partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.44 per emission of this line)",
+      "Ba-133 356 keV: partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.37 per emission of this line)",
+      "Ba-133 383.8 keV: partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.074 per emission of this line)"
+     ],
+     "chi2": 409.68914599927507,
+     "dof": 9,
+     "e_min": 121.7817,
+     "e_max": 1408.013,
+     "points": [
+      {
+       "energy": 121.7817,
+       "efficiency": 0.06083660712247679,
+       "unc": 0.0007480519105627888,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.2853,
+       "u_count_rel": 0.009337753095217857,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 0.9269",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 0.9269017991386399
+      },
+      {
+       "energy": 244.6974,
+       "efficiency": 0.0420395091625434,
+       "unc": 0.000987203495192947,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.0755,
+       "u_count_rel": 0.022078038493950014,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 0.8230",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 0.8230153739291298
+      },
+      {
+       "energy": 344.2785,
+       "efficiency": 0.028762330891667857,
+       "unc": 0.00031515927665256026,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.2659,
+       "u_count_rel": 0.007487575434781479,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 0.9472",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 0.9472074894502589
+      },
+      {
+       "energy": 778.904,
+       "efficiency": 0.017245505894436543,
+       "unc": 0.00026871202022366763,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.1293,
+       "u_count_rel": 0.01337106041807385,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 0.8921",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 0.8920546066075867
+      },
+      {
+       "energy": 964.079,
+       "efficiency": 0.015223222032142289,
+       "unc": 0.0002700100813439846,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.1451,
+       "u_count_rel": 0.015830077818284605,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 0.8704",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 0.8704036735319082
+      },
+      {
+       "energy": 1085.837,
+       "efficiency": 0.011824274548929186,
+       "unc": 0.00011251902429094106,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.1011,
+       "u_count_rel": 0.005152961566552528,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 1.0311",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 1.0310895434698377
+      },
+      {
+       "energy": 1112.076,
+       "efficiency": 0.01347294337518604,
+       "unc": 0.00022397906800522847,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.1367,
+       "u_count_rel": 0.014572898231756714,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 0.8899",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 0.8899170360999517
+      },
+      {
+       "energy": 1408.013,
+       "efficiency": 0.011478420140290503,
+       "unc": 0.00018731704053034776,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.2087,
+       "u_count_rel": 0.014223633777218731,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 0.8855",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 0.8855219907448751
+      },
+      {
+       "energy": 276.3989,
+       "efficiency": 0.032285739632409514,
+       "unc": 0.0003090422164997635,
+       "nuclide": "Ba-133",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.0716,
+       "u_count_rel": 0.00525595206368884,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 0.9841",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 0.9840563671592959,
+       "summing_partial": "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.66 per emission of this line)"
+      },
+      {
+       "energy": 302.8508,
+       "efficiency": 0.029802042201795286,
+       "unc": 0.00028115190382849137,
+       "nuclide": "Ba-133",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.1834,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 1.0000",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 1.0,
+       "summing_partial": "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.44 per emission of this line)"
+      },
+      {
+       "energy": 356.0129,
+       "efficiency": 0.02661215955901671,
+       "unc": 0.0002510586111630435,
+       "nuclide": "Ba-133",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.6205,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 1.0000",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 1.0,
+       "summing_partial": "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.37 per emission of this line)"
+      },
+      {
+       "energy": 383.8485,
+       "efficiency": 0.02523878266104187,
+       "unc": 0.00023810219942034636,
+       "nuclide": "Ba-133",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.0894,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 1.0003",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 1.0002897894947138,
+       "summing_partial": "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.074 per emission of this line)"
+      }
+     ],
+     "geometry": "",
+     "detector": "",
+     "geometry_record": {},
+     "validation_status": "unvalidated",
+     "date": "2026-10-29 09:12",
+     "name": "",
+     "source": "",
+     "note": "cascade-emitter calibration points (Ba-133, Eu-152) corrected for true-coincidence summing (lowest COI 0.8230, 6 refits), partial correction for Ba-133 276.4 keV, Ba-133 302.9 keV, Ba-133 356 keV, Ba-133 383.8 keV",
+     "knots": [],
+     "summing_corrected": true,
+     "orders_auto": false,
+     "crossover_auto": false,
+     "tcs_partial": [
+      [
+       "Ba-133",
+       276.4,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.66 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       302.9,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.44 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       356.0,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.37 per emission of this line)"
+      ],
+      [
+       "Ba-133",
+       383.8,
+       "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.074 per emission of this line)"
+      ]
+     ],
+     "format": "spectramaster-efficiency-1"
+    }
+   },
+   "eu_only": {
+    "raw": {
+     "model": "loglog",
+     "params": [
+      -4.349338860348137,
+      -0.6999999999999977,
+      2.1094237467877974e-15
+     ],
+     "cov": [
+      [
+       4.521518583843587e-06,
+       1.360470613492613e-06,
+       -6.80460250174749e-07
+      ],
+      [
+       1.3604706134925869e-06,
+       3.9875856934880295e-05,
+       2.0899329186474853e-05
+      ],
+      [
+       -6.804602501747627e-07,
+       2.089932918647485e-05,
+       1.239182896162897e-05
+      ]
+     ],
+     "order": 2,
+     "order_high": 2,
+     "e_ref": 1000.0,
+     "u_sys_rel": 0.0,
+     "u_common_rel": 0.0,
+     "cov_method": "gls",
+     "selection": "",
+     "u_model_rel": 0.0,
+     "warnings": [],
+     "chi2": 6.979336418416171e-25,
+     "dof": 5,
+     "e_min": 121.7817,
+     "e_max": 1408.013,
+     "points": [
+      {
+       "energy": 121.7817,
+       "efficiency": 0.05638956059531433,
+       "unc": 0.0005638956059531434,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.2853,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      },
+      {
+       "energy": 244.6974,
+       "efficiency": 0.03459916235320774,
+       "unc": 0.0003459916235320774,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.0755,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      },
+      {
+       "energy": 344.2785,
+       "efficiency": 0.027243895234634337,
+       "unc": 0.0002724389523463434,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.2659,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      },
+      {
+       "energy": 778.904,
+       "efficiency": 0.015383932976410409,
+       "unc": 0.0001538393297641041,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.1293,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      },
+      {
+       "energy": 964.079,
+       "efficiency": 0.013250348379768528,
+       "unc": 0.00013250348379768528,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.1451,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      },
+      {
+       "energy": 1085.837,
+       "efficiency": 0.012191885846517416,
+       "unc": 0.00012191885846517417,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.1011,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      },
+      {
+       "energy": 1112.076,
+       "efficiency": 0.011989801835988039,
+       "unc": 0.00011989801835988038,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.1367,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      },
+      {
+       "energy": 1408.013,
+       "efficiency": 0.010164393453236114,
+       "unc": 0.00010164393453236114,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.2087,
+       "u_count_rel": 0.005,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": ""
+      }
+     ],
+     "geometry": "",
+     "detector": "",
+     "geometry_record": {},
+     "validation_status": "unvalidated",
+     "date": "2026-10-29 09:12",
+     "name": "",
+     "source": "",
+     "note": "",
+     "knots": [],
+     "summing_corrected": false,
+     "orders_auto": false,
+     "crossover_auto": false,
+     "format": "spectramaster-efficiency-1"
+    },
+    "legacy_corrected": {
+     "model": "loglog",
+     "params": [
+      -4.325447903023872,
+      -0.753493453423762,
+      -0.011810434696469252
+     ],
+     "cov": [
+      [
+       0.001028183880581197,
+       0.00034351141537380253,
+       -0.00012588319470536322
+      ],
+      [
+       0.00034351141537379955,
+       0.01104512432499103,
+       0.005670711814181748
+      ],
+      [
+       -0.0001258831947053647,
+       0.005670711814181746,
+       0.003262253395985475
+      ]
+     ],
+     "order": 2,
+     "order_high": 2,
+     "e_ref": 1000.0,
+     "u_sys_rel": 0.0,
+     "u_common_rel": 0.0,
+     "cov_method": "gls",
+     "selection": "",
+     "u_model_rel": 0.12497654030433834,
+     "warnings": [
+      "Eu-152 244.7 keV: +12.9 % from the curve (+4.8 sigma) - check interferences, summing and the peak fit",
+      "Eu-152 778.9 keV: +8.9 % from the curve (+5.0 sigma) - check interferences, summing and the peak fit",
+      "Eu-152 964.1 keV: +12.1 % from the curve (+6.0 sigma) - check interferences, summing and the peak fit",
+      "Eu-152 1085.8 keV: -4.9 % from the curve (-5.4 sigma) - check interferences, summing and the peak fit",
+      "Eu-152 1112.1 keV: +10.4 % from the curve (+5.6 sigma) - check interferences, summing and the peak fit",
+      "Eu-152 1408.0 keV: +12.5 % from the curve (+6.8 sigma) - check interferences, summing and the peak fit"
+     ],
+     "chi2": 326.226744340836,
+     "dof": 5,
+     "e_min": 121.7817,
+     "e_max": 1408.013,
+     "points": [
+      {
+       "energy": 121.7817,
+       "efficiency": 0.06091501843012344,
+       "unc": 0.0007544766877133393,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.2853,
+       "u_count_rel": 0.009455484775674374,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 0.9257",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 0.9257086683803547
+      },
+      {
+       "energy": 244.6974,
+       "efficiency": 0.04214502564037977,
+       "unc": 0.0010014647086529923,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.0755,
+       "u_count_rel": 0.022375189789230063,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 0.8210",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 0.8209548298401738
+      },
+      {
+       "energy": 344.2785,
+       "efficiency": 0.028816064011306874,
+       "unc": 0.0003186764905265367,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.2659,
+       "u_count_rel": 0.0076355224853489854,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 0.9454",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 0.9454412380519543
+      },
+      {
+       "energy": 778.904,
+       "efficiency": 0.01736895516780829,
+       "unc": 0.00028226248686688305,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.1293,
+       "u_count_rel": 0.014145467324244017,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 0.8857",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 0.8857143580474587
+      },
+      {
+       "energy": 964.079,
+       "efficiency": 0.015247149629587193,
+       "unc": 0.00027287187512242,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.1451,
+       "u_count_rel": 0.016008987297870623,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 0.8690",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 0.869037735030562
+      },
+      {
+       "energy": 1085.837,
+       "efficiency": 0.011823533422021677,
+       "unc": 0.00011262183282666682,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.1011,
+       "u_count_rel": 0.005170100403964234,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 1.0312",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 1.031154174589609
+      },
+      {
+       "energy": 1112.076,
+       "efficiency": 0.01347356283800153,
+       "unc": 0.00022517788180929438,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.1367,
+       "u_count_rel": 0.014673446934870776,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 0.8899",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 0.8898761211230176
+      },
+      {
+       "energy": 1408.013,
+       "efficiency": 0.011483350850560242,
+       "unc": 0.00018821538650401088,
+       "nuclide": "Eu-152",
+       "net_area": null,
+       "net_unc": null,
+       "activity_t0": null,
+       "intensity": 0.2087,
+       "u_count_rel": 0.014305293540472596,
+       "u_ref_rel": 0.008,
+       "use": true,
+       "manual": false,
+       "note": "summing corrected, COI 0.8851",
+       "u_act_rel": 0.0,
+       "u_int_rel": 0.0,
+       "group": "",
+       "summing_coi": 0.8851417661544514
+      }
+     ],
+     "geometry": "",
+     "detector": "",
+     "geometry_record": {},
+     "validation_status": "unvalidated",
+     "date": "2026-10-29 09:12",
+     "name": "",
+     "source": "",
+     "note": "cascade-emitter calibration points (Eu-152) corrected for true-coincidence summing (lowest COI 0.8210, 6 refits)",
+     "knots": [],
+     "summing_corrected": true,
+     "orders_auto": false,
+     "crossover_auto": false,
+     "format": "spectramaster-efficiency-1"
+    }
+   }
+  },
+  "control": {
+   "eu_ba_121.8": {
+    "raw_refit": {
+     "summing_corrected": false,
+     "tcs_partial": [],
+     "eps": [
+      0.09255507940800102,
+      0.08165447691005634,
+      0.0720376843939972,
+      0.06355350213761556,
+      0.05606853784839971,
+      0.0494651094073504,
+      0.04363939461551308,
+      0.03849979885267335,
+      0.03396551498378028,
+      0.029965252871270373,
+      0.02643611851809,
+      0.023322625218776368,
+      0.020575821171450955,
+      0.01815251983463214,
+      0.0160146209281754,
+      0.01412851140280002,
+      0.012464536959963675,
+      0.010996535813072996,
+      0.009701427359604812,
+      0.008558849297048522
+     ]
+    },
+    "raw_quant_no_tcs": {
+     "activity": 68.14131591581183,
+     "u": 0.8655502904864917,
+     "mda": 0.39214797988469274,
+     "notes": [
+      "efficiency calibration unvalidated: not independently validated",
+      "decision rule: a search peak above the decision threshold"
+     ],
+     "nuclide_note": "",
+     "curve_tcs_partial": []
+    }
+   },
+   "eu_only": {
+    "raw_refit": {
+     "summing_corrected": false,
+     "tcs_partial": [],
+     "eps": [
+      0.09255507940800237,
+      0.0816544769100574,
+      0.072037684393998,
+      0.06355350213761618,
+      0.056068537848400136,
+      0.04946510940735071,
+      0.04363939461551332,
+      0.038499798852673524,
+      0.03396551498378039,
+      0.029965252871270453,
+      0.02643611851809006,
+      0.023322625218776396,
+      0.020575821171450973,
+      0.018152519834632154,
+      0.0160146209281754,
+      0.014128511402800033,
+      0.012464536959963697,
+      0.010996535813073015,
+      0.009701427359604829,
+      0.008558849297048544
+     ]
+    },
+    "raw_quant_no_tcs": {
+     "activity": 68.14131591581183,
+     "u": 0.8750434433308668,
+     "mda": 0.39214797988469274,
+     "notes": [
+      "efficiency calibration unvalidated: not independently validated",
+      "decision rule: a search peak above the decision threshold"
+     ],
+     "nuclide_note": "",
+     "curve_tcs_partial": []
+    }
+   },
+   "round6_cases": {
+    "fresh_tcs": [
+     67.8843789554262,
+     5.821722823249186,
+     0.3906693276365116,
+     0.1907335133649704,
+     true,
+     [
+      [
+       661.657,
+       1.0,
+       false,
+       0.017310266815807118,
+       67.8843789554262
+      ]
+     ]
+    ],
+    "loaded_tcs": [
+     67.8843789554262,
+     5.821722823249186,
+     0.3906693276365116,
+     0.1907335133649704,
+     true,
+     [
+      [
+       661.657,
+       1.0,
+       false,
+       0.017310266815807118,
+       67.8843789554262
+      ]
+     ]
+    ],
+    "loaded_no_tcs": [
+     67.8843789554262,
+     5.821722823249186,
+     0.3906693276365116,
+     0.1907335133649704,
+     true,
+     [
+      [
+       661.657,
+       1.0,
+       false,
+       0.017310266815807118,
+       67.8843789554262
+      ]
+     ]
+    ],
+    "legacy_no_tcs": [
+     67.8843789554262,
+     5.821722823249186,
+     0.3906693276365116,
+     0.1907335133649704,
+     true,
+     [
+      [
+       661.657,
+       1.0,
+       false,
+       0.017310266815807118,
+       67.8843789554262
+      ]
+     ]
+    ],
+    "control_fresh_tcs": [
+     65.21008371790009,
+     8.665364167992813,
+     0.3752789662835432,
+     0.18321959434151597,
+     true,
+     [
+      [
+       661.657,
+       1.0,
+       false,
+       0.01802016874303179,
+       65.21008371790009
+      ]
+     ]
+    ],
+    "control_loaded_no_tcs": [
+     65.21008371790009,
+     8.665364167992813,
+     0.3752789662835432,
+     0.18321959434151597,
+     true,
+     [
+      [
+       661.657,
+       1.0,
+       false,
+       0.01802016874303179,
+       65.21008371790009
+      ]
+     ]
+    ]
+   }
+  },
+  "dialog": {
+   "error": null,
+   "loaded": true,
+   "refit": true,
+   "state": {
+    "summing_corrected": true,
+    "tcs_partial": [
+     [
+      "Ba-133",
+      276.4,
+      "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.66 per emission of this line)"
+     ],
+     [
+      "Ba-133",
+      302.9,
+      "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.44 per emission of this line)"
+     ],
+     [
+      "Ba-133",
+      356.0,
+      "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.37 per emission of this line)"
+     ],
+     [
+      "Ba-133",
+      383.8,
+      "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.074 per emission of this line)"
+     ]
+    ],
+    "eps": [
+     0.10927285021215025,
+     0.09398419290714682,
+     0.08100824235426765,
+     0.06997379854862737,
+     0.060572226733478715,
+     0.05254646155558079,
+     0.04568201595000894,
+     0.03979961710245953,
+     0.034749165113569354,
+     0.030404768659536813,
+     0.026660658991219856,
+     0.02342782140058834,
+     0.020631213678841968,
+     0.018207465578044875,
+     0.016102973046300886,
+     0.014272316973014712,
+     0.012676949102873819,
+     0.011284098251158173,
+     0.0100658584554166,
+     0.008998427610889191
+    ]
+   },
+   "saved_state": {
+    "summing_corrected": true,
+    "tcs_partial": [
+     [
+      "Ba-133",
+      276.4,
+      "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.66 per emission of this line)"
+     ],
+     [
+      "Ba-133",
+      302.9,
+      "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.44 per emission of this line)"
+     ],
+     [
+      "Ba-133",
+      356.0,
+      "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.37 per emission of this line)"
+     ],
+     [
+      "Ba-133",
+      383.8,
+      "partial true-coincidence summing correction: coincident photons below the efficiency curve left out (on average 0.074 per emission of this line)"
+     ]
+    ],
+    "eps": [
+     0.10927285021215025,
+     0.09398419290714682,
+     0.08100824235426765,
+     0.06997379854862737,
+     0.060572226733478715,
+     0.05254646155558079,
+     0.04568201595000894,
+     0.03979961710245953,
+     0.034749165113569354,
+     0.030404768659536813,
+     0.026660658991219856,
+     0.02342782140058834,
+     0.020631213678841968,
+     0.018207465578044875,
+     0.016102973046300886,
+     0.014272316973014712,
+     0.012676949102873819,
+     0.011284098251158173,
+     0.0100658584554166,
+     0.008998427610889191
+    ]
+   }
+  }
+ },
+ "criteria": {
+  "RA.C1": {
+   "value": "both corrected curves keep summing_corrected, tcs_partial and their efficiencies",
+   "pass": true
+  },
+  "RA.C2": {
+   "value": "activities, u and MDA from the refitted curves equal the source's, partial notes kept",
+   "pass": true
+  },
+  "RA.C3": {
+   "value": "dialog refit and save keep the state",
+   "pass": true
+  },
+  "RA.C4": {
+   "value": "raw cascade point: calibration points corrected for true-coincidence summing are fitted together with cascade-emitter points that are not: Co-60 1332.5 keV. Exclude them, or fit the calibration again from the measured points; raw non-cascade point: fitted, state True",
+   "pass": true
+  },
+  "RA.C5": {
+   "value": "uncorrected files unchanged; 1.26.0 corrected files load with the point fields and refit as corrected",
+   "pass": true
+  },
+  "RA.C6": {
+   "value": "uncorrected curves and round-6 cases identical to before",
+   "pass": true
+  }
+ }
+}
