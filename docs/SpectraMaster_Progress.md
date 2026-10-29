@@ -1615,3 +1615,17 @@ GUI / warning batch, no number changes (no protocol, as R6-F). Engine unchanged.
   for its exports; a folder search is cancelled when its window closes, without a message.
 - **Result (`after_R7F`):** benchmark 154 / 13 / 60 unchanged against `after_R7E`; 10 new tests
   (`tests/test_round7_warnings_threads.py`), all failing on the old code; no existing test changed.
+
+## Round-7 external review: tests and harnesses, Codex M2 / L1 and Gemini L3 (2026-10-29)
+
+Protocol `docs/baseline/round7_tests_protocol.md`, committed before the change (85e589d).
+
+- **Confirmed.** The Qt test process ended with 0xC0000409 after every test had passed (a batch
+  conversion dialog left open by the tests, destroyed during the interpreter's teardown; the object
+  inside it not identified; the application's own exit clean); `round6_inputs` RC.C5 failed on a
+  re-run because it compared the width note added by R6-G as a measurement, and a re-run wrote over
+  `after_R6C`; two parser tests created a QApplication they do not need.
+- **Fix.** The session closes and deletes the widgets left open; RC.C5 compares the numbers exactly
+  and the note apart, `--out` for re-runs; the parser tests need PySide6 only.
+- **Result (`after_R7G`):** 5 PASS / 0 FAIL (abnormal ends 2 of 20 -> 0 of 20); benchmark unchanged;
+  suite 1652 passed, exit 0. Round 7 complete.

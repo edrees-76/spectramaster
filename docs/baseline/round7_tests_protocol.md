@@ -70,3 +70,22 @@ not changed.
   gets `--out` here.
 
 ---
+
+## Results (`after_R7G`)
+
+Protocol committed in 85e589d before the change (SHA-256 of the file
+f50e34b96d2224a712533d79e36f1369965040854c85340a0cb316f4c3bdc056). First run: 5 PASS / 0 FAIL.
+
+| ID | value | result |
+|---|---|---|
+| RT.C1 | before: 2 of 20 runs ended abnormally (Git Bash 127); after: 0 of 20 | PASS |
+| RT.C2 | before 0 of 10, after 0 of 10 abnormal ends of the application | PASS |
+| RT.C3 | re-run with `--out`: 8 PASS / 0 FAIL, RC.C5 "clean spectrum numbers as before: True; width note: R6-G channel-binning note"; `after_R6C` not written; clean FWHM + 1e-9 keV: RC.C5 FAIL | PASS |
+| RT.C4 | `QCoreApplication.instance()` during the two parser tests: before a QApplication (the `app` fixture), after None (6 of 6) | PASS |
+| RT.C5 | benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against `after_R7F`; full suite 1652 passed, 69 skipped, exit 0 | PASS |
+
+Changed existing test: `tests/test_round6_inputs.py` (`test_parse_counts_refuses`, `test_qc_activity`:
+`pytest.importorskip("PySide6")` instead of the `app` fixture, Gemini L3). New tests:
+`tests/test_round7_tests.py`. The before rate of RT.C1 (2 of 20) was lower than in the diagnosis
+(4 of 8, 6 of 16); with 0 of 20 after, the result is consistent with the fix but a low residual rate
+cannot be excluded from 20 runs.
