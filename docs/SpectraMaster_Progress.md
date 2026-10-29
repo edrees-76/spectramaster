@@ -1552,3 +1552,22 @@ Engine 1.28.0.
   fields set by design (kept, disclosed); corrected comparison 5 PASS / 0 FAIL; benchmark 154 / 13 / 60
   unchanged against `after_R7A`; one existing test changed (`test_no_blank_no_cross_terms`, ref_g0 now
   (0, 0, 0) without a blank).
+
+## Round-7 external review: background spectrum shared by the sample and its reagent blank, Gemini H2 (2026-10-29)
+
+Protocol `docs/baseline/round7_shared_background_protocol.md`, committed before the change (512fdf0).
+Engine 1.29.0.
+
+- **Confirmed (Gemini H2).** Sample and blank analysed with the same background spectrum: the
+  covariance of their background estimates was left out, so u_count, the threshold and the limit were
+  too large (Monte Carlo: uncertainty 1.45 x the scatter at net zero, 1.5 % detected against 5 %).
+- **Found while measuring.** The sample's counting of the blank level was missing from sigma0 (8.75 %
+  detected against 5 % without a background spectrum; not conservative).
+- **Fix.** The background estimators return their coefficients on the background channels; with the
+  blank's results from the same session and the same background, C = k_d sum r_i g_i B_i is taken twice
+  off u_count^2 and sigma0^2 (new field `blank_bkg_cov`), otherwise counted as independent with a note;
+  sigma0^2 gets max(A_b', 0) f_w / w.
+- **Result (`after_R7C`):** 4 PASS / 1 FAIL as written (RC.C2: ratio 1.163 against 1.12, from the
+  existing fit-uncertainty overestimate at low net counts; false detection now within limits);
+  benchmark 154 / 13 / 60 unchanged against `after_R7B`; round-4/5 blank-case regression values updated
+  (`round4_activity.AFTER_R7C`).

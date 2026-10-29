@@ -172,7 +172,8 @@ class BackgroundFitter:
 
     def _apply(self, lo: int, hi: int, cents, sigmas, step_h: float = 0.0, cont=None, w2=None, tails=None):
         """Linear estimator of the amplitudes for components at `cents` (index channels) with
-        Gaussian `sigmas` on lo..hi; returns [(k*N_b, k*u_b)] or None.  `cont` (continuum
+        Gaussian `sigmas` on lo..hi; returns [(k*N_b, k*u_b, (lo, c))] or None, c the coefficients
+        of k*N_b on the background channels lo.. (k*N_b = c . B[lo:lo + len(c)]).  `cont` (continuum
         columns) and `w2` (weights) default to a straight line and 1/max(S, 1); the sample's
         FitReport supplies the fit's own ones (log-linear continuum, model weights, peak tail)."""
         from .peaks import SQRT2PI, erfc, peak_shape
@@ -203,12 +204,13 @@ class BackgroundFitter:
         out = []
         for j, sg in enumerate(sigmas):
             a = sg * SQRT2PI
-            out.append((self.k * a * float(amp[nc + j]), self.k * a * math.sqrt(max(float(var[nc + j]), 0.0))))
+            out.append((self.k * a * float(amp[nc + j]), self.k * a * math.sqrt(max(float(var[nc + j]), 0.0)),
+                        (lo, self.k * a * L[nc + j].copy())))
         return out
 
     # ------------------------------------------------------------ public API
     def under_peaks(self, peaks, report=None) -> dict:
-        """{id(peak): (k*N_b, k*u_b)}.  With the sample's FitReport (find_peaks(report=...)) the
+        """{id(peak): (k*N_b, k*u_b, (lo, coefficients))}.  With the sample's FitReport (find_peaks(report=...)) the
         estimator is exactly the sample fit's; otherwise it is rebuilt from the peaks (grouped
         as the search groups them, no step), which is close but not identical."""
         from .peaks import F2S
@@ -247,7 +249,7 @@ class BackgroundFitter:
         return out
 
     def at_energy(self, index: float, fwhm_ch: float) -> Optional[tuple[float, float]]:
-        """(k*N_b, k*u_b) for a peak at channel index `index` (0-based) of width `fwhm_ch`
+        """(k*N_b, k*u_b, (lo, coefficients)) for a peak at channel index `index` (0-based) of width `fwhm_ch`
         where the sample has no peak (detection limits)."""
         from .peaks import F2S
         if not fwhm_ch or fwhm_ch <= 0:

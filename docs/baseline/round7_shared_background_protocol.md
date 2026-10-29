@@ -96,3 +96,48 @@ Before the change: RC.C1 to RC.C4 fail; RC.C5 is the control.
 - The blank's own analysis is unchanged; only the sample's net result, threshold and limit change.
 - Covariances between different lines (the background under one line and the blank at another)
   are not added: their estimators do not share channels unless the lines overlap.
+
+---
+
+## Results (`after_R7C`)
+
+Protocol committed in 512fdf0 before the change (SHA-256 of the file
+c52e45103c2404021baaf7f19924288786f4db5d1b7ecbfd0f9f70ec0f49b2d7). Engine 1.29.0.
+
+**4 PASS / 1 FAIL as written.**
+
+| ID | value | result |
+|---|---|---|
+| RC.C1 | peak and full-spectrum modes: u 10.9937 Bq, expected 10.9937 Bq; net zero | PASS |
+| RC.C2 | peak_null: ratio 1.163 (before 1.447), detected 0.0425 (before 0.0150); spectrum_null: ratio 1.163 (before 1.447), detected 0.0375 (before 0.0150) | **FAIL** (ratio above 1.12) |
+| RC.C3 | peak_net and spectrum_net: ratio 1.103 (before 1.276), \|z\| <= 1 0.7125, \|z\| <= 2 0.9525 | PASS |
+| RC.C4 | detected 0.0475 (before 0.0875), L_C / (1.645 sd) 1.046 (before 0.814), u_count identical | PASS |
+| RC.C5 | no blank identical to before; loaded blank unchanged, "counted as independent" note present | PASS |
+| RC.C6 | benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against `after_R7B`; full suite 1595 passed, 2 failed, 69 skipped before the test changes below, then those files rerun: passed; the new `tests/test_round7_shared_background.py` 5 passed | PASS |
+
+RC.C6 is evaluated outside the harness.
+
+**RC.C2 FAIL, diagnosis.** The false detection fraction is now inside its limit in both modes, and the
+ratio fell from 1.447 to 1.163, but stays above 1.12. Measured after the run with the same
+realisations (exploratory, not a criterion): the fit uncertainties of the single spectra are
+themselves above their observed scatter, by about 2 % for the sample's fit on S - kB, 15 % for the
+blank's, and 5 % for a sample without background spectrum; the no-background null case had a ratio of
+1.10 before the change and is untouched by it. The remainder is therefore the existing conservatism
+of the peak-fit uncertainty at low net counts, enlarged relative to the scatter once the background
+cancels; it is not from the covariance, which RC.C1 checks exactly. The limit is kept and the result
+stands as written; the fit-uncertainty overestimate at low net counts is noted for later work.
+
+**Changed existing tests** (change 3 alters the limits of every blank case, by design):
+- `tests/test_self_attenuation.py::test_round4_activity_criteria` and
+  `tests/test_round5_precision.py::test_full_precision_before_values_and_criteria`: RA.C1-C3 of the
+  round-4 harness (and RF.C2 / RF.C4 of round 5) lock the blank cases' threshold and limit at engine
+  1.14.0. With the sample's counting of the blank level in sigma0 they become: RA.C1 threshold
+  13.706721 -> 13.740820 Bq (detection limit 31.5366 Bq, +0.240 % from Codex's 31.461, still within
+  1 %); RA.C2 without reference peak 1.021354 / 2.059014 -> 1.406803 / 2.830053 Bq (there the blank's
+  given uncertainty, 100 counts, dominated sigma0 and the blank level, 10000 counts, adds as much
+  again); RA.C3 Currie 13.706721 / 27.429372 -> 13.740820 / 27.497569 Bq. The new values are held in
+  `round4_activity.AFTER_R7C` and the tests use them for those quantities only; every other value
+  (no blank, COI, summing, uncertainty interval) is still checked against 1.14.0 at the original limits.
+  The archived round-4 and round-5 results are not changed.
+
+Also changed: the manuals (sources), section 9.3 reagent blank.
