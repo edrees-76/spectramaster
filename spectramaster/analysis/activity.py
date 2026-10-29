@@ -783,9 +783,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     # the curve's own state, whether corrected in this call or loaded already corrected
     tcs_partial = [list(t) for t in getattr(curve, "tcs_partial", None) or []]
     if tcs_partial:
-        notes.append("efficiency curve with a partial true-coincidence summing correction at its calibration "
-                     "points " + ", ".join(f"{n} {e:g} keV" for n, e, _w in tcs_partial) + ": the summing loss "
-                     "left out there is not estimated; review the curve before reporting")
+        notes.append(tcs_partial_note(tcs_partial))
     blank_dt = 0.0          # seconds from the blank's reference date to the sample's
     bl_uc = bl_ur = 0.0     # the blank's own reference peak correction: counting, expected rate
     if blank is not None:
@@ -1550,6 +1548,14 @@ def sampling_decay_factor(half_life_s: Optional[float], sampling_s: Optional[flo
     return x / (-math.expm1(-x)) if x > 1e-9 else 1.0
 
 
+def tcs_partial_note(points) -> str:
+    """The note of an efficiency curve with a partial summing correction at `points`
+    [(nuclide, keV, why)] (round6_tcs_state_protocol.md)."""
+    return ("efficiency curve with a partial true-coincidence summing correction at its calibration points "
+            + ", ".join(f"{n} {e:g} keV" for n, e, *_w in points) + ": the summing loss left out there is not "
+            "estimated; review the curve before reporting")
+
+
 def concentrations(res: "QuantResults", sample, unit: str, quantity_rel_unc: float = 0.0) -> dict:
     """Express the activities of `res` in `unit` ("Bq", "Bq/kg", "Bq/L", "Bq/m3") with the
     sample information `sample` (lab.sample.SampleInfo).
@@ -1579,6 +1585,8 @@ def concentrations(res: "QuantResults", sample, unit: str, quantity_rel_unc: flo
         notes.append(f"true-coincidence summing corrected (first order, gamma-gamma) with an assumed "
                      f"peak-to-total PT(E) = min(1, {a:g} (E/1000 keV)^{b:g}) +- "
                      f"{100 * float(tcs.get('pt_rel_unc') or 0):g} %")
+    if getattr(res, "curve_tcs_partial", None):       # round-7 review, Gemini M2
+        notes.append(tcs_partial_note(res.curve_tcs_partial))
     if unit == "Bq":
         q = 1.0
     elif unit == "Bq/kg":

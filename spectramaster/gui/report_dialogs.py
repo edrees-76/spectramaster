@@ -643,14 +643,15 @@ class ReportBatchDialog(QDialog):
         """Add the spectrum files of `folder`, searched on a worker thread (the add buttons and
         Start wait meanwhile)."""
         from .dialogs import scan_spectrum_files
-        from .worker import start_call
+        from .worker import call_stop, start_call
         if self.scanning:
             return False
         self.scanning = True
         for b in (self.add_btn, self.add_dir_btn, self.clear_btn, self.start_btn):
             b.setEnabled(False)
         self.count_label.setText(tr("scan_folder_running"))
-        start_call(self, lambda: scan_spectrum_files(Path(folder), True), self._folder_scanned,
+        stop = call_stop(self)
+        start_call(self, lambda: scan_spectrum_files(Path(folder), True, stop), self._folder_scanned,
                    self._folder_scan_failed)
         return True
 
@@ -705,8 +706,8 @@ class ReportBatchDialog(QDialog):
 
     # ----------------------------------------------------------- running
     def is_running(self) -> bool:
-        """Reports being written or a folder being searched (a search cannot be cancelled, only
-        waited for: round-6 review, Gemini M1)."""
+        """Reports being written or a folder being searched (a search is cancelled on close: round-7
+        review, Gemini M3)."""
         return self._thread is not None or self.scanning
 
     def start(self) -> bool:
@@ -782,6 +783,8 @@ class ReportBatchDialog(QDialog):
         self._set_running(False)
 
     def cancel(self) -> None:
+        from .worker import cancel_calls
+        cancel_calls(self)              # a folder search
         if self._worker is not None:
             self._worker.cancel()
             self.cancel_btn.setEnabled(False)
@@ -796,6 +799,8 @@ class ReportBatchDialog(QDialog):
         if self.is_running():
             self.cancel()
             self.wait()
+            if self.scanning:           # cancelled: no callback
+                self._scan_finished()
         super().closeEvent(ev)
 
     def reject(self):

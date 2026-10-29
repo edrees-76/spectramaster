@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog,
 
 from . import i18n
 from . import identification_library as idl
-from .worker import quit_on, start_call
+from .worker import call_stop, cancel_calls, quit_on, start_call
 from .workflow_strings import wtr
 
 
@@ -66,9 +66,9 @@ class BatchRunWorker(QObject):
         self.done.emit(rows)
 
 
-def _scan_and_group(paths, tol):
+def _scan_and_group(paths, tol, stop=None):
     from ..lab.batch import group_items, scan
-    items = scan(paths)
+    items = scan(paths, stop)
     return items, group_items(items, tol)
 
 
@@ -287,7 +287,8 @@ class BatchAnalysisDialog(QDialog):
         if self.busy:
             return False
         self._set_busy(True, i18n.tr("scan_folder_running"))
-        start_call(self, lambda: scan_spectrum_files(Path(folder), recursive), self._on_folder_scanned,
+        stop = call_stop(self)
+        start_call(self, lambda: scan_spectrum_files(Path(folder), recursive, stop), self._on_folder_scanned,
                    self._on_scan_failed)
         return True
 
@@ -319,7 +320,8 @@ class BatchAnalysisDialog(QDialog):
             return False
         self._set_busy(True, wtr("batch_scanning"))
         paths, tol = list(self.paths), self.tol_spin.value()
-        start_call(self, lambda: _scan_and_group(paths, tol), self._on_scanned, self._on_scan_failed)
+        stop = call_stop(self)
+        start_call(self, lambda: _scan_and_group(paths, tol, stop), self._on_scanned, self._on_scan_failed)
         return True
 
     def _on_scanned(self, result) -> None:
@@ -436,7 +438,7 @@ class BatchAnalysisDialog(QDialog):
 
     # ------------------------------------------------------------------ run (worker)
     def is_running(self) -> bool:
-        """A batch run or a scan is in progress (scans cannot be cancelled, only waited for)."""
+        """A batch run or a scan is in progress (a scan is cancelled on close: round-7 review, Gemini M3)."""
         return self._thread is not None or bool(self.__dict__.get("_call_threads"))
 
     def run(self) -> bool:
@@ -466,6 +468,7 @@ class BatchAnalysisDialog(QDialog):
         return True
 
     def cancel(self) -> None:
+        cancel_calls(self)              # a folder search or a scan
         if self._worker is not None:
             self._worker.cancel()
 
@@ -546,6 +549,8 @@ class BatchAnalysisDialog(QDialog):
         if self.is_running():
             self.cancel()
             self.wait()
+            if self.busy and self._thread is None:      # a cancelled scan: no callback
+                self._set_busy(False)
         super().closeEvent(ev)
 
 

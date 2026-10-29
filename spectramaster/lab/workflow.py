@@ -136,14 +136,21 @@ def report_record(session, concentrations: Optional[dict] = None, spectrum=None)
     opts = quant.get("options") or {}
     statuses = [asdict(s) for s in workflow_status(session, spectrum, needs_activity=bool(quant))]
     cal = []
+    calc_partial = quant.get("curve_tcs_partial") or []
     for c in session.calibrations or []:
         payload = c.get("payload") or {}
+        eff = {}
+        if c.get("kind") == "efficiency":
+            # the curve's own state; else, corrected for summing in the activity calculation itself
+            # (round-7 review, Gemini M2), that calculation's
+            own = _tcs_partial(c)
+            eff = {"note": payload.get("note", ""), "warnings": payload.get("warnings") or [],
+                   "tcs_partial": own or calc_partial,
+                   "tcs_partial_source": "curve" if own else ("activity calculation" if calc_partial else "")}
         cal.append({k: c.get(k) for k in ("id", "kind", "name", "model", "source", "validation_status",
                                           "validation_note", "energy_range", "detector_id", "geometry_id",
                                           "content_hash", "created")}
-                   | {"selection": payload.get("selection"), "u_model_rel": payload.get("u_model_rel")}
-                   | ({"note": payload.get("note", ""), "warnings": payload.get("warnings") or [],
-                       "tcs_partial": _tcs_partial(c)} if c.get("kind") == "efficiency" else {}))
+                   | {"selection": payload.get("selection"), "u_model_rel": payload.get("u_model_rel")} | eff)
     edits = [{"kind": op.kind, "target": op.target, "reason": op.reason, "user": op.user,
               "time": op.timestamp, "undone": op.undone}
              for op in getattr(session.history, "ops", [])]

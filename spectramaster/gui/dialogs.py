@@ -154,11 +154,19 @@ class BatchModel(QAbstractTableModel):
 
 
 # ======================================================================= batch dialog
-def scan_folder(root: Path, recursive: bool, extensions: Optional[set[str]]) -> list[Path]:
+def _check_stop(stop) -> None:
+    if stop is not None and stop():
+        raise InterruptedError("folder search cancelled")
+
+
+def scan_folder(root: Path, recursive: bool, extensions: Optional[set[str]], stop=None) -> list[Path]:
+    """Files of `root` with one of `extensions` (None: all).  `stop()` True raises InterruptedError
+    (gui.worker.call_stop)."""
     out: list[Path] = []
     root = Path(root)
     if recursive:
         for dirpath, dirnames, filenames in os.walk(root):
+            _check_stop(stop)
             dirnames.sort(key=str.lower)
             for name in sorted(filenames, key=str.lower):
                 if extensions is None or os.path.splitext(name)[1].lower() in extensions:
@@ -175,24 +183,28 @@ def scan_folder(root: Path, recursive: bool, extensions: Optional[set[str]]) -> 
     return out
 
 
-def scan_spectrum_files(root: Path, recursive: bool) -> list[Path]:
+def scan_spectrum_files(root: Path, recursive: bool, stop=None) -> list[Path]:
     """Files with a spectrum extension, plus files with any other extension whose content is
-    recognised (docs/baseline/any_extension_protocol.md)."""
+    recognised (docs/baseline/any_extension_protocol.md).  `stop`: see scan_folder."""
     from ..formats import detect_format, load_all, readable_formats
     load_all()
     exts = {e for f in readable_formats() for e in f.extensions}
-    return [p for p in scan_folder(root, recursive, None)
-            if p.suffix.lower() in exts or detect_format(p) is not None]
+    out = []
+    for p in scan_folder(root, recursive, None, stop):
+        _check_stop(stop)
+        if p.suffix.lower() in exts or detect_format(p) is not None:
+            out.append(p)
+    return out
 
 
-def expand_spectrum_paths(paths: Sequence[Path], recursive: bool = True) -> list[Path]:
+def expand_spectrum_paths(paths: Sequence[Path], recursive: bool = True, stop=None) -> list[Path]:
     """`paths` in order, each folder replaced by its spectrum files (:func:`scan_spectrum_files`).
     Reading the content of every file of unknown extension can take a minute on a large mixed
     folder: call it on a worker thread (gui.worker.start_call)."""
     out: list[Path] = []
     for p in (Path(x) for x in paths):
         if p.is_dir():
-            out.extend(scan_spectrum_files(p, recursive))
+            out.extend(scan_spectrum_files(p, recursive, stop))
         elif p.is_file():
             out.append(p)
     return out
@@ -382,7 +394,7 @@ class BatchDialog(QDialog):
     def scan(self) -> None:
         """Search the input folder on a worker thread (round-6 review, Gemini M1); a change made
         meanwhile searches again when it ends."""
-        from .worker import start_call
+        from .worker import call_stop, start_call
         if not self.folder_mode or self._thread is not None:
             return
         if self.scanning:
@@ -398,7 +410,9 @@ class BatchDialog(QDialog):
         self.count_label.setText(tr("folder_scanning"))
         self.start_btn.setEnabled(False)
         root, recursive, exts = Path(text), self.recursive_cb.isChecked(), self.input_extensions()
-        start_call(self, lambda: scan_folder(root, recursive, exts), self._folder_scanned, self._folder_scan_failed)
+        stop = call_stop(self)
+        start_call(self, lambda: scan_folder(root, recursive, exts, stop), self._folder_scanned,
+                   self._folder_scan_failed)
 
     def _scan_ended(self) -> bool:
         """Clear the search state; True when a newer search was asked for (and is started)."""
@@ -553,7 +567,10 @@ class BatchDialog(QDialog):
                 return
             self.cancel()
         if self.is_running():
-            self.wait()                 # a folder search ends by itself
+            from .worker import cancel_calls
+            cancel_calls(self)          # a folder search stops at its next file
+            self.wait()
+            self.scanning = self._rescan = False
         super().closeEvent(ev)
 
     def reject(self):

@@ -1,8 +1,9 @@
 """Background batch conversion (runs in a QThread)."""
 from __future__ import annotations
 
+import threading
 from pathlib import Path
-from typing import Optional, Sequence
+from typing import Callable, Optional, Sequence
 
 from PySide6.QtCore import QObject, Signal, Slot
 
@@ -125,10 +126,12 @@ class CallWorker(QObject):
     Signals
       done(result)        -- the return value
       failed(message)     -- "ExceptionType: message"
+      cancelled()         -- ``fn`` raised InterruptedError (stopped by cancel_calls): no callback
     """
 
     done = Signal(object)
     failed = Signal(str)
+    cancelled = Signal()
 
     def __init__(self, fn):
         super().__init__()
@@ -138,6 +141,9 @@ class CallWorker(QObject):
     def run(self) -> None:
         try:
             result = self.fn()
+        except InterruptedError:  # cancelled by its owner (closing): nothing to report
+            self.cancelled.emit()
+            return
         except Exception as exc:  # engine error -> message, never a crash
             self.failed.emit(f"{type(exc).__name__}: {exc}")
             return
@@ -182,6 +188,21 @@ def wait_threads(owner, thread=None, ms: Optional[int] = None) -> bool:
     return bool(threads)
 
 
+def call_stop(owner) -> Callable[[], bool]:
+    """A new cancel flag for `owner`'s next start_call work: the returned ``stop()`` is True once
+    :func:`cancel_calls` was called; the work then raises InterruptedError (round-7 review,
+    Gemini M3: a folder search stops when its window closes)."""
+    ev = threading.Event()
+    owner.__dict__.setdefault("_call_cancels", []).append(ev)
+    return ev.is_set
+
+
+def cancel_calls(owner) -> None:
+    """Set the cancel flags of `owner`'s running start_call work (see :func:`call_stop`)."""
+    for ev in owner.__dict__.pop("_call_cancels", []):
+        ev.set()
+
+
 def start_call(owner, fn, on_done, on_failed):
     """Run ``fn`` on a new QThread; `on_done(result)` / `on_failed(message)` are called in the GUI
     thread (bound methods of `owner`, a QObject).  Returns the QThread (kept on
@@ -203,7 +224,7 @@ def start_call(owner, fn, on_done, on_failed):
     thread.started.connect(worker.run)
     worker.done.connect(on_done)
     worker.failed.connect(on_failed)
-    quit_on(thread, worker.done, worker.failed)
+    quit_on(thread, worker.done, worker.failed, worker.cancelled)
     keep = owner.__dict__.setdefault("_call_threads", [])
     keep.append((thread, worker))
     _RUNNING.append((thread, worker))
