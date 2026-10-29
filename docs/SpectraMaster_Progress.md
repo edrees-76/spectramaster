@@ -1533,3 +1533,22 @@ Engine 1.27.0.
   `after_R6G`; full suite 1588 passed, 69 skipped, exit 0. A harness comparison including the fit time
   was corrected before the protocol commit (disclosed).
 
+## Round-7 external review: limits of the weighted mean, Codex H2 and Gemini M1 (2026-10-29)
+
+Protocol `docs/baseline/round7_combined_protocol.md`, committed before the change (8c6b8dd).
+Engine 1.28.0.
+
+- **Confirmed (Codex H2).** With a reference peak correction, the cross terms of the shared reference
+  peak were added only between lines that both had a blank peak; a line without one lost the linear
+  term of the other (Co-60, blank peak at 1173 keV only, ISO 11929: detection limit 6.5 % low).
+- **Confirmed (Gemini M1).** An undetected nuclide with `method = "mean"` reported the weighted mean of
+  its window results as primary result but the decision threshold and MDA of the key line alone.
+- **Rejected (Gemini L1).** The quoted `math.copysign` expression is not in the code.
+- **Fix.** A line with a reference peak correction and no blank peak carries g0 = 0 and its dg, so
+  every pair of such lines gets its cross terms. An undetected nuclide with `method = "mean"` and more
+  than one usable line reports the limits of the weighted mean with the weights of `primary`, and a
+  note when `primary` exceeds that threshold; the detection decision is unchanged.
+- **Result (`after_R7B`):** first run 4 PASS / 1 FAIL from a harness comparison of internal line
+  fields set by design (kept, disclosed); corrected comparison 5 PASS / 0 FAIL; benchmark 154 / 13 / 60
+  unchanged against `after_R7A`; one existing test changed (`test_no_blank_no_cross_terms`, ref_g0 now
+  (0, 0, 0) without a blank).

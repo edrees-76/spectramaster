@@ -172,9 +172,10 @@ class LineResult:
     # reference-peak term) and the reference peak's relative uncertainty, for combined_limits
     limit_slope: float = 0.0
     ref_rel_unc: float = 0.0
-    # with a blank line: the reference-peak part of the zero-activity uncertainty over the shared
-    # variables (sample's peak, blank's peak, expected rate), Bq, and its derivative in the net
-    # activity; their cross products are the covariance of two lines (round6_combined_protocol.md)
+    # with a reference peak correction: the reference-peak part of the zero-activity uncertainty over
+    # the shared variables (sample's peak, blank's peak, expected rate), Bq (zero without a blank
+    # peak), and its derivative in the net activity; their cross products are the covariance of two
+    # lines (round6_combined_protocol.md, round7_combined_protocol.md)
     ref_g0: Optional[list] = None
     ref_dg: Optional[list] = None
     detected: bool = False
@@ -525,9 +526,10 @@ def combined_limits(lines: list, weights: list, opt: "ActivityOptions") -> tuple
     activity budget does (efficiency, summing and reference peak correlated between lines).
     Currie: R = 0.  y# is the larger root of the quadratic of iso11929_limits.
 
-    With a blank, the shared reference peak corrections make the lines covary: the cross terms of
-    ``ref_g0`` (zero activity) and ``ref_dg`` (linear in y, ISO 11929) are added
-    (round6_combined_protocol.md)."""
+    The shared reference peak corrections make the lines covary: the cross terms of ``ref_g0`` (zero
+    activity, from a blank) and ``ref_dg`` (linear in y, ISO 11929) are added for every pair of lines
+    with the correction, also when only one of them has a blank peak (round6_combined_protocol.md,
+    round7_combined_protocol.md)."""
     s0sq = sum((w * l.decision_threshold / opt.k_alpha) ** 2 for w, l in zip(weights, lines))
     slope = sum(w * w * l.limit_slope for w, l in zip(weights, lines))
 
@@ -535,7 +537,7 @@ def combined_limits(lines: list, weights: list, opt: "ActivityOptions") -> tuple
         return sum(x * y for x, y in zip(a, b)) if a and b else 0.0
     for i, (wi, li) in enumerate(zip(weights, lines)):
         for j, (wj, lj) in enumerate(zip(weights, lines)):
-            if i != j and li.ref_g0 and lj.ref_g0:
+            if i != j and li.ref_dg and lj.ref_dg:
                 s0sq += wi * wj * dot(li.ref_g0, lj.ref_g0)
                 if opt.mda_method == "iso11929":
                     slope += wi * wj * (dot(li.ref_dg, lj.ref_g0) + dot(li.ref_g0, lj.ref_dg))
@@ -872,6 +874,8 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                     ref_lin = 2.0 * ab0 * (ref_uc ** 2 + ref_ur * (ref_ur - bl_ur))
                     lr.ref_g0 = [ab0 * ref_uc, ab0 * bl_uc, ab0 * (ref_ur - bl_ur)]
                     lr.ref_dg = [ref_uc, 0.0, ref_ur]
+            if opt.reference_peak and lr.ref_dg is None:     # no blank peak: zero at zero activity
+                lr.ref_g0, lr.ref_dg = [0.0, 0.0, 0.0], [ref_uc, 0.0, ref_ur]
             lin_sample, lin_bkg = B * (1.0 + n / (2.0 * m)), 0.0   # linear terms, replaced for a quadratic window
             if bcounts is not None:
                 cb = continuum_under(spectrum, e, fw_ch, counts=bcounts)
@@ -1257,6 +1261,11 @@ def _combine(res: NuclideResult, opt: ActivityOptions) -> None:
     if opt.method == "mean" and len(usable) > 1:
         res.primary, res.primary_u = _weighted_primary(usable, opt)
         res.primary_method = "window"
+        # the limits of this weighted mean, with its weights (round7_combined_protocol.md)
+        res.decision_threshold, res.mda = combined_limits(usable, _primary_weights(usable, opt), opt)
+        if res.primary > res.decision_threshold:
+            res.note = (res.note + "; weighted mean of the window results above its decision threshold, "
+                                   "no line detected").strip("; ")
         return
     if usable and (k is None or k.primary_method != "window"):
         alt = usable[0] if opt.method == "mean" else min(usable, key=lambda l: l.mda)
@@ -1290,6 +1299,16 @@ def _weighted_primary(lines: list, opt: ActivityOptions) -> tuple[float, float]:
     aa = abs(a)
     return a, math.sqrt(uc ** 2 + ue ** 2 + math.hypot(aa * ui, ul) ** 2 + (aa * _att_rel_unc(opt)) ** 2
                         + ur ** 2 + ut ** 2)
+
+
+def _primary_weights(lines: list, opt: ActivityOptions) -> list:
+    """Normalised weights of the window results' weighted mean: the inverse of their counting and
+    intensity variance, as the activity combination (_combine_activity)."""
+    ui = opt.intensity_rel_unc
+    var_unc = [l.primary_u_count ** 2 + (l.primary * ui) ** 2 + (l.primary * l.int_rel_unc) ** 2 for l in lines]
+    wts = [1.0 / v if v > 0 else 0.0 for v in var_unc]
+    sw = sum(wts)
+    return [w / sw for w in wts]
 
 
 def _att_rel_unc(opt: ActivityOptions) -> float:

@@ -19,4 +19,6 @@ def test_combined_limits_match_full_covariance(case):
 def test_no_blank_no_cross_terms():
     _name, mda, lines, _blank, uc, buc, ur = r6.CASES[3]
     res, _o = r6._run(mda, lines, None, uc, buc, ur)
-    assert all(l.ref_g0 is None for l in res.lines)
+    # no blank: the reference peak terms are zero at zero activity, so no cross term at that level
+    # (round7_combined_protocol.md: ref_g0 is (0, 0, 0) for a line without a blank peak)
+    assert all(l.ref_g0 in (None, [0.0, 0.0, 0.0]) for l in res.lines)

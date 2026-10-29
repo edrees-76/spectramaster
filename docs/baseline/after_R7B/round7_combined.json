@@ -1,0 +1,521 @@
+{
+ "results": {
+  "engine": "1.28.0",
+  "one_blank": {
+   "blank_1173_iso": {
+    "threshold": 6.420827648958943,
+    "mda": 14.760263748841771,
+    "activity": 51.43974739248561,
+    "u": 8.79879186637427,
+    "primary": 51.43974739248561,
+    "primary_u": 8.79879186637427,
+    "detected": true,
+    "note": "lines inconsistent (chi2/dof = 935.2); true-coincidence summing not corrected",
+    "used": [
+     1173.228,
+     1332.492
+    ],
+    "independent": {
+     "threshold": 6.420827648958942,
+     "limit": 14.760263748841773
+    },
+    "lines": [
+     [
+      1173.228,
+      50.0771993006347,
+      [
+       5.0077199300634705,
+       5.0077199300634705,
+       0.0
+      ],
+      [
+       0.1,
+       0.0,
+       0.0
+      ]
+     ],
+     [
+      1332.492,
+      null,
+      [
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.1,
+       0.0,
+       0.0
+      ]
+     ]
+    ]
+   },
+   "blank_1173_rate_iso": {
+    "threshold": 6.420827648958943,
+    "mda": 14.797364583386042,
+    "activity": 51.43974739248561,
+    "u": 8.973904207148802,
+    "primary": 51.43974739248561,
+    "primary_u": 8.973904207148802,
+    "detected": true,
+    "note": "lines inconsistent (chi2/dof = 935.2); true-coincidence summing not corrected",
+    "used": [
+     1173.228,
+     1332.492
+    ],
+    "independent": {
+     "threshold": 6.420827648958942,
+     "limit": 14.797364583386045
+    },
+    "lines": [
+     [
+      1173.228,
+      50.0771993006347,
+      [
+       5.0077199300634705,
+       5.0077199300634705,
+       0.0
+      ],
+      [
+       0.1,
+       0.0,
+       0.03
+      ]
+     ],
+     [
+      1332.492,
+      null,
+      [
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.1,
+       0.0,
+       0.03
+      ]
+     ]
+    ]
+   },
+   "blank_1332_rate_iso": {
+    "threshold": 6.551868009476719,
+    "mda": 15.099309002894167,
+    "activity": 50.589631533491804,
+    "u": 8.978073638652992,
+    "primary": 50.589631533491804,
+    "primary_u": 8.978073638652992,
+    "detected": true,
+    "note": "lines inconsistent (chi2/dof = 1136.5); true-coincidence summing not corrected",
+    "used": [
+     1173.228,
+     1332.492
+    ],
+    "independent": {
+     "threshold": 6.551868009476719,
+     "limit": 15.09930900289417
+    },
+    "lines": [
+     [
+      1173.228,
+      null,
+      [
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.1,
+       0.0,
+       0.03
+      ]
+     ],
+     [
+      1332.492,
+      50.012085918867534,
+      [
+       5.001208591886754,
+       5.001208591886754,
+       0.0
+      ],
+      [
+       0.1,
+       0.0,
+       0.03
+      ]
+     ]
+    ]
+   },
+   "blank_1173_rate_currie": {
+    "threshold": 6.420827648958943,
+    "mda": 12.848506997739902,
+    "activity": 51.43974739248561,
+    "u": 8.973904207148802,
+    "primary": 51.43974739248561,
+    "primary_u": 8.973904207148802,
+    "detected": true,
+    "note": "lines inconsistent (chi2/dof = 935.2); true-coincidence summing not corrected",
+    "used": [
+     1173.228,
+     1332.492
+    ],
+    "independent": {
+     "threshold": 6.420827648958942,
+     "limit": 12.8485069977399
+    },
+    "lines": [
+     [
+      1173.228,
+      50.0771993006347,
+      [
+       5.0077199300634705,
+       5.0077199300634705,
+       0.0
+      ],
+      [
+       0.1,
+       0.0,
+       0.03
+      ]
+     ],
+     [
+      1332.492,
+      null,
+      [
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.1,
+       0.0,
+       0.03
+      ]
+     ]
+    ]
+   },
+   "blank_1332_currie": {
+    "threshold": 6.551868009476719,
+    "mda": 13.110621163755903,
+    "activity": 50.589631533491804,
+    "u": 8.804813119253604,
+    "primary": 50.589631533491804,
+    "primary_u": 8.804813119253604,
+    "detected": true,
+    "note": "lines inconsistent (chi2/dof = 1136.5); true-coincidence summing not corrected",
+    "used": [
+     1173.228,
+     1332.492
+    ],
+    "independent": {
+     "threshold": 6.551868009476719,
+     "limit": 13.110621163755905
+    },
+    "lines": [
+     [
+      1173.228,
+      null,
+      [
+       0.0,
+       0.0,
+       0.0
+      ],
+      [
+       0.1,
+       0.0,
+       0.0
+      ]
+     ],
+     [
+      1332.492,
+      50.012085918867534,
+      [
+       5.001208591886754,
+       5.001208591886754,
+       0.0
+      ],
+      [
+       0.1,
+       0.0,
+       0.0
+      ]
+     ]
+    ]
+   }
+  },
+  "undetected": {
+   "co60_iso": {
+    "threshold": 0.21759867326566454,
+    "mda": 0.442688581580142,
+    "activity": null,
+    "u": null,
+    "primary": 0.0,
+    "primary_u": 0.13227882873292673,
+    "detected": false,
+    "note": "true-coincidence summing not corrected",
+    "used": [],
+    "independent": {
+     "n": 2,
+     "threshold": 0.21759867326566454,
+     "limit": 0.442688581580142
+    },
+    "key": {
+     "threshold": 0.30533664258545584,
+     "mda": 0.6252427757949661,
+     "activity": null,
+     "u": null,
+     "primary": 0.0,
+     "primary_u": 0.1856149802951099,
+     "detected": false,
+     "note": "true-coincidence summing not corrected",
+     "used": []
+    }
+   },
+   "co60_currie": {
+    "threshold": 0.21759867326566448,
+    "mda": 0.44198371994537666,
+    "activity": null,
+    "u": null,
+    "primary": 0.0,
+    "primary_u": 0.13227882873292673,
+    "detected": false,
+    "note": "true-coincidence summing not corrected",
+    "used": [],
+    "independent": {
+     "n": 2,
+     "threshold": 0.21759867326566448,
+     "limit": 0.4419837199453768
+    },
+    "key": {
+     "threshold": 0.3053366425854558,
+     "mda": 0.6242533480071402,
+     "activity": null,
+     "u": null,
+     "primary": 0.0,
+     "primary_u": 0.1856149802951099,
+     "detected": false,
+     "note": "true-coincidence summing not corrected",
+     "used": []
+    }
+   },
+   "ba133_iso": {
+    "threshold": 0.34654581285641184,
+    "mda": 0.7068060543902407,
+    "activity": null,
+    "u": null,
+    "primary": 0.0,
+    "primary_u": 0.21066614763307712,
+    "detected": false,
+    "note": "true-coincidence summing not corrected",
+    "used": [],
+    "independent": {
+     "n": 6,
+     "threshold": 0.3465458128564118,
+     "limit": 0.7068060543902406
+    },
+    "key": {
+     "threshold": 0.42031393977647136,
+     "mda": 0.8637881267581173,
+     "activity": null,
+     "u": null,
+     "primary": 0.0,
+     "primary_u": 0.25550999378508904,
+     "detected": false,
+     "note": "true-coincidence summing not corrected",
+     "used": []
+    }
+   },
+   "ba133_currie": {
+    "threshold": 0.34654581285641184,
+    "mda": 0.7056919237613409,
+    "activity": null,
+    "u": null,
+    "primary": 0.0,
+    "primary_u": 0.21066614763307712,
+    "detected": false,
+    "note": "true-coincidence summing not corrected",
+    "used": [],
+    "independent": {
+     "n": 6,
+     "threshold": 0.34654581285641184,
+     "limit": 0.705691923761341
+    },
+    "key": {
+     "threshold": 0.4203139397764714,
+     "mda": 0.8624612186497714,
+     "activity": null,
+     "u": null,
+     "primary": 0.0,
+     "primary_u": 0.25550999378508904,
+     "detected": false,
+     "note": "true-coincidence summing not corrected",
+     "used": []
+    }
+   }
+  },
+  "controls": {
+   "r5_co60_iso": {
+    "threshold": 0.29875986138193905,
+    "mda": 0.6114887777733695,
+    "activity": 14.793885286841443,
+    "u": 0.4656067511725265,
+    "primary": 14.793885286841443,
+    "primary_u": 0.4656067511725265,
+    "detected": true,
+    "note": "lines inconsistent (chi2/dof = 21.4); true-coincidence summing not corrected",
+    "used": [
+     1173.228,
+     1332.492
+    ]
+   },
+   "r5_co60_currie": {
+    "threshold": 0.298759861381939,
+    "mda": 0.6105208553012829,
+    "activity": 14.793885286841443,
+    "u": 0.4656067511725265,
+    "primary": 14.793885286841443,
+    "primary_u": 0.4656067511725265,
+    "detected": true,
+    "note": "lines inconsistent (chi2/dof = 21.4); true-coincidence summing not corrected",
+    "used": [
+     1173.228,
+     1332.492
+    ]
+   },
+   "r5_ba133_iso_blank": {
+    "threshold": 0.6149353291399852,
+    "mda": 1.2530792074045298,
+    "activity": 37.041354149434746,
+    "u": 1.1259053397634122,
+    "primary": 37.041354149434746,
+    "primary_u": 1.1259053397634122,
+    "detected": true,
+    "note": "true-coincidence summing not corrected",
+    "used": [
+     356.013,
+     302.851,
+     383.849
+    ]
+   },
+   "r6_co60_ref_blank_iso": {
+    "threshold": 11.659970371894186,
+    "mda": 26.803135252419313,
+    "activity": 28.766295968401707,
+    "u": 9.388510261651048,
+    "primary": 28.766295968401707,
+    "primary_u": 9.388510261651048,
+    "detected": true,
+    "note": "true-coincidence summing not corrected",
+    "used": [
+     1173.228,
+     1332.492
+    ]
+   },
+   "r6_co60_ref_blank_currie": {
+    "threshold": 11.659970371894186,
+    "mda": 23.326725609904504,
+    "activity": 28.766295968401707,
+    "u": 9.388510261651048,
+    "primary": 28.766295968401707,
+    "primary_u": 9.388510261651048,
+    "detected": true,
+    "note": "true-coincidence summing not corrected",
+    "used": [
+     1173.228,
+     1332.492
+    ]
+   },
+   "r6_co60_ref_blank_rate_iso": {
+    "threshold": 7.792903541288843,
+    "mda": 16.447212685339068,
+    "activity": 12.492555996764555,
+    "u": 5.148603030076669,
+    "primary": 12.492555996764555,
+    "primary_u": 5.148603030076669,
+    "detected": true,
+    "note": "lines inconsistent (chi2/dof = 13.6); true-coincidence summing not corrected",
+    "used": [
+     1173.228,
+     1332.492
+    ]
+   },
+   "r6_co60_ref_only_iso": {
+    "threshold": 0.29875986138193905,
+    "mda": 0.6285237522134884,
+    "activity": 14.793885286841443,
+    "u": 1.5509287751343297,
+    "primary": 14.793885286841443,
+    "primary_u": 1.5509287751343297,
+    "detected": true,
+    "note": "lines inconsistent (chi2/dof = 21.4); true-coincidence summing not corrected",
+    "used": [
+     1173.228,
+     1332.492
+    ]
+   },
+   "single_line": {
+    "threshold": 0.3301648007063946,
+    "mda": 0.6772992413595295,
+    "activity": null,
+    "u": null,
+    "primary": 0.0,
+    "primary_u": 0.2007080855358022,
+    "detected": false,
+    "note": "",
+    "used": []
+   }
+  },
+  "bump": {
+   "threshold": 0.21761292745615105,
+   "mda": 0.4427170629003517,
+   "activity": null,
+   "u": null,
+   "primary": 0.2759181084308354,
+   "primary_u": 0.13504313177752264,
+   "detected": false,
+   "note": "weighted mean of the window results above its decision threshold, no line detected; true-coincidence summing not corrected",
+   "used": [],
+   "independent": {
+    "n": 2,
+    "threshold": 0.21761292745615105,
+    "limit": 0.44271706290035173
+   },
+   "lines": [
+    [
+     1173.228,
+     0.2736862393971466,
+     0.3053589922557037,
+     false
+    ],
+    [
+     1332.492,
+     0.2782198523394899,
+     0.3102003984206093,
+     false
+    ]
+   ]
+  }
+ },
+ "criteria": {
+  "RB.C1": {
+   "value": "ISO 11929 threshold and limit equal the full-covariance computation",
+   "pass": true
+  },
+  "RB.C2": {
+   "value": "Currie cases identical to before",
+   "pass": true
+  },
+  "RB.C3": {
+   "value": "limits of the weighted mean of the window results, primary unchanged",
+   "pass": true
+  },
+  "RB.C4": {
+   "value": "primary 0.2759 Bq, threshold 0.2176 Bq, detected False, note present",
+   "pass": true
+  },
+  "RB.C5": {
+   "value": "detected cases, key-line runs and the single line identical to before",
+   "pass": true
+  }
+ }
+}
