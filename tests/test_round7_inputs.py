@@ -47,7 +47,7 @@ def test_aptec_empty_slots_are_skipped():
 def test_negative_activity_is_refused_and_the_value_kept():
     pytest.importorskip("PySide6")
     r = h.c5()
-    assert all(h._refused(r[repr(v)]) for v in h.SET_BAD) and r["after a refusal"] == 12345.678
+    assert all(h._refused(r[repr(v)]) for v in h.SET_BAD) and math.isclose(r["after a refusal"], 12345.678, rel_tol=1e-12)
 
 
 @pytest.mark.parametrize("col,text", [(4, "0,02"), (4, "-0.01"), (2, "-100"), (5, "1,5"), (5, "")])

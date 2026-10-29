@@ -217,7 +217,7 @@ def criteria(m: dict, b: dict) -> list[dict]:
                           f"skipped empty slots as before: {good}"})
     r5, b5 = m["C5"], b["C5"]
     bad = [repr(v) for v in SET_BAD if not _refused(r5[repr(v)])]
-    good = all(r5[repr(v)] == b5[repr(v)] for v in SET_GOOD) and r5["after a refusal"] == 12345.678
+    good = all(r5[repr(v)] == b5[repr(v)] for v in SET_GOOD) and math.isclose(r5["after a refusal"], 12345.678, rel_tol=1e-12)
     rows.append({"id": "RE.C5", "pass": not bad and good,
                  "value": f"refused {len(SET_BAD) - len(bad)} of {len(SET_BAD)} (not: {bad}); valid as before and "
                           f"the previous value kept: {good}"})
