@@ -18,8 +18,8 @@ def test_range_contains_the_measured_bias():
 def test_wide_peak_has_no_note_and_values_unchanged():
     w = dt.peak_width(r6.build(12.0, 0.0))
     assert "binning" not in w.note and max(w.fwhm_bin_bias) < dt.BIN_NOTE_BIAS
-    assert math.isclose(dt.peak_width(r6.r5.build([0.0, 0.5])).fwhm_kev, r6.r5.BEFORE["linear"][1],
-                        rel_tol=0, abs_tol=0)
+    # recorded on Windows: equal to rounding across platforms
+    assert math.isclose(dt.peak_width(r6.r5.build([0.0, 0.5])).fwhm_kev, r6.r5.BEFORE["linear"][1], rel_tol=1e-9)
 
 
 def test_binning_bias_is_the_fixed_point_of_the_binned_width():
