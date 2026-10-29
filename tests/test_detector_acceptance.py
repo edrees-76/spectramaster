@@ -18,7 +18,8 @@ def test_widths_of_a_gaussian_peak():
     w = dt.peak_width(da.build(0.25, 2.0, 1e5))
     assert w.fwhm_kev == pytest.approx(2.0, rel=0.01)
     assert w.ratio == pytest.approx(da.FWTM_RATIO, rel=0.01)
-    assert w.linear_crossings == 0 and not w.note
+    # 8 channels per FWHM: only the channel binning note (round6_fwhm_protocol.md)
+    assert w.linear_crossings == 0 and w.note.startswith("FWHM 8.0 channels: the widths from the channel contents")
 
 
 def test_relative_efficiency_with_decay_correction():

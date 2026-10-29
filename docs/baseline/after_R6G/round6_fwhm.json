@@ -1,0 +1,658 @@
+{
+ "results": {
+  "engine": "1.26.0",
+  "cases": {
+   "3 ch, +0": {
+    "fw_ch": 3.0,
+    "frac": 0.0,
+    "centroid_kev": 1332.5,
+    "fwhm_kev": 1.5388320739325536,
+    "fwtm_kev": 2.8036248498697205,
+    "note": "FWHM 3.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 2.6 to 8.8 %, FWTM by 2.5 to 4.3 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.02588805018134699,
+     0.08820742866569686
+    ],
+    "fwtm_bin_bias": [
+     0.025494953974762424,
+     0.0430435976778627
+    ],
+    "p_c": 310.4445783561337
+   },
+   "3 ch, +0.1": {
+    "fw_ch": 3.0,
+    "frac": 0.1,
+    "centroid_kev": 1332.583307519798,
+    "fwhm_kev": 1.5420791720873694,
+    "fwtm_kev": 2.8054085907810986,
+    "note": "FWHM 3.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 2.6 to 8.8 %, FWTM by 2.5 to 4.3 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.025772798197808422,
+     0.08778159955910314
+    ],
+    "fwtm_bin_bias": [
+     0.02546130113004952,
+     0.042985145655406676
+    ],
+    "p_c": 309.54039984258156
+   },
+   "3 ch, +0.25": {
+    "fw_ch": 3.0,
+    "frac": 0.25,
+    "centroid_kev": 1332.6447866212957,
+    "fwhm_kev": 1.5590154197468564,
+    "fwtm_kev": 2.814732111598687,
+    "note": "FWHM 3.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 2.5 to 8.6 %, FWTM by 2.5 to 4.3 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.025184203848847675,
+     0.08561225810007067
+    ],
+    "fwtm_bin_bias": [
+     0.02528649857985754,
+     0.04268160546205091
+    ],
+    "p_c": 304.836573768855
+   },
+   "3 ch, +0.4": {
+    "fw_ch": 3.0,
+    "frac": 0.4,
+    "centroid_kev": 1332.7076888252366,
+    "fwhm_kev": 1.5899895412280785,
+    "fwtm_kev": 2.8319417201630586,
+    "note": "FWHM 3.2 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 2.4 to 8.2 %, FWTM by 2.5 to 4.2 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.02415961715269921,
+     0.08185723917322263
+    ],
+    "fwtm_bin_bias": [
+     0.02496861938315842,
+     0.04212994526371849
+    ],
+    "p_c": 296.29008708719203
+   },
+   "3 ch, +0.5": {
+    "fw_ch": 3.0,
+    "frac": 0.5,
+    "centroid_kev": 1332.75,
+    "fwhm_kev": 1.6180167748020722,
+    "fwtm_kev": 2.847745023166226,
+    "note": "FWHM 3.2 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 2.3 to 7.9 %, FWTM by 2.5 to 4.2 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.023286374311696223,
+     0.07867784965031444
+    ],
+    "fwtm_bin_bias": [
+     0.02468205563138781,
+     0.04163299575362944
+    ],
+    "p_c": 288.61428461081607
+   },
+   "3.5 ch, +0": {
+    "fw_ch": 3.5,
+    "frac": 0.0,
+    "centroid_kev": 1332.5,
+    "fwhm_kev": 1.783241566465449,
+    "fwtm_kev": 3.249450197787837,
+    "note": "FWHM 3.6 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 1.9 to 6.3 %, FWTM by 1.9 to 3.2 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.01899518138517431,
+     0.06332407818221863
+    ],
+    "fwtm_bin_bias": [
+     0.018771349040104468,
+     0.03150631676648974
+    ],
+    "p_c": 268.01136418207557
+   },
+   "3.5 ch, +0.1": {
+    "fw_ch": 3.5,
+    "frac": 0.1,
+    "centroid_kev": 1332.5443807174088,
+    "fwhm_kev": 1.78604384894129,
+    "fwtm_kev": 3.2509873792739654,
+    "note": "FWHM 3.6 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 1.9 to 6.3 %, FWTM by 1.9 to 3.1 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.018933078509837387,
+     0.06310506551246964
+    ],
+    "fwtm_bin_bias": [
+     0.01875298851701901,
+     0.031475111698238134
+    ],
+    "p_c": 267.4299986013851
+   },
+   "3.5 ch, +0.25": {
+    "fw_ch": 3.5,
+    "frac": 0.25,
+    "centroid_kev": 1332.6105862570926,
+    "fwhm_kev": 1.8006773568915833,
+    "fwtm_kev": 3.259045773848129,
+    "note": "FWHM 3.6 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 1.9 to 6.2 %, FWTM by 1.9 to 3.1 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.01861373269194244,
+     0.061980253043466105
+    ],
+    "fwtm_bin_bias": [
+     0.018657184946584637,
+     0.03131229460661045
+    ],
+    "p_c": 264.39851636140503
+   },
+   "3.5 ch, +0.4": {
+    "fw_ch": 3.5,
+    "frac": 0.4,
+    "centroid_kev": 1332.7134232910323,
+    "fwhm_kev": 1.827530606373557,
+    "fwtm_kev": 3.2739428593743014,
+    "note": "FWHM 3.7 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 1.8 to 6.0 %, FWTM by 1.8 to 3.1 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.018048609094360124,
+     0.059995446520508144
+    ],
+    "fwtm_bin_bias": [
+     0.01848203905443535,
+     0.03101467161001792
+    ],
+    "p_c": 258.85976342994485
+   },
+   "3.5 ch, +0.5": {
+    "fw_ch": 3.5,
+    "frac": 0.5,
+    "centroid_kev": 1332.7500000000002,
+    "fwhm_kev": 1.8519774526341735,
+    "fwtm_kev": 3.287640471296072,
+    "note": "FWHM 3.7 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 1.8 to 5.8 %, FWTM by 1.8 to 3.1 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.017556464316822895,
+     0.058272830370820206
+    ],
+    "fwtm_bin_bias": [
+     0.018323205139342047,
+     0.030744807064283286
+    ],
+    "p_c": 253.85041884010099
+   },
+   "4 ch, +0": {
+    "fw_ch": 4.0,
+    "frac": 0.0,
+    "centroid_kev": 1332.5,
+    "fwhm_kev": 2.0290541514755205,
+    "fwtm_kev": 3.697680701578065,
+    "note": "FWHM 4.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 1.5 to 4.8 %, FWTM by 1.4 to 2.4 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.01452707517370766,
+     0.04779328632071489
+    ],
+    "fwtm_bin_bias": [
+     0.014388453693322312,
+     0.02406296242892325
+    ],
+    "p_c": 235.64978197988242
+   },
+   "4 ch, +0.1": {
+    "fw_ch": 4.0,
+    "frac": 0.1,
+    "centroid_kev": 1332.540048670974,
+    "fwhm_kev": 2.0315121772828206,
+    "fwtm_kev": 3.699032557317196,
+    "note": "FWHM 4.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 1.4 to 4.8 %, FWTM by 1.4 to 2.4 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.01449062546086588,
+     0.04766881980858373
+    ],
+    "fwtm_bin_bias": [
+     0.014377687112958393,
+     0.02404469419409394
+    ],
+    "p_c": 235.2550153253619
+   },
+   "4 ch, +0.25": {
+    "fw_ch": 4.0,
+    "frac": 0.25,
+    "centroid_kev": 1332.5998088337767,
+    "fwhm_kev": 2.04438288323081,
+    "fwtm_kev": 3.7061217313857924,
+    "note": "FWHM 4.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 1.4 to 4.7 %, FWTM by 1.4 to 2.4 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.01430202707086714,
+     0.04702515430275489
+    ],
+    "fwtm_bin_bias": [
+     0.01432142671330161,
+     0.02394924012878663
+    ],
+    "p_c": 233.193354360122
+   },
+   "4 ch, +0.4": {
+    "fw_ch": 4.0,
+    "frac": 0.4,
+    "centroid_kev": 1332.6587754897675,
+    "fwhm_kev": 2.0680817596633005,
+    "fwtm_kev": 3.7192428432974793,
+    "note": "FWHM 4.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 1.4 to 4.6 %, FWTM by 1.4 to 2.4 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.013964417995268263,
+     0.04587439923561498
+    ],
+    "fwtm_bin_bias": [
+     0.014218174824812246,
+     0.023774084253468386
+    ],
+    "p_c": 229.41254572652286
+   },
+   "4 ch, +0.5": {
+    "fw_ch": 4.0,
+    "frac": 0.5,
+    "centroid_kev": 1332.7499999999939,
+    "fwhm_kev": 2.0897219297366973,
+    "fwtm_kev": 3.7313124421650627,
+    "note": "FWHM 4.2 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 1.4 to 4.5 %, FWTM by 1.4 to 2.4 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.013666636596606052,
+     0.044860964938341574
+    ],
+    "fwtm_bin_bias": [
+     0.014124192519864742,
+     0.023614682851587743
+    ],
+    "p_c": 225.97720212034767
+   },
+   "5 ch, +0": {
+    "fw_ch": 5.0,
+    "frac": 0.0,
+    "centroid_kev": 1332.4999999999998,
+    "fwhm_kev": 2.5231897574738014,
+    "fwtm_kev": 4.59855728891057,
+    "note": "FWHM 5.0 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 0.9 to 3.0 %, FWTM by 0.9 to 1.5 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.009275945334116242,
+     0.03009115610918922
+    ],
+    "fwtm_bin_bias": [
+     0.009221581830049175,
+     0.015352237728451401
+    ],
+    "p_c": 189.67848284411193
+   },
+   "5 ch, +0.1": {
+    "fw_ch": 5.0,
+    "frac": 0.1,
+    "centroid_kev": 1332.5966142291384,
+    "fwhm_kev": 2.5251706052961254,
+    "fwtm_kev": 4.599644329800412,
+    "note": "FWHM 5.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 0.9 to 3.0 %, FWTM by 0.9 to 1.5 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.009261075177897204,
+     0.030041664644728572
+    ],
+    "fwtm_bin_bias": [
+     0.009217153904196085,
+     0.015344801767638971
+    ],
+    "p_c": 189.47312437667412
+   },
+   "5 ch, +0.25": {
+    "fw_ch": 5.0,
+    "frac": 0.25,
+    "centroid_kev": 1332.6537753500177,
+    "fwhm_kev": 2.5355446699791173,
+    "fwtm_kev": 4.605347089979432,
+    "note": "FWHM 5.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 0.9 to 3.0 %, FWTM by 0.9 to 1.5 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.009183783372700427,
+     0.029784484851016924
+    ],
+    "fwtm_bin_bias": [
+     0.009193977031379141,
+     0.01530588094989005
+    ],
+    "p_c": 188.39865223927302
+   },
+   "5 ch, +0.4": {
+    "fw_ch": 5.0,
+    "frac": 0.4,
+    "centroid_kev": 1332.7114322786304,
+    "fwhm_kev": 2.5546990466989428,
+    "fwtm_kev": 4.615918941875407,
+    "note": "FWHM 5.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 0.9 to 2.9 %, FWTM by 0.9 to 1.5 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.009043615485750056,
+     0.029318374291911864
+    ],
+    "fwtm_bin_bias": [
+     0.00915124400301437,
+     0.015234123379237463
+    ],
+    "p_c": 186.41942197042638
+   },
+   "5 ch, +0.5": {
+    "fw_ch": 5.0,
+    "frac": 0.5,
+    "centroid_kev": 1332.7499999813879,
+    "fwhm_kev": 2.572252090076745,
+    "fwtm_kev": 4.625654087301655,
+    "note": "FWHM 5.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 0.9 to 2.9 %, FWTM by 0.9 to 1.5 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.008917987780980852,
+     0.02890092463832805
+    ],
+    "fwtm_bin_bias": [
+     0.009112158216916466,
+     0.015168494625657614
+    ],
+    "p_c": 184.6109910712786
+   },
+   "6 ch, +0": {
+    "fw_ch": 6.0,
+    "frac": 0.0,
+    "centroid_kev": 1332.5,
+    "fwhm_kev": 3.019291124110623,
+    "fwtm_kev": 5.502810999703797,
+    "note": "FWHM 6.0 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 0.6 to 2.1 %, FWTM by 0.6 to 1.1 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.006435401241948746,
+     0.020711774239610348
+    ],
+    "fwtm_bin_bias": [
+     0.006408652454783725,
+     0.010642869138862476
+    ],
+    "p_c": 158.66511393772836
+   },
+   "6 ch, +0.1": {
+    "fw_ch": 6.0,
+    "frac": 0.1,
+    "centroid_kev": 1332.5375281627505,
+    "fwhm_kev": 3.0209457359865155,
+    "fwtm_kev": 5.503718203170365,
+    "note": "FWHM 6.0 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 0.6 to 2.1 %, FWTM by 0.6 to 1.1 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.006428240438991484,
+     0.020688339762413133
+    ],
+    "fwtm_bin_bias": [
+     0.006406515933601309,
+     0.010639300386635853
+    ],
+    "p_c": 158.54524148228856
+   },
+   "6 ch, +0.25": {
+    "fw_ch": 6.0,
+    "frac": 0.25,
+    "centroid_kev": 1332.5936886825039,
+    "fwhm_kev": 3.0296197749498788,
+    "fwtm_kev": 5.508478500536739,
+    "note": "FWHM 6.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 0.6 to 2.1 %, FWTM by 0.6 to 1.1 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.006390897155951647,
+     0.020566143783214308
+    ],
+    "fwtm_bin_bias": [
+     0.00639532272639598,
+     0.01062060392480424
+    ],
+    "p_c": 157.91740412072178
+   },
+   "6 ch, +0.4": {
+    "fw_ch": 6.0,
+    "frac": 0.4,
+    "centroid_kev": 1332.6495127392673,
+    "fwhm_kev": 3.045664054265444,
+    "fwtm_kev": 5.517307842721493,
+    "note": "FWHM 6.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 0.6 to 2.0 %, FWTM by 0.6 to 1.1 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.0063226813801362525,
+     0.020342985645381173
+    ],
+    "fwtm_bin_bias": [
+     0.006374639661141712,
+     0.010586056994642323
+    ],
+    "p_c": 156.75804818296612
+   },
+   "6 ch, +0.5": {
+    "fw_ch": 6.0,
+    "frac": 0.5,
+    "centroid_kev": 1332.7499974962896,
+    "fwhm_kev": 3.060399671654295,
+    "fwtm_kev": 5.525444247680298,
+    "note": "FWHM 6.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 0.6 to 2.0 %, FWTM by 0.6 to 1.1 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.006260993286044014,
+     0.020141248493510844
+    ],
+    "fwtm_bin_bias": [
+     0.00635566903671414,
+     0.010554371294807963
+    ],
+    "p_c": 155.6954744984237
+   },
+   "7 ch, +0": {
+    "fw_ch": 7.0,
+    "frac": 0.0,
+    "centroid_kev": 1332.5,
+    "fwhm_kev": 3.516186340163358,
+    "fwtm_kev": 6.407459047367638,
+    "note": "FWHM 7.0 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 0.5 to 1.5 %, FWTM by 0.5 to 0.8 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.004725414689193741,
+     0.015139836314590038
+    ],
+    "fwtm_bin_bias": [
+     0.004712801363719432,
+     0.007814852068144473
+    ],
+    "p_c": 136.36322527372212
+   },
+   "7 ch, +0.1": {
+    "fw_ch": 7.0,
+    "frac": 0.1,
+    "centroid_kev": 1332.6033695981807,
+    "fwhm_kev": 3.517604300194307,
+    "fwtm_kev": 6.408222702714966,
+    "note": "FWHM 7.0 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 0.5 to 1.5 %, FWTM by 0.5 to 0.8 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.004721562285489922,
+     0.015127336162904959
+    ],
+    "fwtm_bin_bias": [
+     0.004711668743442532,
+     0.007812966714320524
+    ],
+    "p_c": 136.28734290411427
+   },
+   "7 ch, +0.25": {
+    "fw_ch": 7.0,
+    "frac": 0.25,
+    "centroid_kev": 1332.6581668980227,
+    "fwhm_kev": 3.525039088431413,
+    "fwtm_kev": 6.412229945508443,
+    "note": "FWHM 7.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 0.5 to 1.5 %, FWTM by 0.5 to 0.8 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.004701440220916675,
+     0.015062048893359048
+    ],
+    "fwtm_bin_bias": [
+     0.004705732089892001,
+     0.007803084644217417
+    ],
+    "p_c": 135.8896575042919
+   },
+   "7 ch, +0.4": {
+    "fw_ch": 7.0,
+    "frac": 0.4,
+    "centroid_kev": 1332.7132066180445,
+    "fwhm_kev": 3.538804466136071,
+    "fwtm_kev": 6.419663271359923,
+    "note": "FWHM 7.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 0.5 to 1.5 %, FWTM by 0.5 to 0.8 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.0046645240695670775,
+     0.014942290249207124
+    ],
+    "fwtm_bin_bias": [
+     0.004694749548604049,
+     0.0077848034923879705
+    ],
+    "p_c": 135.15419644496657
+   },
+   "7 ch, +0.5": {
+    "fw_ch": 7.0,
+    "frac": 0.5,
+    "centroid_kev": 1332.749963162799,
+    "fwhm_kev": 3.5514606414171794,
+    "fwtm_kev": 6.426503477085589,
+    "note": "FWHM 7.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 0.5 to 1.5 %, FWTM by 0.5 to 0.8 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.0046309665636790065,
+     0.014833447594845728
+    ],
+    "fwtm_bin_bias": [
+     0.00468467739454681,
+     0.007768038003856947
+    ],
+    "p_c": 134.47886741139467
+   },
+   "12 ch, +0": {
+    "fw_ch": 12.0,
+    "frac": 0.0,
+    "centroid_kev": 1332.5,
+    "fwhm_kev": 5.829043254977023,
+    "fwtm_kev": 10.161501770667655,
+    "note": "",
+    "fwhm_bin_bias": [
+     0.0017070367071794212,
+     0.005425396363207602
+    ],
+    "fwtm_bin_bias": [
+     0.0018644736035244858,
+     0.003084047075865737
+    ],
+    "p_c": 80.18502626156116
+   },
+   "12 ch, +0.1": {
+    "fw_ch": 12.0,
+    "frac": 0.1,
+    "centroid_kev": 1332.5339426966061,
+    "fwhm_kev": 5.829609957334242,
+    "fwtm_kev": 10.161147331968323,
+    "note": "",
+    "fwhm_bin_bias": [
+     0.0017067034737081599,
+     0.005424332462847126
+    ],
+    "fwtm_bin_bias": [
+     0.0018646041130025992,
+     0.003084263293628542
+    ],
+    "p_c": 80.16981993616825
+   },
+   "12 ch, +0.25": {
+    "fw_ch": 12.0,
+    "frac": 0.25,
+    "centroid_kev": 1332.5848406048576,
+    "fwhm_kev": 5.83236256770806,
+    "fwtm_kev": 10.158902681166182,
+    "note": "",
+    "fwhm_bin_bias": [
+     0.0017050862674792278,
+     0.005419169303430893
+    ],
+    "fwtm_bin_bias": [
+     0.001865430944687274,
+     0.0030856331240316504
+    ],
+    "p_c": 80.09003459096604
+   },
+   "12 ch, +0.4": {
+    "fw_ch": 12.0,
+    "frac": 0.4,
+    "centroid_kev": 1332.7095935333089,
+    "fwhm_kev": 5.837286982802652,
+    "fwtm_kev": 10.152848770816718,
+    "note": "",
+    "fwhm_bin_bias": [
+     0.0017021988260339516,
+     0.0054099508469009905
+    ],
+    "fwtm_bin_bias": [
+     0.0018676636892867027,
+     0.003089332171329451
+    ],
+    "p_c": 79.94207492152144
+   },
+   "12 ch, +0.5": {
+    "fw_ch": 12.0,
+    "frac": 0.5,
+    "centroid_kev": 1332.7405882708106,
+    "fwhm_kev": 5.8418993569255235,
+    "fwtm_kev": 10.148188831384232,
+    "note": "",
+    "fwhm_bin_bias": [
+     0.0016995010074554173,
+     0.005401337906891568
+    ],
+    "fwtm_bin_bias": [
+     0.0018693850580251414,
+     0.0030921840184214844
+    ],
+    "p_c": 79.80574228922103
+   }
+  },
+  "round5": {
+   "linear": {
+    "centroid_kev": 1332.5,
+    "fwhm_kev": 2.0290541514755205,
+    "fwtm_kev": 3.697680701578065,
+    "note": "FWHM 4.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 1.5 to 4.8 %, FWTM by 1.4 to 2.4 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.01452707517370766,
+     0.04779328632071489
+    ],
+    "fwtm_bin_bias": [
+     0.014388453693322312,
+     0.02406296242892325
+    ],
+    "p_c": 235.64978197988242,
+    "notes": [
+     "FWHM 4.1 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 1.5 to 4.8 %, FWTM by 1.4 to 2.4 % (centroid on a channel to between two); not corrected"
+    ]
+   },
+   "quadratic": {
+    "centroid_kev": 1332.5130274007079,
+    "fwhm_kev": 2.0611789609121796,
+    "fwtm_kev": 3.730729825747318,
+    "note": "FWHM 3.5 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 2.0 to 6.8 %, FWTM by 2.0 to 3.4 % (centroid on a channel to between two); not corrected",
+    "fwhm_bin_bias": [
+     0.020333344107518858,
+     0.06806496135501638
+    ],
+    "fwtm_bin_bias": [
+     0.020365826350221994,
+     0.03421817122664228
+    ],
+    "p_c": 286.6314956682205,
+    "notes": [
+     "FWHM 3.5 channels: the widths from the channel contents are overestimated by the channel binning, FWHM by 2.0 to 6.8 %, FWTM by 2.0 to 3.4 % (centroid on a channel to between two); not corrected"
+    ]
+   }
+  }
+ },
+ "criteria": {
+  "RG.C1": {
+   "value": "measured FWHM overestimates (up to 7.87 %) inside the stated range for every case",
+   "pass": true
+  },
+  "RG.C2": {
+   "value": "measured FWTM overestimates inside the stated range for every case",
+   "pass": true
+  },
+  "RG.C3": {
+   "value": "note present exactly when the upper bound is >= 1 %, also in the acceptance test notes; absent at 12 channels",
+   "pass": true
+  },
+  "RG.C4": {
+   "value": "centroids, FWHM, FWTM and P/C identical to before",
+   "pass": true
+  }
+ }
+}
