@@ -4,6 +4,10 @@ import os
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 os.environ.setdefault("SPECTRAMASTER_NO_SPLASH", "1")
 
+import pytest  # noqa: E402
+
+pytest.importorskip("PySide6")
+
 from PySide6.QtCore import QSize  # noqa: E402
 from PySide6.QtWidgets import QApplication, QComboBox, QFileDialog  # noqa: E402
 

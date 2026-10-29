@@ -18,6 +18,7 @@ needs_interspec = pytest.mark.skipif(not (IS / "background_20100317.n42").is_fil
 
 @needs_interspec
 def test_n42_detector_type_is_used():
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     from spectramaster.convert import read_spectra
     from spectramaster.analysis.peaks import guess_detector
     for f in ("ba133_source_640s_20100317.n42", "background_20100317.n42"):
@@ -30,6 +31,7 @@ def test_n42_detector_type_is_used():
 def test_measured_background_on_real_pairs():
     """Same-day background subtracted from a Ba-133 measurement, 8 HPGe detectors: the two
     modes agree on Ba-133, and the natural lines (background only) are not detected."""
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     from spectramaster.convert import read_spectra
     from spectramaster.analysis.activity import ActivityOptions, compute_activities
     from spectramaster.validation.benchmark import _flat_curve
@@ -62,6 +64,7 @@ needs_idb = pytest.mark.skipif(not (IDB / "1.spe").is_file(), reason="IAEA IDB s
 def test_idb_spectra_are_read_and_the_detector_type_is_recognised():
     """IAEA IDB v2024-01 (CC BY 4.0, Dipti et al., Sci Data 12, 1868 (2025)): the SPE remark
     names the detector; the guess must agree (CdTe is treated as the CZT resolution class)."""
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     import re
     from spectramaster.convert import read_spectra
     from spectramaster.analysis.peaks import guess_detector
@@ -78,6 +81,7 @@ def test_idb_spectra_are_read_and_the_detector_type_is_recognised():
 def test_idb_plutonium_is_identified_in_hpge_spectra():
     """Pu-239 (lines of 1e-5 to 1e-4 per decay, very high activity) must win its peaks against
     single-line nuclides (Os-191 at 129 keV) in HPGe plutonium spectra."""
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     import re
     from spectramaster.convert import read_spectra
     from spectramaster.analysis import find_peaks, identify

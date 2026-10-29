@@ -33,6 +33,7 @@ def test_registered_codes():
 
 # ------------------------------------------------------------------- ASCII-1
 def test_ascii1_roundtrip(tmp_path):
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     s = synthetic()
     p = tmp_path / "a.txt"
     A.write_ascii1(s, p)

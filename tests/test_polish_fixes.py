@@ -154,6 +154,7 @@ def test_cli_no_args_without_gui_prints_help(monkeypatch, capsys):
 
 
 def test_cli_sum_time_formatting(tmp_path, capsys):
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     from spectramaster.convert import resolve_format, write_spectrum
     from spectramaster.tools.cli_tools import fmt_seconds
     assert fmt_seconds(6261.040000000001) == "6261.04 s"

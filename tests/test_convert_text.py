@@ -47,6 +47,7 @@ def test_ascii_only_set_matches_behaviour(tmp_path, fmt):
 
 
 def test_cli_prints_text_warning(tmp_path, capsys):
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     from spectramaster import cli
     from spectramaster.convert import resolve_format
     src = tmp_path / "a.spe"

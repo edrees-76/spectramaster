@@ -241,6 +241,7 @@ def test_g1_peak_search_spectrum(g1_reference_areas):
 # ------------------------------------------------------------------- timing
 @pytest.mark.skipif(not EU16K.exists(), reason="test corpus not available")
 def test_timing_16k_channels():
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     spec = read_spectra(EU16K)[0][0]
     assert len(spec.counts) == 16384
     peaks = find_peaks(spec)          # warm-up (imports, library load)
@@ -274,6 +275,7 @@ def test_cli_peaks_and_identify():
 
 
 def test_cli_identify_uncalibrated(tmp_path):
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     from spectramaster.cli import main
     p = tmp_path / "x.spe"
     spec = _synthetic([(661.66, 20000)], n=1024)
