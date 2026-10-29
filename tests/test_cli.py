@@ -43,6 +43,7 @@ def test_datamaster_syntax(tmp_path, capsys):
 
 
 def test_datamaster_auto_and_errors(tmp_path, capsys):
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     src = write(tmp_path / "a.json")
     assert cli.main(["-0", str(src), "-7", str(tmp_path / "a.spe")]) == 0
     assert (tmp_path / "a.spe").exists()
@@ -53,6 +54,7 @@ def test_datamaster_auto_and_errors(tmp_path, capsys):
 
 
 def test_convert_folder_recursive_keep_tree(tmp_path, capsys):
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     inp = tmp_path / "in"
     write(inp / "a.json")
     write(inp / "sub" / "b.chn", "ortec_chn")
@@ -116,6 +118,8 @@ def test_gui_import_failure_is_graceful(monkeypatch, capsys):
             raise ImportError("no Qt")
         return real_import(name, *a, **k)
     monkeypatch.setattr(builtins, "__import__", fake)
+    # PySide6 found but the GUI import fails (without PySide6 main() prints the help instead)
+    monkeypatch.setattr(cli, "gui_available", lambda: True)
     assert cli.main([]) == 2
     assert "not available" in capsys.readouterr().err
 

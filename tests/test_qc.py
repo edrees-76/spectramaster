@@ -255,6 +255,7 @@ def _write_series(folder: Path) -> list[Path]:
 
 
 def test_import_folder_sorted_dedup_and_outlier(tmp_path):
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     files = _write_series(tmp_path / "series")
     (tmp_path / "series" / "copy.spe").write_bytes(files[0].read_bytes())     # duplicate
     (tmp_path / "series" / "junk.spe").write_text("not a spectrum")

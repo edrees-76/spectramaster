@@ -196,6 +196,7 @@ def make_archive(root: Path) -> dict:
 
 
 def test_index_archive(tmp_path):
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     root = tmp_path / "archive"
     files = make_archive(root)
     before = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
@@ -234,6 +235,7 @@ def _manifest(path):
 
 
 def test_rescue_verify_and_resume(tmp_path):
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     root = tmp_path / "archive"
     make_archive(root)
     out = tmp_path / "rescued"
@@ -266,6 +268,7 @@ def test_rescue_verify_and_resume(tmp_path):
 
 
 def test_rescue_detects_injected_corruption(tmp_path, monkeypatch):
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     root = tmp_path / "archive"
     make_archive(root)
     fmt = get_format("n42_2012")
@@ -296,6 +299,7 @@ def test_verify_output_energy_refit_warning():
 
 # ------------------------------------------------------------- CLI
 def test_cli_tools(tmp_path, capsys):
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     root = tmp_path / "archive"
     files = make_archive(root)
     assert cli.main(["index", str(root), "-o", str(tmp_path / "c.xlsx"), "-q"]) == 0

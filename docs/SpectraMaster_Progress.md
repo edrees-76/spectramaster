@@ -1494,3 +1494,22 @@ Engine 1.26.0 (unchanged).
 - **Result (`after_R6G`):** 5 PASS / 0 FAIL at the first run; benchmark 154 / 13 / 60 unchanged against
   `after_R6E`; full suite 1583 passed, 69 skipped; one existing test changed (an 8-channel peak now
   carries the note).
+
+## Round-6 external review: test suite portability and the chi-square input format, Gemini L1 / L3 (2026-10-29)
+
+No program change (engine 1.26.0 kept), so no protocol.
+
+- **Confirmed.** Run with SpecUtils and PySide6 made unimportable (pytest-qt disabled, as in a stripped
+  environment), the suite had one collection error (`test_open_dialog_size.py` imported PySide6 before
+  its `importorskip`) and 25 failures instead of skips: 24 tests that read or write a format of the
+  SpecUtils bridge without `importorskip("SpecUtils")` (Gemini counted 15; the others need optional data
+  as well), and `test_gui_import_failure_is_graceful`, which assumed PySide6 present (without it `main()`
+  prints the help and returns 0 before the failing import).
+- **Fix.** `importorskip("PySide6")` before the Qt imports; `importorskip("SpecUtils")` in the 24 tests
+  (in `test_refit_keeps_energies_close` only for the formats SpecUtils registers); the GUI test mocks
+  `gui_available`.
+- **L3.** Section 12.6 of the manual sources already states the counts format (point for decimals, no
+  thousands separator) since R6-C, and 12.5 the binning overestimate since R6-G; the built manuals are
+  regenerated with the final manuals step.
+- **Result.** Stripped environment: 920 passed, 365 skipped, 0 failed (before: 1 collection error, 25
+  failed). Full environment, the 15 changed files: 380 passed, 1 skipped.

@@ -51,6 +51,7 @@ def test_recorded_results_match_the_protocol_limits():
 
 @pytest.mark.skipif(not (ia.DEFAULT_DATA / "spectra").exists(), reason="IAEA 2002 test spectra not present")
 def test_marinelli_reproduces_the_recorded_ratios():
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     if not CURRENT.exists():
         pytest.skip("after_MX1 results not present")
     rec = {(p["spectrum"], p["nuclide"]): p["ratio"]

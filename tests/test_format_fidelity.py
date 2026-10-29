@@ -101,6 +101,7 @@ def test_chn_unknown_date_reads_back_unknown(tmp_path):
 
 
 def test_non_finite_counts_refused(tmp_path):
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     c = [7.0] * 1024
     c[3] = float("nan")
     with pytest.raises(FormatError, match="non-finite"):

@@ -23,6 +23,7 @@ def test_reference_selection_as_pre_registered():
 
 @needs_data
 def test_harness_runs_on_the_laboratory_spectra():
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     res = gv.criteria(gv.analyse(DATA))
     assert list(res["criteria"]) == ["G1", "G2", "G3", "G4", "G5", "G6"]
     assert len(res["spectra"]) == len(gv.SPECTRA)

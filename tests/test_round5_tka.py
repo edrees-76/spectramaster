@@ -20,6 +20,7 @@ def _write(tmp_path, counts, key, name, **kw):
 
 
 def test_tka_named_txt_is_ambiguous(tmp_path):
+    pytest.importorskip("SpecUtils")      # format read or written through SpecUtils
     q = _write(tmp_path, [i % 31 for i in range(1024)], "tka", "a.txt", live_time=100.0, real_time=110.0)
     f, how, cands = detect(q)
     assert f is None and how == "ambiguous" and {c.key for c in cands} == {"ascii1", "tka"}
