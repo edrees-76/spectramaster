@@ -41,14 +41,22 @@ def test_quadratic_window_is_exact_on_a_quadratic_continuum():
 def test_nai_curved_line_gets_a_quadratic_window_with_its_own_threshold(curve):
     ln = _cs_line(NAI, curve)
     assert ln.primary_method == "window" and ln.window_continuum == "quadratic"
-    assert 1.05 < ln.window_lc_counts / ln.lc_counts < 1.35   # wider estimator, own threshold
+    assert 1.05 < ln.window_lc_counts / _linear_lc(ln) < 1.35   # wider estimator, own threshold
     assert "quadratic continuum" in ln.note
 
 
-def test_shared_limits_of_the_line_are_the_linear_ones(curve):
-    ln = _cs_line(NAI, curve)
+def _linear_lc(ln):
+    """L_C of the linear window, the line's limit before round7_quad_limits_protocol.md."""
     _b, n, m, _f = act.continuum_under(_spectrum(NAI), pr.CS, _fw(NAI))
-    assert ln.lc_counts == pytest.approx(act.K_DEFAULT * np.sqrt(ln.continuum * (1 + n / (2 * m))), rel=1e-12)
+    return act.K_DEFAULT * np.sqrt(ln.continuum * (1 + n / (2 * m)))
+
+
+def test_line_reports_the_limits_of_the_quadratic_window(curve):
+    """round7_quad_limits_protocol.md: the limits of the estimator used (were the linear ones)."""
+    ln = _cs_line(NAI, curve)
+    assert ln.lc_counts == ln.window_lc_counts and ln.decision_threshold == ln.window_decision_threshold
+    assert ln.ld_counts == pytest.approx(act.currie_limits(ln.lc_counts / act.K_DEFAULT)[1], rel=1e-12)
+    assert ln.mda == pytest.approx(ln.ld_counts * ln.decision_threshold / ln.lc_counts, rel=1e-12)
 
 
 def _fw(det):
@@ -79,13 +87,13 @@ def test_d2_decides_with_the_quadratic_threshold(curve, monkeypatch):
     ln = _cs_line(NAI, curve, decision="iso11929")
     fwin = act.line_window(_spectrum(NAI), pr.CS, _fw(NAI))[3]
     assert ln.detected == (ln.primary_net * fwin > ln.window_lc_counts)
-    target = 0.5 * (ln.lc_counts + ln.window_lc_counts)             # window counts between the two
+    target = 0.5 * (_linear_lc(ln) + ln.window_lc_counts)           # window counts between the two
     shift = target - ln.primary_net * fwin
     real = act.quadratic_window
     monkeypatch.setattr(act, "quadratic_window",
                         lambda y, lo, hi, m: (lambda q: q and dataclasses.replace(q, b=q.b - shift))(real(y, lo, hi, m)))
     ln2 = _cs_line(NAI, curve, decision="iso11929")
-    assert ln2.lc_counts < ln2.primary_net * fwin < ln2.window_lc_counts and not ln2.detected
+    assert _linear_lc(ln2) < ln2.primary_net * fwin < ln2.window_lc_counts and not ln2.detected
 
 
 def test_new_fields_survive_a_result_round_trip(curve):

@@ -862,7 +862,9 @@ with the QCY48 curve, peak-by-peak background subtraction and concentrations in 
   <tr><td>Primary result</td><td>For a nuclide <b>not detected</b>, the signed window result G − B (gross minus
       continuum in the line's window), which may be negative. It is given for information; the activity column
       still shows <i>&lt; MDA</i>. Window results next to a found peak (<i>interfered</i>) or on a curved continuum
-      where neither a straight nor a quadratic continuum fits (<i>curved</i>) are flagged and not used. The nuclide's
+      where neither a straight nor a quadratic continuum fits (<i>curved</i>) are flagged and not used. A line whose
+      window needs the quadratic continuum reports that window's decision threshold and MDA (the ones its detection
+      uses), and its nuclide inherits them. The nuclide's
       primary result is combined like the activity: the key line, or with <i>weighted mean of lines</i> the weighted mean
       of the usable lines; when the key line is flagged, the usable line with the smallest MDA is used and named in the note.
       A weighted mean above its own decision threshold while no line is detected is noted; the nuclide stays

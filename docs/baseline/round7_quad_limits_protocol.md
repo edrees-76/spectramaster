@@ -72,3 +72,31 @@ Before the change: RD.C1, RD.C2 and RD.C4 fail; RD.C3 is the control.
 - RD.C4's null realisations measure the threshold only; the detection limit is checked by formula
   (RD.C1), not by injected peaks (a peak at the MDA is often found by the search and leaves the
   window path).
+
+---
+
+## Results (`after_R7D`)
+
+Protocol committed in f57e493 before the change (SHA-256 of the file
+314188e32086de5b5768cfd78d73102d01d52f61809ecef7fe610e624748bb8c). Engine 1.30.0.
+
+**5 PASS / 0 FAIL.**
+
+| ID | value | result |
+|---|---|---|
+| RD.C1 | Currie: threshold 8.559 -> 9.931 Bq (quadratic 9.931), MDA 17.20 -> 19.94 Bq (expected 19.94); ISO 11929: threshold 8.559 -> 9.931 Bq, MDA 24.07 -> 27.91 Bq (expected 27.91) | PASS |
+| RD.C2 | Cs-137 nuclide: Currie 8.559 / 17.20 -> 9.931 / 19.94 Bq, ISO 8.559 / 24.07 -> 9.931 / 27.91 Bq; Ba-133 mean: Currie 5.778 / 11.59 -> 6.437 / 12.90 Bq, ISO 5.778 / 16.31 -> 6.437 / 18.17 Bq | PASS |
+| RD.C3 | every other number, decision and note identical to before | PASS |
+| RD.C4 | 195 of 200 quadratic; reported threshold / (k sd) 0.881 -> 1.022; fraction above the reported threshold 0.0615 -> 0.0410 | PASS |
+| RD.C5 | benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against `after_R7C`; full suite 1597 passed, 69 skipped (with the test changes below) | PASS |
+
+RD.C5 is evaluated outside the harness. Changed existing tests, all in `tests/test_window_polynomial.py`,
+because they asserted that the line's limits are the linear ones (the choice this change reverses):
+- `test_shared_limits_of_the_line_are_the_linear_ones` replaced by
+  `test_line_reports_the_limits_of_the_quadratic_window` (L_C and threshold equal the window's, L_D
+  and MDA by the Currie formula);
+- `test_nai_curved_line_gets_a_quadratic_window_with_its_own_threshold` and
+  `test_d2_decides_with_the_quadratic_threshold` compare the quadratic L_C with the linear one, now
+  recomputed in the test (`_linear_lc`) instead of read from `lc_counts`.
+
+Also changed: the manuals (sources), primary result row.
