@@ -804,7 +804,9 @@ validated by the laboratory.</div>
       <i>Auto (cross-validation)</i> or explicit. Click <b>Measure &amp; Fit</b>: each line becomes a point (net area,
       efficiency, uncertainty, fitted value, residual). With a background spectrum the peaks are fitted on
       sample − k × background with its propagated variance. Untick <b>Use</b> for a doubtful point (a reason is asked
-      and recorded) and press <b>Refit</b>; <b>Add manual point</b> adds a point by hand. Amber rows are cascade
+      and recorded) and press <b>Refit</b>; <b>Add manual point</b> adds a point by hand (its energy, efficiency and
+      uncertainty must be numbers above 0 with a decimal point; an invalid cell is named and nothing is fitted or saved
+      until it is corrected). Amber rows are cascade
       emitters (section <a href="#q-tcs">9.5</a>).</li>
   <li><b>4. Independent validation.</b> Measure a second source that was <b>not</b> used in the fit, with the same
       detector and geometry: <b>Measure and compare</b> lists measured and curve efficiency, deviation and z for each
@@ -1019,7 +1021,10 @@ Cs-134 lines are corrected (section <a href="#q-tcs">9.5</a>). Further notes lis
 live-time ratio (k = 3.31) and the decision rule.</p>
 <p>Without <code>--cert</code> the certificate is taken from the Aptec records in the <code>.S0</code> file;
 <code>--compare</code> lists the difference to Aptec's own stored efficiencies (here within ±6 %). A certificate
-CSV has the columns <code>nuclide,activity_bq,unc_percent,ref_date[,half_life_s,energy_kev,intensity_percent]</code>.</p>
+CSV has the columns <code>nuclide,activity_bq,unc_percent,ref_date[,half_life_s,energy_kev,intensity_percent]</code>
+(<code>unc_bq</code> may replace <code>unc_percent</code>). An unknown column, a header without an uncertainty column,
+an intensity above 100 %, an energy without its intensity, or a second row of a nuclide whose activity, uncertainty,
+reference date or half-life differs from its first row is refused with the row named.</p>
 <div class="note"><b>About this example.</b> The two files were measured in different set-ups (a 10 ml bottle
 on a 10 % HPGe and a rag wipe in another geometry); the example only shows the workflow. In practice the
 standard and the sample must share detector and geometry.</div>
@@ -1143,7 +1148,8 @@ tolerance lines, violations labelled.</figcaption></figure>
   <li>name, detector, detector type (HPGe, NaI, LaBr3, CZT), type (check source / background);</li>
   <li><b>monitored lines</b> — from a preset (Cs-137, Co-60, Cs-137 + Co-60, Eu-152, Ba-133, Am-241, Na-22,
       Background) or typed as <code>keV[:nuclide[:FWHM max]]</code>, e.g.
-      <code>661.657:Cs-137, 1332.492:Co-60:2.0</code>;</li>
+      <code>661.657:Cs-137, 1332.492:Co-60:2.0</code> (energies and FWHM above 0, a decimal point; a comma between
+      digits is refused);</li>
   <li>reference date and reference activity (for decay correction; a unit may follow the number, e.g.
       <code>Cs-137=1 µCi</code>, Bq when none; nuclides separated by <code>;</code>, a new line or a comma; a point for
       decimals and no thousands separator, so <code>1,000</code> is refused; an activity must be above 0; a name such

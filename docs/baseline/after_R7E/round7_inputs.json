@@ -1,0 +1,522 @@
+{
+ "observations": {
+  "C1": {
+   "4:0,02": {
+    "refit": false,
+    "curve": false,
+    "messages": [
+     "Row 1, Efficiency: '0,02' is not a number above 0 (decimal point, no comma). Correct it before fitting.",
+     "Row 1, Efficiency: '0,02' is not a number above 0 (decimal point, no comma). Correct it before fitting."
+    ],
+    "point": [
+     100.0,
+     0.05,
+     0.02
+    ],
+    "saved": false,
+    "shown": "0,02"
+   },
+   "4:-0.01": {
+    "refit": false,
+    "curve": false,
+    "messages": [
+     "Row 1, Efficiency: '-0.01' is not a number above 0 (decimal point, no comma). Correct it before fitting.",
+     "Row 1, Efficiency: '-0.01' is not a number above 0 (decimal point, no comma). Correct it before fitting."
+    ],
+    "point": [
+     100.0,
+     0.05,
+     0.02
+    ],
+    "saved": false,
+    "shown": "-0.01"
+   },
+   "4:nan": {
+    "refit": false,
+    "curve": false,
+    "messages": [
+     "Row 1, Efficiency: 'nan' is not a number above 0 (decimal point, no comma). Correct it before fitting.",
+     "Row 1, Efficiency: 'nan' is not a number above 0 (decimal point, no comma). Correct it before fitting."
+    ],
+    "point": [
+     100.0,
+     0.05,
+     0.02
+    ],
+    "saved": false,
+    "shown": "nan"
+   },
+   "4:0": {
+    "refit": false,
+    "curve": false,
+    "messages": [
+     "Row 1, Efficiency: '0' is not a number above 0 (decimal point, no comma). Correct it before fitting.",
+     "Row 1, Efficiency: '0' is not a number above 0 (decimal point, no comma). Correct it before fitting."
+    ],
+    "point": [
+     100.0,
+     0.05,
+     0.02
+    ],
+    "saved": false,
+    "shown": "0"
+   },
+   "4:abc": {
+    "refit": false,
+    "curve": false,
+    "messages": [
+     "Row 1, Efficiency: 'abc' is not a number above 0 (decimal point, no comma). Correct it before fitting.",
+     "Row 1, Efficiency: 'abc' is not a number above 0 (decimal point, no comma). Correct it before fitting."
+    ],
+    "point": [
+     100.0,
+     0.05,
+     0.02
+    ],
+    "saved": false,
+    "shown": "abc"
+   },
+   "4:": {
+    "refit": false,
+    "curve": false,
+    "messages": [
+     "Row 1, Efficiency: '' is not a number above 0 (decimal point, no comma). Correct it before fitting.",
+     "Row 1, Efficiency: '' is not a number above 0 (decimal point, no comma). Correct it before fitting."
+    ],
+    "point": [
+     100.0,
+     0.05,
+     0.02
+    ],
+    "saved": false,
+    "shown": ""
+   },
+   "2:inf": {
+    "refit": false,
+    "curve": false,
+    "messages": [
+     "Row 1, Energy (keV): 'inf' is not a number above 0 (decimal point, no comma). Correct it before fitting.",
+     "Row 1, Energy (keV): 'inf' is not a number above 0 (decimal point, no comma). Correct it before fitting."
+    ],
+    "point": [
+     100.0,
+     0.05,
+     0.02
+    ],
+    "saved": false,
+    "shown": "inf"
+   },
+   "2:-100": {
+    "refit": false,
+    "curve": false,
+    "messages": [
+     "Row 1, Energy (keV): '-100' is not a number above 0 (decimal point, no comma). Correct it before fitting.",
+     "Row 1, Energy (keV): '-100' is not a number above 0 (decimal point, no comma). Correct it before fitting."
+    ],
+    "point": [
+     100.0,
+     0.05,
+     0.02
+    ],
+    "saved": false,
+    "shown": "-100"
+   },
+   "2:1,5": {
+    "refit": false,
+    "curve": false,
+    "messages": [
+     "Row 1, Energy (keV): '1,5' is not a number above 0 (decimal point, no comma). Correct it before fitting.",
+     "Row 1, Energy (keV): '1,5' is not a number above 0 (decimal point, no comma). Correct it before fitting."
+    ],
+    "point": [
+     100.0,
+     0.05,
+     0.02
+    ],
+    "saved": false,
+    "shown": "1,5"
+   },
+   "5:1,5": {
+    "refit": false,
+    "curve": false,
+    "messages": [
+     "Row 1, Unc. %: '1,5' is not a number above 0 (decimal point, no comma). Correct it before fitting.",
+     "Row 1, Unc. %: '1,5' is not a number above 0 (decimal point, no comma). Correct it before fitting."
+    ],
+    "point": [
+     100.0,
+     0.05,
+     0.02
+    ],
+    "saved": false,
+    "shown": "1,5"
+   },
+   "5:-2": {
+    "refit": false,
+    "curve": false,
+    "messages": [
+     "Row 1, Unc. %: '-2' is not a number above 0 (decimal point, no comma). Correct it before fitting.",
+     "Row 1, Unc. %: '-2' is not a number above 0 (decimal point, no comma). Correct it before fitting."
+    ],
+    "point": [
+     100.0,
+     0.05,
+     0.02
+    ],
+    "saved": false,
+    "shown": "-2"
+   },
+   "5:nan": {
+    "refit": false,
+    "curve": false,
+    "messages": [
+     "Row 1, Unc. %: 'nan' is not a number above 0 (decimal point, no comma). Correct it before fitting.",
+     "Row 1, Unc. %: 'nan' is not a number above 0 (decimal point, no comma). Correct it before fitting."
+    ],
+    "point": [
+     100.0,
+     0.05,
+     0.02
+    ],
+    "saved": false,
+    "shown": "nan"
+   },
+   "5:0": {
+    "refit": false,
+    "curve": false,
+    "messages": [
+     "Row 1, Unc. %: '0' is not a number above 0 (decimal point, no comma). Correct it before fitting.",
+     "Row 1, Unc. %: '0' is not a number above 0 (decimal point, no comma). Correct it before fitting."
+    ],
+    "point": [
+     100.0,
+     0.05,
+     0.02
+    ],
+    "saved": false,
+    "shown": "0"
+   },
+   "5:": {
+    "refit": false,
+    "curve": false,
+    "messages": [
+     "Row 1, Unc. %: '' is not a number above 0 (decimal point, no comma). Correct it before fitting.",
+     "Row 1, Unc. %: '' is not a number above 0 (decimal point, no comma). Correct it before fitting."
+    ],
+    "point": [
+     100.0,
+     0.05,
+     0.02
+    ],
+    "saved": false,
+    "shown": ""
+   },
+   "4:0.02": {
+    "refit": true,
+    "curve": true,
+    "messages": [],
+    "point": [
+     100.0,
+     0.02,
+     0.02
+    ],
+    "saved": true,
+    "shown": "0.02"
+   },
+   "2:120": {
+    "refit": true,
+    "curve": true,
+    "messages": [],
+    "point": [
+     120.0,
+     0.05,
+     0.02
+    ],
+    "saved": true,
+    "shown": "120"
+   },
+   "5:3.5": {
+    "refit": true,
+    "curve": true,
+    "messages": [],
+    "point": [
+     100.0,
+     0.05,
+     0.035
+    ],
+    "saved": true,
+    "shown": "3.5"
+   }
+  },
+  "C2": {
+   "inf:Cs-137": "ValueError: 'inf:Cs-137': 'inf' is not a number above 0",
+   "nan:Cs-137": "ValueError: 'nan:Cs-137': 'nan' is not a number above 0",
+   "661.657:Cs-137:nan": "ValueError: '661.657:Cs-137:nan': 'nan' is not a number above 0",
+   "661.657:Cs-137:inf": "ValueError: '661.657:Cs-137:inf': 'inf' is not a number above 0",
+   "661.657:Cs-137:-5": "ValueError: '661.657:Cs-137:-5': '-5' is not a number above 0",
+   "661.657:Cs-137:0": "ValueError: '661.657:Cs-137:0': '0' is not a number above 0",
+   "661,657:Cs-137": "ValueError: a comma between digits in '661,657:Cs-137': use a decimal point, and ';' or ', ' between lines",
+   "661.657:Cs-137:1,5": "ValueError: a comma between digits in '661.657:Cs-137:1,5': use a decimal point, and ';' or ', ' between lines",
+   "abc:Cs-137": "ValueError: 'abc:Cs-137': 'abc' is not a number above 0",
+   "661.657:Cs-137, 1332.492:Co-60:2.0": [
+    [
+     661.657,
+     "Cs-137",
+     null
+    ],
+    [
+     1332.492,
+     "Co-60",
+     2.0
+    ]
+   ],
+   "661.657; 1332.492": [
+    [
+     661.657,
+     "",
+     null
+    ],
+    [
+     1332.492,
+     "",
+     null
+    ]
+   ],
+   "1460.82:K-40:3\n661.657:Cs-137": [
+    [
+     661.657,
+     "Cs-137",
+     null
+    ],
+    [
+     1460.82,
+     "K-40",
+     3.0
+    ]
+   ]
+  },
+  "C3": {
+   "second row other activity": "ValueError: certificate CSV, row 2: Eu-152 activity, uncertainty differ(s) from its first row",
+   "second row other uncertainty": "ValueError: certificate CSV, row 2: Eu-152 uncertainty differ(s) from its first row",
+   "second row other date": "ValueError: certificate CSV, row 2: Eu-152 reference date differ(s) from its first row",
+   "second row invalid date": "ValueError: certificate CSV, row 2: unrecognised date: 'INVALID_DATE'",
+   "second row other half-life": "ValueError: certificate CSV, row 2: Eu-152 half-life differ(s) from its first row",
+   "second row invalid half-life": "ValueError: certificate CSV, row 2: half_life_s '-50' is not a number above 0",
+   "unknown column": "ValueError: certificate CSV: unknown column(s) ['uncertainty_pct']; known: nuclide, activity_bq, activity, unc_percent, unc_%, unc_bq, ref_date, half_life_s, energy_kev, intensity_percent",
+   "no uncertainty column": "ValueError: certificate CSV: no uncertainty column (unc_percent, unc_% or unc_bq)",
+   "intensity above 100": "ValueError: certificate CSV, row 1: intensity_percent 185.1 is above 100",
+   "energy without intensity": "ValueError: certificate CSV, row 1: energy_kev and intensity_percent go together",
+   "intensity without energy": "ValueError: certificate CSV, row 1: energy_kev and intensity_percent go together",
+   "two lines, same data": [
+    [
+     "Eu-152",
+     1000.0,
+     20.0,
+     "2020-01-01 12:00:00",
+     427000000.0,
+     [
+      [
+       121.78,
+       0.285
+      ],
+      [
+       344.28,
+       0.266
+      ]
+     ]
+    ]
+   ],
+   "library lines": [
+    [
+     "Cs-137",
+     1000.0,
+     20.0,
+     "2020-01-01 12:00:00",
+     949000000.0,
+     null
+    ],
+    [
+     "Co-60",
+     2000.0,
+     30.0,
+     "2020-01-01 00:00:00",
+     null,
+     null
+    ]
+   ],
+   "no header": [
+    [
+     "Cs-137",
+     1000.0,
+     20.0,
+     "2020-01-01 00:00:00",
+     null,
+     null
+    ],
+    [
+     "Co-60",
+     2000.0,
+     30.0,
+     "2020-01-01 00:00:00",
+     null,
+     null
+    ]
+   ],
+   "unc in Bq": [
+    [
+     "Cs-137",
+     1000.0,
+     20.0,
+     "2020-01-01 00:00:00",
+     null,
+     null
+    ]
+   ],
+   "second row date written otherwise": [
+    [
+     "Eu-152",
+     1000.0,
+     20.0,
+     "2020-01-01 12:00:00",
+     427000000.0,
+     [
+      [
+       121.78,
+       0.285
+      ],
+      [
+       344.28,
+       0.266
+      ]
+     ]
+    ]
+   ],
+   "written by the program": [
+    [
+     "Eu-152",
+     1000.0,
+     20.0,
+     "2020-01-01 12:00:00",
+     427000000.0,
+     [
+      [
+       121.78,
+       0.285
+      ],
+      [
+       344.28,
+       0.266
+      ]
+     ]
+    ],
+    [
+     "Cs-137",
+     500.0,
+     10.0,
+     "2020-01-01 00:00:00",
+     null,
+     null
+    ]
+   ]
+  },
+  "C4": {
+   "good": [
+    [
+     "Cs-137",
+     661.657,
+     0.851,
+     1000.0,
+     20.0,
+     949000000.0
+    ]
+   ],
+   "no half-life": [
+    [
+     "Cs-137",
+     661.657,
+     0.851,
+     1000.0,
+     20.0,
+     null
+    ]
+   ],
+   "nan energy": "ValueError: Aptec source record Cs-137 nan keV: energy nan is not a finite number, not negative",
+   "inf energy": "ValueError: Aptec source record Cs-137 inf keV: energy inf is not a finite number, not negative",
+   "negative energy": "ValueError: Aptec source record Cs-137 -661.657 keV: energy -661.657 is not a finite number, not negative",
+   "nan yield": "ValueError: Aptec source record Cs-137 661.657 keV: yield nan is not a finite number, not negative",
+   "inf yield": "ValueError: Aptec source record Cs-137 661.657 keV: yield inf is not a finite number, not negative",
+   "yield above 1": "ValueError: Aptec source record Cs-137 661.657 keV: energy above 0 and yield at most 1 expected (yield 1.5)",
+   "nan activity": "ValueError: Aptec source record Cs-137 661.657 keV: activity nan is not a finite number, not negative",
+   "inf activity": "ValueError: Aptec source record Cs-137 661.657 keV: activity inf is not a finite number, not negative",
+   "nan uncertainty": "ValueError: Aptec source record Cs-137 661.657 keV: activity uncertainty % nan is not a finite number, not negative",
+   "negative uncertainty": "ValueError: Aptec source record Cs-137 661.657 keV: activity uncertainty % -2.0 is not a finite number, not negative",
+   "nan half-life": "ValueError: Aptec source record Cs-137 661.657 keV: half-life nan is not a finite number, not negative",
+   "inf half-life": "ValueError: Aptec source record Cs-137 661.657 keV: half-life inf is not a finite number, not negative",
+   "empty slot": [
+    [
+     "Cs-137",
+     661.657,
+     0.851,
+     1000.0,
+     20.0,
+     949000000.0
+    ]
+   ],
+   "zero activity": [
+    [
+     "Cs-137",
+     661.657,
+     0.851,
+     1000.0,
+     20.0,
+     949000000.0
+    ]
+   ],
+   "zero yield": [
+    [
+     "Cs-137",
+     661.657,
+     0.851,
+     1000.0,
+     20.0,
+     949000000.0
+    ]
+   ]
+  },
+  "C5": {
+   "-5.0": "ValueError: not a finite activity, not negative: -5.0 Bq",
+   "-1e-09": "ValueError: not a finite activity, not negative: -1e-09 Bq",
+   "0.0": 0.0,
+   "12345.678": 12345.678,
+   "0.001": 0.001,
+   "after a refusal": 12345.678
+  }
+ },
+ "criteria": [
+  {
+   "id": "RE.C1",
+   "pass": true,
+   "value": "refused with the row named, nothing fitted or saved: 14 of 14 (not: []); valid edits as before: True"
+  },
+  {
+   "id": "RE.C2",
+   "pass": true,
+   "value": "refused 9 of 9 (not: []); valid as before: True"
+  },
+  {
+   "id": "RE.C3",
+   "pass": true,
+   "value": "refused 11 of 11 (not: []); valid files as before: True"
+  },
+  {
+   "id": "RE.C4",
+   "pass": true,
+   "value": "refused 12 of 12 (not: []); valid records and skipped empty slots as before: True"
+  },
+  {
+   "id": "RE.C5",
+   "pass": true,
+   "value": "refused 2 of 2 (not: []); valid as before and the previous value kept: True"
+  }
+ ]
+}

@@ -1584,3 +1584,18 @@ Engine 1.30.0.
   line or weighted mean) inherits them.
 - **Result (`after_R7D`):** 5 PASS / 0 FAIL (threshold 1.02 x k sigma, 4.1 % above it); benchmark
   154 / 13 / 60 unchanged against `after_R7C`; three `test_window_polynomial.py` tests changed.
+
+## Round-7 external review: input validation, Codex M1 and Gemini M4 (2026-10-29)
+
+Protocol `docs/baseline/round7_inputs_protocol.md`, committed before the change (5bf16c1).
+
+- **Confirmed.** Invalid manual efficiency cells were ignored silently (the fit and the save used the
+  old value while the cell showed the new text); QC lines accepted inf / nan / negative values and
+  split a decimal comma into two lines; the certificate CSV ignored later rows' activity, date and
+  half-life, gave a zero uncertainty for an unknown column, accepted intensities above 100 %; Aptec
+  source records were not checked for finite values; `set_bq` accepted a negative activity.
+- **Fix.** Each is refused with a message naming the row / value; an invalid manual cell clears the
+  curve until corrected; valid inputs give the same results.
+- **Result (`after_R7E`):** runs 1 and 2 4 PASS / 1 FAIL from two harness comparison errors (kept,
+  disclosed), run 3 5 PASS / 0 FAIL; benchmark unchanged; suite 1638 passed (one run exited 127 after
+  passing, not reproduced; Codex M2, R7-G).

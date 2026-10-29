@@ -63,6 +63,8 @@ EN = {
     "eff_no_cert": "The certificate table is empty.",
     "eff_no_aptec": "This file holds no Aptec source records.",
     "eff_failed": "Efficiency calibration failed:\n{msg}",
+    "eff_bad_cell": "Row {row}, {col}: {text!r} is not a number above 0 (decimal point, no comma). "
+                    "Correct it before fitting.",
     "eff_saved": "Efficiency curve saved:\n{path}",
     "eff_plot_title": "ε(E)",
     "eff_plot_resid": "residual %",
@@ -204,6 +206,8 @@ AR = {
     "eff_no_cert": "جدول الشهادة فارغ.",
     "eff_no_aptec": "لا يحتوي هذا الملف على سجلات مصدر Aptec.",
     "eff_failed": "فشلت معايرة الكفاءة:\n{msg}",
+    "eff_bad_cell": "الصف {row}، {col}: القيمة {text!r} ليست عددًا أكبر من 0 (بنقطة عشرية ودون فاصلة). "
+                    "صحّحها قبل الملاءمة.",
     "eff_saved": "حُفظ منحنى الكفاءة:\n{path}",
     "eff_plot_title": "ε(E)",
     "eff_plot_resid": "المتبقي %",
