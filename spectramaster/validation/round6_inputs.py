@@ -17,6 +17,7 @@ import sys
 import tempfile
 from datetime import datetime
 from pathlib import Path
+from typing import Optional
 
 import numpy as np
 
@@ -222,6 +223,23 @@ def collect() -> dict:
     return {"engine": ENGINE_VERSION, "C1": c1(), "C2": c2(), "C3": c3(), "C4": c4(), "C5": c5(), "C678": c678()}
 
 
+def _clean_numbers(v: dict) -> list:
+    """The clean spectrum's numbers (RC.C5), compared exactly; the width note is compared apart."""
+    return [v["peak_width"][:3], v["peak_to_compton"], v["net_area"], v["relative_efficiency"]]
+
+
+def _clean_note(v: dict, before: dict) -> Optional[str]:
+    """'as before', 'R6-G channel-binning note' (round6_fwhm_protocol.md, the intended change), or None
+    (round-7 review, Codex L1: a re-run compared the note added by R6-G as a measurement)."""
+    note, old = v["peak_width"][3], before["peak_width"][3]
+    if note == old:
+        return "as before"
+    if (isinstance(note, str) and note.startswith("FWHM") and "overestimated by the channel binning" in note
+            and note.endswith("not corrected")):
+        return "R6-G channel-binning note"
+    return None
+
+
 def criteria(m: dict, b: dict) -> list[dict]:
     r1 = m["C1"]
     exact = (r1["edited"] == [["Cs-137", 2000.0, 40.0, None, None]] and r1["edited_then_kBq"] == [["Cs-137", 2000.0, 40.0, None, None]]
@@ -237,7 +255,9 @@ def criteria(m: dict, b: dict) -> list[dict]:
     c4_ok = not bad4 and r4["good"] == b["C4"]["good"] and bool(r4["good"]) and not _refused(r4["good"])
     r5 = m["C5"]
     bad5 = [f"{k}/{f}" for k, v in r5.items() if k != "clean" for f, x in v.items() if not _refused(x)]
-    c5_ok = not bad5 and r5["clean"] == b["C5"]["clean"]
+    nums5 = _clean_numbers(r5["clean"]) == _clean_numbers(b["C5"]["clean"])
+    note5 = _clean_note(r5["clean"], b["C5"]["clean"])
+    c5_ok = not bad5 and nums5 and note5 is not None
     q = m["C678"]
     bad6 = [t for t, v in q["counts"]["bad"].items() if not _refused(v)]
     c6_ok = not bad6 and q["counts"]["good"] == b["C678"]["counts"]["good"]
@@ -258,8 +278,8 @@ def criteria(m: dict, b: dict) -> list[dict]:
                                                 f"valid file as before: {r3['good'] == b['C3']['good']}"},
         {"id": "RC.C4", "pass": c4_ok, "value": f"refused {len(LINE_BAD) - len(bad4)} of {len(LINE_BAD)} (not: {bad4}); "
                                                 f"valid line as before: {r4['good'] == b['C4']['good']}"},
-        {"id": "RC.C5", "pass": c5_ok, "value": f"not refused: {bad5}; clean spectrum as before: "
-                                                f"{r5['clean'] == b['C5']['clean']}"},
+        {"id": "RC.C5", "pass": c5_ok, "value": f"not refused: {bad5}; clean spectrum numbers as before: {nums5}; "
+                                                f"width note: {note5 or 'neither the before note nor the R6-G note'}"},
         {"id": "RC.C6", "pass": c6_ok, "value": f"refused {len(COUNTS_BAD) - len(bad6)} of {len(COUNTS_BAD)}; "
                                                 f"valid text {q['counts']['good']}"},
         {"id": "RC.C7", "pass": c7_ok, "value": f"refused {len(QC_BAD) - len(bad7)} of {len(QC_BAD)}; read as registered "
@@ -272,9 +292,11 @@ def criteria(m: dict, b: dict) -> list[dict]:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--collect", action="store_true", help="write the before values (fixed file)")
+    ap.add_argument("--out", type=Path, default=OUT, help="results folder of a re-run (default: the fixed after_R6C)")
     a = ap.parse_args(argv)
     m = collect()
-    OUT.mkdir(parents=True, exist_ok=True)
+    out = a.out
+    out.mkdir(parents=True, exist_ok=True)
     if a.collect:
         BEFORE_JSON.write_text(json.dumps(m, indent=1, ensure_ascii=False, default=str), encoding="utf-8", newline="\n")
         return 0
@@ -282,12 +304,12 @@ def main(argv=None) -> int:
     # compare as stored: tuples become lists, as in the before file (first run: 3 false FAILs)
     m = json.loads(json.dumps(m, ensure_ascii=False, default=str))
     cs = criteria(m, b)
-    (OUT / "round6_inputs.json").write_text(json.dumps({"measured": m, "criteria": cs}, indent=1, ensure_ascii=False,
+    (out / "round6_inputs.json").write_text(json.dumps({"measured": m, "criteria": cs}, indent=1, ensure_ascii=False,
                                                        default=str), encoding="utf-8", newline="\n")
     lines = ["# Round-6 review: input validation", "", "Protocol: `docs/baseline/round6_inputs_protocol.md`.", "",
              "| ID | result | value |", "|---|---|---|"]
     lines += [f"| {c['id']} | {'PASS' if c['pass'] else 'FAIL'} | {c['value']} |" for c in cs]
-    (OUT / "round6_inputs.md").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
+    (out / "round6_inputs.md").write_text("\n".join(lines) + "\n", encoding="utf-8", newline="\n")
     print(", ".join(f"{c['id']}:{'PASS' if c['pass'] else 'FAIL'}" for c in cs))
     return 1 if any(not c["pass"] for c in cs) else 0
 

@@ -66,13 +66,15 @@ def test_detector_test_refuses_non_finite_counts(fn):
 
 
 @pytest.mark.parametrize("text", r6.COUNTS_BAD)
-def test_parse_counts_refuses(app, text):
+def test_parse_counts_refuses(text):
+    pytest.importorskip("PySide6")                  # the module imports Qt; no application is needed
     from spectramaster.gui.detector_test_dialog import parse_counts
     with pytest.raises(ValueError):
         parse_counts(text)
 
 
-def test_qc_activity(app):
+def test_qc_activity():
+    pytest.importorskip("PySide6")
     from spectramaster.gui.qc_window import _parse_activity
     assert _parse_activity("Cs137=37000, Co60=1 uCi") == {"Cs-137": 37000.0, "Co-60": 37000.0}
     for text in r6.QC_BAD:
