@@ -189,7 +189,10 @@ def read_certificate_csv(path) -> list[CertNuclide]:
         nuclide, activity_bq, unc_percent | unc_bq, ref_date [, half_life_s] [, energy_kev, intensity_percent]
 
     Without a header the column order is nuclide, activity_bq, unc_percent, ref_date.
-    Rows of the same nuclide that give energy+intensity define that nuclide's lines explicitly.
+    Rows of the same nuclide that give energy+intensity define that nuclide's lines explicitly; they
+    repeat the nuclide's activity, uncertainty, reference date and half-life.  An unknown column, a
+    header without an uncertainty column, a later row that disagrees, an intensity above 100 % and
+    an energy without intensity (or the reverse) raise ValueError (round7_inputs_protocol.md).
     """
     rows = []
     with open(path, newline="", encoding="utf-8-sig") as fh:
@@ -205,6 +208,11 @@ def read_certificate_csv(path) -> list[CertNuclide]:
                   "intensity_percent"]
     except (ValueError, IndexError):
         header = [h.lower().replace(" ", "_") for h in rows.pop(0)]
+        unknown = [h for h in header if h and h not in CERT_CSV_COLUMNS]
+        if unknown:
+            raise ValueError(f"certificate CSV: unknown column(s) {unknown}; known: {', '.join(CERT_CSV_COLUMNS)}")
+        if not {"unc_percent", "unc_%", "unc_bq"} & set(header):
+            raise ValueError("certificate CSV: no uncertainty column (unc_percent, unc_% or unc_bq)")
     by: dict[str, CertNuclide] = {}
     for n, r in enumerate(rows, 1):
         d = {header[i]: r[i] for i in range(min(len(header), len(r)))}
@@ -230,13 +238,37 @@ def read_certificate_csv(path) -> list[CertNuclide]:
             unc = act * num("unc_percent" if d.get("unc_percent") else "unc_%", positive=False) / 100.0
         else:
             unc = 0.0
+        try:
+            ref = parse_date(d.get("ref_date"))
+        except ValueError as exc:
+            raise ValueError(f"certificate CSV, row {n}: {exc}") from None
+        hl = num("half_life_s") if d.get("half_life_s") else None
         c = by.get(name)
         if c is None:
-            c = by[name] = CertNuclide(name, act, unc, parse_date(d.get("ref_date")),
-                                       num("half_life_s") if d.get("half_life_s") else None)
-        if d.get("energy_kev") and d.get("intensity_percent"):
-            c.lines = (c.lines or []) + [(num("energy_kev"), num("intensity_percent") / 100.0)]
+            c = by[name] = CertNuclide(name, act, unc, ref, hl)
+        else:
+            def same(a, b):
+                return (a is None and b is None) or (a is not None and b is not None
+                                                      and math.isclose(a, b, rel_tol=1e-9, abs_tol=0.0))
+            diff = [k for k, a, b in (("activity", act, c.activity), ("uncertainty", unc, c.activity_unc),
+                                      ("half-life", hl, c.half_life_s)) if not same(a, b)]
+            if ref != c.ref_date:
+                diff.append("reference date")
+            if diff:
+                raise ValueError(f"certificate CSV, row {n}: {name} {', '.join(diff)} differ(s) from its first row")
+        has_e, has_i = bool(d.get("energy_kev")), bool(d.get("intensity_percent"))
+        if has_e != has_i:
+            raise ValueError(f"certificate CSV, row {n}: energy_kev and intensity_percent go together")
+        if has_e:
+            pct = num("intensity_percent")
+            if pct > 100.0:
+                raise ValueError(f"certificate CSV, row {n}: intensity_percent {pct:g} is above 100")
+            c.lines = (c.lines or []) + [(num("energy_kev"), pct / 100.0)]
     return list(by.values())
+
+
+CERT_CSV_COLUMNS = ("nuclide", "activity_bq", "activity", "unc_percent", "unc_%", "unc_bq", "ref_date",
+                    "half_life_s", "energy_kev", "intensity_percent")
 
 
 def write_certificate_csv(path, entries: Sequence[CertNuclide]) -> Path:
@@ -360,14 +392,25 @@ def aptec_source_records(data) -> list[AptecSourceRecord]:
 
 
 def certificate_from_aptec(records: Sequence[AptecSourceRecord]) -> list[CertLine]:
-    """Certificate lines (Aptec's own energies, yields, half-lives and activities)."""
+    """Certificate lines (Aptec's own energies, yields, half-lives and activities).  Empty slots (no
+    nuclide, activity or yield 0) are skipped; a record with a value that is not finite, negative, or
+    a yield above 1 raises ValueError (round7_inputs_protocol.md)."""
     out = []
     for r in records:
+        if not r.nuclide or not r.activity or not r.yield_:
+            continue
+        what = f"Aptec source record {r.nuclide} {r.energy!r} keV"
+        for k, v in (("energy", r.energy), ("yield", r.yield_), ("activity", r.activity),
+                     ("activity uncertainty %", r.activity_unc_pct), ("half-life", r.half_life_s)):
+            if not math.isfinite(v) or v < 0:
+                raise ValueError(f"{what}: {k} {v!r} is not a finite number, not negative")
+        if r.energy <= 0 or r.yield_ > 1.0:
+            raise ValueError(f"{what}: energy above 0 and yield at most 1 expected (yield {r.yield_!r})")
         a = r.total_activity_bq
-        if not r.nuclide or not a or a <= 0 or r.yield_ <= 0:
+        if not a or a <= 0:
             continue
         out.append(CertLine(r.nuclide, float(r.energy), float(r.yield_), float(a),
-                            float(a) * max(r.activity_unc_pct, 0.0) / 100.0, r.ref_date,
+                            float(a) * r.activity_unc_pct / 100.0, r.ref_date,
                             r.half_life_s if r.half_life_s > 0 else None))
     return sorted(out, key=lambda l: l.energy)
 

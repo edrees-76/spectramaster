@@ -96,8 +96,8 @@ class ActivityInput(QWidget):
         return bq if math.isfinite(bq) else 0.0
 
     def set_bq(self, bq: float) -> None:
-        if not math.isfinite(bq):
-            raise ValueError(f"not a finite activity: {bq!r} Bq")      # round6_inputs_protocol.md
+        if not math.isfinite(bq) or bq < 0:       # round6_inputs_protocol.md, round7_inputs_protocol.md
+            raise ValueError(f"not a finite activity, not negative: {bq!r} Bq")
         text =f"{from_bq(bq, self._unit):.6g}" if bq else ""
         self._shown = (float(bq), text)
         self.number.setText(text)

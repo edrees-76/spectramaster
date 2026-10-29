@@ -1097,17 +1097,31 @@ class EfficiencyDialog(QDialog):
         self._filling = False
 
     def _read_points(self) -> None:
+        """The table into the points.  A manual cell that is not a finite number above 0 raises
+        ValueError naming its row and column, and nothing is changed (round7_inputs_protocol.md)."""
         t = self.pt_table
+        rows = []
         for r, p in enumerate(self.points):
             if r >= t.rowCount():
                 break
-            p.use = t.item(r, 0).checkState() == Qt.Checked
+            vals = None
             if p.manual:
-                e, v, u = _num(t.item(r, 2).text()), _num(t.item(r, 4).text()), _num(t.item(r, 5).text(), 2.0)
-                if e and v:
-                    p.energy, p.efficiency = e, v
-                    p.unc = v * (u or 0.0) / 100.0
-                    p.u_count_rel = (u or 0.0) / 100.0
+                vals = []
+                for c in (2, 4, 5):
+                    text = t.item(r, c).text()
+                    v = _num(text)
+                    if v is None or v <= 0:
+                        head = t.horizontalHeaderItem(c)
+                        raise ValueError(qtr("eff_bad_cell", row=r + 1, col=head.text() if head else c, text=text))
+                    vals.append(v)
+            rows.append((p, t.item(r, 0).checkState() == Qt.Checked, vals))
+        for p, use, vals in rows:
+            p.use = use
+            if vals:
+                e, v, u = vals
+                p.energy, p.efficiency = e, v
+                p.unc = v * u / 100.0
+                p.u_count_rel = u / 100.0
 
     def _pt_item_changed(self, item) -> None:
         if self._filling or item.column() != 0:
@@ -1146,7 +1160,13 @@ class EfficiencyDialog(QDialog):
             p.use = True
             p.note = note_without_exclusion(p.note)
         self._set_check(row, p.use)
-        self._read_points()      # manual-point edits; `use` of every row equals the table now
+        try:
+            self._read_points()      # manual-point edits; `use` of every row equals the table now
+        except ValueError as exc:
+            p.use, p.note = before
+            self._set_check(row, p.use)
+            self._msg(str(exc))
+            return False
         self._fill_points()
         ok = self.refit(threaded=threaded)
         if not ok and not threaded:          # e.g. too few points left: keep the previous review
@@ -1156,7 +1176,11 @@ class EfficiencyDialog(QDialog):
         return ok
 
     def add_manual_point(self, energy: float = 0.0, efficiency: float = 0.0, unc_pct: float = 2.0) -> None:
-        self._read_points()
+        try:
+            self._read_points()
+        except ValueError as exc:
+            self._msg(str(exc))
+            return
         p = eff.manual_point(energy or 100.0, efficiency or 0.01, unc_pct)
         p.use = bool(energy and efficiency)
         self.points.append(p)
@@ -1189,7 +1213,15 @@ class EfficiencyDialog(QDialog):
         return fit
 
     def refit(self, threaded: bool = False) -> bool:
-        self._read_points()
+        try:
+            self._read_points()
+        except ValueError as exc:
+            # the shown values are not the points: no curve until corrected (nothing to save)
+            self.curve = None
+            self.plot.set_data(self.points, None)
+            self._show_fit()
+            self._msg(str(exc))
+            return False
         try:
             fit = self._fit_call()
         except ValueError as exc:

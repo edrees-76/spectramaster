@@ -69,3 +69,41 @@ Before the change RE.C1 to RE.C5 fail.
 - The checks are the ones named; other fields of these editors are covered by R6-C.
 - A comma between digits in a QC line list is refused even where it was meant as a separator
   without a space (`661.657,1332.492`); the message says to use `;` or `, `.
+
+---
+
+## Results (`after_R7E`)
+
+Protocol committed in 5bf16c1 before the change (SHA-256 of the file
+c082e227221c3869013b62f3bd42e439156ab0ffa6677620c2c2b8242413f656).
+
+**First run: 4 PASS / 1 FAIL, harness error, disclosed** (kept as `after_R7E/round7_inputs_run1.md`).
+RE.C1 looked for "row 1" in the messages case-sensitively; the message says "Row 1, Efficiency: ..."
+(every one of the 14 cases was refused, named row 1, fitted and saved nothing). The comparison was
+made case-insensitive.
+
+**Second run: 4 PASS / 1 FAIL, harness error, disclosed** (kept as `after_R7E/round7_inputs_run2.md`).
+RE.C1 compared the refused point with its value *before the change*; for the 4 cases the old code
+accepted (`-0.01`, `-100`, `-2`, `0` uncertainty) that value is the accepted invalid one. The row
+"the point keeps its value" means the value it had before the edit (the 5 manual points of the
+case); the comparison was corrected to that. No limit was changed.
+
+**Third run: 5 PASS / 0 FAIL.**
+
+| ID | value | result |
+|---|---|---|
+| RE.C1 | refused with row 1 named, nothing fitted or saved, cell text and point value kept: 14 of 14; 3 valid edits as before | PASS |
+| RE.C2 | QC lines refused 9 of 9; 3 valid as before | PASS |
+| RE.C3 | certificate CSV refused 11 of 11; 6 valid files as before | PASS |
+| RE.C4 | Aptec records refused 12 of 12; valid records and skipped empty slots as before | PASS |
+| RE.C5 | negative `set_bq` refused 2 of 2, previous value kept; valid as before | PASS |
+| RE.C6 | benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against `after_R7D`; full suite 1638 passed, 69 skipped, no existing test changed | PASS |
+
+RE.C6 is evaluated outside the harness. **Disclosed:** the first full-suite run printed
+"1638 passed, 69 skipped" and then exited with code 127 (no test failed or errored); the
+second full-suite run, unchanged code, printed the same and exited 0, and `tests/test_round7_inputs.py`
+alone exited 0 twice. This matches the abnormal end of the Qt test process reported in Codex M2,
+which is batch R7-G; it is recorded there.
+
+New tests: `tests/test_round7_inputs.py`. Also changed: the manuals (sources), certificate CSV,
+QC monitored lines, manual efficiency points.

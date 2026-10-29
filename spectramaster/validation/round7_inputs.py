@@ -188,8 +188,8 @@ def criteria(m: dict, b: dict) -> list[dict]:
     for c, t in POINT_BAD:
         v = r1[f"{c}:{t}"]
         refused = (not v["refit"] and not v["curve"] and not v["saved"] and v["messages"]
-                   and any("row 1" in s for s in v["messages"]) and v["shown"] == t
-                   and v["point"] == b1[f"{c}:{t}"]["point"])
+                   and any("row 1" in s.lower() for s in v["messages"]) and v["shown"] == t
+                   and v["point"] == [MANUAL[0][0], MANUAL[0][1], MANUAL[0][2] / 100.0])   # the point as entered
         if not refused:
             bad.append(f"{c}:{t!r}")
     good = all(r1[f"{c}:{t}"]["refit"] and r1[f"{c}:{t}"]["saved"] and not r1[f"{c}:{t}"]["messages"]

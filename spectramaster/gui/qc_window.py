@@ -5,6 +5,7 @@ Opened from the main window by :func:`install_qc_menu` (adds the action to the
 """
 from __future__ import annotations
 
+import math
 import re
 from datetime import datetime
 from pathlib import Path
@@ -52,18 +53,30 @@ def lines_to_text(lines: Sequence[qc.MonitoredLine]) -> str:
 
 
 def parse_lines(text: str) -> list[qc.MonitoredLine]:
-    """``"661.657:Cs-137, 1332.492:Co-60:2.0"`` -> MonitoredLine list (ValueError if invalid)."""
+    """``"661.657:Cs-137, 1332.492:Co-60:2.0"`` -> MonitoredLine list (ValueError if invalid): the
+    energy and a maximum FWHM finite and above 0; a comma between digits is ambiguous (decimal or a
+    separator) and refused (round7_inputs_protocol.md)."""
+    if re.search(r"\d,\d", text):
+        raise ValueError(f"a comma between digits in {text.strip()!r}: use a decimal point, and ';' or ', ' "
+                         f"between lines")
+
+    def pos(s: str, part: str) -> float:
+        try:
+            v = float(s)
+        except ValueError:
+            v = math.nan
+        if not math.isfinite(v) or v <= 0:
+            raise ValueError(f"{part!r}: {s!r} is not a number above 0")
+        return v
     out = []
     for part in re.split(r"[,;\n]+", text):
         part = part.strip()
         if not part:
             continue
         bits = [b.strip() for b in part.split(":")]
-        e = float(bits[0])
-        if e <= 0:
-            raise ValueError(part)
+        e = pos(bits[0], part)
         nuc = bits[1] if len(bits) > 1 else ""
-        fm = float(bits[2]) if len(bits) > 2 and bits[2] else None
+        fm = pos(bits[2], part) if len(bits) > 2 and bits[2] else None
         out.append(qc.MonitoredLine(e, nuc, fm))
     return sorted(out, key=lambda l: l.energy)
 
