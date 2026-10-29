@@ -72,3 +72,31 @@ RA.C6 is the control.
   The COI depends on the curve, but only weakly (`summing_free_curve` iterates to 1e-4), and a new
   correction needs the raw points, which a corrected curve no longer holds.
 - An imported curve with no calibration points is not concerned: it cannot be refitted.
+
+---
+
+## Results (`after_R7A`)
+
+Protocol committed in e93d747 before the change (SHA-256 of the file
+8d86c2bd7755350436f5f63697fb5dc2b4147d8b21121c66f6a06bb947e5e336). Engine 1.27.0.
+
+Harness correction before the protocol commit, disclosed: the first evaluation of the "before"
+values compared the raw curve files including `date`, the time of the fit, which differs between two
+runs; RA.C5 then excludes `date`, as written in its row.
+
+**First run: 6 PASS / 0 FAIL.**
+
+| ID | value | result |
+|---|---|---|
+| RA.C1 | both corrected curves (`eu_ba_121.8`, 4 partial points; `eu_only`) refitted keep `summing_corrected`, `tcs_partial` and their efficiencies within 1e-12 (before: False, []) | PASS |
+| RA.C2 | Cs-137 activity, u and MDA from the refitted curves equal the source's, with and without the sample's summing correction (before: 69.0339 against 67.8844 Bq for `eu_ba_121.8`, 63.7101 against 65.2101 Bq for `eu_only`); partial notes kept | PASS |
+| RA.C3 | efficiency dialog offscreen: load, *Refit*, save; the saved file loads with the same state | PASS |
+| RA.C4 | a raw Co-60 point refused ("... cascade-emitter points that are not: Co-60 1332.5 keV ..."); a raw Cs-137 point fitted, state kept (before: both accepted, state lost) | PASS |
+| RA.C5 | uncorrected curve files identical (except `date`); 1.26.0 corrected files load with `summing_coi` and `summing_partial` and refit as corrected | PASS |
+| RA.C6 | uncorrected curves and the six `round6_tcs_state` cases identical to before | PASS |
+| RA.C7 | benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against `after_R6G`; full suite 1588 passed, 69 skipped, process exit 0; no existing test changed | PASS |
+
+RA.C7 is evaluated outside the harness (benchmark compared criterion by criterion with `after_R6G`).
+
+Also changed: the manuals (sources), section 9.5: a corrected curve refitted stays corrected; a raw
+cascade point cannot be fitted with corrected ones.

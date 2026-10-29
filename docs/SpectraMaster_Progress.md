@@ -1513,3 +1513,23 @@ No program change (engine 1.26.0 kept), so no protocol.
   regenerated with the final manuals step.
 - **Result.** Stripped environment: 920 passed, 365 skipped, 0 failed (before: 1 collection error, 25
   failed). Full environment, the 15 changed files: 380 passed, 1 skipped.
+
+## Round-7 external review: summing state of an efficiency curve kept through a refit, H1 (2026-10-29)
+
+Protocol `docs/baseline/round7_tcs_refit_protocol.md`, committed before the change (e93d747).
+Engine 1.27.0.
+
+- **Confirmed (Codex and Gemini H1).** `fit_efficiency` always returned an uncorrected curve: a
+  corrected curve refitted from its own points (the efficiency dialog's *Refit* after loading it) lost
+  `summing_corrected` and `tcs_partial` while its points stayed corrected. Without the sample's summing
+  correction the partial warning disappeared; with it the points were corrected twice (Cs-137
+  67.8844 -> 69.0339 Bq, +1.69 %).
+- **Fix.** Each corrected point keeps its COI and partial reason (`EfficiencyPoint.summing_coi`,
+  `summing_partial`); `fit_efficiency` derives the curve's state from its points and refuses corrected
+  and uncorrected cascade points together. Point fields are saved only when set; curves saved by 1.26.0
+  get them on loading from the point notes. `summing_free_curve` leaves `tcs_partial` and its warnings
+  to the fit.
+- **Result (`after_R7A`):** 6 PASS / 0 FAIL at the first run; benchmark 154 / 13 / 60 unchanged against
+  `after_R6G`; full suite 1588 passed, 69 skipped, exit 0. A harness comparison including the fit time
+  was corrected before the protocol commit (disclosed).
+
