@@ -888,7 +888,12 @@ refitted on sample − k × background and the notes say so.</p>
 <p>A <b>reagent blank</b> is a blank sample prepared and counted like the samples, with the same reagents, container
 and geometry. Choose its spectrum in <b>Reagent blank</b>. It is analysed exactly like the sample, with the same curve,
 options and background, and its activity is subtracted line by line. The blank's uncertainty, including the part of
-its reference-peak correction it shares with the sample, is in the budget, and the decision threshold includes it. A
+its reference-peak correction it shares with the sample, is in the budget, and the decision threshold includes it,
+with the sample's own counting of the blank level. When the sample and the blank subtracted the same background
+spectrum in the same calculation, the background is not counted twice: the covariance of their background estimates
+is taken off the uncertainty and the decision threshold (both background modes). A blank whose results were loaded
+from a file, or analysed with another or a re-binned background, is counted as independent, which is conservative,
+and the notes say so. A
 blank analysed with other options (attenuation, summing correction, reference peak, background) is reported in the
 notes. The spectrum, background, blank and peaks are taken as they are when <b>Calculate</b> is pressed. The session and
 the report record the blank file with its SHA-256 fingerprint.</p>

@@ -71,8 +71,14 @@ Reagent blank (``blank=``, the results of a blank sample prepared and counted li
 analysed with the same curve, options and laboratory background), per line::
 
     A      = A_gross - A_b exp(-lambda (t_ref - t_ref,blank))     (Bq, before dividing by the quantity)
-    u_count(A)^2 = u_count(A_gross)^2 + u_count(A_b')^2
-    sigma0^2    += (u_count(A_b') f_w / w)^2                       (the blank is part of the null hypothesis)
+    u_count(A)^2 = u_count(A_gross)^2 + u_count(A_b')^2 - 2 C
+    sigma0^2    += (u_count(A_b') f_w / w)^2 + max(A_b', 0) f_w / w - 2 C_0   (the blank is part of the
+                                                                    null hypothesis, counted in the sample too)
+
+C = k_d sum r_i g_i B_i (C_0 the same with the background term of sigma0) is the covariance of the
+background estimates of sample (r) and blank (g) when both subtracted the same background spectrum
+B on its own channels, in the same session (round7_shared_background_protocol.md); otherwise 0 and
+noted.
 
 Efficiency, emission probability and attenuation stay relative to the net value (the same curve,
 line and geometry: fully correlated).  A line without a peak in the blank is not corrected (noted).
@@ -189,6 +195,8 @@ class LineResult:
     coi_partial: bool = False    # that correction is partial (partners left out, inconsistent scheme)
     blank_activity: Optional[float] = None  # reagent blank subtracted, Bq (parent) at the reference date
     blank_unc: float = 0.0                  # its counting standard uncertainty, Bq
+    blank_bkg_cov: float = 0.0              # covariance of the background estimates of sample and blank
+    #                                         (same background spectrum), Bq^2, taken twice off u_count^2
     gross_activity: Optional[float] = None  # activity before the blank correction
     # signed primary result (ISO 11929) of every line, peak or not (signed_primary_protocol.md):
     # the fitted net area ("fit"), the window estimator ("window") or a window overlapping another
@@ -690,7 +698,9 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             work, net_var, _k = net_spectrum(spectrum, background)
             bal = background if same_calibration(spectrum, background) else align_to(background, spectrum)
             bcounts = np.clip(np.asarray(bal.counts, dtype=float), 0, None)
-            peaks = find_peaks(work, min_sig=opt.min_sig, variance=net_var)
+            from .peaks import FitReport
+            fit_report = FitReport()
+            peaks = find_peaks(work, min_sig=opt.min_sig, variance=net_var, report=fit_report)
         elif bkg_peaks is None:
             bfit = BackgroundFitter(spectrum, background)
             if bfit.note:
@@ -711,6 +721,19 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
         peaks = find_peaks(work, min_sig=opt.min_sig)
     if bfit is not None:
         bkg_under = bfit.under_peaks(peaks, fit_report)
+    # background estimates as coefficients on the background's own channels, for the covariance with
+    # a blank that subtracted the same spectrum (round7_shared_background_protocol.md); kept in memory
+    shared_ok = False
+    if background is not None and bkg_peaks is None:
+        from ..tools.arithmetic import same_calibration
+        shared_ok = same_calibration(spectrum, background)
+    coef_under = bkg_under
+    if shared_ok and bfit is None:          # full-spectrum mode: the sample fit's estimator
+        coef_under = BackgroundFitter(spectrum, background).under_peaks(peaks, fit_report)
+    bkey = _bkg_key(background) if shared_ok else None
+    b_cov = np.maximum(np.asarray(background.counts, dtype=float), 0.0) if shared_ok else None
+    bl_shared = blank is not None and bkey is not None and getattr(blank, "_bkg_key", None) == bkey
+    cov_used = False
     y = np.asarray(spectrum.counts, dtype=float)
     fw_ch, fw_src = checked_fwhm_model(spectrum, np.maximum(y, 0.0))
     if fw_src.startswith(IMPLAUSIBLE_PREFIX):
@@ -854,8 +877,13 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             if bnet is not None:
                 lr.bkg_peak = bnet[0]
                 var0 += max(bnet[0], 0.0) + bnet[1] ** 2
+            h0 = None           # coefficients of the background term of sigma0, counts per background count
+            if shared_ok:
+                h0 = bnet[2] if bnet is not None else (_window_coef(spectrum, e, fw_ch, k_b)
+                                                       if bcounts is not None else None)
             blank_counts = 0.0
             ref_lin = 0.0       # u_ref^2(y) term linear in the net activity y (reference peak with a blank)
+            bl_coef, kd = None, 1.0     # the blank's background estimate (Bq per background count), decay
             if blank is not None:
                 bl = _blank_line(blank, name, e)
                 if bl is None:
@@ -866,6 +894,9 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                     lr.blank_unc = (bl.u_count_bq or abs(bl.activity) * bl.u_count_rel) * kd
                     blank_counts = lr.blank_activity / w
                     var0 += (lr.blank_unc * fwin / w) ** 2
+                    var0 += max(lr.blank_activity, 0.0) * fwin / w     # the sample counts the blank level too
+                    if bl_shared:
+                        bl_coef = getattr(bl, "_bkg_res", None)
                     # no net activity: the sample's gross activity is the blank's, whose reference peak
                     # corrections (sample and blank) still vary (combined_corrections_protocol.md, R2)
                     ab0 = lr.blank_activity
@@ -885,6 +916,17 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                     bwin = float(bcounts[max(0, int(round(idx)) - h):int(round(idx)) + h + 1].sum())
                     lin_bkg = k_b ** 2 * bwin * (1.0 + cb[1] / (2.0 * cb[2]))
                     var0 += lin_bkg
+
+            def bcov(v, bl_coef=bl_coef, kd=kd):
+                """k_d sum v_i g_i B_i with the blank's estimate g, or None (not computable)."""
+                return None if bl_coef is None or v is None else kd * _overlap(v, bl_coef, b_cov)
+
+            def cov_h0(h, w=w, fwin=fwin, bcov=bcov):
+                """2 C_0, in window counts, for the background term h of sigma0."""
+                c = bcov(h)
+                return 0.0 if c is None else 2.0 * c * fwin / w
+            cov0 = cov_h0(h0)
+            var0 -= cov0
             w_rel = math.sqrt(lr.eff_rel_unc ** 2 + opt.intensity_rel_unc ** 2 + lr.int_rel_unc ** 2
                               + _att_rel_unc(opt) ** 2 + ref_u ** 2 + lr.coi_rel_unc ** 2)
 
@@ -901,10 +943,13 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             lr.limit_slope = w / fwin + (ref_lin if iso else 0.0)
             lr.ref_rel_unc = ref_u if iso else 0.0
 
-            def quad_limits(s_term, b_term, var0=var0, lin_sample=lin_sample, lin_bkg=lin_bkg, limits=limits):
+            def quad_limits(s_term, b_term, h=None, var0=var0, lin_sample=lin_sample, lin_bkg=lin_bkg,
+                            limits=limits, cov0=cov0, cov_h0=cov_h0):
                 """Limits of the quadratic window: the linear sample (and spectrum-mode background)
-                terms of var0 replaced (window_polynomial_protocol.md, 4)."""
-                return limits(var0 - lin_sample - lin_bkg + s_term + b_term)
+                terms of var0 replaced (window_polynomial_protocol.md, 4), with the covariance of the
+                replacing background term h."""
+                extra = cov0 - cov_h0(h) if h is not None else 0.0
+                return limits(var0 - lin_sample - lin_bkg + s_term + b_term + extra)
             if p is not None:
                 lr.peak_found = True
                 nnet, unet = float(p.net_area), float(p.net_area_unc)
@@ -915,10 +960,17 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                 used_peaks.setdefault(id(p), []).append(name)
                 lr.activity = nnet * w
                 gross = lr.activity
+                r_vec = coef_under.get(id(p)) if shared_ok else None
+                if r_vec is not None:
+                    lr._bkg_res = _scaled(r_vec[2], w)      # its background estimate, Bq per background count
                 if lr.blank_activity is not None:
                     lr.gross_activity = gross
                     nnet -= blank_counts
                     unet = math.hypot(unet, lr.blank_unc / w)
+                    c = bcov(getattr(lr, "_bkg_res", None))
+                    if c is not None:
+                        lr.blank_bkg_cov, cov_used = c, True
+                        unet = math.sqrt(max(unet ** 2 - 2.0 * c / w ** 2, 0.0))
                     lr.activity = nnet * w
                 lr.u_count_bq = unet * w
                 lr.u_count_rel = unet / abs(nnet) if nnet else float("inf")
@@ -938,7 +990,8 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                                                                     else (None, 0.0))
                 _window_primary(lr, spectrum, e, fw_ch, w, fwin, peaks, opt, wb, wk,
                                 bnet if bfit is None else None, blank_counts, (ref_uc, ref_ur, bl_uc, bl_ur),
-                                quad_limits, bcounts is not None)
+                                quad_limits, bcounts is not None, bcov if shared_ok else None)
+                cov_used = cov_used or bool(lr.blank_bkg_cov)
             res.lines.append(lr)
         _combine(res, opt)
         results.append(res)
@@ -1003,13 +1056,71 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     if blank is not None:
         blank_name = blank.source_path or blank.sample or "?"
         notes.append(f"reagent blank subtracted: {blank_name}")
-    return QuantResults(sample=spectrum.sample_id, source_path=spectrum.source_path,
+        if cov_used:
+            notes.append("background spectrum shared by the sample and the reagent blank: the covariance of "
+                         "their background estimates taken into account")
+        elif background is not None and blank.background:
+            notes.append("background spectrum of the sample and of the reagent blank counted as independent "
+                         "(conservative): " + _indep_reason(shared_ok, blank, bkey))
+    out = QuantResults(sample=spectrum.sample_id, source_path=spectrum.source_path,
                         start_time=spectrum.start_time, live_time=t_live, real_time=spectrum.real_time,
                         ref_date=ref, curve_name=curve.name or curve.geometry, curve_model=curve.describe(),
                         background=(background.source_path or background.sample_id) if background is not None else "",
                         options=opt, nuclides=results, notes=notes, blank=blank_name,
                         reference_factor=ref_k if opt.reference_peak else None, reference_u_rel=ref_u,
                         reference_u_count_rel=ref_uc, reference_u_rate_rel=ref_ur, curve_tcs_partial=tcs_partial)
+    if bkey is not None:
+        out._bkg_key = bkey         # in memory only, with the lines' _bkg_res
+    return out
+
+
+def _bkg_key(background) -> tuple:
+    """Identity of a background spectrum: live time and counts."""
+    import hashlib
+    counts = np.ascontiguousarray(np.asarray(background.counts, dtype=float))
+    return float(background.live_time), hashlib.sha256(counts.tobytes()).hexdigest()
+
+
+def _indep_reason(shared_ok: bool, blank, bkey) -> str:
+    if not shared_ok:
+        return "background re-binned to the sample, or background peaks given"
+    if getattr(blank, "_bkg_key", None) is None:
+        return "the blank's results carry no background estimators (loaded, or analysed otherwise)"
+    return "the blank was analysed with another background spectrum"
+
+
+def _scaled(v: tuple, f: float) -> tuple:
+    lo, c = v
+    return lo, np.asarray(c, dtype=float) * f
+
+
+def _overlap(v: tuple, g: tuple, b: np.ndarray) -> float:
+    """sum v_i g_i b_i over the channels both coefficient vectors (lo, c) cover."""
+    (lv, cv), (lg, cg) = v, g
+    lo, hi = max(lv, lg), min(lv + len(cv), lg + len(cg))
+    if hi <= lo:
+        return 0.0
+    return float(np.sum(cv[lo - lv:hi - lv] * cg[lo - lg:hi - lg] * b[lo:hi]))
+
+
+def _window_coef(spectrum, energy: float, fw_ch, k: float) -> Optional[tuple]:
+    """k times the window estimator G - (n / 2m) sides as coefficients (lo, c), or None."""
+    win = line_window(spectrum, energy, fw_ch)
+    if win is None:
+        return None
+    lo, hi, m, _f = win
+    c = np.full(hi - lo + 1 + 2 * m, -(hi - lo + 1) / (2.0 * m))
+    c[m:m + hi - lo + 1] = 1.0
+    return lo - m, k * c
+
+
+def _quad_coef(lo: int, hi: int, q, k: float) -> tuple:
+    """k times the quadratic window estimator G - c . y[idx] as coefficients (start, c)."""
+    a, b = min(lo, int(q.idx.min())), max(hi, int(q.idx.max()))
+    c = np.zeros(b - a + 1)
+    c[lo - a:hi - a + 1] = 1.0
+    np.subtract.at(c, np.asarray(q.idx, dtype=int) - a, np.asarray(q.c, dtype=float))
+    return a, k * c
 
 
 def reference_rate(spectrum, energy: float, min_sig: float = 3.0) -> tuple[float, float]:
@@ -1132,15 +1243,16 @@ def _quad_share(p, f0: int, lo: int, hi: int, q: QuadWindow) -> float:
 
 
 def _quad_result(spectrum, lo: int, hi: int, m: int, bcounts, k_b: float, bnet, spectrum_mode: bool):
-    """(window result, its variance, H0 sample term, H0 background term, sample fit) of the
-    quadratic continuum, or None when it cannot be used (sides outside, chi-square p < QUAD_CHI2_P)."""
+    """(window result, its variance, H0 sample term, H0 background term, sample fit, background fit or
+    None) of the quadratic continuum, or None when it cannot be used (sides outside, chi-square
+    p < QUAD_CHI2_P)."""
     y = np.asarray(spectrum.counts, dtype=float)
     q = quadratic_window(y, lo, hi, m)
     if q is None or q.p_chi2 < QUAD_CHI2_P:
         return None
     g = float(y[lo:hi + 1].sum())
     yw, var = g - q.b, max(g, 0.0) + q.var_data
-    b_term = 0.0
+    b_term, qb = 0.0, None
     if bcounts is not None:
         yb = np.asarray(bcounts, dtype=float)
         qb = quadratic_window(yb, lo, hi, m)
@@ -1154,18 +1266,19 @@ def _quad_result(spectrum, lo: int, hi: int, m: int, bcounts, k_b: float, bnet, 
     elif bnet is not None:
         yw -= bnet[0]
         var += bnet[1] ** 2
-    return yw, var, max(q.b, 0.0) + q.var_fit, b_term, q
+    return yw, var, max(q.b, 0.0) + q.var_fit, b_term, q, qb
 
 
 def _window_primary(lr: LineResult, spectrum, e: float, fw_ch, w: float, fwin: float, peaks, opt,
                     bcounts, k_b: float, bnet, blank_counts: float, ref: tuple, quad_limits=None,
-                    spectrum_mode: bool = False) -> None:
+                    spectrum_mode: bool = False, bcov=None) -> None:
     """Signed primary result of a line without a search peak: the window estimator G - B (the
     estimator of the decision threshold), minus the scaled background (spectrum mode) or the
     background fitter's area (peak mode), minus the blank; decision rule opt.decision
     (docs/baseline/signed_primary_protocol.md).  Where the linear continuum is too curved, a
     quadratic one over wider sides with its own decision threshold
-    (docs/baseline/window_polynomial_protocol.md)."""
+    (docs/baseline/window_polynomial_protocol.md).  `bcov`: the covariance with the blank's
+    background estimate (round7_shared_background_protocol.md), None without a shared background."""
     wn = window_net(spectrum, e, fw_ch)
     win = line_window(spectrum, e, fw_ch)
     if wn is None or win is None:
@@ -1188,8 +1301,24 @@ def _window_primary(lr: LineResult, spectrum, e: float, fw_ch, w: float, fwin: f
               or (c_b is not None and k_b * abs(c_b) > WINDOW_BIAS_LIMIT * u_win))
     gross_net, unet = yw / fwin, u_win / fwin
     nnet = gross_net - blank_counts
-    if lr.blank_activity is not None:
+
+    def with_blank(unet, r):
+        """unet with the blank's counting and, the background being shared, their covariance."""
+        lr._bkg_res = r
         unet = math.hypot(unet, lr.blank_unc / w)
+        c = bcov(r) if bcov is not None and lr.blank_activity is not None else None
+        lr.blank_bkg_cov = c or 0.0
+        return unet if c is None else math.sqrt(max(unet ** 2 - 2.0 * c / w ** 2, 0.0))
+    # the background estimate of the result, Bq per background count (both modes: the window
+    # estimator on the background counts)
+    r_lin = None
+    if bcov is not None and bcounts is not None:
+        rc = _window_coef(spectrum, e, fw_ch, k_b)
+        r_lin = _scaled(rc, w / fwin) if rc is not None else None
+    if lr.blank_activity is not None:
+        unet = with_blank(unet, r_lin)
+    elif r_lin is not None:
+        lr._bkg_res = r_lin
     lr.primary_net, lr.primary_net_unc = nnet, unet
     lr.primary, lr.primary_u_count = nnet * w, unet * w
     if near:
@@ -1206,12 +1335,16 @@ def _window_primary(lr: LineResult, spectrum, e: float, fw_ch, w: float, fwin: f
             lr.note = (lr.note + "; continuum too curved for the window estimator and not smooth enough for a "
                        "polynomial window (e.g. a Compton edge): primary result not used").strip("; ")
             return
-        yw, var, s_term, b_term, q = qr
+        yw, var, s_term, b_term, q, qb = qr
         u_win = math.sqrt(max(var, 0.0))
         gross_net, unet = yw / fwin, u_win / fwin
         nnet = gross_net - blank_counts
+        hq = _quad_coef(lo, hi, qb, k_b) if (bcov is not None and qb is not None) else None
+        r_q = _scaled(hq, w / fwin) if hq is not None else None
         if lr.blank_activity is not None:
-            unet = math.hypot(unet, lr.blank_unc / w)
+            unet = with_blank(unet, r_q)
+        elif r_q is not None:
+            lr._bkg_res = r_q
         lr.primary_net, lr.primary_net_unc = nnet, unet
         lr.primary, lr.primary_u_count = nnet * w, unet * w
         near = [p for p in peaks if abs(_quad_share(p, spectrum.first_channel, lo, hi, q)) > WINDOW_BIAS_LIMIT * u_win]
@@ -1221,7 +1354,7 @@ def _window_primary(lr: LineResult, spectrum, e: float, fw_ch, w: float, fwin: f
                 f"{p.energy:.1f} keV" if p.energy is not None else f"channel {p.centroid:.0f}" for p in near)
                 + ": primary result not used").strip("; ")
             return
-        lc_counts, _ld, dt, _mda = quad_limits(s_term, b_term)
+        lc_counts, _ld, dt, _mda = quad_limits(s_term, b_term, hq if spectrum_mode else None)
         lr.window_continuum, lr.window_lc_counts, lr.window_decision_threshold = "quadratic", lc_counts, dt
         lr.note = (lr.note + f"; quadratic continuum (curved for the linear window), decision threshold "
                    f"{dt:.4g} Bq").strip("; ")

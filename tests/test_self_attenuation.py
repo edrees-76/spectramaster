@@ -90,7 +90,9 @@ def test_constant_attenuation_with_the_model_refused_and_model_noted():
     assert SA.describe() in res.notes
 
 
-def test_round4_activity_criteria():
+def test_round4_activity_criteria(monkeypatch):
     from spectramaster.validation import round4_activity as r4
+    for k, v in r4.AFTER_R7C.items():     # the blank cases since engine 1.29.0
+        monkeypatch.setitem(r4.BEFORE, k, v)
     res = r4.run()
     assert all(v["pass"] for v in r4.criteria(res).values())

@@ -41,6 +41,11 @@ def _before() -> dict:
 
 
 BEFORE = _before()
+# The blank cases' limits since engine 1.29.0, which adds the sample's counting of the blank level to
+# sigma0 (round7_shared_background_protocol.md, change 3): RA.C1-C3 hold these values in the tests
+# (RA.C1's detection limit still within 1 % of Codex's value).
+AFTER_R7C = {"C1_threshold": 13.740820024545718, "C2_no_reference": (1.4068030931281361, 2.830052977191367),
+             "C3_currie": (13.740820024545718, 27.497569477492647)}
 SA_SAME = SelfAttenuation("water", 1.0, "water", 1.0, 50.0)
 SA_SOIL = SelfAttenuation("mineral", 1.6, "water", 1.0, 50.0)
 PT = (0.25, -0.3)
