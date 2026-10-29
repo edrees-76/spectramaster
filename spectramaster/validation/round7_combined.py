@@ -42,6 +42,9 @@ UNDETECTED = (("co60_iso", "Co-60", "iso11929"), ("co60_currie", "Co-60", "curri
               ("ba133_iso", "Ba-133", "iso11929"), ("ba133_currie", "Ba-133", "currie"))
 
 
+ROW = ("threshold", "mda", "activity", "u", "primary", "primary_u", "detected", "note", "used")
+
+
 def _row(r) -> dict:
     return {"threshold": r.decision_threshold, "mda": r.mda, "activity": r.activity, "u": r.u,
             "primary": r.primary, "primary_u": r.primary_u, "detected": r.detected, "note": r.note,
@@ -180,7 +183,8 @@ def criteria(res: dict, before: dict) -> dict:
     bad1, bad2 = [], []
     for name, c in res["one_blank"].items():
         if "currie" in name:
-            if json.dumps(c, sort_keys=True) != json.dumps(before["one_blank"][name], sort_keys=True):
+            # the results (_row); `lines` holds the ref_g0 / ref_dg fields the change sets by design
+            if json.dumps({k: c[k] for k in ROW}, sort_keys=True)                     != json.dumps({k: before["one_blank"][name][k] for k in ROW}, sort_keys=True):
                 bad2.append(name)
         elif not (_close(c["threshold"], c["independent"]["threshold"]) and _close(c["mda"], c["independent"]["limit"])):
             bad1.append(f"{name}: {c['threshold']:.6g} / {c['mda']:.6g} vs {c['independent']['threshold']:.6g} / "

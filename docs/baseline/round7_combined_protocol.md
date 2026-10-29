@@ -77,3 +77,37 @@ RB.C2 and RB.C5 are the controls.
   round5_combined_protocol.md.
 - Detection of a nuclide stays line by line; deciding it on the weighted mean is a separate question,
   not answered here.
+
+---
+
+## Results (`after_R7B`)
+
+Protocol committed in 8c6b8dd before the change (SHA-256 of the file
+a881ebcf11c0392ed9c300f9ba435de95afa8bdb9425c88de96422a867184f0a). Engine 1.28.0.
+
+**First run: 4 PASS / 1 FAIL, harness error, disclosed** (kept as
+`after_R7B/round7_combined_run1.md`). RB.C2 compared every field of the line results, including
+`ref_g0` and `ref_dg`, which item 1 of the change sets by design for a line without a blank peak;
+every number of the Currie cases was identical. The comparison was corrected to the reported
+quantities (threshold, limit, activity, u, primary, primary_u, detection, note, lines used), as the
+row "identical to before" intends for the results; the limit was not changed.
+
+**Second run: 5 PASS / 0 FAIL.**
+
+| ID | value | result |
+|---|---|---|
+| RB.C1 | ISO 11929, blank peak on 1173 keV only and on 1332 keV only, rate 0 and 3 %: threshold and limit equal the full-covariance computation within 1e-9 (before: limit 6.5 % low in Codex's case) | PASS |
+| RB.C2 | Currie cases identical to before (second run) | PASS |
+| RB.C3 | Co-60 and Ba-133, ISO 11929 and Currie: limits equal those of the weighted mean with the weights of `primary`; `primary` and `primary_u` identical to before | PASS |
+| RB.C4 | primary 0.2759 Bq above the threshold 0.2176 Bq of the weighted mean, not detected, note present; absent without the Gaussians | PASS |
+| RB.C5 | detected cases of `round5_combined` / `round6_combined`, key-line runs, single usable line identical to before | PASS |
+| RB.C6 | benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against `after_R7A`; full suite 1591 passed, 1 failed, 69 skipped before the test change below, then that test file rerun: passed | PASS |
+
+RB.C6 is evaluated outside the harness. Changed existing test:
+`tests/test_round6_combined.py::test_no_blank_no_cross_terms` asserted `ref_g0 is None` for lines
+with a reference peak and no blank; item 1 sets `ref_g0 = (0, 0, 0)` for such a line, so the test now
+accepts None or (0, 0, 0). The limits it covers are unchanged (zero cross terms at that level).
+
+Also changed: the manuals (sources), MDA and primary result rows: the limits of the weighted mean are
+reported for an undetected nuclide with `method = "mean"`; cross terms also apply when only some lines
+have a blank peak.

@@ -851,8 +851,9 @@ with the QCY48 curve, peak-by-peak background subtraction and concentrations in 
   <tr><td>MDA</td><td>Minimum detectable activity (Bq and per unit quantity), from the continuum under the
       expected peak (Currie: L<sub>D</sub> = k² + 2L<sub>C</sub>, k = 1.645; ISO 11929: detection limit y#). With
       <i>weighted mean of lines</i>, the decision threshold and the MDA are those of the weighted mean itself,
-      with the same weights as the activity; with a reagent blank, the reference peak corrections shared by the lines
-      are counted as correlated between them.</td></tr>
+      with the same weights as the activity, also for a nuclide not detected (the weighted mean of its primary
+      results); the reference peak corrections shared by the lines are counted as correlated between them, also when
+      only some lines have a peak in the reagent blank.</td></tr>
   <tr><td>Decision</td><td><i>detected</i> when the net signal exceeds the decision threshold (Currie L<sub>C</sub> or
       ISO y*); otherwise <i>&lt; MDA</i>. A nuclide can be <i>detected</i> with an activity below its MDA
       (between L<sub>C</sub> and L<sub>D</sub>) — report it with its uncertainty.</td></tr>
@@ -863,7 +864,9 @@ with the QCY48 curve, peak-by-peak background subtraction and concentrations in 
       still shows <i>&lt; MDA</i>. Window results next to a found peak (<i>interfered</i>) or on a curved continuum
       where neither a straight nor a quadratic continuum fits (<i>curved</i>) are flagged and not used. The nuclide's
       primary result is combined like the activity: the key line, or with <i>weighted mean of lines</i> the weighted mean
-      of the usable lines; when the key line is flagged, the usable line with the smallest MDA is used and named in the note.</td></tr>
+      of the usable lines; when the key line is flagged, the usable line with the smallest MDA is used and named in the note.
+      A weighted mean above its own decision threshold while no line is detected is noted; the nuclide stays
+      <i>&lt; MDA</i>, since detection is decided line by line.</td></tr>
   <tr><td>Blank subtracted</td><td>The reagent-blank activity subtracted from the line (section <a href="#q-blank">9.3</a>).</td></tr>
   <tr><td>Budget</td><td>Relative components (k = 1): counting, efficiency, emission probability, quantity,
       attenuation, and, when used, the reagent blank, the reference peak and the summing correction.</td></tr>
