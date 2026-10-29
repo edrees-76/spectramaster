@@ -208,7 +208,8 @@ class LineResult:
     primary_method: str = ""
     # continuum of a "window" result: "linear", or "quadratic" where the linear one is too curved,
     # which has its own decision threshold (window_polynomial_protocol.md); the line's
-    # lc_counts / decision_threshold / mda stay the shared linear ones
+    # lc_counts / decision_threshold / mda are then those of the quadratic window
+    # (round7_quad_limits_protocol.md)
     window_continuum: str = ""
     window_lc_counts: Optional[float] = None
     window_decision_threshold: Optional[float] = None   # Bq (parent)
@@ -1354,8 +1355,10 @@ def _window_primary(lr: LineResult, spectrum, e: float, fw_ch, w: float, fwin: f
                 f"{p.energy:.1f} keV" if p.energy is not None else f"channel {p.centroid:.0f}" for p in near)
                 + ": primary result not used").strip("; ")
             return
-        lc_counts, _ld, dt, _mda = quad_limits(s_term, b_term, hq if spectrum_mode else None)
+        lc_counts, ld_counts, dt, mda = quad_limits(s_term, b_term, hq if spectrum_mode else None)
         lr.window_continuum, lr.window_lc_counts, lr.window_decision_threshold = "quadratic", lc_counts, dt
+        # the line reports the limits of the estimator it uses (round7_quad_limits_protocol.md)
+        lr.lc_counts, lr.ld_counts, lr.decision_threshold, lr.mda = lc_counts, ld_counts, dt, mda
         lr.note = (lr.note + f"; quadratic continuum (curved for the linear window), decision threshold "
                    f"{dt:.4g} Bq").strip("; ")
     else:

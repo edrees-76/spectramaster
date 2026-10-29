@@ -113,7 +113,9 @@ SCHEMA_VERSION = 1
 #   1.29.0 2026-10-29 background spectrum shared by the sample and its reagent blank: covariance of
 #          their background estimates; the sample's counting of the blank level in sigma0
 #          (round7_shared_background_protocol.md)
-ENGINE_VERSION = "1.29.0"
+#   1.30.0 2026-10-29 a line on the quadratic window reports that window's decision threshold and MDA,
+#          and its nuclide inherits them (round7_quad_limits_protocol.md)
+ENGINE_VERSION = "1.30.0"
 
 
 class SessionSchemaError(ValueError):

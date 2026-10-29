@@ -1571,3 +1571,16 @@ Engine 1.29.0.
   existing fit-uncertainty overestimate at low net counts; false detection now within limits);
   benchmark 154 / 13 / 60 unchanged against `after_R7B`; round-4/5 blank-case regression values updated
   (`round4_activity.AFTER_R7C`).
+
+## Round-7 external review: limits of the quadratic window, Gemini H3 (2026-10-29)
+
+Protocol `docs/baseline/round7_quad_limits_protocol.md`, committed before the change (f57e493).
+Engine 1.30.0.
+
+- **Confirmed (Gemini H3).** A line on the quadratic window decided detection with its own threshold
+  but reported the linear threshold and MDA, inherited by its nuclide (NaI Cs-137: threshold 0.88 x
+  k sigma, 6.2 % of null results above it).
+- **Fix.** Such a line reports the quadratic window's L_C, L_D, threshold and MDA; the nuclide (key
+  line or weighted mean) inherits them.
+- **Result (`after_R7D`):** 5 PASS / 0 FAIL (threshold 1.02 x k sigma, 4.1 % above it); benchmark
+  154 / 13 / 60 unchanged against `after_R7C`; three `test_window_polynomial.py` tests changed.
