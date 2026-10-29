@@ -1183,9 +1183,10 @@ class MainWindow(ReportActionsMixin, QMainWindow):
             self.load_file(items[0])
             return
         if any(p.is_dir() for p in items):          # folders are searched on a worker thread
-            from .worker import start_call
+            from .worker import call_stop, start_call
             self.statusBar().showMessage(tr("scan_folder_running"))
-            start_call(self, lambda: expand_spectrum_paths(items), self._dropped_files_found,
+            stop = call_stop(self)
+            start_call(self, lambda: expand_spectrum_paths(items, stop=stop), self._dropped_files_found,
                        self._dropped_scan_failed)
             return
         self._dropped_files_found(expand_spectrum_paths(items))
@@ -1226,6 +1227,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         if ctl is not None and not ctl.confirm_discard():    # unsaved analysis session
             ev.ignore()
             return
+        from .worker import cancel_calls
+        cancel_calls(self)                                     # a dropped folder being searched
         for dlg in (list(getattr(self, "_report_batch_dialogs", [])) + list(self._batch_dialogs)
                     + list(getattr(self, "_analysis_batch_dialogs", []))):
             if dlg.is_running():

@@ -849,6 +849,9 @@ class ActivityDialog(QDialog):
                 out.append(qtr("act_note_geo_not_given"))
             elif "treated as unvalidated" in n:
                 out.append(qtr("act_note_record", text=n))
+            elif n.startswith("efficiency curve with a partial true-coincidence summing correction at"):
+                pts = n.split(" points ", 1)[-1].split(": ", 1)[0]
+                out.append(qtr("act_note_tcs_partial", points=i18n.ltr(pts)))
         self.notes_label.setText("\n".join("\u26a0 " + t for t in out))
         self.notes_label.setStyleSheet("color: %s; font-weight: bold;" % ("#c62828" if severe else "#e65100"))
 

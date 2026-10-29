@@ -63,6 +63,8 @@ EN = {
     "eff_no_cert": "The certificate table is empty.",
     "eff_no_aptec": "This file holds no Aptec source records.",
     "eff_failed": "Efficiency calibration failed:\n{msg}",
+    "act_note_tcs_partial": "The efficiency curve is only partly corrected for true-coincidence summing at {points}; "
+                            "the summing loss left out there is not estimated. Review the curve before reporting.",
     "eff_bad_cell": "Row {row}, {col}: {text!r} is not a number above 0 (decimal point, no comma). "
                     "Correct it before fitting.",
     "eff_saved": "Efficiency curve saved:\n{path}",
@@ -206,6 +208,8 @@ AR = {
     "eff_no_cert": "جدول الشهادة فارغ.",
     "eff_no_aptec": "لا يحتوي هذا الملف على سجلات مصدر Aptec.",
     "eff_failed": "فشلت معايرة الكفاءة:\n{msg}",
+    "act_note_tcs_partial": "منحنى الكفاءة مصحَّح جزئيًا فقط للجمع التطابقي الحقيقي عند {points}؛ وفقد الجمع غير "
+                            "المصحَّح هناك غير مقدَّر. راجع المنحنى قبل إصدار التقرير.",
     "eff_bad_cell": "الصف {row}، {col}: القيمة {text!r} ليست عددًا أكبر من 0 (بنقطة عشرية ودون فاصلة). "
                     "صحّحها قبل الملاءمة.",
     "eff_saved": "حُفظ منحنى الكفاءة:\n{path}",

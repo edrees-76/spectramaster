@@ -840,6 +840,8 @@ class QCWindow(QMainWindow):
                 self._worker.cancel()
             self._thread.quit()
             self._thread.wait()                    # never destroy a running thread
+        from .worker import wait_threads
+        wait_threads(self)                         # PDF / Excel exports (round-7 review, Gemini M3)
         super().closeEvent(ev)
 
 

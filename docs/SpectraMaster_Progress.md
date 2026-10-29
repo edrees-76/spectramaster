@@ -1599,3 +1599,19 @@ Protocol `docs/baseline/round7_inputs_protocol.md`, committed before the change 
 - **Result (`after_R7E`):** runs 1 and 2 4 PASS / 1 FAIL from two harness comparison errors (kept,
   disclosed), run 3 5 PASS / 0 FAIL; benchmark unchanged; suite 1638 passed (one run exited 127 after
   passing, not reproduced; Codex M2, R7-G).
+
+## Round-7 external review: warnings and threads, Gemini M2 and M3 (2026-10-29)
+
+GUI / warning batch, no number changes (no protocol, as R6-F). Engine unchanged.
+
+- **Confirmed (Gemini M2).** A partial true-coincidence summing correction of the efficiency curve was
+  named only in the review; the concentrations, the report's calibration record (when the curve was
+  corrected in the activity calculation), the activity window's warning line and the Arabic status
+  text left it out or showed it in English.
+- **Confirmed (Gemini M3).** The QC window closed without waiting for its PDF / Excel export threads;
+  folder searches (batch conversion, batch reports, batch analysis, dropped folders) could not be
+  stopped, so closing a window during a large search waited for its end.
+- **Fix.** The partial points are named in all four places (Arabic and English); the QC window waits
+  for its exports; a folder search is cancelled when its window closes, without a message.
+- **Result (`after_R7F`):** benchmark 154 / 13 / 60 unchanged against `after_R7E`; 10 new tests
+  (`tests/test_round7_warnings_threads.py`), all failing on the old code; no existing test changed.

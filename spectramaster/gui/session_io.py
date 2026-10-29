@@ -55,6 +55,8 @@ _PATTERNS = [
     (r"measurement geometry not recorded: compatibility not checked", "msg_geo_unrecorded"),
     (r"sample information not recorded: no concentration", "msg_sample_unrecorded"),
     (r"efficiency extrapolated at (?P<energies>.+) keV", "msg_extrapolated"),
+    (r"efficiency curve with a partial true-coincidence summing correction at (?P<energies>.+): the summing "
+     r"loss left out is not estimated", "msg_tcs_partial"),
     (r"no results computed yet", "msg_no_results"),
     (r"results require recalculation: (?P<reasons>.*)", "msg_stale"),
     (r"reviewed by (?P<who>.+?) on (?P<time>\S+): (?P<note>.*)", "msg_reviewed_note"),

@@ -58,11 +58,14 @@ class BatchSetup:
     bkg_mode: str = "peak"
 
 
-def scan(paths: Sequence) -> list[BatchItem]:
+def scan(paths: Sequence, stop=None) -> list[BatchItem]:
+    """The spectra of `paths`.  `stop()` True raises InterruptedError (the window closed)."""
     from ..analysis.peaks import guess_detector
     from ..convert import read_spectra
     items = []
     for p in paths:
+        if stop is not None and stop():
+            raise InterruptedError("scan cancelled")
         try:
             spectra = read_spectra(p)[0]
         except Exception as exc:                       # unreadable file: kept, with the reason

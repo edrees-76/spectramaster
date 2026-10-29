@@ -79,6 +79,8 @@ EN = {
     "msg_geo_unrecorded": "Measurement geometry not recorded: compatibility not checked.",
     "msg_sample_unrecorded": "Sample information not recorded: no concentration.",
     "msg_extrapolated": "Efficiency extrapolated at {energies} keV.",
+    "msg_tcs_partial": "Efficiency curve with a partial true-coincidence summing correction at {energies}: "
+                       "the summing loss left out is not estimated.",
     "msg_no_results": "No results computed yet.",
     "msg_stale": "Results require recalculation: {reasons}",
     "msg_reviewed": "Reviewed by {who} on {time}.",
@@ -256,6 +258,8 @@ AR = {
     "msg_geo_unrecorded": "لم تُسجَّل هندسة القياس: لم يُتحقق من التوافق.",
     "msg_sample_unrecorded": "لم تُسجَّل معلومات العينة: لا يوجد تركيز.",
     "msg_extrapolated": "الكفاءة مستقرأة خارج نطاق المعايرة عند {energies} keV.",
+    "msg_tcs_partial": "منحنى الكفاءة مصحَّح جزئيًا للجمع التطابقي الحقيقي عند {energies}: "
+                       "فقد الجمع غير المصحَّح هناك غير مقدَّر.",
     "msg_no_results": "لم تُحسب نتائج بعد.",
     "msg_stale": "النتائج تحتاج إلى إعادة حساب: {reasons}",
     "msg_reviewed": "راجعها {who} في {time}.",
