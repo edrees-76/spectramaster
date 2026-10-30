@@ -1,0 +1,384 @@
+{
+ "results": {
+  "head": "d47fb31",
+  "harnesses": {
+   "round7_tcs_refit": {
+    "folder": "after_R7A",
+    "merge": "1d610ac",
+    "committed": {
+     "RA.C1": "PASS",
+     "RA.C2": "PASS",
+     "RA.C3": "PASS",
+     "RA.C4": "PASS",
+     "RA.C5": "PASS",
+     "RA.C6": "PASS"
+    },
+    "historical": {
+     "exit": 0,
+     "stderr_tail": [],
+     "states": {
+      "RA.C1": "PASS",
+      "RA.C2": "PASS",
+      "RA.C3": "PASS",
+      "RA.C4": "PASS",
+      "RA.C5": "PASS",
+      "RA.C6": "PASS"
+     }
+    },
+    "current": {
+     "exit": 0,
+     "stderr_tail": [],
+     "states": {
+      "RA.C1": "PASS",
+      "RA.C2": "PASS",
+      "RA.C3": "PASS",
+      "RA.C4": "PASS",
+      "RA.C5": "PASS",
+      "RA.C6": "PASS"
+     }
+    },
+    "changed": [],
+    "assigned": {},
+    "steps": [],
+    "committed_files_unchanged": true
+   },
+   "round7_combined": {
+    "folder": "after_R7B",
+    "merge": "0b95938",
+    "committed": {
+     "RB.C1": "PASS",
+     "RB.C2": "PASS",
+     "RB.C3": "PASS",
+     "RB.C4": "PASS",
+     "RB.C5": "PASS"
+    },
+    "historical": {
+     "exit": 0,
+     "stderr_tail": [],
+     "states": {
+      "RB.C1": "PASS",
+      "RB.C2": "PASS",
+      "RB.C3": "PASS",
+      "RB.C4": "PASS",
+      "RB.C5": "PASS"
+     }
+    },
+    "current": {
+     "exit": 1,
+     "stderr_tail": [],
+     "states": {
+      "RB.C1": "PASS",
+      "RB.C2": "FAIL",
+      "RB.C3": "FAIL",
+      "RB.C4": "PASS",
+      "RB.C5": "FAIL"
+     }
+    },
+    "changed": [
+     "RB.C2",
+     "RB.C3",
+     "RB.C5"
+    ],
+    "assigned": {
+     "RB.C2": "3cd2aa7",
+     "RB.C5": "3cd2aa7",
+     "RB.C3": "5de3b03"
+    },
+    "steps": [
+     {
+      "commit": "3cd2aa7",
+      "subject": "Merge pull request #95 from edrees-76/claude/r7c-shared-background",
+      "exit": 1,
+      "states": {
+       "RB.C1": "PASS",
+       "RB.C2": "FAIL",
+       "RB.C3": "PASS",
+       "RB.C4": "PASS",
+       "RB.C5": "FAIL"
+      },
+      "error": null
+     },
+     {
+      "commit": "27a54b1",
+      "subject": "Merge pull request #96 from edrees-76/claude/r7d-quad-limits",
+      "exit": 1,
+      "states": {
+       "RB.C1": "PASS",
+       "RB.C2": "FAIL",
+       "RB.C3": "PASS",
+       "RB.C4": "PASS",
+       "RB.C5": "FAIL"
+      },
+      "error": null
+     },
+     {
+      "commit": "2469fda",
+      "subject": "Merge pull request #97 from edrees-76/claude/r7e-inputs",
+      "exit": 1,
+      "states": {
+       "RB.C1": "PASS",
+       "RB.C2": "FAIL",
+       "RB.C3": "PASS",
+       "RB.C4": "PASS",
+       "RB.C5": "FAIL"
+      },
+      "error": null
+     },
+     {
+      "commit": "c942377",
+      "subject": "Merge pull request #98 from edrees-76/claude/r7f-warnings-threads",
+      "exit": 1,
+      "states": {
+       "RB.C1": "PASS",
+       "RB.C2": "FAIL",
+       "RB.C3": "PASS",
+       "RB.C4": "PASS",
+       "RB.C5": "FAIL"
+      },
+      "error": null
+     },
+     {
+      "commit": "384e89d",
+      "subject": "Merge pull request #99 from edrees-76/claude/r7g-tests",
+      "exit": 1,
+      "states": {
+       "RB.C1": "PASS",
+       "RB.C2": "FAIL",
+       "RB.C3": "PASS",
+       "RB.C4": "PASS",
+       "RB.C5": "FAIL"
+      },
+      "error": null
+     },
+     {
+      "commit": "497467b",
+      "subject": "Merge pull request #100 from edrees-76/claude/r8a-alt-limits",
+      "exit": 1,
+      "states": {
+       "RB.C1": "PASS",
+       "RB.C2": "FAIL",
+       "RB.C3": "PASS",
+       "RB.C4": "PASS",
+       "RB.C5": "FAIL"
+      },
+      "error": null
+     },
+     {
+      "commit": "a68c114",
+      "subject": "Merge pull request #101 from edrees-76/claude/r8f-scan-cancel",
+      "exit": 1,
+      "states": {
+       "RB.C1": "PASS",
+       "RB.C2": "FAIL",
+       "RB.C3": "PASS",
+       "RB.C4": "PASS",
+       "RB.C5": "FAIL"
+      },
+      "error": null
+     },
+     {
+      "commit": "68721ca",
+      "subject": "Merge pull request #102 from edrees-76/claude/r8e-inputs",
+      "exit": 1,
+      "states": {
+       "RB.C1": "PASS",
+       "RB.C2": "FAIL",
+       "RB.C3": "PASS",
+       "RB.C4": "PASS",
+       "RB.C5": "FAIL"
+      },
+      "error": null
+     },
+     {
+      "commit": "6ba72d7",
+      "subject": "Merge pull request #103 from edrees-76/claude/r8d-spe-truncation",
+      "exit": 1,
+      "states": {
+       "RB.C1": "PASS",
+       "RB.C2": "FAIL",
+       "RB.C3": "PASS",
+       "RB.C4": "PASS",
+       "RB.C5": "FAIL"
+      },
+      "error": null
+     },
+     {
+      "commit": "dbfb5b5",
+      "subject": "Merge pull request #104 from edrees-76/claude/r8b-peak-mode",
+      "exit": 1,
+      "states": {
+       "RB.C1": "PASS",
+       "RB.C2": "FAIL",
+       "RB.C3": "PASS",
+       "RB.C4": "PASS",
+       "RB.C5": "FAIL"
+      },
+      "error": null
+     },
+     {
+      "commit": "77310c2",
+      "subject": "Merge pull request #105 from edrees-76/claude/r8c-coi-guard",
+      "exit": 1,
+      "states": {
+       "RB.C1": "PASS",
+       "RB.C2": "FAIL",
+       "RB.C3": "PASS",
+       "RB.C4": "PASS",
+       "RB.C5": "FAIL"
+      },
+      "error": null
+     },
+     {
+      "commit": "09d5efe",
+      "subject": "Merge pull request #106 from edrees-76/claude/r8g-harness-rerun",
+      "exit": 1,
+      "states": {
+       "RB.C1": "PASS",
+       "RB.C2": "FAIL",
+       "RB.C3": "PASS",
+       "RB.C4": "PASS",
+       "RB.C5": "FAIL"
+      },
+      "error": null
+     },
+     {
+      "commit": "5de3b03",
+      "subject": "Merge pull request #107 from edrees-76/claude/r8h-line-covariance",
+      "exit": 1,
+      "states": {
+       "RB.C1": "PASS",
+       "RB.C2": "FAIL",
+       "RB.C3": "FAIL",
+       "RB.C4": "PASS",
+       "RB.C5": "FAIL"
+      },
+      "error": null
+     }
+    ],
+    "committed_files_unchanged": true
+   },
+   "round7_shared_background": {
+    "folder": "after_R7C",
+    "merge": "3cd2aa7",
+    "committed": {
+     "RC.C1": "PASS",
+     "RC.C2": "FAIL",
+     "RC.C3": "PASS",
+     "RC.C4": "PASS",
+     "RC.C5": "PASS"
+    },
+    "historical": {
+     "exit": 1,
+     "stderr_tail": [],
+     "states": {
+      "RC.C1": "PASS",
+      "RC.C2": "FAIL",
+      "RC.C3": "PASS",
+      "RC.C4": "PASS",
+      "RC.C5": "PASS"
+     }
+    },
+    "current": {
+     "exit": 1,
+     "stderr_tail": [],
+     "states": {
+      "RC.C1": "PASS",
+      "RC.C2": "FAIL",
+      "RC.C3": "PASS",
+      "RC.C4": "PASS",
+      "RC.C5": "PASS"
+     }
+    },
+    "changed": [],
+    "assigned": {},
+    "steps": [],
+    "committed_files_unchanged": true
+   },
+   "round7_quad_limits": {
+    "folder": "after_R7D",
+    "merge": "27a54b1",
+    "committed": {
+     "RD.C1": "PASS",
+     "RD.C2": "PASS",
+     "RD.C3": "PASS",
+     "RD.C4": "PASS"
+    },
+    "historical": {
+     "exit": 0,
+     "stderr_tail": [],
+     "states": {
+      "RD.C1": "PASS",
+      "RD.C2": "PASS",
+      "RD.C3": "PASS",
+      "RD.C4": "PASS"
+     }
+    },
+    "current": {
+     "exit": 0,
+     "stderr_tail": [],
+     "states": {
+      "RD.C1": "PASS",
+      "RD.C2": "PASS",
+      "RD.C3": "PASS",
+      "RD.C4": "PASS"
+     }
+    },
+    "changed": [],
+    "assigned": {},
+    "steps": [],
+    "committed_files_unchanged": true
+   },
+   "round7_inputs": {
+    "folder": "after_R7E",
+    "merge": "2469fda",
+    "committed": {
+     "RE.C1": "PASS",
+     "RE.C2": "PASS",
+     "RE.C3": "PASS",
+     "RE.C4": "PASS",
+     "RE.C5": "PASS"
+    },
+    "historical": {
+     "exit": 0,
+     "stderr_tail": [],
+     "states": {
+      "RE.C1": "PASS",
+      "RE.C2": "PASS",
+      "RE.C3": "PASS",
+      "RE.C4": "PASS",
+      "RE.C5": "PASS"
+     }
+    },
+    "current": {
+     "exit": 0,
+     "stderr_tail": [],
+     "states": {
+      "RE.C1": "PASS",
+      "RE.C2": "PASS",
+      "RE.C3": "PASS",
+      "RE.C4": "PASS",
+      "RE.C5": "PASS"
+     }
+    },
+    "changed": [],
+    "assigned": {},
+    "steps": [],
+    "committed_files_unchanged": true
+   }
+  }
+ },
+ "criteria": {
+  "RG8.C1": {
+   "value": "every committed after_R7x file byte-identical after the --rerun runs",
+   "pass": true
+  },
+  "RG8.C2": {
+   "value": "round7_tcs_refit at 1d610ac: 6 PASS / 0 FAIL; round7_combined at 0b95938: 5 PASS / 0 FAIL; round7_shared_background at 3cd2aa7: 4 PASS / 1 FAIL; round7_quad_limits at 27a54b1: 4 PASS / 0 FAIL; round7_inputs at 2469fda: 5 PASS / 0 FAIL",
+   "pass": true
+  },
+  "RG8.C3": {
+   "value": "round7_tcs_refit at d47fb31: 6 PASS / 0 FAIL; round7_combined at d47fb31: 2 PASS / 3 FAIL (RB.C2 PASS -> FAIL from 3cd2aa7, RB.C3 PASS -> FAIL from 5de3b03, RB.C5 PASS -> FAIL from 3cd2aa7); round7_shared_background at d47fb31: 4 PASS / 1 FAIL; round7_quad_limits at d47fb31: 4 PASS / 0 FAIL; round7_inputs at d47fb31: 5 PASS / 0 FAIL",
+   "pass": true
+  }
+ }
+}

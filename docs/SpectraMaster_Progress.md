@@ -1702,3 +1702,36 @@ Protocol `docs/baseline/round8_alt_limits_protocol.md`, committed before the cha
 - `after_R9A` 3 PASS / 1 FAIL: RA9.C2 a drafting FAIL (exact equality with the note's 4 decimals),
   kept; pre-registered amendment (c8aab2b, tolerance 5e-5) re-run `after_R9A2` 4 PASS / 0 FAIL.
   Benchmark 154 / 13 / 60 unchanged; suite 1767 passed. ENGINE_VERSION 1.35.0.
+
+### 2026-10-30 Round-9 review, Codex H2 / Gemini L2 (R9-B, #110): truncated and multi-block spectrum files
+
+- An SPE file with several `$DATA` blocks is refused unless one measurement is read per block; IEC 1455
+  files with fewer values than record 2 declares, Canberra S100 files shorter than the header's
+  channels and Aptec ASCII files whose data stop before `CHANNELS-1` are refused instead of read
+  short. `tests/test_round9_format_truncation.py` (8 tests, 4 fail before). No analysis change.
+
+### 2026-10-30 Round-9 review, Codex M1 / L1, Gemini L3 (R9-C, #108): number inputs
+
+- The thousands check applies to the mantissa (`1,000e0` refused), Arabic-Indic and other decimal
+  digits are read as ASCII before it (`٠,٥٠٠` = 0.5), and the activity input reads through
+  `decimal_text` (decimal comma accepted, ambiguous separators refused).
+  `tests/test_round9_number_inputs.py` (51 cases, 22 fail before). GUI only.
+
+### 2026-10-30 Round-9 review, Codex M2 / Gemini L1 (R9-D, #109): late messages after close or cancel
+
+- The QC window reports an export or import failure that arrives after it is closed in the main
+  window's status bar instead of a message box; the batch dialog drops a scan result or failure that
+  arrives after cancel, and `lab.batch.scan` checks the stop flag after its loop.
+  `tests/test_round9_gui_cancel.py` (7 tests, 5 fail before). GUI only.
+
+### 2026-10-30 Round-9 review, Codex M3 / M4, Gemini M1 (R9-E): re-run reliability of the harnesses
+
+- Protocol `docs/baseline/round9_harness_protocol.md` (86c3148). `round8_rerun` removes a harness's
+  results file before running it and counts only a fresh file with exit 0 or 1 (an injected exit 99
+  passed before); `round7_quad_limits` keeps the lines' window coefficients when copying them and
+  excepts the intended 1.34.0 change of the Ba-133 mean uncertainty (RD.C2 / RD.C3 failed on the
+  current engine); the round-8 controls compare numbers within relative 1e-12 (a 1e-13 change failed
+  six controls).
+- First run `after_R9E`: RE9.C3 FAIL (RA8.C1 compared three values outside `_same`), kept;
+  pre-registered amendment (788f5c9) `after_R9E2` 6 PASS / 0 FAIL. Suite 1774 passed. Harness code
+  only; ENGINE_VERSION unchanged (1.35.0).
