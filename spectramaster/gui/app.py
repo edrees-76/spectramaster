@@ -1185,20 +1185,28 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         if any(p.is_dir() for p in items):          # folders are searched on a worker thread
             from .worker import call_stop, start_call
             self.statusBar().showMessage(tr("scan_folder_running"))
-            stop = call_stop(self)
+            stop = self._drop_stop = call_stop(self)
             start_call(self, lambda: expand_spectrum_paths(items, stop=stop), self._dropped_files_found,
                        self._dropped_scan_failed)
             return
+        self._drop_stop = None
         self._dropped_files_found(expand_spectrum_paths(items))
+
+    def _drop_cancelled(self) -> bool:
+        """True when the search of dropped folders was cancelled (window closing): a result that
+        still arrives is dropped (round-8 review, Codex M4)."""
+        stop = self.__dict__.get("_drop_stop")
+        return stop is not None and stop()
 
     def _dropped_files_found(self, files) -> None:
         self.statusBar().clearMessage()
-        if files:
+        if files and not self._drop_cancelled():
             self.open_batch(files)
 
     def _dropped_scan_failed(self, msg: str) -> None:
         self.statusBar().clearMessage()
-        self.show_error(msg)
+        if not self._drop_cancelled():
+            self.show_error(msg)
 
     def dragEnterEvent(self, ev):
         if SpectrumPlot.local_paths(ev.mimeData()):

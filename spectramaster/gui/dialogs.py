@@ -161,9 +161,11 @@ def _check_stop(stop) -> None:
 
 def scan_folder(root: Path, recursive: bool, extensions: Optional[set[str]], stop=None) -> list[Path]:
     """Files of `root` with one of `extensions` (None: all).  `stop()` True raises InterruptedError
-    (gui.worker.call_stop)."""
+    (gui.worker.call_stop), checked before each folder and each entry of a single folder and once
+    more at the end, so a cancelled search never returns a list (round-8 review, Codex M4)."""
     out: list[Path] = []
     root = Path(root)
+    _check_stop(stop)
     if recursive:
         for dirpath, dirnames, filenames in os.walk(root):
             _check_stop(stop)
@@ -177,9 +179,11 @@ def scan_folder(root: Path, recursive: bool, extensions: Optional[set[str]], sto
         except OSError:
             names = []
         for name in names:
+            _check_stop(stop)
             p = root / name
             if p.is_file() and (extensions is None or p.suffix.lower() in extensions):
                 out.append(p)
+    _check_stop(stop)
     return out
 
 
@@ -191,9 +195,10 @@ def scan_spectrum_files(root: Path, recursive: bool, stop=None) -> list[Path]:
     exts = {e for f in readable_formats() for e in f.extensions}
     out = []
     for p in scan_folder(root, recursive, None, stop):
-        _check_stop(stop)
+        _check_stop(stop)                       # before reading the content of each file
         if p.suffix.lower() in exts or detect_format(p) is not None:
             out.append(p)
+    _check_stop(stop)
     return out
 
 
@@ -207,6 +212,7 @@ def expand_spectrum_paths(paths: Sequence[Path], recursive: bool = True, stop=No
             out.extend(scan_spectrum_files(p, recursive, stop))
         elif p.is_file():
             out.append(p)
+    _check_stop(stop)
     return out
 
 
@@ -410,9 +416,18 @@ class BatchDialog(QDialog):
         self.count_label.setText(tr("folder_scanning"))
         self.start_btn.setEnabled(False)
         root, recursive, exts = Path(text), self.recursive_cb.isChecked(), self.input_extensions()
-        stop = call_stop(self)
+        stop = self._scan_stop = call_stop(self)
         start_call(self, lambda: scan_folder(root, recursive, exts, stop), self._folder_scanned,
                    self._folder_scan_failed)
+
+    def _scan_cancelled(self) -> bool:
+        """True when the search was cancelled (window closed): its result, if it still arrives,
+        is dropped (round-8 review, Codex M4)."""
+        stop = self.__dict__.get("_scan_stop")
+        if stop is not None and stop():
+            self.scanning = self._rescan = False
+            return True
+        return False
 
     def _scan_ended(self) -> bool:
         """Clear the search state; True when a newer search was asked for (and is started)."""
@@ -424,7 +439,7 @@ class BatchDialog(QDialog):
         return False
 
     def _folder_scanned(self, files) -> None:
-        if self._scan_ended():
+        if self._scan_cancelled() or self._scan_ended():
             return
         self.model.set_files(files)
         self._update_count()
@@ -434,7 +449,7 @@ class BatchDialog(QDialog):
             self.summary.setText(" ")
 
     def _folder_scan_failed(self, msg: str) -> None:
-        if self._scan_ended():
+        if self._scan_cancelled() or self._scan_ended():
             return
         self.model.set_files([])
         self._update_count()
