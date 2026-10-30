@@ -490,7 +490,10 @@ def read_iec(path: Path) -> list[Spectrum]:
     if len(counts) > nch:
         counts = counts[:nch]
     elif len(counts) < nch:
-        spec.extra["iec_declared_channels"] = nch
+        # record 2 gives a channel count (not a range), and IEC 1455 writers emit every
+        # channel: fewer values means a truncated or partially copied file
+        raise FormatError(f"{Path(path).name}: truncated IEC 1455 file: record 2 declares {nch} "
+                          f"channels, {len(counts)} read")
     spec.counts = counts
     return [spec]
 
