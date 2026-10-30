@@ -305,10 +305,10 @@ class BatchAnalysisDialog(QDialog):
         self.add_paths(paths)
 
     def _on_folder_scan_failed(self, msg: str) -> None:
+        self._set_busy(False)
         if self._folder_cancelled():
-            self._set_busy(False)
             return
-        self._on_scan_failed(msg)
+        self.message(wtr("batch_failed", msg=msg))
 
     def add_paths(self, paths) -> None:
         known = set(self.paths)
@@ -334,11 +334,20 @@ class BatchAnalysisDialog(QDialog):
             return False
         self._set_busy(True, wtr("batch_scanning"))
         paths, tol = list(self.paths), self.tol_spin.value()
-        stop = call_stop(self)
+        stop = self._scan_stop = call_stop(self)
         start_call(self, lambda: _scan_and_group(paths, tol, stop), self._on_scanned, self._on_scan_failed)
         return True
 
+    def _scan_cancelled(self) -> bool:
+        """True when the scan was cancelled (window closed): a result or a failure that still
+        arrives is dropped (round-9 review, Gemini L1; as _folder_cancelled)."""
+        stop = self.__dict__.get("_scan_stop")
+        return stop is not None and stop()
+
     def _on_scanned(self, result) -> None:
+        if self._scan_cancelled():
+            self._set_busy(False)
+            return
         self.items, self.groups = result
         self.setups.clear(), self.setup_text.clear(), self.setup_inputs.clear()
         self.rows = []
@@ -354,6 +363,8 @@ class BatchAnalysisDialog(QDialog):
 
     def _on_scan_failed(self, msg: str) -> None:
         self._set_busy(False)
+        if self._scan_cancelled():
+            return
         self.message(wtr("batch_failed", msg=msg))
 
     def _fill_groups(self) -> None:
