@@ -1,11 +1,13 @@
 """Round-7 review, H1 (Codex and Gemini): the true-coincidence summing state of an efficiency curve
 kept through a refit (docs/baseline/round7_tcs_refit_protocol.md).
 
-    python -m spectramaster.validation.round7_tcs_refit [--collect]
+    python -m spectramaster.validation.round7_tcs_refit [--collect] [--rerun]
 
 Synthetic data and the bundled coincidence table only.  ``--collect`` writes the observations only,
 to ``docs/baseline/after_R7A/round7_tcs_refit_before.json`` (the "before" values); without it the
 criteria are evaluated against that file.  RA.C3 uses the efficiency dialog offscreen (PySide6).
+``--rerun`` writes the results to RERUN (in the temporary folder) instead of the committed folder,
+which a re-run on a later engine then leaves as committed (round8_rerun_protocol.md).
 """
 from __future__ import annotations
 
@@ -23,6 +25,7 @@ from spectramaster.analysis import efficiency as ef
 from spectramaster.validation import round6_tcs_state as r6
 
 OUT = r6.OUT.parent / "after_R7A"
+RERUN = Path(tempfile.gettempdir()) / "spectramaster_round7_tcs_refit"     # --rerun: results here, OUT left as committed
 BEFORE_JSON = OUT / "round7_tcs_refit_before.json"
 ENERGIES = list(np.geomspace(60.0, 1800.0, 20))
 REL = 1e-12
@@ -191,21 +194,24 @@ def _cascade(nuc) -> bool:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--collect", action="store_true", help="write the observations only (the 'before' values)")
+    ap.add_argument("--rerun", action="store_true",
+                    help=f"write the results to {RERUN}, not the committed folder")
     a = ap.parse_args(argv)
+    out = RERUN if a.rerun else OUT
     res = json.loads(json.dumps(collect(), default=float))
-    OUT.mkdir(parents=True, exist_ok=True)
+    out.mkdir(parents=True, exist_ok=True)
     if a.collect:
         BEFORE_JSON.write_text(json.dumps(res, indent=1, ensure_ascii=False), encoding="utf-8")
         print(f"wrote {BEFORE_JSON}")
         return 0
     before = json.loads(BEFORE_JSON.read_text(encoding="utf-8"))
     crit = criteria(res, before)
-    (OUT / "round7_tcs_refit.json").write_text(json.dumps({"results": res, "criteria": crit}, indent=1,
+    (out / "round7_tcs_refit.json").write_text(json.dumps({"results": res, "criteria": crit}, indent=1,
                                                           ensure_ascii=False), encoding="utf-8")
     lines = ["# Round-7 TCS state through a refit (H1)", "", f"engine {res['engine']}", "",
              "| ID | value | result |", "|---|---|---|"]
     lines += [f"| {k} | {v['value']} | {'PASS' if v['pass'] else 'FAIL'} |" for k, v in crit.items()]
-    (OUT / "round7_tcs_refit.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (out / "round7_tcs_refit.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     n = sum(v["pass"] for v in crit.values())
     print("\n".join(lines))
     print(f"{n} PASS / {len(crit) - n} FAIL")
