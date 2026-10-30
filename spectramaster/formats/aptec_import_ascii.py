@@ -298,6 +298,12 @@ def read_aptec_ascii(path: Path) -> list[Spectrum]:
                 coeffs[int(k[14])] = f
     if not data:
         raise FormatError("no 'channel: counts' lines")
+    if nch and max(data) + 1 < nch:
+        # one "channel: counts" line per channel up to CHANNELS - 1 (Aptec's writer and ours):
+        # data that stop early come from a truncated or partially copied file. Missing lines
+        # inside the range still read as 0, as in Aptec's own reader (zeroed memory).
+        raise FormatError(f"{Path(path).name}: truncated Aptec ASCII file: CHANNELS: {nch}, "
+                          f"last data line is channel {max(data)}")
     n = nch if nch else max(data) + 1
     spec.counts = [data.get(i, 0) for i in range(n)]
     if d and len(d) == 3:

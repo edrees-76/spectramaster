@@ -81,11 +81,12 @@ def read_s100(path: Path) -> list[Spectrum]:
         raise FormatError("file too short for an S100 header")
     (rtype, mca, region, tag, specid, acqmode, sec, msec, tz, dst, live, true, sweeps,
      comp, q2, q1, q0, unit, unit_type, fmt, order, _filler, nch) = _S100_HDR.unpack_from(data)
-    if nch <= 0 or len(data) < 128 + 4 * nch:
-        # some files store fewer channels than the header claims; use what is there
-        nch = (len(data) - 128) // 4
-        if nch <= 0:
-            raise FormatError("no channel data")
+    if nch <= 0:
+        raise FormatError("no channel data")
+    if len(data) < 128 + 4 * nch:
+        # fixed 4-byte records after the 128-byte header: a shorter file is truncated
+        raise FormatError(f"{Path(path).name}: truncated S100 file: header declares {nch} channels, "
+                          f"{(len(data) - 128) // 4} present")
     counts = list(struct.unpack_from(f"<{nch}i", data, 128))
     s = Spectrum(counts=counts)
     s.sample_id = _cstr(specid)

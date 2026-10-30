@@ -344,15 +344,15 @@ def _reader(parser):
     return read
 
 
-def _spe_declared_channels(path: Path) -> list[int]:
-    """Channel counts declared by the ``$DATA:`` blocks of an ASCII SPE file (``first last`` on
-    the next non-empty line gives ``last - first + 1``). A block whose range is missing or
-    cannot be parsed is left out, so it is never checked."""
+def _spe_data_blocks(path: Path) -> list[Optional[int]]:
+    """One entry per ``$DATA:`` block of an ASCII SPE file: the declared channel count
+    (``first last`` on the next non-empty line gives ``last - first + 1``), or None when the
+    range is missing or cannot be parsed."""
     try:
         lines = Path(path).read_bytes().decode("latin-1").splitlines()
     except OSError:
         return []
-    out = []
+    out: list[Optional[int]] = []
     for i, line in enumerate(lines):
         if line.strip().upper() != "$DATA:":
             continue
@@ -360,10 +360,16 @@ def _spe_declared_channels(path: Path) -> list[int]:
         try:
             first, last = int(rng[0]), int(rng[1])
         except (IndexError, ValueError):
+            out.append(None)
             continue
-        if last >= first >= 0:
-            out.append(last - first + 1)
+        out.append(last - first + 1 if last >= first >= 0 else None)
     return out
+
+
+def _spe_declared_channels(path: Path) -> list[int]:
+    """Channel counts declared by the ``$DATA:`` blocks of an ASCII SPE file. A block whose
+    range is missing or cannot be parsed is left out, so it is never checked."""
+    return [n for n in _spe_data_blocks(path) if n is not None]
 
 
 def _spe_read(path: Path) -> list[Spectrum]:
@@ -372,17 +378,23 @@ def _spe_read(path: Path) -> list[Spectrum]:
     holds one value would otherwise open silently as a 1-channel spectrum. One channel short is
     accepted: some writers give the end channel as exclusive (143 of the 1629 public IAEA IDB
     files declare ``0 8191`` and hold 8191 values). More values than declared are left as
-    SpecUtils reads them."""
+    SpecUtils reads them. A file with several ``$DATA:`` blocks must give one measurement per
+    block: otherwise the blocks cannot be matched to what was read (SpecUtils returns a single
+    spectrum for a truncated two-block file), and the file is refused rather than left
+    unchecked."""
     spectra = _read_with(path, P.SpeIaea)
-    declared = _spe_declared_channels(path)
-    if len(declared) == 1:
-        pairs = [(declared[0], s) for s in spectra]
-    elif len(declared) == len(spectra):
-        pairs = list(zip(declared, spectra))
+    blocks = _spe_data_blocks(path)
+    if len(blocks) == 1:
+        pairs = [(blocks[0], s) for s in spectra]
+    elif len(blocks) == len(spectra):
+        pairs = list(zip(blocks, spectra))
+    elif blocks:
+        raise FormatError(f"{Path(path).name}: SPE file has {len(blocks)} $DATA blocks but "
+                          f"{len(spectra)} measurement(s) were read (truncated or malformed file)")
     else:
         pairs = []
     for n_decl, s in pairs:
-        if len(s.counts) < n_decl - 1:
+        if n_decl is not None and len(s.counts) < n_decl - 1:
             raise FormatError(f"{Path(path).name}: truncated SPE file: $DATA declares {n_decl} channels, "
                               f"{len(s.counts)} read")
     return spectra
