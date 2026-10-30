@@ -859,6 +859,8 @@ def fit_efficiency(points: Sequence[EfficiencyPoint], model: str = "loglog", ord
 
 TCS_REFIT_TOL = 1e-7             # relative change of the corrected cascade points: converged
 TCS_REFIT_MAX_ITER = 200
+TCS_ALREADY_CORRECTED = ("cascade-emitter calibration points already corrected for true-coincidence summing: "
+                         "curve refitted on them, not corrected again")
 
 
 def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0,
@@ -903,6 +905,15 @@ def summing_free_curve(curve: EfficiencyCurve, pt, pt_rel_unc: float = 0.0,
                   crossover="auto" if curve.crossover_auto else curve.e_ref)
     meta = {k: getattr(curve, k) for k in ("geometry", "detector", "geometry_record", "validation_status",
                                             "name", "source", "date")}
+    if any(curve.points[i].summing_coi is not None for i in cascade):
+        # points corrected earlier (excluded, refitted, included again): refitted as they are, not
+        # corrected twice; a mix with uncorrected ones is refused by fit_efficiency
+        # (round8_coi_guard_protocol.md)
+        cur = fit_efficiency(list(curve.points), curve.model, **kw, **meta)
+        if not (curve.orders_auto or curve.crossover_auto):
+            cur.selection = curve.selection
+        cur.note = (curve.note + "; " + TCS_ALREADY_CORRECTED).strip("; ")
+        return cur
     cur, factors, partial, prev, n_iter = curve, {}, {}, None, 0
     for n_iter in range(1, max(int(iterations), 1) + 1):
         def eps(e, c=cur):

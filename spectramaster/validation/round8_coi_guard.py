@@ -109,7 +109,17 @@ def _pt121(state) -> dict:
     return [p for p in state["points"] if p["nuclide"] == "Eu-152" and abs(p["energy"] - EU121) < 0.1][0]
 
 
+def _no_date(x):
+    """`x` without the curves' "date" (the time of the fit, not a result)."""
+    if isinstance(x, dict):
+        return {k: _no_date(v) for k, v in x.items() if k != "date"}
+    if isinstance(x, list):
+        return [_no_date(v) for v in x]
+    return x
+
+
 def criteria(res: dict, before: dict) -> dict:
+    res, before = _no_date(res), _no_date(before)
     out = {}
     f, inp, ref = res["free"]["reenabled"], res["input"]["reenabled"], res["input"]["refit"]
     fb = before["free"]["reenabled"]
@@ -117,7 +127,7 @@ def criteria(res: dict, before: dict) -> dict:
             and _same(f["state"]["points"], inp["points"])
             and all(math.isclose(a, b, rel_tol=REL) for a, b in zip(f["state"]["eps"] + [f["state"]["eps121"]],
                                                                    ref["eps"] + [ref["eps121"]]))
-            and _same(f["state"]["tcs_partial"], ref["tcs_partial"]))
+            and _same(f["state"].get("tcs_partial", []), ref.get("tcs_partial", [])))
     p_in, p_b = _pt121(inp), _pt121(fb["state"])
     now = (f"{_pt121(f['state'])['efficiency']:.6g}, curve at {EU121} keV {f['state']['eps121']:.6g}, marked "
            f"corrected {f['state']['summing_corrected']}") if f["state"] else f"refused ({f['error']})"

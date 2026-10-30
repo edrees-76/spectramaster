@@ -108,7 +108,7 @@ import numpy as np
 
 from . import coincidence
 from .efficiency import (TCS_NUCLIDES, EfficiencyCurve, check_measurement, counting_decay_factor, decay_factor,
-                         match_peak, summing_free_curve)
+                         match_peak, summing_free_curve, TCS_ALREADY_CORRECTED)
 
 K_DEFAULT = 1.645
 # beyond this summing-out loss the first-order correction degrades (tcs_protocol.md, close geometry)
@@ -776,7 +776,8 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
         if free is not curve:
             # its partial points are named below, as for a curve loaded already corrected
             done = free.note.split("; ")[-1].split(", partial correction for ")[0]
-            notes.append(f"efficiency curve: {done} with the same peak-to-total, so the summing is not counted twice")
+            notes.append(f"efficiency curve: {done}" if done == TCS_ALREADY_CORRECTED else
+                         f"efficiency curve: {done} with the same peak-to-total, so the summing is not counted twice")
             curve = free
         eps_peak = lambda en: np.clip(curve.efficiency(np.clip(np.asarray(en, dtype=float),     # noqa: E731
                                                                curve.e_min, curve.e_max)), 0.0, 1.0)

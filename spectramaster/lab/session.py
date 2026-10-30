@@ -117,7 +117,9 @@ SCHEMA_VERSION = 1
 #          and its nuclide inherits them (round7_quad_limits_protocol.md)
 #   1.31.0 2026-10-30 a nuclide not detected whose primary result comes from another line than its key line
 #          reports that line's decision threshold and MDA (round8_alt_limits_protocol.md)
-ENGINE_VERSION = "1.31.0"
+#   1.33.0 2026-10-30 calibration points already corrected for true-coincidence summing on a curve not
+#          marked corrected are refitted as they are, not corrected twice (round8_coi_guard_protocol.md)
+ENGINE_VERSION = "1.33.0"
 
 
 class SessionSchemaError(ValueError):
