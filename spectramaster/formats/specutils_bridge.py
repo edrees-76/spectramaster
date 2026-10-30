@@ -344,6 +344,50 @@ def _reader(parser):
     return read
 
 
+def _spe_declared_channels(path: Path) -> list[int]:
+    """Channel counts declared by the ``$DATA:`` blocks of an ASCII SPE file (``first last`` on
+    the next non-empty line gives ``last - first + 1``). A block whose range is missing or
+    cannot be parsed is left out, so it is never checked."""
+    try:
+        lines = Path(path).read_bytes().decode("latin-1").splitlines()
+    except OSError:
+        return []
+    out = []
+    for i, line in enumerate(lines):
+        if line.strip().upper() != "$DATA:":
+            continue
+        rng = next((ln.split() for ln in lines[i + 1:] if ln.strip()), [])
+        try:
+            first, last = int(rng[0]), int(rng[1])
+        except (IndexError, ValueError):
+            continue
+        if last >= first >= 0:
+            out.append(last - first + 1)
+    return out
+
+
+def _spe_read(path: Path) -> list[Spectrum]:
+    """ASCII SPE through SpecUtils, refusing a truncated file: SpecUtils reads whatever count
+    values are present, so a partially copied file whose ``$DATA:`` declares 4096 channels but
+    holds one value would otherwise open silently as a 1-channel spectrum. One channel short is
+    accepted: some writers give the end channel as exclusive (143 of the 1629 public IAEA IDB
+    files declare ``0 8191`` and hold 8191 values). More values than declared are left as
+    SpecUtils reads them."""
+    spectra = _read_with(path, P.SpeIaea)
+    declared = _spe_declared_channels(path)
+    if len(declared) == 1:
+        pairs = [(declared[0], s) for s in spectra]
+    elif len(declared) == len(spectra):
+        pairs = list(zip(declared, spectra))
+    else:
+        pairs = []
+    for n_decl, s in pairs:
+        if len(s.counts) < n_decl - 1:
+            raise FormatError(f"{Path(path).name}: truncated SPE file: $DATA declares {n_decl} channels, "
+                              f"{len(s.counts)} read")
+    return spectra
+
+
 def _placeholder_calibration(spec: Spectrum) -> Spectrum:
     """E = 0 + 1 * channel stored by an MCA that was never calibrated is not a calibration
     (docs/baseline/placeholder_energy_calibration_protocol.md): the stored values are kept in
@@ -950,7 +994,7 @@ _reg(1, "ortec_chn", "ORTEC ADCAM / MAESTRO", [".chn"], reader=_chn_read, writer
      sniffer=_chn_sniff, aliases=["chn"], notes="Integer CHN with -102 calibration trailer.")
 _reg(2, "ortec_spc", "ORTEC INFORM (integer SPC)", [".spc"], P.Spc, W.SpcBinaryInt,
      sniffer=_spc_sniff(1), aliases=["spc"], notes="Reads integer, float and ASCII SPC.")
-_reg(7, "iaea_spe", "IAEA / Rossendorf ASCII SPE", [".spe"], P.SpeIaea, W.SpeIaea,
+_reg(7, "iaea_spe", "IAEA / Rossendorf ASCII SPE", [".spe"], reader=_spe_read, kind=W.SpeIaea,
      sniffer=_spe_sniff, aliases=["spe", "rossendorf"])
 _reg(10, "rms_phd", "RMS / IMS ASCII PHD", [".phd"], P.Phd, sniffer=_phd_sniff, aliases=["phd"])
 _reg(16, "ci_cnf", "Canberra CAM (Genie-2000)", [".cnf"], reader=_cnf_read,
