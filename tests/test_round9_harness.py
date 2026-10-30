@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import math
 import shutil
+import subprocess
 import tempfile
 
 import pytest
@@ -33,7 +34,14 @@ def test_round8_controls_use_the_tolerance(mod):
     assert not mod._same(v, {"lines": [{"mda": 0.1 * (1 + 1e-9), "note": "x"}], "n": 3})
 
 
-@pytest.mark.skipif(shutil.which("git") is None, reason="needs git")
+def _has_commit(sha: str) -> bool:
+    if shutil.which("git") is None:
+        return False
+    return subprocess.run(["git", "cat-file", "-e", f"{sha}^{{commit}}"], cwd=rr.ROOT,
+                          capture_output=True).returncode == 0
+
+
+@pytest.mark.skipif(not _has_commit("2469fda"), reason="needs git and the repository's history")
 def test_rerun_ignores_a_stale_artifact(monkeypatch, tmp_path):
     """A harness run that fails before writing reports no states, whatever files are present."""
     monkeypatch.setattr(tempfile, "tempdir", str(tmp_path))
