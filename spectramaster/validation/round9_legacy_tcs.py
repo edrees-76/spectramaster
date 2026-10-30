@@ -1,13 +1,14 @@
 """Round-9 review, Codex H1: summing state of efficiency curves saved by engine 1.26.0 and earlier
 (docs/baseline/round9_legacy_tcs_protocol.md).
 
-    python -m spectramaster.validation.round9_legacy_tcs [--collect] [--rerun]
+    python -m spectramaster.validation.round9_legacy_tcs [--collect] [--amendment] [--rerun]
 
 Synthetic data and the bundled coincidence table only.  The files of engine 1.26.0 and earlier are
 made from current curves by removing the per-point summing fields, as those engines wrote them.
 ``--collect`` writes the observations only, to ``docs/baseline/after_R9A/round9_legacy_tcs_before.json``
 (the "before" values); without it the criteria are evaluated against that file.  ``--rerun`` writes
-the results to RERUN (in the temporary folder) instead of ``after_R9A``.
+the results to RERUN (in the temporary folder) instead of ``after_R9A``.  ``--amendment`` evaluates
+RA9.C2a of round9_legacy_tcs_amendment_protocol.md in place of RA9.C2, results to ``after_R9A2``.
 """
 from __future__ import annotations
 
@@ -25,7 +26,9 @@ from spectramaster.validation import round8_coi_guard as r8
 
 OUT = r8.OUT.parent / "after_R9A"
 BEFORE_JSON = OUT / "round9_legacy_tcs_before.json"
+OUT2 = OUT.parent / "after_R9A2"
 RERUN = Path(tempfile.gettempdir()) / "spectramaster_round9_legacy_tcs"
+COI_NOTE_TOL = 5e-5                  # RA9.C2a: half the last decimal of "summing corrected, COI x.xxxx"
 REL = 1e-12
 EXCLUDED = (121.78, 344.28)          # Eu-152 points excluded in the "excluded" case (keV)
 
@@ -124,7 +127,7 @@ def _eps(s) -> list:
     return s["eps"] + [s["eps121"]]
 
 
-def criteria(res: dict, before: dict) -> dict:
+def criteria(res: dict, before: dict, amendment: bool = False) -> dict:
     res, before = r8._no_date(res), r8._no_date(before)
     out = {}
     ref = res["refit_as_is"]
@@ -146,7 +149,11 @@ def criteria(res: dict, before: dict) -> dict:
     bad = []
     pts = res["loaded"]["excluded"]["points"]
     modern = res["loaded"]["modern_excluded"]["points"]
-    if [p[4] for p in pts] != [p[4] for p in modern]:
+    if amendment:
+        if [p[4] is None for p in pts] != [p[4] is None for p in modern] or any(
+                abs(a[4] - b[4]) > COI_NOTE_TOL for a, b in zip(pts, modern) if a[4] is not None):
+            bad.append("excluded points' summing_coi differ from the modern file's beyond the note's rounding")
+    elif [p[4] for p in pts] != [p[4] for p in modern]:
         bad.append("excluded points' summing_coi differ from the modern file's")
     inc, incm = res["include"]["excluded"], res["include"]["modern_excluded"]
     if inc["error"] is not None:
@@ -154,7 +161,7 @@ def criteria(res: dict, before: dict) -> dict:
     elif not (inc["state"]["summing_corrected"] and all(_close(a, b) for a, b in zip(_eps(inc["state"]),
                                                                                    _eps(incm["state"])))):
         bad.append("include + refit differs from the modern file's")
-    out["RA9.C2"] = {"value": "; ".join(bad) or "excluded corrected points carry their correction; included again "
+    out["RA9.C2a" if amendment else "RA9.C2"] = {"value": "; ".join(bad) or "excluded corrected points carry their correction; included again "
                      "and refitted as the modern file", "pass": not bad}
     m = res["free"]["lost_flag_mixed"]
     out["RA9.C3"] = {"value": f"lost flag with an uncorrected cascade point: before "
@@ -175,6 +182,7 @@ def criteria(res: dict, before: dict) -> dict:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--collect", action="store_true", help="write the observations only (the 'before' values)")
+    ap.add_argument("--amendment", action="store_true", help="RA9.C2a in place of RA9.C2, results to after_R9A2")
     ap.add_argument("--rerun", action="store_true", help=f"write the results to {RERUN}, not after_R9A")
     a = ap.parse_args(argv)
     res = json.loads(json.dumps(collect(), default=float))
@@ -184,8 +192,8 @@ def main(argv=None) -> int:
         print(f"wrote {BEFORE_JSON}")
         crit = criteria(res, res)
     else:
-        crit = criteria(res, json.loads(BEFORE_JSON.read_text(encoding="utf-8")))
-        out = RERUN if a.rerun else OUT
+        crit = criteria(res, json.loads(BEFORE_JSON.read_text(encoding="utf-8")), a.amendment)
+        out = RERUN if a.rerun else (OUT2 if a.amendment else OUT)
         out.mkdir(parents=True, exist_ok=True)
         (out / "round9_legacy_tcs.json").write_text(json.dumps({"results": res, "criteria": crit}, indent=1,
                                                                ensure_ascii=False), encoding="utf-8")

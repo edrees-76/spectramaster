@@ -24,3 +24,11 @@ passed (curve at 121.78 keV 0.06134159693644672 in both). The FAIL is kept in `a
 
 RA9.C1, RA9.C3, RA9.C4 and RA9.C5 are unchanged. The re-run is `round9_legacy_tcs --amendment`,
 results to `after_R9A2`; the code is not changed between the runs.
+
+---
+
+## Results
+
+Re-run `round9_legacy_tcs --amendment` (`after_R9A2`, engine 1.35.0, code unchanged since 666b5fc): **4 PASS / 0 FAIL**
+(RA9.C1, RA9.C2a, RA9.C3, RA9.C4). The only harness change between the runs is the `--amendment`
+flag (criterion RA9.C2a, output folder `after_R9A2`). RA9.C5: see the main protocol.

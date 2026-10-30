@@ -1691,3 +1691,14 @@ Protocol `docs/baseline/round8_alt_limits_protocol.md`, committed before the cha
   Monte Carlo u / sd 1.085 -> 0.989. One harness correction (conversion factor 0/0 at a zero result)
   and one changed existing test (`test_round7_combined`, Ba-133) disclosed. Benchmark 154 / 13 / 60
   unchanged; suite 1762 passed. ENGINE_VERSION 1.34.0.
+
+### 2026-10-30 Round-9 review, Codex H1 (R9-A): summing state of curves saved by engine 1.26.0 and earlier
+
+- Protocol `docs/baseline/round9_legacy_tcs_protocol.md` (82c64c4, before values 1 PASS / 3 FAIL).
+  A legacy curve whose summing flag was lost by an old refit (point values still divided by their
+  COI, "summing corrected, COI x" in the notes) loaded as uncorrected and was corrected a second time
+  (curve at 121.78 keV +5.6 %); excluded corrected points got no state. The state is now read from
+  the point notes on loading whatever the flag, excluded points included.
+- `after_R9A` 3 PASS / 1 FAIL: RA9.C2 a drafting FAIL (exact equality with the note's 4 decimals),
+  kept; pre-registered amendment (c8aab2b, tolerance 5e-5) re-run `after_R9A2` 4 PASS / 0 FAIL.
+  Benchmark 154 / 13 / 60 unchanged; suite 1767 passed. ENGINE_VERSION 1.35.0.

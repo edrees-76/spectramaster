@@ -65,3 +65,17 @@ Before the change (collect run): RA9.C1, RA9.C2 and RA9.C3 fail; RA9.C4 is the c
 - The COI read from a note has the note's 4 decimals; it marks the state, the efficiencies are the
   stored ones.
 - A point note edited by hand to contain or remove "summing corrected, COI" changes the restored state.
+
+---
+
+## Results
+
+First run, 666b5fc (`after_R9A`, engine 1.35.0): **3 PASS / 1 FAIL**.
+
+| ID | result |
+|---|---|
+| RA9.C1 | PASS: lost-flag files (as saved by 1.26.0 and re-saved by 1.27.0-1.34.0) refitted as they are; curve at 121.78 keV equals the refit as is (0.0613416; before 0.0647965) |
+| RA9.C2 | FAIL (drafting, kept): the restored `summing_coi` carry the note's 4 decimals (e.g. 0.9257 against 0.9257086683803547), so the exact-equality criterion cannot hold as written; the pattern of corrected points and the include-and-refit part matched (curve at 121.78 keV 0.06134159693644672 in both). Amended before the re-run: `round9_legacy_tcs_amendment_protocol.md` |
+| RA9.C3 | PASS: refused (ValueError naming Co-60 1173.2 keV) |
+| RA9.C4 | PASS: controls identical to before |
+| RA9.C5 | PASS: benchmark `after_R9A2` 154 PASS / 13 FAIL / 60 REPORT, no criterion changed against `after_R8H`; full suite 1767 passed, 69 skipped, exit 0; no existing test changed (new `tests/test_round9_legacy_tcs.py`, 5 tests: 4 fail on 82c64c4, the uncorrected-legacy control passes before and after) |
