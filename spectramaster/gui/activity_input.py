@@ -6,11 +6,12 @@ import math
 import re
 from typing import Optional
 
-from PySide6.QtCore import QLocale, Signal
-from PySide6.QtGui import QDoubleValidator
+from PySide6.QtCore import QRegularExpression, Signal
+from PySide6.QtGui import QRegularExpressionValidator
 from PySide6.QtWidgets import QComboBox, QHBoxLayout, QLineEdit, QWidget
 
 from ..analysis.decay_calc import ACTIVITY_UNITS
+from .number_text import decimal_text
 
 # units offered for a source, in this order; "µCi" is shown for the "uCi" of decay_calc
 UNITS = ("Bq", "kBq", "MBq", "GBq", "TBq", "Ci", "mCi", "µCi", "nCi", "pCi")
@@ -53,6 +54,11 @@ def format_activity(bq: float, unit: str = "Bq", digits: int = 5) -> str:
     return f"{from_bq(bq, unit):.{digits}g} {unit}"
 
 
+# what can be typed in ActivityInput (ASCII, Arabic-Indic and Eastern Arabic-Indic digits)
+_DIGIT = r"[0-9\x{0660}-\x{0669}\x{06F0}-\x{06F9}]"
+_TYPED = f"{_DIGIT}*[.,]?{_DIGIT}*(?:[eE][-+]?{_DIGIT}*)?"
+
+
 class ActivityInput(QWidget):
     """A number and its unit; ``value_bq()`` / ``set_bq()``.  Changing the unit converts the number
     shown, so the activity stays the same.  A text field (6 significant digits, scientific notation
@@ -64,12 +70,9 @@ class ActivityInput(QWidget):
         lay = QHBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         self.number = QLineEdit()
-        v = QDoubleValidator(0.0, 1e18, 12, self.number)
-        v.setNotation(QDoubleValidator.ScientificNotation)
-        loc = QLocale.c()                                     # a point for decimals, no thousands separator
-        loc.setNumberOptions(QLocale.RejectGroupSeparator)
-        v.setLocale(loc)
-        self.number.setValidator(v)
+        # digits, a decimal point or comma and an exponent; the text is read by decimal_text, which
+        # refuses an ambiguous "1,000" (round-9 review, Gemini L3: "0,5" was blocked here)
+        self.number.setValidator(QRegularExpressionValidator(QRegularExpression(_TYPED), self.number))
         self.unit = QComboBox()
         self.unit.addItems(list(UNITS))
         self.unit.setCurrentText(unit if unit in UNITS else "Bq")
@@ -83,14 +86,15 @@ class ActivityInput(QWidget):
 
     def _number(self) -> float:
         """The number typed; 0 for an empty field.  ValueError for a text that is not a finite number
-        >= 0 ("nan", "inf", "abc", "-5"): refused, never read as 0 (round-8 review, Codex M3)."""
+        >= 0 ("nan", "inf", "abc", "-5"): refused, never read as 0 (round-8 review, Codex M3).  A decimal
+        comma is read ("0,5"), an ambiguous comma ("1,000", "1,000e3") refused (round-9 review, Gemini L3)."""
         text = self.number.text().strip()
         if not text:
             return 0.0
         try:
-            x = float(text)
+            x = float(decimal_text(text))
         except ValueError:
-            raise ValueError(f"not an activity: {text!r} (a finite number, a point for decimals)") from None
+            raise ValueError(f"not an activity: {text!r} (a finite number, no thousands separator)") from None
         if not (math.isfinite(x) and x >= 0):
             raise ValueError(f"not a finite activity, not negative: {text!r}")
         return x

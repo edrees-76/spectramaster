@@ -59,7 +59,8 @@ class BatchSetup:
 
 
 def scan(paths: Sequence, stop=None) -> list[BatchItem]:
-    """The spectra of `paths`.  `stop()` True raises InterruptedError (the window closed)."""
+    """The spectra of `paths`.  `stop()` True raises InterruptedError (the window closed), checked
+    before each file and once more at the end, so a cancelled scan never returns a list."""
     from ..analysis.peaks import guess_detector
     from ..convert import read_spectra
     items = []
@@ -76,6 +77,8 @@ def scan(paths: Sequence, stop=None) -> list[BatchItem]:
             # enough to separate measurements of one detector
             label = (s.detector or "").strip() or (s.extra or {}).get("detector_type", "") or "unlabelled detector"
             items.append(BatchItem(str(p), i, s, label, len(s.counts), guess=guess_detector(s)))
+    if stop is not None and stop():                    # cancelled while the last file was read
+        raise InterruptedError("scan cancelled")
     return items
 
 

@@ -312,6 +312,7 @@ class QCWindow(QMainWindow):
         self._thread: Optional[QThread] = None
         self._worker: Optional[ImportWorker] = None
         self.last_import: Optional[qc.ImportResult] = None
+        self._closed = False                      # closed: no dialog for a late worker result
         self.setWindowTitle(tr("qc_title"))
         self.setLayoutDirection(Qt.RightToLeft if is_rtl() else Qt.LeftToRight)
         self.resize(1250, 820)
@@ -540,6 +541,9 @@ class QCWindow(QMainWindow):
         self._update_list_item()
         msg = tr("qc_import_done", added=len(res.added), dup=len(res.duplicates), err=len(res.errors))
         self.statusBar().showMessage(msg, 10000)
+        if self._closed:                           # an import that ended as the window closed
+            self._report_after_close(msg)
+            return
         if not quiet and res.errors:
             QMessageBox.warning(self, tr("qc_title"), msg + "\n\n" + "\n".join(
                 f"{Path(p).name}: {e}" for p, e in res.errors[:15]))
@@ -811,7 +815,17 @@ class QCWindow(QMainWindow):
 
     def _export_failed(self, msg: str) -> None:
         self.statusBar().clearMessage()
+        if self._closed:                           # the window waited for the write, then closed
+            self._report_after_close(msg)
+            return
         QMessageBox.warning(self, tr("qc_title"), msg)
+
+    def _report_after_close(self, msg: str) -> None:
+        """A worker result that reaches this window after it was closed: no dialog for a closed
+        owner (round-9 review, Codex M2); the main window's status bar shows it, if there is one."""
+        bar = getattr(self.main_window, "statusBar", None)
+        if callable(bar):
+            bar().showMessage(f"{tr('qc_title')}: {msg}", 15000)
 
     def exports_running(self) -> bool:
         return bool(self.__dict__.get("_call_threads"))
@@ -834,7 +848,12 @@ class QCWindow(QMainWindow):
             return None
         return self._export(export_qc_pdf, path)
 
+    def showEvent(self, ev):
+        self._closed = False                       # reopened (open_qc_window keeps the window)
+        super().showEvent(ev)
+
     def closeEvent(self, ev):
+        self._closed = True                        # results still on their way show no dialog
         if self._thread is not None and self._thread.isRunning():
             if self._worker is not None:
                 self._worker.cancel()
