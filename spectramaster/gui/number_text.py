@@ -9,8 +9,9 @@ from __future__ import annotations
 
 import re
 
-# thousands grouping: "1,000", "-12,500,000" (\d also matches Arabic-Indic digits, which float() reads)
-_GROUPED = re.compile(r"[+-]?\d{1,3}(?:,\d{3})+")
+# thousands grouping: "1,000", "-12,500,000" (\d also matches Arabic-Indic digits, which float() reads);
+# a lone leading zero is not a thousands group, so "0,500" is the decimal 0.5
+_GROUPED = re.compile(r"[+-]?(?!0,)\d{1,3}(?:,\d{3})+")
 
 
 def is_ambiguous(text: str) -> bool:
