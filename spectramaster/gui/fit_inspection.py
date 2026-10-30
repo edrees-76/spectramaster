@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog,
 
 from . import i18n
 from .i18n import ltr
+from .number_text import decimal_text
 from .plot import C_AXIS_TEXT, C_BG, C_FRAME, C_GRID, C_LINE, _nice_step
 from .session_strings import ftr
 from .worker import start_call
@@ -499,7 +500,7 @@ class FitInspectionDialog(QDialog):
         for r in range(self.pos_table.rowCount()):
             it = self.pos_table.item(r, 0)
             try:
-                c = float((it.text() if it else "").replace(",", ".").strip())
+                c = float(decimal_text(it.text() if it else ""))     # round-8 review, Codex M1
             except ValueError:
                 continue
             fx = self.pos_table.item(r, 1)

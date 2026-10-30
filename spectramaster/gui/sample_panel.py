@@ -20,6 +20,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDateTim
 
 from ..lab.sample import CONCENTRATION_UNITS, MATRIX_TYPES, SampleInfo
 from . import i18n
+from .number_text import decimal_text
 from .quant_strings import qtr
 
 # unit proposed when the matrix changes (the user can choose another)
@@ -262,16 +263,24 @@ class SampleSection(QGroupBox):
                 edit.setDateTime(QDateTime(v))
 
     def _float(self, name: str, label_key: str) -> Optional[float]:
-        text = self._num[name].text().strip().replace(",", ".")
-        if not text:
+        raw = self._num[name].text().strip()
+        if not raw:
             return None
+        field = qtr(label_key).rstrip(":")
+        try:                                   # "1,000" is refused, not read as 1 (round-8 review, Codex M1)
+            text = decimal_text(raw)
+        except ValueError:
+            raise ValueError(qtr("conc_ambiguous_number", field=field, text=raw)) from None
         try:
             return float(text)
         except ValueError:
-            raise ValueError(qtr("conc_bad_number", field=qtr(label_key).rstrip(":"), text=text)) from None
+            raise ValueError(qtr("conc_bad_number", field=field, text=raw)) from None
 
     def quantity_rel_unc(self) -> float:
         v = self._float("quantity_rel_unc_pct", "conc_qty_unc")
+        if v is not None and not (math.isfinite(v) and v >= 0):     # round-8 review, Codex M2
+            raise ValueError(qtr("conc_bad_unc", field=qtr("conc_qty_unc").rstrip(":"),
+                                 text=self._num["quantity_rel_unc_pct"].text().strip()))
         return 0.0 if v is None else v / 100.0
 
     def sample_info(self, sample_id: str = "", reference_date=None) -> SampleInfo:

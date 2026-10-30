@@ -43,6 +43,7 @@ from ..tools import calibrate as cal_tools
 from . import i18n
 from .aptec_cal_strings import atr
 from .i18n import ltr
+from .number_text import decimal_text
 
 ENERGY, RESOLUTION, EFFICIENCY = "energy", "resolution", "efficiency"
 KIND_KEYS = {ENERGY: "act_energy", RESOLUTION: "act_resolution", EFFICIENCY: "act_efficiency"}
@@ -50,7 +51,7 @@ KIND_KEYS = {ENERGY: "act_energy", RESOLUTION: "act_resolution", EFFICIENCY: "ac
 
 def _num(text) -> Optional[float]:
     try:
-        return float(str(text).replace(",", ".").strip())
+        return float(decimal_text(str(text)))     # ambiguous "1,000": None (round-8 review, Codex M1)
     except (TypeError, ValueError):
         return None
 

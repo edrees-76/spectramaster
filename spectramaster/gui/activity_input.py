@@ -82,18 +82,34 @@ class ActivityInput(QWidget):
         self.number.textChanged.connect(lambda _t: self.changed.emit())
 
     def _number(self) -> float:
-        """The number typed; 0 for an empty field or a text that is not a finite number."""
-        try:
-            x = float(self.number.text() or 0.0)
-        except ValueError:
+        """The number typed; 0 for an empty field.  ValueError for a text that is not a finite number
+        >= 0 ("nan", "inf", "abc", "-5"): refused, never read as 0 (round-8 review, Codex M3)."""
+        text = self.number.text().strip()
+        if not text:
             return 0.0
-        return x if math.isfinite(x) else 0.0
+        try:
+            x = float(text)
+        except ValueError:
+            raise ValueError(f"not an activity: {text!r} (a finite number, a point for decimals)") from None
+        if not (math.isfinite(x) and x >= 0):
+            raise ValueError(f"not a finite activity, not negative: {text!r}")
+        return x
 
     def value_bq(self) -> float:
+        """The activity in Bq (0 for an empty field); ValueError for an invalid text (:meth:`_number`)."""
         if self.number.text() == self._shown[1]:          # not edited since set: the exact value
             return self._shown[0]
         bq = to_bq(self._number(), self._unit)
-        return bq if math.isfinite(bq) else 0.0
+        if not math.isfinite(bq):                         # e.g. 1e300 TBq
+            raise ValueError(f"not a finite activity: {self.number.text()!r} {self._unit}")
+        return bq
+
+    def is_valid(self) -> bool:
+        try:
+            self.value_bq()
+        except ValueError:
+            return False
+        return True
 
     def set_bq(self, bq: float) -> None:
         if not math.isfinite(bq) or bq < 0:       # round6_inputs_protocol.md, round7_inputs_protocol.md
@@ -109,7 +125,12 @@ class ActivityInput(QWidget):
         self.unit.setCurrentText(unit)
 
     def _unit_changed(self, unit: str) -> None:
-        bq = self.value_bq()
+        try:
+            bq = self.value_bq()
+        except ValueError:                    # an invalid text stays as typed (refused when used)
+            self._unit = unit
+            self.changed.emit()
+            return
         self._unit = unit
         self.number.blockSignals(True)
         self.set_bq(bq)

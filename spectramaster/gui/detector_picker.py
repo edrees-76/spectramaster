@@ -29,6 +29,7 @@ from ..lab.detector import DETECTOR_TYPES, DetectorProfile, MeasurementGeometry
 from . import i18n
 from .context_strings import ctr, detector_type_label
 from .detector_registry import DetectorRegistry
+from .number_text import decimal_text
 
 CONTEXT_TARGETS = (["detector"], ["geometry"])
 
@@ -83,10 +84,10 @@ def fill_detector_combo(combo: QComboBox, registry: DetectorRegistry, select: Op
 
 
 def _num(text: str, field: str) -> Optional[float]:
-    s = (text or "").strip().replace(",", ".")
-    if not s:
-        return None
     try:
+        s = decimal_text(text)             # ambiguous "1,000" refused (round-8 review, Codex M1)
+        if not s:
+            return None
         return float(s)
     except ValueError:
         raise ValueError(ctr("ed_err_number", field=field.rstrip(":"), text=text)) from None
