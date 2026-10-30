@@ -3,6 +3,7 @@
 import math
 
 from spectramaster.validation import round7_combined as h
+from spectramaster.validation import round8_line_covariance as r8
 
 
 def _close(a, b):
@@ -27,6 +28,10 @@ def test_undetected_mean_reports_the_limits_of_its_weighted_mean():
     for nuc in ("Co-60", "Ba-133"):
         r, o = h._undetected(nuc, "iso11929")
         ind = h.weighted_mean_limits(r, o, "iso11929")
+        if nuc == "Ba-133":
+            # its close lines share window channels: their covariance counts since engine 1.34.0
+            # (round8_line_covariance_protocol.md)
+            ind = r8.expected(r, o, h.r5._spectrum("sample"), None, None, False)
         assert ind["n"] >= 2 and not r.detected
         assert _close(r.decision_threshold, ind["threshold"]) and _close(r.mda, ind["limit"])
         key, _o = h._undetected(nuc, "iso11929", method="key")

@@ -1677,3 +1677,17 @@ Protocol `docs/baseline/round8_alt_limits_protocol.md`, committed before the cha
   current code RB.C2 and RB.C5 of round7_combined fail from 3cd2aa7 (R7-C, #95), the intended
   change 3 of round7_shared_background_protocol.md (the sample counts the blank level). Benchmark
   154 / 13 / 60 unchanged; suite 1752 passed. No analysis change; ENGINE_VERSION unchanged.
+
+### 2026-10-30 Round-8 review, Gemini M3 (R8-H): covariance of a nuclide's window results
+
+- Protocol `docs/baseline/round8_line_covariance_protocol.md` (7208d2c, before values 2 PASS / 3 FAIL).
+  The weighted mean of a not-detected nuclide's window results added the lines' counting variances
+  as if independent, although close lines share window channels (NaI Ba-133: correlation +0.925
+  between 79.6 and 81.0 keV), and added the reference peak terms as magnitudes. Each window line now
+  keeps its estimator's coefficients on the sample and background channels (in memory);
+  `_weighted_primary` and `combined_limits` add the cross terms with the observed counts, and the
+  reference components are summed before the norm.
+- `after_R8H` 6 PASS / 0 FAIL: NaI Ba-133 threshold 15.04 -> 13.67 Bq, uncertainty 9.11 -> 8.28 Bq;
+  Monte Carlo u / sd 1.085 -> 0.989. One harness correction (conversion factor 0/0 at a zero result)
+  and one changed existing test (`test_round7_combined`, Ba-133) disclosed. Benchmark 154 / 13 / 60
+  unchanged; suite 1762 passed. ENGINE_VERSION 1.34.0.
