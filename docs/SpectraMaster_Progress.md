@@ -1735,3 +1735,10 @@ Protocol `docs/baseline/round8_alt_limits_protocol.md`, committed before the cha
 - First run `after_R9E`: RE9.C3 FAIL (RA8.C1 compared three values outside `_same`), kept;
   pre-registered amendment (788f5c9) `after_R9E2` 6 PASS / 0 FAIL. Suite 1774 passed. Harness code
   only; ENGINE_VERSION unchanged (1.35.0).
+
+### 2026-10-30 Manuals rebuilt with the round-6 to round-9 changes
+
+- `docs/manual_{ar,en}.html` and the PDFs rebuilt from the sources (AR 75 pages, EN 71; last build
+  613e90b, round 5). New in the sources: decimal point or comma and Arabic-Indic digits in the sample
+  numbers, an ambiguous thousands comma refused (R9-C); FAQ entry for files refused as truncated or
+  with unreadable `$DATA` blocks (R9-B). Screenshots unchanged.
