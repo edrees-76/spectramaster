@@ -119,7 +119,9 @@ SCHEMA_VERSION = 1
 #          reports that line's decision threshold and MDA (round8_alt_limits_protocol.md)
 #   1.32.0 2026-10-30 peak background mode: the limits of a line without a sample peak use the window
 #          estimator of its primary result on the background (round8_peak_mode_protocol.md)
-ENGINE_VERSION = "1.32.0"
+#   1.33.0 2026-10-30 calibration points already corrected for true-coincidence summing on a curve not
+#          marked corrected are refitted as they are, not corrected twice (round8_coi_guard_protocol.md)
+ENGINE_VERSION = "1.33.0"
 
 
 class SessionSchemaError(ValueError):
