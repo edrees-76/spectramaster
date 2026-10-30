@@ -1742,3 +1742,10 @@ Protocol `docs/baseline/round8_alt_limits_protocol.md`, committed before the cha
   613e90b, round 5). New in the sources: decimal point or comma and Arabic-Indic digits in the sample
   numbers, an ambiguous thousands comma refused (R9-C); FAQ entry for files refused as truncated or
   with unreadable `$DATA` blocks (R9-B). Screenshots unchanged.
+
+### 2026-10-30 Laboratory validation protocol (pre-registered, before any data)
+
+- `docs/baseline/lab_validation_protocol.md`: criteria LV.C1-C7 for measured laboratory spectra
+  against Genie-2000 reports, the laboratory's efficiency calibration, proficiency-test reference
+  values (IAEA accuracy and precision tests, ISO 13528 z) and a certified source; matched analysis
+  settings and data handling (private, anonymised) fixed before the data are received.
