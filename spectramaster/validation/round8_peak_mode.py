@@ -1,12 +1,14 @@
 """Round-8 review, Gemini H2: the detection limits of a line without a sample peak in the peak
 background mode (docs/baseline/round8_peak_mode_protocol.md).
 
-    python -m spectramaster.validation.round8_peak_mode [--collect] [--rerun]
+    python -m spectramaster.validation.round8_peak_mode [--collect] [--amendment] [--rerun]
 
 Synthetic data only.  ``--collect`` writes the observations only, to
 ``docs/baseline/after_R8B/round8_peak_mode_before.json`` (the "before" values); without it the
 criteria are evaluated against that file.  ``--rerun`` writes the results to RERUN (in the
 temporary folder) instead of ``after_R8B``, which a re-run then leaves as committed.
+``--amendment`` evaluates RB8.C3a of ``round8_peak_mode_amendment_protocol.md`` in place of RB8.C3
+and writes to ``after_R8B2`` (``--rerun``: RERUN / "amendment").
 """
 from __future__ import annotations
 
@@ -30,6 +32,7 @@ from spectramaster.validation.synthetic import HPGE, NAI, Continuum, TruePeak, c
 
 OUT = r5.OUT.parent / "after_R8B"
 BEFORE_JSON = OUT / "round8_peak_mode_before.json"
+OUT_AMENDMENT = r5.OUT.parent / "after_R8B2"
 RERUN = Path(tempfile.gettempdir()) / "spectramaster_round8_peak_mode"
 METHODS = ("currie", "iso11929")
 MODES = ("peak", "spectrum")
@@ -139,7 +142,35 @@ def _no_peak_window(ln) -> bool:
     return not ln["peak_found"] and ln["primary_method"] == "window"
 
 
-def criteria(res: dict, before: dict) -> dict:
+def _criterion_c3a(res: dict, before: dict, spec: dict) -> dict:
+    """RB8.C3a (amendment): a line without a usable window result changes its limits only, to the
+    Change 1 linear-window sigma0^2."""
+    bad, vals = [], []
+    for key, c in res["cases"].items():
+        b = before["cases"][key]
+        if "_peak_" not in key:
+            if not _same(c, b):
+                bad.append(key)
+            continue
+        name = key.split("_peak_")[0]
+        for ln, lb in zip(c["lines"], b["lines"]):
+            if lb["peak_found"]:
+                if not _same(ln, lb):
+                    bad.append(f"{key} {ln['energy']:.1f} keV")
+            elif lb["primary_method"] != "window":
+                keys = [k for k in lb if k not in ("lc_counts", "ld_counts", "decision_threshold", "mda")]
+                v, _cont = _window_sigma0_sq(*spec[name], ln)
+                lc = act.K_DEFAULT * math.sqrt(max(v, 0.0))
+                if not (_same({k: ln[k] for k in keys}, {k: lb[k] for k in keys})
+                        and math.isclose(ln["lc_counts"], lc, rel_tol=REL)):
+                    bad.append(f"{key} {ln['energy']:.1f} keV")
+                vals.append(f"{key} {ln['energy']:.1f} keV ({ln['primary_method']}): L_C {lb['lc_counts']:.5g} -> "
+                            f"{ln['lc_counts']:.5g} counts (registered {lc:.5g})")
+    return {"value": "; ".join(bad) or ("spectrum mode and lines with a sample peak identical to before; "
+                                        + "; ".join(vals)), "pass": not bad and bool(vals)}
+
+
+def criteria(res: dict, before: dict, amendment: bool = False) -> dict:
     out = {}
     spec = {name: (kind, area, extra, blank) for name, kind, area, extra, blank in CASES}
     vals, ok, n, nq = [], True, 0, 0
@@ -183,6 +214,9 @@ def criteria(res: dict, before: dict) -> dict:
             bad.append(key)
     out["RB8.C3"] = {"value": "; ".join(bad) or "spectrum mode, and the peak-mode lines with a sample peak or "
                      "without a usable window result, identical to before", "pass": not bad}
+    if amendment:
+        del out["RB8.C3"]
+        out["RB8.C3a"] = _criterion_c3a(res, before, spec)
     vals, ok = [], True
     for name, _area in MC:
         rows = [r for r in res["mc"][name]["rows"] if not r[0] and r[1] == "window"]
@@ -200,6 +234,7 @@ def criteria(res: dict, before: dict) -> dict:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--collect", action="store_true", help="write the observations only (the 'before' values)")
+    ap.add_argument("--amendment", action="store_true", help="RB8.C3a in place of RB8.C3, to after_R8B2")
     ap.add_argument("--rerun", action="store_true", help=f"write the results to {RERUN}, not after_R8B")
     a = ap.parse_args(argv)
     res = json.loads(json.dumps(collect(), default=float))
@@ -209,8 +244,11 @@ def main(argv=None) -> int:
         print(f"wrote {BEFORE_JSON}")
         return 0
     before = json.loads(BEFORE_JSON.read_text(encoding="utf-8"))
-    crit = criteria(res, before)
-    out = RERUN if a.rerun else OUT
+    crit = criteria(res, before, a.amendment)
+    if a.amendment:
+        out = RERUN / "amendment" if a.rerun else OUT_AMENDMENT
+    else:
+        out = RERUN if a.rerun else OUT
     out.mkdir(parents=True, exist_ok=True)
     (out / "round8_peak_mode.json").write_text(json.dumps({"results": res, "criteria": crit}, indent=1,
                                                          ensure_ascii=False), encoding="utf-8")

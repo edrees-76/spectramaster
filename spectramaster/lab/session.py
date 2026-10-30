@@ -117,7 +117,9 @@ SCHEMA_VERSION = 1
 #          and its nuclide inherits them (round7_quad_limits_protocol.md)
 #   1.31.0 2026-10-30 a nuclide not detected whose primary result comes from another line than its key line
 #          reports that line's decision threshold and MDA (round8_alt_limits_protocol.md)
-ENGINE_VERSION = "1.31.0"
+#   1.32.0 2026-10-30 peak background mode: the limits of a line without a sample peak use the window
+#          estimator of its primary result on the background (round8_peak_mode_protocol.md)
+ENGINE_VERSION = "1.32.0"
 
 
 class SessionSchemaError(ValueError):

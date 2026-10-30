@@ -84,3 +84,24 @@ after.
   primary result.
 - The background area reported for such a line (`bkg_peak`) stays the fitter's, which is not the
   one subtracted from the window result.
+
+---
+
+## Results (`after_R8B`)
+
+Protocol committed in 14f3437 before the change (SHA-256 of the file
+92678ee7cdc3f3a71034694248ae478e0d2d92c278fab687c075917773153ebe; before file
+`after_R8B/round8_peak_mode_before.json` c8bcb1f53880372b571218a298810cf7f60142d9680dee8232eca29d6fa54af8).
+First run: 3 PASS / 1 FAIL.
+
+| ID | value | result |
+|---|---|---|
+| RB8.C1 | every peak-mode line without a sample peak with a usable window result equals the registered sigma0^2 (e.g. HPGe 1500-count background peak: L_C 97.68 -> 99.25 counts; no background peak 33.98 -> 41.49; with the blank 145.35 -> 146.69; NaI 661.7 keV quadratic 392.1 -> 476.1, 1173.2 keV linear 309.2 -> 336.4) | PASS |
+| RB8.C2 | primary result, its uncertainty, method and every other line field identical to before | PASS |
+| RB8.C3 | NaI case, peak mode: the 1332.5 keV line (no sample peak, "curved", not used) changed its limits (Currie L_C 291.08 -> 314.42 counts); every other field and every other line identical | FAIL |
+| RB8.C4 | 1500-count case: 396 results without a peak, false detections 0.0556 -> 0.0530, threshold ratio 0.9277 -> 0.9444; 20000-count case: 399, 0.0526 -> 0.0526, 0.9379 -> 0.9397 | PASS |
+
+The RB8.C3 failure is a drafting error of this protocol, not of the change: Change 1 applies to
+every line without a sample peak, and RB8.C3 wrongly listed the lines without a usable window
+result among those unchanged. It stays a FAIL; the amendment below was written after seeing it and
+before any re-run.

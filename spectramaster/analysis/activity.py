@@ -862,6 +862,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
             var0 = B * (1.0 + n / (2.0 * m))
             p = match_peak(peaks, e)
             bnet = None           # (k N_b, k u_b) under this line
+            wbk = None            # peak mode, no sample peak: (k N_w, k u_w) of the window estimator
             if bfit is not None:
                 if p is not None:
                     bnet = bkg_under.get(id(p))
@@ -869,17 +870,30 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                     idx = _channel_of_energy(spectrum, e)
                     if idx is not None:
                         bnet = bfit.at_energy(idx, float(fw_ch[int(min(max(round(idx), 0), len(fw_ch) - 1))]))
+                    # the limits use the background estimator of the primary result
+                    # (round8_peak_mode_protocol.md)
+                    bw = window_net(spectrum, e, fw_ch, counts=bfit.b)
+                    if bw is not None:
+                        wbk = (bfit.k * bw[0], bfit.k * math.sqrt(max(bw[1], 0.0)))
             elif bkg_peaks and opt.bkg_mode == "peak":      # legacy: caller-supplied background peaks
                 bp = match_peak(bkg_peaks, e)
                 if bp is not None:
                     bnet = (k_b * bp.net_area, k_b * bp.net_area_unc)
             if bnet is not None:
                 lr.bkg_peak = bnet[0]
-                var0 += max(bnet[0], 0.0) + bnet[1] ** 2
+            bv = wbk or bnet
+            lin_bkg = 0.0       # the linear background term of var0, replaced for a quadratic window
+            if bv is not None:
+                var0 += max(bv[0], 0.0) + bv[1] ** 2
+                if wbk is not None:
+                    lin_bkg = max(wbk[0], 0.0) + wbk[1] ** 2
             h0 = None           # coefficients of the background term of sigma0, counts per background count
             if shared_ok:
-                h0 = bnet[2] if bnet is not None else (_window_coef(spectrum, e, fw_ch, k_b)
-                                                       if bcounts is not None else None)
+                if wbk is not None:
+                    h0 = _window_coef(spectrum, e, fw_ch, bfit.k)
+                else:
+                    h0 = bnet[2] if bnet is not None else (_window_coef(spectrum, e, fw_ch, k_b)
+                                                           if bcounts is not None else None)
             blank_counts = 0.0
             ref_lin = 0.0       # u_ref^2(y) term linear in the net activity y (reference peak with a blank)
             bl_coef, kd = None, 1.0     # the blank's background estimate (Bq per background count), decay
@@ -906,7 +920,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
                     lr.ref_dg = [ref_uc, 0.0, ref_ur]
             if opt.reference_peak and lr.ref_dg is None:     # no blank peak: zero at zero activity
                 lr.ref_g0, lr.ref_dg = [0.0, 0.0, 0.0], [ref_uc, 0.0, ref_ur]
-            lin_sample, lin_bkg = B * (1.0 + n / (2.0 * m)), 0.0   # linear terms, replaced for a quadratic window
+            lin_sample = B * (1.0 + n / (2.0 * m))      # linear term, replaced for a quadratic window
             if bcounts is not None:
                 cb = continuum_under(spectrum, e, fw_ch, counts=bcounts)
                 if cb is not None:
@@ -1262,6 +1276,8 @@ def _quad_result(spectrum, lo: int, hi: int, m: int, bcounts, k_b: float, bnet, 
         var += k_b * k_b * (max(gb, 0.0) + qb.var_data)
         if spectrum_mode:
             b_term = k_b * k_b * (max(qb.b, 0.0) + qb.var_fit)
+        else:       # peak mode: the sample counts the background's level (round8_peak_mode_protocol.md)
+            b_term = k_b * max(gb - qb.b, 0.0) + k_b * k_b * (max(gb, 0.0) + qb.var_data)
     elif bnet is not None:
         yw -= bnet[0]
         var += bnet[1] ** 2
@@ -1353,7 +1369,7 @@ def _window_primary(lr: LineResult, spectrum, e: float, fw_ch, w: float, fwin: f
                 f"{p.energy:.1f} keV" if p.energy is not None else f"channel {p.centroid:.0f}" for p in near)
                 + ": primary result not used").strip("; ")
             return
-        lc_counts, ld_counts, dt, mda = quad_limits(s_term, b_term, hq if spectrum_mode else None)
+        lc_counts, ld_counts, dt, mda = quad_limits(s_term, b_term, hq)
         lr.window_continuum, lr.window_lc_counts, lr.window_decision_threshold = "quadratic", lc_counts, dt
         # the line reports the limits of the estimator it uses (round7_quad_limits_protocol.md)
         lr.lc_counts, lr.ld_counts, lr.decision_threshold, lr.mda = lc_counts, ld_counts, dt, mda
