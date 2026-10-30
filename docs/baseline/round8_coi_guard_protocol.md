@@ -64,3 +64,35 @@ Before the change: RC8.C1, RC8.C2 and RC8.C3 fail; RC8.C4 is the control.
   coefficients are not kept.
 - Synthetic Eu-152 calibration; the sequence is reachable through the API and saved curves, the
   efficiency dialog refits on every change of the points.
+
+---
+
+## Results (`after_R8C`)
+
+Protocol committed in 4435773 before the change (SHA-256 of the file
+32198ab2626bd852d0cf09ddf90110455c8425003839cf8233de485ac23755b5; before file
+`after_R8C/round8_coi_guard_before.json` a25fad245d4e28158bcfbbff9abd0fb1ea7d771fc99da5abfdae64b7de01b39d).
+
+Harness errors before the result (disclosed; no criterion or limit changed):
+1. The first evaluation stopped with a KeyError: `EfficiencyCurve.to_dict` leaves out an empty
+   `tcs_partial`; the harness now reads it with an empty default.
+2. The next run gave 3 PASS / 1 FAIL (kept in `after_R8C/first_run_harness_error/`): RC8.C4 failed
+   on every control only through the curves' `date` field, the time of the fit in minutes
+   (09:32 before, 09:34 after), which is not a result. The harness now leaves `date` out of the
+   comparison on both sides.
+
+Run after these fixes: 4 PASS / 0 FAIL.
+
+| ID | value | result |
+|---|---|---|
+| RC8.C1 | Eu-152 121.78 keV point: input 0.060915; before 0.065826 (+8.06 %), curve 0.064797; now 0.060915 (unchanged), curve 0.061342, marked corrected; explicit refit 0.061342 | PASS |
+| RC8.C2 | Cs-137 activity with the summing correction: before 64.366 Bq, now 65.210 Bq, explicit refit 65.210 Bq; note "not corrected again" | PASS |
+| RC8.C3 | corrected Eu-152 points with an uncorrected Co-60 1173.2 keV point: before corrected without refusal; now refused with `fit_efficiency`'s message | PASS |
+| RC8.C4 | uncorrected, corrected, excluded, explicitly refitted and declared-free curves and their activities identical to before | PASS |
+| RC8.C5 | benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against `after_R8A`; full suite 1748 passed, 69 skipped, exit 0; no existing test changed | PASS |
+
+New tests: `tests/test_round8_coi_guard.py` (4); on the code before the change (4435773) all 4 fail
+(three on the defect, the fourth because the note constant `TCS_ALREADY_CORRECTED` is new).
+ENGINE_VERSION 1.33.0 (after 1.32.0 of R8-B, merged in). Re-run after merging main (R8-B):
+4 PASS / 0 FAIL. The manual sources say that corrected points excluded and included again are
+refitted as they are.

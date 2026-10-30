@@ -1656,3 +1656,13 @@ Protocol `docs/baseline/round8_alt_limits_protocol.md`, committed before the cha
 - `after_R8B` 3 PASS / 1 FAIL (RB8.C3 drafting error: the curved line follows the change);
   `after_R8B2` 4 PASS / 0 FAIL. Benchmark 154 / 13 / 60 unchanged. ENGINE_VERSION 1.32.0.
 - Same day, by subagents: R8-F scan cancel (#101), R8-E inputs (#102), R8-D truncated SPE (#103).
+
+### 2026-10-30 Round-8 review, Gemini M1 (R8-C): summing-corrected points not corrected twice
+
+- Protocol `docs/baseline/round8_coi_guard_protocol.md` (4435773). Cascade points corrected for
+  true-coincidence summing, excluded, the curve refitted (not marked corrected), then included again
+  without a refit were divided by their COI a second time by `summing_free_curve` (Eu-152 121.78 keV
+  +8.06 %). Now such a curve is refitted on its points as they are and marked corrected; a mix with
+  uncorrected cascade points is refused.
+- `after_R8C` 4 PASS / 0 FAIL after two disclosed harness errors (missing empty `tcs_partial`; the
+  fit time compared). Benchmark 154 / 13 / 60 unchanged; suite 1748 passed. ENGINE_VERSION 1.33.0.
