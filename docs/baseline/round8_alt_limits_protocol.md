@@ -104,3 +104,7 @@ First run: 6 PASS / 0 FAIL.
 New tests: `tests/test_round8_alt_limits.py` (7); on the code before the change (09f3471) 6 of them
 fail and the usable-key-line control passes. ENGINE_VERSION 1.31.0. The manual sources say that the
 replacing line's decision threshold and MDA are used.
+
+Deviation from the text above (no criterion affected): the harness's `--out DIR` was replaced by
+`--rerun` (results to a fixed folder in the temporary directory), because SonarCloud rule S8707 flags a
+results path taken from the command line; the fixed `after_R8A` results are unchanged.

@@ -1,12 +1,12 @@
 """Round-8 review, Codex H1 / Gemini H1: the limits of a nuclide whose primary result comes from
 another line than its key line (docs/baseline/round8_alt_limits_protocol.md).
 
-    python -m spectramaster.validation.round8_alt_limits [--collect] [--out DIR]
+    python -m spectramaster.validation.round8_alt_limits [--collect] [--rerun]
 
 Synthetic data only.  ``--collect`` writes the observations only, to
 ``docs/baseline/after_R8A/round8_alt_limits_before.json`` (the "before" values); without it the
-criteria are evaluated against that file.  ``--out DIR`` writes the results to DIR instead of
-``after_R8A`` (the before file is always read from ``after_R8A``).
+criteria are evaluated against that file.  ``--rerun`` writes the results to RERUN (in the
+temporary folder) instead of ``after_R8A``, which a re-run then leaves as committed.
 """
 from __future__ import annotations
 
@@ -14,7 +14,6 @@ import argparse
 import dataclasses
 import json
 import math
-import os
 import sys
 import tempfile
 from pathlib import Path
@@ -27,6 +26,7 @@ from spectramaster.validation.synthetic import HPGE, NAI, Continuum, TruePeak, a
 
 OUT = r5.OUT.parent / "after_R8A"
 BEFORE_JSON = OUT / "round8_alt_limits_before.json"
+RERUN = Path(tempfile.gettempdir()) / "spectramaster_round8_alt_limits"
 METHODS = ("currie", "iso11929")
 NUCLIDE_LIMITS = ("decision_threshold", "mda", "specific_mda")
 # (name, detector, spectrum, seed, combination method); spectrum: ("peak", keV) an interfering peak
@@ -153,21 +153,10 @@ def criteria(res: dict, before: dict) -> dict:
     return out
 
 
-def _out_dir(path) -> Path:
-    """The results folder: inside the working directory, the repository or the temporary folder
-    (a re-run in a copy), refused elsewhere."""
-    real = os.path.realpath(path)
-    roots = [os.path.realpath(r) for r in (os.getcwd(), OUT.parents[2], tempfile.gettempdir())]
-    if not any(os.path.splitdrive(real)[0].lower() == os.path.splitdrive(r)[0].lower()
-               and os.path.commonpath([real, r]) == r for r in roots):
-        raise SystemExit(f"--out must be inside the working directory, the repository or {tempfile.gettempdir()}")
-    return Path(real)
-
-
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--collect", action="store_true", help="write the observations only (the 'before' values)")
-    ap.add_argument("--out", type=Path, default=OUT, help="folder of the results (default after_R8A)")
+    ap.add_argument("--rerun", action="store_true", help=f"write the results to {RERUN}, not after_R8A")
     a = ap.parse_args(argv)
     res = json.loads(json.dumps(collect(), default=float))
     if a.collect:
@@ -177,7 +166,7 @@ def main(argv=None) -> int:
         return 0
     before = json.loads(BEFORE_JSON.read_text(encoding="utf-8"))
     crit = criteria(res, before)
-    out = _out_dir(a.out)
+    out = RERUN if a.rerun else OUT
     out.mkdir(parents=True, exist_ok=True)
     (out / "round8_alt_limits.json").write_text(json.dumps({"results": res, "criteria": crit}, indent=1,
                                                           ensure_ascii=False), encoding="utf-8")
