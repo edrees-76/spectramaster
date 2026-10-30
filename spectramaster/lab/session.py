@@ -121,7 +121,10 @@ SCHEMA_VERSION = 1
 #          estimator of its primary result on the background (round8_peak_mode_protocol.md)
 #   1.33.0 2026-10-30 calibration points already corrected for true-coincidence summing on a curve not
 #          marked corrected are refitted as they are, not corrected twice (round8_coi_guard_protocol.md)
-ENGINE_VERSION = "1.33.0"
+#   1.34.0 2026-10-30 weighted mean of a nuclide's window results: the covariance of lines whose windows
+#          share channels, and the reference peak components summed before the norm
+#          (round8_line_covariance_protocol.md)
+ENGINE_VERSION = "1.34.0"
 
 
 class SessionSchemaError(ValueError):

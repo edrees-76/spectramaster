@@ -127,7 +127,7 @@ def covariance(res, o, sp, bg, mode):
     for l in use:
         lo, hi, m, _f = act.line_window(sp, l.energy, fw_ch)
         fwin = act.continuum_under(sp, l.energy, fw_ch)[3]
-        w = l.primary / l.primary_net if l.primary_net else 0.0
+        w = l.primary_u_count / l.primary_net_unc          # Bq per count (the result may be 0)
         quad = l.window_continuum == "quadratic"
         a_vec.append(w / fwin * _estimator(y, lo, hi, m, quad))
         b_vec.append(-k * w / fwin * _estimator(b, lo, hi, m, quad) if b is not None else None)

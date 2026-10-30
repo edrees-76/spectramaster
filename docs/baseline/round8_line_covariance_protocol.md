@@ -93,3 +93,44 @@ exploration): it guards the change against over-correcting, it does not measure 
   independent counts per channel, as the lines' own variances already do.
 - The false-detection fraction of the weighted mean also depends on the bias of the window results
   at low counts (mean -1.07 Bq in the exploration); it is reported, not a limit.
+
+---
+
+## Results (2026-10-30, engine 1.34.0)
+
+Before the change (`--collect`, engine 1.33.0, commit 7208d2c): 2 PASS / 3 FAIL, as expected
+(RH8.C1, RH8.C2, RH8.C3 FAIL; RH8.C4 PASS; RH8.C5 PASS, u / sd 1.0846, threshold ratio 1.0849,
+399 of 400 spectra with a window weighted mean, false detections 0.0100).
+
+After the change, `after_R8H/round8_line_covariance.{json,md}`:
+
+| ID | value | result |
+|---|---|---|
+| RH8.C1 | primary_u equals W'CW and the other components (8 cases) | PASS |
+| RH8.C2 | decision threshold and MDA equal the recomputation | PASS |
+| RH8.C3 | reference term equals the norm of the summed components | PASS |
+| RH8.C4 | controls and every line field identical to before | PASS |
+| RH8.C5 | 399 spectra: u / sd 0.9889, threshold / (1.645 sd) 0.9892, false detections 0.0201 (reported), mean -2.957 Bq | PASS |
+| RH8.C6 | benchmark `after_R8H` 154 PASS / 13 FAIL / 60 REPORT, no criterion changed from `after_R8C`; full suite 1762 passed, 69 skipped, exit 0 (one changed existing test, below) | PASS |
+
+**6 PASS / 0 FAIL.**
+
+Effect (weighted mean of Ba-133 on NaI, Ba-133 absent): without background primary_u 9.113 -> 8.280 Bq,
+threshold 15.036 -> 13.671 Bq, MDA 30.14 -> 27.41 Bq (Currie); with a background spectrum (both
+modes) primary_u 12.88 -> 11.70 Bq, threshold 21.20 -> 19.27 Bq; with the reference peak and the
+blank primary_u 5.143 -> 5.047 Bq, threshold 10.733 -> 10.661 Bq.
+
+Harness correction, disclosed: the harness took a line's conversion factor (Bq per count) as
+`primary / primary_net`, which is 0/0 when a window result is exactly 0 (found by the existing test
+below on `round5_combined`'s noiseless flat spectrum). It now takes `primary_u_count /
+primary_net_unc`, the same factor. Re-run after the correction: criteria identical, every expected
+value bit-identical (the registered cases have no zero result); the committed results are that re-run.
+
+Changed existing test: `tests/test_round7_combined.py::test_undetected_mean_reports_the_limits_of_its_weighted_mean`
+compared the Ba-133 weighted mean with R7-B's computation of independent lines; Ba-133's 79.6 and
+81.0 keV windows share channels, so the comparison for Ba-133 is now with this harness's
+recomputation (Co-60, whose windows share none, still with R7-B's). A re-run of `round7_combined` on
+engine 1.34.0 is expected to change RB.C3 (Ba-133 cases) for the same reason; it is not re-run here.
+The first full suite run, before that test was changed, gave 1 failed (this test), 1755 passed, 69
+skipped, exit 1. New tests: `tests/test_round8_line_covariance.py` (6), all failing on 7208d2c and
+passing after.

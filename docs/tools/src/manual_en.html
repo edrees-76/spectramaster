@@ -856,7 +856,8 @@ with the QCY48 curve, peak-by-peak background subtraction and concentrations in 
       <i>weighted mean of lines</i>, the decision threshold and the MDA are those of the weighted mean itself,
       with the same weights as the activity, also for a nuclide not detected (the weighted mean of its primary
       results); the reference peak corrections shared by the lines are counted as correlated between them, also when
-      only some lines have a peak in the reagent blank.</td></tr>
+      only some lines have a peak in the reagent blank. Lines whose windows share channels (close lines, e.g. Ba-133 79.6
+      and 81.0 keV on NaI) covary, and that covariance enters the weighted mean's uncertainty and limits.</td></tr>
   <tr><td>Decision</td><td><i>detected</i> when the net signal exceeds the decision threshold (Currie L<sub>C</sub> or
       ISO y*); otherwise <i>&lt; MDA</i>. A nuclide can be <i>detected</i> with an activity below its MDA
       (between L<sub>C</sub> and L<sub>D</sub>) — report it with its uncertainty.</td></tr>

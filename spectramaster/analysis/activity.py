@@ -538,8 +538,10 @@ def combined_limits(lines: list, weights: list, opt: "ActivityOptions") -> tuple
     The shared reference peak corrections make the lines covary: the cross terms of ``ref_g0`` (zero
     activity, from a blank) and ``ref_dg`` (linear in y, ISO 11929) are added for every pair of lines
     with the correction, also when only one of them has a blank peak (round6_combined_protocol.md,
-    round7_combined_protocol.md)."""
+    round7_combined_protocol.md).  Lines whose window estimators share channels covary: their cross
+    terms, with the observed counts, are added to S0^2 (round8_line_covariance_protocol.md)."""
     s0sq = sum((w * l.decision_threshold / opt.k_alpha) ** 2 for w, l in zip(weights, lines))
+    s0sq += _cross_cov(lines, weights)
     slope = sum(w * w * l.limit_slope for w, l in zip(weights, lines))
 
     def dot(a, b):
@@ -1394,7 +1396,19 @@ def _window_primary(lr: LineResult, spectrum, e: float, fw_ch, w: float, fwin: f
     lr.primary_method = "window"
     ref_uc, ref_ur, bl_uc, bl_ur = ref
     gross, ab = gross_net * w, lr.blank_activity or 0.0
-    lr.ref_unc_bq = math.sqrt((gross * ref_uc) ** 2 + (ab * bl_uc) ** 2 + (gross * ref_ur - ab * bl_ur) ** 2)
+    lr._ref_vec = (gross * ref_uc, ab * bl_uc, gross * ref_ur - ab * bl_ur)
+    lr.ref_unc_bq = math.sqrt(sum(g * g for g in lr._ref_vec))
+    # the estimator in Bq per count on the sample's and the background's channels, for the covariance
+    # of the lines' window results (round8_line_covariance_protocol.md); in memory only
+    f = w / fwin
+    if lr.window_continuum == "quadratic":
+        s_res = _quad_coef(lo, hi, q, f)
+        b_res = _quad_coef(lo, hi, qb, -f * k_b) if qb is not None else None
+    else:
+        s_res = _window_coef(spectrum, e, fw_ch, f)
+        b_res = _window_coef(spectrum, e, fw_ch, -f * k_b) if bcounts is not None else None
+    lr._cov_res = (s_res, np.maximum(np.asarray(spectrum.counts, dtype=float), 0.0), b_res,
+                   np.maximum(np.asarray(bcounts, dtype=float), 0.0) if b_res is not None else None)
     if nnet * fwin <= lc_counts:
         return
     if opt.decision == "iso11929":
@@ -1457,14 +1471,40 @@ def _weighted_primary(lines: list, opt: ActivityOptions) -> tuple[float, float]:
     wts = [1.0 / v if v > 0 else 0.0 for v in var_unc]
     sw = sum(wts)
     a = sum(w * l.primary for w, l in zip(wts, lines)) / sw
-    uc = math.sqrt(sum((w * l.primary_u_count) ** 2 for w, l in zip(wts, lines))) / sw
+    # the lines' window results covary through the channels their estimators share; the reference
+    # peak components are common to the lines (round8_line_covariance_protocol.md)
+    uc = math.sqrt(max(sum((w * l.primary_u_count) ** 2 for w, l in zip(wts, lines))
+                       + _cross_cov(lines, wts), 0.0)) / sw
     ul = math.sqrt(sum((w * l.primary * l.int_rel_unc) ** 2 for w, l in zip(wts, lines))) / sw
     ue = sum(w * abs(l.primary) * l.eff_rel_unc for w, l in zip(wts, lines)) / sw
     ut = sum(w * abs(l.primary) * l.coi_rel_unc for w, l in zip(wts, lines)) / sw
-    ur = sum(w * l.ref_unc_bq for w, l in zip(wts, lines)) / sw
+    vecs = [getattr(l, "_ref_vec", None) for l in lines]
+    if all(v is not None for v in vecs):
+        ur = math.sqrt(sum(sum(w * v[c] for w, v in zip(wts, vecs)) ** 2 for c in range(3))) / sw
+    else:
+        ur = sum(w * l.ref_unc_bq for w, l in zip(wts, lines)) / sw
     aa = abs(a)
     return a, math.sqrt(uc ** 2 + ue ** 2 + math.hypot(aa * ui, ul) ** 2 + (aa * _att_rel_unc(opt)) ** 2
                         + ur ** 2 + ut ** 2)
+
+
+def _window_cov(li, lj) -> float:
+    """Covariance (Bq^2) of two lines' window results from the sample and background channels their
+    estimators share, the observed counts as the variances; 0 without coefficients
+    (round8_line_covariance_protocol.md)."""
+    ci, cj = getattr(li, "_cov_res", None), getattr(lj, "_cov_res", None)
+    if ci is None or cj is None or ci[0] is None or cj[0] is None:
+        return 0.0
+    c = _overlap(ci[0], cj[0], ci[1])
+    if ci[2] is not None and cj[2] is not None:
+        c += _overlap(ci[2], cj[2], ci[3])
+    return c
+
+
+def _cross_cov(lines: list, weights: list) -> float:
+    """sum over i != j of w_i w_j cov(i, j) of the lines' window results."""
+    return sum(wi * wj * _window_cov(li, lj) for i, (wi, li) in enumerate(zip(weights, lines))
+               for j, (wj, lj) in enumerate(zip(weights, lines)) if i != j)
 
 
 def _primary_weights(lines: list, opt: ActivityOptions) -> list:
