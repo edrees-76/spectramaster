@@ -72,7 +72,8 @@ def _primary_text(r: act.NuclideResult, tr) -> str:
     if r.detected or r.primary is None or r.primary_u is None:
         return ""
     text = f"{_g(r.primary, 3)} ± {_g(r.primary_u, 2)}"
-    return text + " " + tr("res_interfered") if r.primary_method == "interfered" else text
+    mark = {"interfered": "res_interfered", "curved": "res_curved"}.get(r.primary_method or "")
+    return text + " " + tr(mark) if mark else text
 
 
 def quant_table(res: Optional[act.QuantResults], lang: Optional[str] = None) -> tuple[list[str], list[list[str]]]:

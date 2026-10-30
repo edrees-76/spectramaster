@@ -868,7 +868,8 @@ with the QCY48 curve, peak-by-peak background subtraction and concentrations in 
       window needs the quadratic continuum reports that window's decision threshold and MDA (the ones its detection
       uses), and its nuclide inherits them. The nuclide's
       primary result is combined like the activity: the key line, or with <i>weighted mean of lines</i> the weighted mean
-      of the usable lines; when the key line is flagged, the usable line with the smallest MDA is used and named in the note.
+      of the usable lines; when the key line is flagged, the usable line with the smallest MDA is used, with its decision threshold and MDA,
+      and named in the note.
       A weighted mean above its own decision threshold while no line is detected is noted; the nuclide stays
       <i>&lt; MDA</i>, since detection is decided line by line.</td></tr>
   <tr><td>Blank subtracted</td><td>The reagent-blank activity subtracted from the line (section <a href="#q-blank">9.3</a>).</td></tr>

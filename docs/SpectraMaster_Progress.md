@@ -1629,3 +1629,17 @@ Protocol `docs/baseline/round7_tests_protocol.md`, committed before the change (
   and the note apart, `--out` for re-runs; the parser tests need PySide6 only.
 - **Result (`after_R7G`):** 5 PASS / 0 FAIL (abnormal ends 2 of 20 -> 0 of 20); benchmark unchanged;
   suite 1652 passed, exit 0. Round 7 complete.
+
+## Round-8 external review: limits of a replacing line, Codex H1 / Gemini H1 (2026-10-30)
+
+Protocol `docs/baseline/round8_alt_limits_protocol.md`, committed before the change (09f3471).
+
+- **Confirmed.** A nuclide not detected whose key line has no usable window result takes its primary
+  result from another usable line, but kept the key line's decision threshold and MDA (2.876 / 5.882
+  Bq instead of the used line's 1.703 / 3.553 Bq in the HPGe case). A "curved" primary result was
+  shown without the "not used" mark that an interfered one has. Gemini H1 part a (no usable line: the
+  key line's marked result) is the registered rule and was not changed.
+- **Fix.** The nuclide reports the replacing line's threshold and MDA (and the specific MDA), named in
+  the note; "curved" is marked in Arabic and English. ENGINE_VERSION 1.31.0.
+- **Result (`after_R8A`):** 6 PASS / 0 FAIL; benchmark 154 / 13 / 60 unchanged against `after_R7G`;
+  suite 1659 passed, exit 0; 7 new tests, no existing test changed.
