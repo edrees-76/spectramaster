@@ -1003,6 +1003,9 @@ unit to report: Bq, Bq/kg, Bq/L or Bq/m³.</p>
   <li>An empty field means <i>unknown</i>: it is never taken as zero or one. A missing value is listed instead of
       a concentration.</li>
   <li>Non-detects are shown as &lt; MDA, never as zero.</li>
+  <li>Mass, volume and the other numbers take a point or a comma for decimals (<code>0.5</code>, <code>0,5</code>),
+      also with Arabic-Indic digits (<code>٠,٥</code>). A comma that could be a thousands separator
+      (<code>1,000</code>, <code>1,000e3</code>) is refused with a message instead of being read as a decimal.</li>
 </ul>
 
 <h3 id="q-example">9.8 Worked example: QCY48CAL → CHERN (command line)</h3>
@@ -1241,6 +1244,11 @@ scatter (unstable electronics, high voltage, source position); a value below it 
 <code>smconvert info FILE --from CODE</code> command shows the reader's exact error. If <i>Auto-detect</i> is not
 active, a wrong fixed format is the most common cause — the status bar shows the active input mode. If the message
 names several possible formats, choose the right one by hand.</p>
+
+<h4>The file is refused as truncated</h4>
+<p>A spectrum file that holds fewer channels than its header declares (IEC 1455, Canberra S100, Aptec ASCII, SPE),
+or an SPE file with several <code>$DATA</code> blocks of which not all can be read, is refused rather than read
+short, because missing channels would silently change areas and limits. Copy the file again from its source.</p>
 
 <h4>Peaks are at the wrong energies, or no nuclide is identified</h4>
 <ul>
