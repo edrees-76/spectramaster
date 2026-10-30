@@ -1,0 +1,53 @@
+{
+ "engine": "1.34.0",
+ "main": "5de3b03",
+ "codex_m3_injected_exit99_round7_inputs": {
+  "current": {
+   "exit": 99,
+   "stderr_tail": [
+    "injected"
+   ],
+   "states": {
+    "RE.C1": "PASS",
+    "RE.C2": "PASS",
+    "RE.C3": "PASS",
+    "RE.C4": "PASS",
+    "RE.C5": "PASS"
+   }
+  },
+  "historical": {
+   "exit": 99,
+   "stderr_tail": [
+    "injected"
+   ],
+   "states": {
+    "RE.C1": "PASS",
+    "RE.C2": "PASS",
+    "RE.C3": "PASS",
+    "RE.C4": "PASS",
+    "RE.C5": "PASS"
+   }
+  },
+  "criteria": {
+   "RG8.C1": true,
+   "RG8.C2": true,
+   "RG8.C3": true
+  }
+ },
+ "gemini_m1_scaled_before_values": [
+  "round8_alt_limits as is {'RA8.C1': True, 'RA8.C2': True, 'RA8.C3': True, 'RA8.C4': True}",
+  "round8_alt_limits rel 1e-13 {'RA8.C1': False, 'RA8.C2': True, 'RA8.C3': False, 'RA8.C4': False}",
+  "round8_alt_limits rel 1e-9 {'RA8.C1': False, 'RA8.C2': True, 'RA8.C3': False, 'RA8.C4': False}",
+  "round8_alt_limits engine {'RA8.C1': True, 'RA8.C2': True, 'RA8.C3': True, 'RA8.C4': True}",
+  "round8_peak_mode as is {'RB8.C1': True, 'RB8.C2': True, 'RB8.C3a': True, 'RB8.C4': True}",
+  "round8_peak_mode rel 1e-13 {'RB8.C1': True, 'RB8.C2': False, 'RB8.C3a': False, 'RB8.C4': True}",
+  "round8_peak_mode rel 1e-9 {'RB8.C1': True, 'RB8.C2': False, 'RB8.C3a': False, 'RB8.C4': True}",
+  "round8_peak_mode engine {'RB8.C1': True, 'RB8.C2': True, 'RB8.C3a': True, 'RB8.C4': True}",
+  "round8_coi_guard as is {'RC8.C1': True, 'RC8.C2': True, 'RC8.C3': True, 'RC8.C4': True}",
+  "round8_coi_guard rel 1e-13 {'RC8.C1': True, 'RC8.C2': True, 'RC8.C3': True, 'RC8.C4': False}",
+  "round8_coi_guard rel 1e-9 {'RC8.C1': True, 'RC8.C2': True, 'RC8.C3': True, 'RC8.C4': False}",
+  "round8_coi_guard engine {'RC8.C1': True, 'RC8.C2': True, 'RC8.C3': True, 'RC8.C4': True}"
+ ],
+ "codex_m4_round7_quad_limits_rerun": "2 PASS / 2 FAIL (RD.C2, RD.C3); Ba-133 mean Currie 5.743308467676736 / 11.515563206831441 Bq against recombined 6.571910331611115 / 13.1727669347002; primary_u 4.822820294502 -> 4.487457287668837",
+ "round8_rerun_before": "after_R9E/round8_rerun_before.md (3 PASS / 0 FAIL)"
+}
