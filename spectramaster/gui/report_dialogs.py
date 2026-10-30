@@ -650,10 +650,16 @@ class ReportBatchDialog(QDialog):
         for b in (self.add_btn, self.add_dir_btn, self.clear_btn, self.start_btn):
             b.setEnabled(False)
         self.count_label.setText(tr("scan_folder_running"))
-        stop = call_stop(self)
+        stop = self._folder_stop = call_stop(self)
         start_call(self, lambda: scan_spectrum_files(Path(folder), True, stop), self._folder_scanned,
                    self._folder_scan_failed)
         return True
+
+    def _folder_cancelled(self) -> bool:
+        """True when the folder search was cancelled: a result that still arrives is dropped
+        (round-8 review, Codex M4)."""
+        stop = self.__dict__.get("_folder_stop")
+        return stop is not None and stop()
 
     def _scan_finished(self) -> None:
         self.scanning = False
@@ -662,11 +668,13 @@ class ReportBatchDialog(QDialog):
 
     def _folder_scanned(self, files) -> None:
         self._scan_finished()
-        self.add_files(files)
+        self.add_files([] if self._folder_cancelled() else files)
 
     def _folder_scan_failed(self, msg: str) -> None:
         self._scan_finished()
         self.add_files([])
+        if self._folder_cancelled():
+            return
         QMessageBox.warning(self, tr("err_title"), msg)
 
     def _browse_out(self) -> None:
