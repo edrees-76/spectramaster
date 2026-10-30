@@ -1,0 +1,7475 @@
+{
+ "results": {
+  "engine": "1.32.0",
+  "cases": {
+   "hpge_bkg1500_peak_currie": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 1496.967747828073,
+      "continuum": 151.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 99.24681858880919,
+      "ld_counts": 201.1996621776184,
+      "decision_threshold": 10.492589039098117,
+      "mda": 21.271264913605656,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": 0.10572217012386162,
+      "primary_u_count": 6.379349683784319,
+      "primary_net": 1.0009222645933868,
+      "primary_net_unc": 60.396349456747984,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 10.492589039098117,
+      "mda": 21.271264913605656,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": null,
+      "best_u": null,
+      "coverage_low": null,
+      "coverage_high": null,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": 0.10572217012386162,
+      "primary_u": 6.379442105115317,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (peak-by-peak, k = 1)"
+    ]
+   },
+   "hpge_bkg1500_peak_iso11929": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 1496.967747828073,
+      "continuum": 151.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 99.24681858880918,
+      "ld_counts": 281.58865527230546,
+      "decision_threshold": 10.492589039098116,
+      "mda": 29.770163717648096,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": 0.10572217012386162,
+      "primary_u_count": 6.379349683784319,
+      "primary_net": 1.0009222645933868,
+      "primary_net_unc": 60.396349456747984,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 10.492589039098116,
+      "mda": 29.770163717648096,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": 5.12866725043207,
+      "best_u": 3.8647467754592357,
+      "coverage_low": 0.20253761305582133,
+      "coverage_high": 14.372221712772296,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": 0.10572217012386162,
+      "primary_u": 6.379442105115317,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (peak-by-peak, k = 1)"
+    ]
+   },
+   "hpge_bkg1500_spectrum_currie": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 0.0,
+      "continuum": 151.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 99.7906408437184,
+      "ld_counts": 202.28730668743682,
+      "decision_threshold": 10.550083108048769,
+      "mda": 21.386253051506966,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": 0.10572217012386162,
+      "primary_u_count": 6.379349683784319,
+      "primary_net": 1.0009222645933868,
+      "primary_net_unc": 60.396349456747984,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 10.550083108048769,
+      "mda": 21.386253051506966,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": null,
+      "best_u": null,
+      "coverage_low": null,
+      "coverage_high": null,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": 0.10572217012386162,
+      "primary_u": 6.379442105115317,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (full spectrum, k = 1)"
+    ]
+   },
+   "hpge_bkg1500_spectrum_iso11929": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 0.0,
+      "continuum": 151.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 99.7906408437184,
+      "ld_counts": 283.11086635168436,
+      "decision_threshold": 10.55008310804877,
+      "mda": 29.931095176346624,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": 0.10572217012386162,
+      "primary_u_count": 6.379349683784319,
+      "primary_net": 1.0009222645933868,
+      "primary_net_unc": 60.396349456747984,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 10.55008310804877,
+      "mda": 29.931095176346624,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": 5.12866725043207,
+      "best_u": 3.8647467754592357,
+      "coverage_low": 0.20253761305582133,
+      "coverage_high": 14.372221712772296,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": 0.10572217012386162,
+      "primary_u": 6.379442105115317,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (full spectrum, k = 1)"
+    ]
+   },
+   "hpge_bkg20000_peak_currie": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 19926.483831338188,
+      "continuum": 173.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 331.89072546547607,
+      "ld_counts": 666.4874759309521,
+      "decision_threshold": 35.088207740192914,
+      "mda": 70.46250231579523,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": -4.228886804954464,
+      "primary_u_count": 21.31973476102001,
+      "primary_net": -40.03689058373547,
+      "primary_net_unc": 201.84410869101305,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 35.088207740192914,
+      "mda": 70.46250231579523,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": null,
+      "best_u": null,
+      "coverage_low": null,
+      "coverage_high": null,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": -4.228886804954464,
+      "primary_u": 21.363936564002703,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (peak-by-peak, k = 1)"
+    ]
+   },
+   "hpge_bkg20000_peak_iso11929": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 19926.483831338188,
+      "continuum": 173.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 331.89072546547607,
+      "ld_counts": 932.7814474039757,
+      "decision_threshold": 35.08820774019291,
+      "mda": 98.615678870825,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": -4.228886804954464,
+      "primary_u_count": 21.31973476102001,
+      "primary_net": -40.03689058373547,
+      "primary_net_unc": 201.84410869101305,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 35.08820774019291,
+      "mda": 98.615678870825,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": 15.59734172145782,
+      "best_u": 12.131831029838988,
+      "coverage_low": 0.5771329327285981,
+      "coverage_high": 45.04914221931982,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": -4.228886804954464,
+      "primary_u": 21.363936564002703,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (peak-by-peak, k = 1)"
+    ]
+   },
+   "hpge_bkg20000_spectrum_currie": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 0.0,
+      "continuum": 173.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 332.17597053369167,
+      "ld_counts": 667.0579660673833,
+      "decision_threshold": 35.11836446782179,
+      "mda": 70.522815771053,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": -4.228886804954464,
+      "primary_u_count": 21.31973476102001,
+      "primary_net": -40.03689058373547,
+      "primary_net_unc": 201.84410869101305,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 35.11836446782179,
+      "mda": 70.522815771053,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": null,
+      "best_u": null,
+      "coverage_low": null,
+      "coverage_high": null,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": -4.228886804954464,
+      "primary_u": 21.363936564002703,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (full spectrum, k = 1)"
+    ]
+   },
+   "hpge_bkg20000_spectrum_iso11929": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 0.0,
+      "continuum": 173.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 332.17597053369167,
+      "ld_counts": 933.5798759332541,
+      "decision_threshold": 35.11836446782179,
+      "mda": 98.70009046762911,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": -4.228886804954464,
+      "primary_u_count": 21.31973476102001,
+      "primary_net": -40.03689058373547,
+      "primary_net_unc": 201.84410869101305,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 35.11836446782179,
+      "mda": 98.70009046762911,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": 15.59734172145782,
+      "best_u": 12.131831029838988,
+      "coverage_low": 0.5771329327285981,
+      "coverage_high": 45.04914221931982,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": -4.228886804954464,
+      "primary_u": 21.363936564002703,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (full spectrum, k = 1)"
+    ]
+   },
+   "hpge_nobkgpeak_peak_currie": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 1.1219010068117798,
+      "continuum": 150.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 41.48532150050184,
+      "ld_counts": 85.67666800100368,
+      "decision_threshold": 4.3859182173191495,
+      "mda": 9.057923270047722,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": 0.10572217012386162,
+      "primary_u_count": 2.6683069373443704,
+      "primary_net": 1.0009222645933868,
+      "primary_net_unc": 25.26213583421493,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 4.3859182173191495,
+      "mda": 9.057923270047722,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": null,
+      "best_u": null,
+      "coverage_low": null,
+      "coverage_high": null,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": 0.10572217012386162,
+      "primary_u": 2.6685278893800506,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (peak-by-peak, k = 1)"
+    ]
+   },
+   "hpge_nobkgpeak_peak_iso11929": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 1.1219010068117798,
+      "continuum": 150.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 41.48532150050183,
+      "ld_counts": 119.90863935604625,
+      "decision_threshold": 4.385918217319149,
+      "mda": 12.67700156932069,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": 0.10572217012386162,
+      "primary_u_count": 2.6683069373443704,
+      "primary_net": 1.0009222645933868,
+      "primary_net_unc": 25.26213583421493,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 4.385918217319149,
+      "mda": 12.67700156932069,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": 2.168054298883876,
+      "best_u": 1.627818496919931,
+      "coverage_low": 0.0862824346820288,
+      "coverage_high": 6.054827496466845,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": 0.10572217012386162,
+      "primary_u": 2.6685278893800506,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (peak-by-peak, k = 1)"
+    ]
+   },
+   "hpge_nobkgpeak_spectrum_currie": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 0.0,
+      "continuum": 150.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 42.70668390310819,
+      "ld_counts": 88.11939280621638,
+      "decision_threshold": 4.515043301030387,
+      "mda": 9.316173437470194,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": 0.10572217012386162,
+      "primary_u_count": 2.6683069373443704,
+      "primary_net": 1.0009222645933868,
+      "primary_net_unc": 25.26213583421493,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 4.515043301030387,
+      "mda": 9.316173437470194,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": null,
+      "best_u": null,
+      "coverage_low": null,
+      "coverage_high": null,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": 0.10572217012386162,
+      "primary_u": 2.6685278893800506,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (full spectrum, k = 1)"
+    ]
+   },
+   "hpge_nobkgpeak_spectrum_iso11929": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 0.0,
+      "continuum": 150.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 42.70668390310819,
+      "ld_counts": 123.32735082730571,
+      "decision_threshold": 4.515043301030386,
+      "mda": 13.03843516508958,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": 0.10572217012386162,
+      "primary_u_count": 2.6683069373443704,
+      "primary_net": 1.0009222645933868,
+      "primary_net_unc": 25.26213583421493,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 4.515043301030386,
+      "mda": 13.03843516508958,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": 2.168054298883876,
+      "best_u": 1.627818496919931,
+      "coverage_low": 0.0862824346820288,
+      "coverage_high": 6.054827496466845,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": 0.10572217012386162,
+      "primary_u": 2.6685278893800506,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (full spectrum, k = 1)"
+    ]
+   },
+   "hpge_bkg1500_blank_peak_currie": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 1496.967747828073,
+      "continuum": 151.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 146.686149445923,
+      "ld_counts": 296.078323891846,
+      "decision_threshold": 15.507978046536062,
+      "mda": 31.302042928481544,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "ref_dg": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": 207.25388959754804,
+      "blank_unc": 8.025317150029512,
+      "blank_bkg_cov": 19.063594563234865,
+      "gross_activity": null,
+      "primary": -207.1481674274242,
+      "primary_u_count": 8.183802821432538,
+      "primary_net": -1961.170609768166,
+      "primary_net_unc": 77.47996889788783,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 15.507978046536062,
+      "mda": 31.302042928481544,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": null,
+      "best_u": null,
+      "coverage_low": null,
+      "coverage_high": null,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": -207.1481674274242,
+      "primary_u": 67.7789677087304,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (peak-by-peak, k = 1)",
+     "reagent blank subtracted: synthetic-20000",
+     "background spectrum shared by the sample and the reagent blank: the covariance of their background estimates taken into account"
+    ]
+   },
+   "hpge_bkg1500_blank_peak_iso11929": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 1496.967747828073,
+      "continuum": 151.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 146.686149445923,
+      "ld_counts": 414.37592974874,
+      "decision_threshold": 15.507978046536062,
+      "mda": 43.80872254012962,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "ref_dg": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": 207.25388959754804,
+      "blank_unc": 8.025317150029512,
+      "blank_bkg_cov": 19.063594563234865,
+      "gross_activity": null,
+      "primary": -207.1481674274242,
+      "primary_u_count": 8.183802821432538,
+      "primary_net": -1961.170609768166,
+      "primary_net_unc": 77.47996889788783,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 15.507978046536062,
+      "mda": 43.80872254012962,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": 18.92254948547523,
+      "best_u": 17.780723710240743,
+      "coverage_low": 0.5139397571853124,
+      "coverage_high": 65.92759099672548,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": -207.1481674274242,
+      "primary_u": 67.7789677087304,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (peak-by-peak, k = 1)",
+     "reagent blank subtracted: synthetic-20000",
+     "background spectrum shared by the sample and the reagent blank: the covariance of their background estimates taken into account"
+    ]
+   },
+   "hpge_bkg1500_blank_spectrum_currie": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 0.0,
+      "continuum": 151.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 147.0546409987514,
+      "ld_counts": 296.81530699750283,
+      "decision_threshold": 15.546935773173391,
+      "mda": 31.379958381756204,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "ref_dg": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": 207.25388959754804,
+      "blank_unc": 8.025317150029512,
+      "blank_bkg_cov": 19.063594563234865,
+      "gross_activity": null,
+      "primary": -207.1481674274242,
+      "primary_u_count": 8.183802821432538,
+      "primary_net": -1961.170609768166,
+      "primary_net_unc": 77.47996889788783,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 15.546935773173391,
+      "mda": 31.379958381756204,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": null,
+      "best_u": null,
+      "coverage_low": null,
+      "coverage_high": null,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": -207.1481674274242,
+      "primary_u": 67.7789677087304,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (full spectrum, k = 1)",
+     "reagent blank subtracted: synthetic-20000",
+     "background spectrum shared by the sample and the reagent blank: the covariance of their background estimates taken into account"
+    ]
+   },
+   "hpge_bkg1500_blank_spectrum_iso11929": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 0.0,
+      "continuum": 151.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 147.05464099875138,
+      "ld_counts": 415.4073732384268,
+      "decision_threshold": 15.54693577317339,
+      "mda": 43.91776898421944,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "ref_dg": [
+       0.0,
+       0.0,
+       0.0
+      ],
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": 207.25388959754804,
+      "blank_unc": 8.025317150029512,
+      "blank_bkg_cov": 19.063594563234865,
+      "gross_activity": null,
+      "primary": -207.1481674274242,
+      "primary_u_count": 8.183802821432538,
+      "primary_net": -1961.170609768166,
+      "primary_net_unc": 77.47996889788783,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 15.54693577317339,
+      "mda": 43.91776898421944,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": 18.92254948547523,
+      "best_u": 17.780723710240743,
+      "coverage_low": 0.5139397571853124,
+      "coverage_high": 65.92759099672548,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": -207.1481674274242,
+      "primary_u": 67.7789677087304,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (full spectrum, k = 1)",
+     "reagent blank subtracted: synthetic-20000",
+     "background spectrum shared by the sample and the reagent blank: the covariance of their background estimates taken into account"
+    ]
+   },
+   "hpge_sample_peak_peak_currie": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 2996.415710554475,
+      "net_unc": 81.80550618800875,
+      "bkg_peak": 1513.9517342248982,
+      "continuum": 155.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": 316.4956787545766,
+      "u_count_rel": 0.02730112043527864,
+      "u_count_bq": 8.640686642923956,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 98.77424272255745,
+      "ld_counts": 200.2545104451149,
+      "decision_threshold": 10.442627292969819,
+      "mda": 21.17134142134906,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": true,
+      "peak_found": true,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": 316.4956787545766,
+      "primary_u_count": 8.640686642923956,
+      "primary_net": 2996.415710554475,
+      "primary_net_unc": 81.80550618800875,
+      "primary_method": "fit",
+      "window_continuum": "",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": ""
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": 316.4956787545766,
+      "u": 103.1623789116695,
+      "budget": {
+       "counting": 2.7301120435278645,
+       "efficiency": 32.47980748555265,
+       "intensity": 0.23501762632197423,
+       "attenuation": 0.0
+      },
+      "used_energies": [
+       661.657
+      ],
+      "decision_threshold": 10.442627292969819,
+      "mda": 21.17134142134906,
+      "detected": true,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": null,
+      "best_u": null,
+      "coverage_low": null,
+      "coverage_high": null,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": 316.4956787545766,
+      "primary_u": 103.1623789116695,
+      "primary_method": "fit"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (peak-by-peak, k = 1)"
+    ]
+   },
+   "hpge_sample_peak_peak_iso11929": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 2996.415710554475,
+      "net_unc": 81.80550618800875,
+      "bkg_peak": 1513.9517342248982,
+      "continuum": 155.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": 316.4956787545766,
+      "u_count_rel": 0.02730112043527864,
+      "u_count_bq": 8.640686642923956,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 98.77424272255745,
+      "ld_counts": 280.26586972434063,
+      "decision_threshold": 10.442627292969817,
+      "mda": 29.630315958908774,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": true,
+      "peak_found": true,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": 316.4956787545766,
+      "primary_u_count": 8.640686642923956,
+      "primary_net": 2996.415710554475,
+      "primary_net_unc": 81.80550618800875,
+      "primary_method": "fit",
+      "window_continuum": "",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": ""
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": 316.4956787545766,
+      "u": 103.1623789116695,
+      "budget": {
+       "counting": 2.7301120435278645,
+       "efficiency": 32.47980748555265,
+       "intensity": 0.23501762632197423,
+       "attenuation": 0.0
+      },
+      "used_energies": [
+       661.657
+      ],
+      "decision_threshold": 10.442627292969817,
+      "mda": 29.630315958908774,
+      "detected": true,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": 316.8681204770126,
+      "best_u": 102.5887981903451,
+      "coverage_low": 116.12402288749794,
+      "coverage_high": 518.7378045954907,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": 316.4956787545766,
+      "primary_u": 103.1623789116695,
+      "primary_method": "fit"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (peak-by-peak, k = 1)"
+    ]
+   },
+   "hpge_sample_peak_spectrum_currie": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 2996.415710554475,
+      "net_unc": 81.80550618800875,
+      "bkg_peak": 0.0,
+      "continuum": 155.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": 316.4956787545766,
+      "u_count_rel": 0.02730112043527864,
+      "u_count_bq": 8.640686642923956,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 99.89905004553346,
+      "ld_counts": 202.50412509106692,
+      "decision_threshold": 10.561544364126053,
+      "mda": 21.40917556366153,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": true,
+      "peak_found": true,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": 316.4956787545766,
+      "primary_u_count": 8.640686642923956,
+      "primary_net": 2996.415710554475,
+      "primary_net_unc": 81.80550618800875,
+      "primary_method": "fit",
+      "window_continuum": "",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": ""
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": 316.4956787545766,
+      "u": 103.1623789116695,
+      "budget": {
+       "counting": 2.7301120435278645,
+       "efficiency": 32.47980748555265,
+       "intensity": 0.23501762632197423,
+       "attenuation": 0.0
+      },
+      "used_energies": [
+       661.657
+      ],
+      "decision_threshold": 10.561544364126053,
+      "mda": 21.40917556366153,
+      "detected": true,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": null,
+      "best_u": null,
+      "coverage_low": null,
+      "coverage_high": null,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": 316.4956787545766,
+      "primary_u": 103.1623789116695,
+      "primary_method": "fit"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (full spectrum, k = 1)"
+    ]
+   },
+   "hpge_sample_peak_spectrum_iso11929": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 2996.415710554475,
+      "net_unc": 81.80550618800875,
+      "bkg_peak": 0.0,
+      "continuum": 155.0,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": 316.4956787545766,
+      "u_count_rel": 0.02730112043527864,
+      "u_count_bq": 8.640686642923956,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 99.89905004553347,
+      "ld_counts": 283.4143141907896,
+      "decision_threshold": 10.561544364126053,
+      "mda": 29.96317634041622,
+      "limit_slope": 0.1057221701238616,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": true,
+      "peak_found": true,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": 316.4956787545766,
+      "primary_u_count": 8.640686642923956,
+      "primary_net": 2996.415710554475,
+      "primary_net_unc": 81.80550618800875,
+      "primary_method": "fit",
+      "window_continuum": "",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": ""
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": 316.4956787545766,
+      "u": 103.1623789116695,
+      "budget": {
+       "counting": 2.7301120435278645,
+       "efficiency": 32.47980748555265,
+       "intensity": 0.23501762632197423,
+       "attenuation": 0.0
+      },
+      "used_energies": [
+       661.657
+      ],
+      "decision_threshold": 10.561544364126053,
+      "mda": 29.96317634041622,
+      "detected": true,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": 316.8681204770126,
+      "best_u": 102.5887981903451,
+      "coverage_low": 116.12402288749794,
+      "coverage_high": 518.7378045954907,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": 316.4956787545766,
+      "primary_u": 103.1623789116695,
+      "primary_method": "fit"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-10000 (full spectrum, k = 1)"
+    ]
+   },
+   "nai_co60_peak_currie": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 141.76841037848462,
+      "continuum": 16733.91304347826,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 476.10075241037686,
+      "ld_counts": 954.9075298207537,
+      "decision_threshold": 14.0048011560442,
+      "mda": 28.08920172850692,
+      "limit_slope": 0.029415624917922222,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": -7.684420144205899,
+      "primary_u_count": 8.491515687908763,
+      "primary_net": -261.9072176229824,
+      "primary_net_unc": 289.415363226722,
+      "primary_method": "window",
+      "window_continuum": "quadratic",
+      "window_lc_counts": 476.10075241037686,
+      "window_decision_threshold": 14.0048011560442,
+      "note": "no peak; quadratic continuum (curved for the linear window), decision threshold 14 Bq"
+     },
+     {
+      "nuclide": "Co-60",
+      "energy": 1173.228,
+      "intensity": 0.9984999999999999,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 3394.588665004628,
+      "continuum": 10551.274193548386,
+      "efficiency": 0.005776485176058049,
+      "eff_rel_unc": 0.32502132337030615,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 336.3857220455958,
+      "ld_counts": 675.4774690911916,
+      "decision_threshold": 16.242564178480706,
+      "mda": 32.61579021877823,
+      "limit_slope": 0.048285533879702205,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.00030045067601402103,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": -9.929686402680755,
+      "primary_u_count": 9.849590099912355,
+      "primary_net": -206.17997188095913,
+      "primary_net_unc": 204.5168525453778,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     },
+     {
+      "nuclide": "Co-60",
+      "energy": 1332.492,
+      "intensity": 0.9998,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 2825.9403634190317,
+      "continuum": 9545.454545454546,
+      "efficiency": 0.0051144225085167794,
+      "eff_rel_unc": 0.3246458276209965,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 314.4229288668358,
+      "ld_counts": 631.5518827336715,
+      "decision_threshold": 17.12904442938253,
+      "mda": 34.40550693231036,
+      "limit_slope": 0.05447772047386855,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 6.001200240048009e-06,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": 19.668107931080854,
+      "primary_u_count": 10.464116352700549,
+      "primary_net": 362.05248178155665,
+      "primary_net_unc": 192.62449181292476,
+      "primary_method": "curved",
+      "window_continuum": "",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak; continuum too curved for the window estimator and not smooth enough for a polynomial window (e.g. a Compton edge): primary result not used"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 14.0048011560442,
+      "mda": 28.08920172850692,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": null,
+      "best_u": null,
+      "coverage_low": null,
+      "coverage_high": null,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": -7.684420144205899,
+      "primary_u": 8.850740427369457,
+      "primary_method": "window"
+     },
+     {
+      "nuclide": "Co-60",
+      "key_energy": 1173.228,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 16.242564178480706,
+      "mda": 32.61579021877823,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 166344192.0,
+      "note": "true-coincidence summing not corrected",
+      "best_estimate": null,
+      "best_u": null,
+      "coverage_low": null,
+      "coverage_high": null,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": -9.929686402680755,
+      "primary_u": 10.364858195554506,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-8 (peak-by-peak, k = 1)"
+    ]
+   },
+   "nai_co60_peak_iso11929": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 141.76841037848462,
+      "continuum": 16733.91304347826,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 476.1007524103768,
+      "ld_counts": 1336.4392580055564,
+      "decision_threshold": 14.004801156044199,
+      "mda": 39.31219593907773,
+      "limit_slope": 0.029415624917922222,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": -7.684420144205899,
+      "primary_u_count": 8.491515687908763,
+      "primary_net": -261.9072176229824,
+      "primary_net_unc": 289.415363226722,
+      "primary_method": "window",
+      "window_continuum": "quadratic",
+      "window_lc_counts": 476.1007524103768,
+      "window_decision_threshold": 14.004801156044199,
+      "note": "no peak; quadratic continuum (curved for the linear window), decision threshold 14 Bq"
+     },
+     {
+      "nuclide": "Co-60",
+      "energy": 1173.228,
+      "intensity": 0.9984999999999999,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 3394.588665004628,
+      "continuum": 10551.274193548386,
+      "efficiency": 0.005776485176058049,
+      "eff_rel_unc": 0.32502132337030615,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 336.3857220455958,
+      "ld_counts": 945.863587452602,
+      "decision_threshold": 16.242564178480706,
+      "mda": 45.67152829751928,
+      "limit_slope": 0.048285533879702205,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.00030045067601402103,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": -9.929686402680755,
+      "primary_u_count": 9.849590099912355,
+      "primary_net": -206.17997188095913,
+      "primary_net_unc": 204.5168525453778,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     },
+     {
+      "nuclide": "Co-60",
+      "energy": 1332.492,
+      "intensity": 0.9998,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 2825.9403634190317,
+      "continuum": 9545.454545454546,
+      "efficiency": 0.0051144225085167794,
+      "eff_rel_unc": 0.3246458276209965,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 314.4229288668358,
+      "ld_counts": 883.5380601069602,
+      "decision_threshold": 17.129044429382535,
+      "mda": 48.13313946653105,
+      "limit_slope": 0.05447772047386855,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 6.001200240048009e-06,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": 19.668107931080854,
+      "primary_u_count": 10.464116352700549,
+      "primary_net": 362.05248178155665,
+      "primary_net_unc": 192.62449181292476,
+      "primary_method": "curved",
+      "window_continuum": "",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak; continuum too curved for the window estimator and not smooth enough for a polynomial window (e.g. a Compton edge): primary result not used"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 14.004801156044199,
+      "mda": 39.31219593907773,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": 4.8893061618785465,
+      "best_u": 4.105947954682211,
+      "coverage_low": 0.15696293693203867,
+      "coverage_high": 15.228155315096902,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": -7.684420144205899,
+      "primary_u": 8.850740427369457,
+      "primary_method": "window"
+     },
+     {
+      "nuclide": "Co-60",
+      "key_energy": 1173.228,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 16.242564178480706,
+      "mda": 45.67152829751928,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 166344192.0,
+      "note": "true-coincidence summing not corrected",
+      "best_estimate": 5.530672761716167,
+      "best_u": 4.682317598911297,
+      "coverage_low": 0.17513708968272468,
+      "coverage_high": 17.366000971195614,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": -9.929686402680755,
+      "primary_u": 10.364858195554506,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-8 (peak-by-peak, k = 1)"
+    ]
+   },
+   "nai_co60_spectrum_currie": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 0.0,
+      "continuum": 16733.91304347826,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 475.8073335551542,
+      "ld_counts": 954.3206921103083,
+      "decision_threshold": 13.996170057055123,
+      "mda": 28.071939530528766,
+      "limit_slope": 0.029415624917922222,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": -7.684420144205899,
+      "primary_u_count": 8.491515687908763,
+      "primary_net": -261.9072176229824,
+      "primary_net_unc": 289.415363226722,
+      "primary_method": "window",
+      "window_continuum": "quadratic",
+      "window_lc_counts": 475.8073335551542,
+      "window_decision_threshold": 13.996170057055123,
+      "note": "no peak; quadratic continuum (curved for the linear window), decision threshold 14 Bq"
+     },
+     {
+      "nuclide": "Co-60",
+      "energy": 1173.228,
+      "intensity": 0.9984999999999999,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 0.0,
+      "continuum": 10551.274193548386,
+      "efficiency": 0.005776485176058049,
+      "eff_rel_unc": 0.32502132337030615,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 335.50387579677124,
+      "ld_counts": 673.7137765935424,
+      "decision_threshold": 16.199983761556396,
+      "mda": 32.53062938492961,
+      "limit_slope": 0.048285533879702205,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.00030045067601402103,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": -9.929686402680755,
+      "primary_u_count": 9.849590099912355,
+      "primary_net": -206.17997188095913,
+      "primary_net_unc": 204.5168525453778,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     },
+     {
+      "nuclide": "Co-60",
+      "energy": 1332.492,
+      "intensity": 0.9998,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 0.0,
+      "continuum": 9545.454545454546,
+      "efficiency": 0.0051144225085167794,
+      "eff_rel_unc": 0.3246458276209965,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 315.21090966007637,
+      "ld_counts": 633.1278443201527,
+      "decision_threshold": 17.171971826775472,
+      "mda": 34.49136172709624,
+      "limit_slope": 0.05447772047386855,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 6.001200240048009e-06,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": 19.668107931080854,
+      "primary_u_count": 10.464116352700549,
+      "primary_net": 362.05248178155665,
+      "primary_net_unc": 192.62449181292476,
+      "primary_method": "curved",
+      "window_continuum": "",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak; continuum too curved for the window estimator and not smooth enough for a polynomial window (e.g. a Compton edge): primary result not used"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 13.996170057055123,
+      "mda": 28.071939530528766,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": null,
+      "best_u": null,
+      "coverage_low": null,
+      "coverage_high": null,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": -7.684420144205899,
+      "primary_u": 8.850740427369457,
+      "primary_method": "window"
+     },
+     {
+      "nuclide": "Co-60",
+      "key_energy": 1173.228,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 16.199983761556396,
+      "mda": 32.53062938492961,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 166344192.0,
+      "note": "true-coincidence summing not corrected",
+      "best_estimate": null,
+      "best_u": null,
+      "coverage_low": null,
+      "coverage_high": null,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": -9.929686402680755,
+      "primary_u": 10.364858195554506,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-8 (full spectrum, k = 1)"
+    ]
+   },
+   "nai_co60_spectrum_iso11929": {
+    "lines": [
+     {
+      "nuclide": "Cs-137",
+      "energy": 661.657,
+      "intensity": 0.851,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 0.0,
+      "continuum": 16733.91304347826,
+      "efficiency": 0.011125124523413497,
+      "eff_rel_unc": 0.3247980748555265,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 475.8073335551542,
+      "ld_counts": 1335.6179502560358,
+      "decision_threshold": 13.996170057055123,
+      "mda": 39.28803665837565,
+      "limit_slope": 0.029415624917922222,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.002350176263219742,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": -7.684420144205899,
+      "primary_u_count": 8.491515687908763,
+      "primary_net": -261.9072176229824,
+      "primary_net_unc": 289.415363226722,
+      "primary_method": "window",
+      "window_continuum": "quadratic",
+      "window_lc_counts": 475.8073335551542,
+      "window_decision_threshold": 13.996170057055123,
+      "note": "no peak; quadratic continuum (curved for the linear window), decision threshold 14 Bq"
+     },
+     {
+      "nuclide": "Co-60",
+      "energy": 1173.228,
+      "intensity": 0.9984999999999999,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 0.0,
+      "continuum": 10551.274193548386,
+      "efficiency": 0.005776485176058049,
+      "eff_rel_unc": 0.32502132337030615,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 335.5038757967713,
+      "ld_counts": 943.3939084635543,
+      "decision_threshold": 16.1999837615564,
+      "mda": 45.552278529021635,
+      "limit_slope": 0.048285533879702205,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 0.00030045067601402103,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": -9.929686402680755,
+      "primary_u_count": 9.849590099912355,
+      "primary_net": -206.17997188095913,
+      "primary_net_unc": 204.5168525453778,
+      "primary_method": "window",
+      "window_continuum": "linear",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak"
+     },
+     {
+      "nuclide": "Co-60",
+      "energy": 1332.492,
+      "intensity": 0.9998,
+      "factor": 1.0,
+      "net_area": 0.0,
+      "net_unc": 0.0,
+      "bkg_peak": 0.0,
+      "continuum": 9545.454545454546,
+      "efficiency": 0.0051144225085167794,
+      "eff_rel_unc": 0.3246458276209965,
+      "activity": null,
+      "u_count_rel": 0.0,
+      "u_count_bq": 0.0,
+      "ref_unc_bq": 0.0,
+      "lc_counts": 315.21090966007637,
+      "ld_counts": 885.7428228208256,
+      "decision_threshold": 17.171971826775472,
+      "mda": 48.253249913368215,
+      "limit_slope": 0.05447772047386855,
+      "ref_rel_unc": 0.0,
+      "ref_g0": null,
+      "ref_dg": null,
+      "detected": false,
+      "peak_found": false,
+      "in_range": true,
+      "int_rel_unc": 6.001200240048009e-06,
+      "coi": 1.0,
+      "coi_rel_unc": 0.0,
+      "self_attenuation": 1.0,
+      "coi_applied": false,
+      "coi_partial": false,
+      "blank_activity": null,
+      "blank_unc": 0.0,
+      "blank_bkg_cov": 0.0,
+      "gross_activity": null,
+      "primary": 19.668107931080854,
+      "primary_u_count": 10.464116352700549,
+      "primary_net": 362.05248178155665,
+      "primary_net_unc": 192.62449181292476,
+      "primary_method": "curved",
+      "window_continuum": "",
+      "window_lc_counts": null,
+      "window_decision_threshold": null,
+      "note": "no peak; continuum too curved for the window estimator and not smooth enough for a polynomial window (e.g. a Compton edge): primary result not used"
+     }
+    ],
+    "nuclides": [
+     {
+      "nuclide": "Cs-137",
+      "key_energy": 661.657,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 13.996170057055123,
+      "mda": 39.28803665837565,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 949232333.3157274,
+      "note": "",
+      "best_estimate": 4.8893061618785465,
+      "best_u": 4.105947954682211,
+      "coverage_low": 0.15696293693203867,
+      "coverage_high": 15.228155315096902,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": -7.684420144205899,
+      "primary_u": 8.850740427369457,
+      "primary_method": "window"
+     },
+     {
+      "nuclide": "Co-60",
+      "key_energy": 1173.228,
+      "method": "key",
+      "activity": null,
+      "u": null,
+      "budget": {},
+      "used_energies": [],
+      "decision_threshold": 16.1999837615564,
+      "mda": 45.552278529021635,
+      "detected": false,
+      "specific": null,
+      "specific_u": null,
+      "specific_mda": null,
+      "unit": "",
+      "half_life_s": 166344192.0,
+      "note": "true-coincidence summing not corrected",
+      "best_estimate": 5.530672761716167,
+      "best_u": 4.682317598911297,
+      "coverage_low": 0.17513708968272468,
+      "coverage_high": 17.366000971195614,
+      "specific_best": null,
+      "specific_best_u": null,
+      "specific_low": null,
+      "specific_high": null,
+      "primary": -9.929686402680755,
+      "primary_u": 10.364858195554506,
+      "primary_method": "window"
+     }
+    ],
+    "notes": [
+     "efficiency calibration unvalidated: not independently validated",
+     "background acquisition date unknown",
+     "decision rule: a search peak above the decision threshold",
+     "background: synthetic-8 (full spectrum, k = 1)"
+    ]
+   }
+  },
+  "mc": {
+   "mc_bkg1500": {
+    "rows": [
+     [
+      false,
+      "window",
+      0.10572217012386162,
+      10.492589039098117
+     ],
+     [
+      false,
+      "window",
+      -2.220165572601094,
+      10.391208989697361
+     ],
+     [
+      false,
+      "window",
+      -1.5858325518579242,
+      10.47816622947777
+     ],
+     [
+      false,
+      "window",
+      3.7002759543351567,
+      10.457940879417967
+     ],
+     [
+      false,
+      "window",
+      -14.589659477092903,
+      10.649950894843162
+     ],
+     [
+      false,
+      "window",
+      -4.546053315326049,
+      10.635741481050447
+     ],
+     [
+      false,
+      "window",
+      -2.9602207634681252,
+      10.498352614945611
+     ],
+     [
+      false,
+      "window",
+      1.1629438713624776,
+      10.595853748585021
+     ],
+     [
+      false,
+      "window",
+      -7.294829738546452,
+      10.692465837919297
+     ],
+     [
+      false,
+      "window",
+      -1.4801103817340626,
+      10.492589039098117
+     ],
+     [
+      false,
+      "window",
+      -4.757497655573773,
+      10.635741481050447
+     ],
+     [
+      false,
+      "window",
+      -5.603275016564665,
+      10.47816622947777
+     ],
+     [
+      false,
+      "window",
+      -2.220165572601094,
+      10.601561184360381
+     ],
+     [
+      false,
+      "window",
+      -0.31716651037158483,
+      10.39411928494829
+     ],
+     [
+      false,
+      "window",
+      1.7972768921056472,
+      10.382473209263155
+     ],
+     [
+      false,
+      "window",
+      4.65177548544991,
+      10.524249645805426
+     ],
+     [
+      false,
+      "window",
+      8.352051439785066,
+      10.220994111234894
+     ],
+     [
+      false,
+      "window",
+      0.21144434024772324,
+      10.437676338258173
+     ],
+     [
+      false,
+      "window",
+      1.902999062229509,
+      10.370814055434622
+     ],
+     [
+      false,
+      "window",
+      -2.6430542530965404,
+      10.64426940556454
+     ],
+     [
+      false,
+      "window",
+      -4.228886804954464,
+      10.627206713207238
+     ],
+     [
+      false,
+      "window",
+      3.065942933591987,
+      10.38829787912344
+     ],
+     [
+      false,
+      "window",
+      -0.10572217012386162,
+      10.463723540008827
+     ],
+     [
+      false,
+      "window",
+      0.10572217012386162,
+      10.391208989697361
+     ],
+     [
+      false,
+      "window",
+      1.1629438713624776,
+      10.59299887752456
+     ],
+     [
+      false,
+      "window",
+      2.5373320829726786,
+      10.564407735295411
+     ],
+     [
+      false,
+      "window",
+      -6.8719410580510045,
+      10.62151305798301
+     ],
+     [
+      false,
+      "window",
+      12.792382584987255,
+      10.405752326401045
+     ],
+     [
+      false,
+      "window",
+      -1.4801103817340626,
+      10.652790503184477
+     ],
+     [
+      false,
+      "window",
+      -16.38693636919855,
+      10.78540881406785
+     ],
+     [
+      false,
+      "window",
+      6.026163697060111,
+      10.347456336465823
+     ],
+     [
+      false,
+      "window",
+      -2.5373320829726786,
+      10.449260888259099
+     ],
+     [
+      false,
+      "window",
+      4.0174424647067415,
+      10.350378933992388
+     ],
+     [
+      false,
+      "window",
+      5.391830676316943,
+      10.538609387299122
+     ],
+     [
+      false,
+      "window",
+      -6.8719410580510045,
+      10.720715466643925
+     ],
+     [
+      false,
+      "window",
+      -1.691554721981786,
+      10.607265549144609
+     ],
+     [
+      false,
+      "window",
+      -7.294829738546452,
+      10.587286825948523
+     ],
+     [
+      false,
+      "window",
+      -1.4801103817340626,
+      10.39411928494829
+     ],
+     [
+      false,
+      "window",
+      -1.7972768921056472,
+      10.550083108048769
+     ],
+     [
+      false,
+      "window",
+      4.546053315326049,
+      10.309387173198004
+     ],
+     [
+      false,
+      "window",
+      -2.6430542530965404,
+      10.547215848012653
+     ],
+     [
+      false,
+      "window",
+      1.902999062229509,
+      10.532867839944435
+     ],
+     [
+      false,
+      "window",
+      4.546053315326049,
+      10.373730072378356
+     ],
+     [
+      false,
+      "window",
+      -3.1716651037158483,
+      10.731994497082313
+     ],
+     [
+      false,
+      "window",
+      4.334608975078326,
+      10.329903386869912
+     ],
+     [
+      false,
+      "window",
+      10.677939182510022,
+      10.449260888259099
+     ],
+     [
+      false,
+      "window",
+      -4.863219825697634,
+      10.601561184360381
+     ],
+     [
+      false,
+      "window",
+      -8.880662290404375,
+      10.632897319619447
+     ],
+     [
+      false,
+      "window",
+      -2.114443402477232,
+      10.552949589043942
+     ],
+     [
+      false,
+      "window",
+      0.7400551908670313,
+      10.38829787912344
+     ],
+     [
+      false,
+      "window",
+      -3.1716651037158483,
+      10.550083108048769
+     ],
+     [
+      false,
+      "window",
+      -2.748776423220402,
+      10.59299887752456
+     ],
+     [
+      false,
+      "window",
+      -0.6343330207431697,
+      10.61296684788959
+     ],
+     [
+      false,
+      "window",
+      -1.691554721981786,
+      10.512747730187805
+     ],
+     [
+      false,
+      "window",
+      0.7400551908670313,
+      10.440573680808981
+     ],
+     [
+      false,
+      "window",
+      3.1716651037158483,
+      10.472391543875496
+     ],
+     [
+      false,
+      "window",
+      -0.528610850619308,
+      10.495471222654494
+     ],
+     [
+      false,
+      "window",
+      -1.7972768921056472,
+      10.443470219547137
+     ],
+     [
+      false,
+      "window",
+      -1.4801103817340626,
+      10.408658555287877
+     ],
+     [
+      false,
+      "window",
+      -10.889383522757747,
+      10.689636768988201
+     ],
+     [
+      false,
+      "window",
+      -9.937883991642991,
+      10.509870284470791
+     ],
+     [
+      false,
+      "window",
+      12.263771734367948,
+      10.385385952540899
+     ],
+     [
+      false,
+      "window",
+      3.065942933591987,
+      10.501233216622799
+     ],
+     [
+      false,
+      "window",
+      -2.431609912848817,
+      10.567270330588512
+     ],
+     [
+      false,
+      "window",
+      8.352051439785066,
+      10.512747730187805
+     ],
+     [
+      false,
+      "window",
+      -12.369493904491808,
+      10.610116581463032
+     ],
+     [
+      false,
+      "window",
+      -4.546053315326049,
+      10.683976383752029
+     ],
+     [
+      false,
+      "window",
+      -4.440331145202188,
+      10.61866508553391
+     ],
+     [
+      false,
+      "window",
+      -6.660496717803281,
+      10.550083108048769
+     ],
+     [
+      false,
+      "window",
+      -13.320993435606562,
+      10.627206713207238
+     ],
+     [
+      false,
+      "window",
+      1.374388211610201,
+      10.498352614945611
+     ],
+     [
+      false,
+      "window",
+      7.083385398298728,
+      10.282949037479433
+     ],
+     [
+      false,
+      "window",
+      -1.902999062229509,
+      10.538609387299122
+     ],
+     [
+      false,
+      "window",
+      0.31716651037158483,
+      10.408658555287877
+     ],
+     [
+      false,
+      "window",
+      -10.360772672138438,
+      10.703774636255101
+     ],
+     [
+      false,
+      "window",
+      -5.074664165945357,
+      10.544347808300074
+     ],
+     [
+      false,
+      "window",
+      -0.528610850619308,
+      10.52712316112063
+     ],
+     [
+      false,
+      "window",
+      -4.546053315326049,
+      10.449260888259099
+     ],
+     [
+      false,
+      "interfered",
+      -25.47904299985065,
+      10.888674237332134
+     ],
+     [
+      false,
+      "window",
+      -5.286108506193081,
+      10.51850026015602
+     ],
+     [
+      false,
+      "window",
+      7.400551908670313,
+      10.370814055434622
+     ],
+     [
+      false,
+      "window",
+      3.065942933591987,
+      10.417372377287258
+     ],
+     [
+      false,
+      "window",
+      -10.4664948422623,
+      10.632897319619447
+     ],
+     [
+      false,
+      "window",
+      -9.726439651395268,
+      10.734812402998562
+     ],
+     [
+      false,
+      "window",
+      7.294829738546452,
+      10.504113028336507
+     ],
+     [
+      false,
+      "window",
+      -0.528610850619308,
+      10.472391543875496
+     ],
+     [
+      false,
+      "window",
+      1.1629438713624776,
+      10.495471222654494
+     ],
+     [
+      false,
+      "window",
+      2.325887742724955,
+      10.259391276779805
+     ],
+     [
+      true,
+      "fit",
+      20.561374074145316,
+      9.242730046288168
+     ],
+     [
+      false,
+      "window",
+      13.003826925234979,
+      10.250543158465577
+     ],
+     [
+      false,
+      "window",
+      5.9204415269362505,
+      10.353300706509017
+     ],
+     [
+      false,
+      "window",
+      1.057221701238616,
+      10.489706063624244
+     ],
+     [
+      false,
+      "window",
+      3.27738727383971,
+      10.437676338258173
+     ],
+     [
+      false,
+      "window",
+      3.805998124459018,
+      10.188391176140847
+     ],
+     [
+      false,
+      "window",
+      3.488831614087433,
+      10.572993196066554
+     ],
+     [
+      false,
+      "window",
+      4.123164634830603,
+      10.506992050736283
+     ],
+     [
+      false,
+      "window",
+      5.180386336069219,
+      10.610116581463032
+     ],
+     [
+      false,
+      "window",
+      -5.708997186688527,
+      10.700948557093962
+     ],
+     [
+      false,
+      "window",
+      -2.0087212323533707,
+      10.321115717574644
+     ],
+     [
+      false,
+      "window",
+      -4.123164634830603,
+      10.624360267002919
+     ],
+     [
+      false,
+      "window",
+      -0.4228886804954465,
+      10.423177544846917
+     ],
+     [
+      false,
+      "window",
+      -6.8719410580510045,
+      10.624360267002919
+     ],
+     [
+      false,
+      "window",
+      4.757497655573773,
+      10.509870284470791
+     ],
+     [
+      false,
+      "window",
+      3.27738727383971,
+      10.501233216622799
+     ],
+     [
+      false,
+      "window",
+      -3.9117202945828793,
+      10.428979481029504
+     ],
+     [
+      false,
+      "window",
+      -8.986384460528237,
+      10.709424557279977
+     ],
+     [
+      false,
+      "window",
+      2.0087212323533707,
+      10.515624388534214
+     ],
+     [
+      false,
+      "window",
+      -7.083385398298728,
+      10.512747730187805
+     ],
+     [
+      false,
+      "window",
+      5.708997186688527,
+      10.364979560426878
+     ],
+     [
+      false,
+      "window",
+      -10.995105692881609,
+      10.664141375347768
+     ],
+     [
+      false,
+      "window",
+      -5.603275016564665,
+      10.489706063624244
+     ],
+     [
+      false,
+      "window",
+      -12.686660414863393,
+      10.610116581463032
+     ],
+     [
+      false,
+      "window",
+      12.898104755111117,
+      10.472391543875496
+     ],
+     [
+      false,
+      "window",
+      -3.1716651037158483,
+      10.408658555287877
+     ],
+     [
+      false,
+      "window",
+      4.863219825697634,
+      10.541478988274648
+     ],
+     [
+      false,
+      "window",
+      4.757497655573773,
+      10.541478988274648
+     ],
+     [
+      false,
+      "window",
+      -5.708997186688527,
+      10.506992050736283
+     ],
+     [
+      false,
+      "window",
+      -0.4228886804954465,
+      10.598707850656606
+     ],
+     [
+      false,
+      "window",
+      6.237608037307835,
+      10.209150545135065
+     ],
+     [
+      false,
+      "window",
+      9.726439651395268,
+      10.385385952540899
+     ],
+     [
+      false,
+      "window",
+      -19.66432364303826,
+      10.830184964313386
+     ],
+     [
+      false,
+      "window",
+      5.497552846440804,
+      10.335757682260159
+     ],
+     [
+      false,
+      "window",
+      -4.757497655573773,
+      10.558680216449218
+     ],
+     [
+      false,
+      "window",
+      1.7972768921056472,
+      10.547215848012653
+     ],
+     [
+      false,
+      "window",
+      1.057221701238616,
+      10.42607891652311
+     ],
+     [
+      false,
+      "window",
+      14.801103817340627,
+      10.125857715401883
+     ],
+     [
+      false,
+      "window",
+      7.823440589165759,
+      10.47816622947777
+     ],
+     [
+      false,
+      "window",
+      -8.246329269661206,
+      10.550083108048769
+     ],
+     [
+      false,
+      "window",
+      4.0174424647067415,
+      10.315253112320265
+     ],
+     [
+      false,
+      "window",
+      -2.5373320829726786,
+      10.61866508553391
+     ],
+     [
+      false,
+      "window",
+      -5.391830676316943,
+      10.457940879417967
+     ],
+     [
+      false,
+      "window",
+      -13.215271265482702,
+      10.67831299804598
+     ],
+     [
+      false,
+      "window",
+      8.034884929413483,
+      10.42607891652311
+     ],
+     [
+      false,
+      "window",
+      4.440331145202188,
+      10.524249645805426
+     ],
+     [
+      false,
+      "window",
+      1.4801103817340626,
+      10.460832609289195
+     ],
+     [
+      false,
+      "window",
+      -11.312272203253192,
+      10.578712965592887
+     ],
+     [
+      false,
+      "window",
+      5.391830676316943,
+      10.405752326401045
+     ],
+     [
+      false,
+      "window",
+      4.0174424647067415,
+      10.492589039098117
+     ],
+     [
+      false,
+      "window",
+      3.5945537842112945,
+      10.285889963905209
+     ],
+     [
+      false,
+      "window",
+      1.5858325518579242,
+      10.604413750316581
+     ],
+     [
+      false,
+      "window",
+      -2.114443402477232,
+      10.42607891652311
+     ],
+     [
+      false,
+      "window",
+      -4.863219825697634,
+      10.661304790279539
+     ],
+     [
+      false,
+      "window",
+      5.180386336069219,
+      10.512747730187805
+     ],
+     [
+      false,
+      "window",
+      -0.9514995311147545,
+      10.552949589043942
+     ],
+     [
+      false,
+      "window",
+      10.149328331890715,
+      10.306452951657658
+     ],
+     [
+      false,
+      "window",
+      -8.56349578003279,
+      10.689636768988201
+     ],
+     [
+      false,
+      "window",
+      -8.56349578003279,
+      10.627206713207238
+     ],
+     [
+      false,
+      "window",
+      -7.92916275928962,
+      10.67831299804598
+     ],
+     [
+      false,
+      "window",
+      -0.10572217012386162,
+      10.492589039098117
+     ],
+     [
+      false,
+      "window",
+      7.083385398298728,
+      10.229867787434914
+     ],
+     [
+      false,
+      "window",
+      -1.4801103817340626,
+      10.457940879417967
+     ],
+     [
+      false,
+      "window",
+      2.114443402477232,
+      10.578712965592887
+     ],
+     [
+      false,
+      "window",
+      10.043606161766853,
+      10.564407735295411
+     ],
+     [
+      false,
+      "window",
+      -3.488831614087433,
+      10.66697720610534
+     ],
+     [
+      false,
+      "window",
+      -6.026163697060111,
+      10.509870284470791
+     ],
+     [
+      false,
+      "window",
+      -5.180386336069219,
+      10.492589039098117
+     ],
+     [
+      false,
+      "window",
+      -4.757497655573773,
+      10.561544364126053
+     ],
+     [
+      false,
+      "window",
+      -12.47521607461567,
+      10.80502121153584
+     ],
+     [
+      false,
+      "window",
+      4.863219825697634,
+      10.524249645805426
+     ],
+     [
+      false,
+      "window",
+      -15.11827032771221,
+      10.746076637370432
+     ],
+     [
+      false,
+      "window",
+      -3.383109443963572,
+      10.68680695113081
+     ],
+     [
+      false,
+      "window",
+      -2.220165572601094,
+      10.62151305798301
+     ],
+     [
+      false,
+      "window",
+      2.6430542530965404,
+      10.489706063624244
+     ],
+     [
+      false,
+      "window",
+      3.805998124459018,
+      10.38829787912344
+     ],
+     [
+      false,
+      "window",
+      -4.0174424647067415,
+      10.495471222654494
+     ],
+     [
+      false,
+      "window",
+      -3.1716651037158483,
+      10.501233216622799
+     ],
+     [
+      false,
+      "window",
+      0.845777360990893,
+      10.737629569403971
+     ],
+     [
+      false,
+      "window",
+      3.805998124459018,
+      10.452155019567403
+     ],
+     [
+      false,
+      "window",
+      -10.149328331890715,
+      10.463723540008827
+     ],
+     [
+      false,
+      "window",
+      3.065942933591987,
+      10.515624388534214
+     ],
+     [
+      false,
+      "window",
+      14.48393730696904,
+      10.359141779304572
+     ],
+     [
+      false,
+      "window",
+      -2.8544985933442635,
+      10.584429644186617
+     ],
+     [
+      false,
+      "window",
+      -4.228886804954464,
+      10.446365955141273
+     ],
+     [
+      false,
+      "window",
+      6.55477454767942,
+      10.373730072378356
+     ],
+     [
+      false,
+      "window",
+      1.1629438713624776,
+      10.446365955141273
+     ],
+     [
+      false,
+      "window",
+      2.114443402477232,
+      10.483937734310606
+     ],
+     [
+      false,
+      "window",
+      -6.237608037307835,
+      10.61296684788959
+     ],
+     [
+      false,
+      "window",
+      8.774940120280514,
+      10.443470219547137
+     ],
+     [
+      false,
+      "window",
+      0.845777360990893,
+      10.492589039098117
+     ],
+     [
+      false,
+      "window",
+      11.312272203253192,
+      10.309387173198004
+     ],
+     [
+      false,
+      "window",
+      -4.9689419958214955,
+      10.700948557093962
+     ],
+     [
+      false,
+      "window",
+      -0.4228886804954465,
+      10.547215848012653
+     ],
+     [
+      false,
+      "window",
+      8.246329269661206,
+      10.434778191225142
+     ],
+     [
+      false,
+      "window",
+      7.823440589165759,
+      10.338683586828964
+     ],
+     [
+      false,
+      "window",
+      -0.31716651037158483,
+      10.604413750316581
+     ],
+     [
+      false,
+      "window",
+      1.902999062229509,
+      10.521375345698345
+     ],
+     [
+      false,
+      "window",
+      -0.10572217012386162,
+      10.315253112320265
+     ],
+     [
+      false,
+      "window",
+      -1.902999062229509,
+      10.434778191225142
+     ],
+     [
+      false,
+      "window",
+      -2.748776423220402,
+      10.483937734310606
+     ],
+     [
+      false,
+      "window",
+      2.6430542530965404,
+      10.495471222654494
+     ],
+     [
+      false,
+      "window",
+      -2.748776423220402,
+      10.524249645805426
+     ],
+     [
+      false,
+      "window",
+      3.383109443963572,
+      10.59299887752456
+     ],
+     [
+      false,
+      "window",
+      5.497552846440804,
+      10.501233216622799
+     ],
+     [
+      false,
+      "window",
+      3.065942933591987,
+      10.367897218348261
+     ],
+     [
+      false,
+      "window",
+      8.457773609908928,
+      10.382473209263155
+     ],
+     [
+      false,
+      "window",
+      -2.220165572601094,
+      10.512747730187805
+     ],
+     [
+      false,
+      "window",
+      6.026163697060111,
+      10.48105237916189
+     ],
+     [
+      false,
+      "window",
+      4.123164634830603,
+      10.297645270557377
+     ],
+     [
+      false,
+      "window",
+      1.374388211610201,
+      10.535739004735381
+     ],
+     [
+      false,
+      "window",
+      4.757497655573773,
+      10.420275365326692
+     ],
+     [
+      false,
+      "window",
+      3.9117202945828793,
+      10.318184831325695
+     ],
+     [
+      false,
+      "window",
+      -0.31716651037158483,
+      10.709424557279977
+     ],
+     [
+      false,
+      "window",
+      8.457773609908928,
+      10.437676338258173
+     ],
+     [
+      false,
+      "window",
+      -8.880662290404375,
+      10.535739004735381
+     ],
+     [
+      false,
+      "window",
+      -2.8544985933442635,
+      10.604413750316581
+     ],
+     [
+      false,
+      "window",
+      -3.9117202945828793,
+      10.460832609289195
+     ],
+     [
+      false,
+      "window",
+      1.5858325518579242,
+      10.547215848012653
+     ],
+     [
+      false,
+      "window",
+      -13.320993435606562,
+      10.598707850656606
+     ],
+     [
+      false,
+      "window",
+      -3.805998124459018,
+      10.452155019567403
+     ],
+     [
+      false,
+      "window",
+      5.180386336069219,
+      10.561544364126053
+     ],
+     [
+      false,
+      "window",
+      -1.7972768921056472,
+      10.48105237916189
+     ],
+     [
+      false,
+      "window",
+      15.964047688703102,
+      10.229867787434914
+     ],
+     [
+      false,
+      "window",
+      -8.034884929413483,
+      10.641427523413883
+     ],
+     [
+      false,
+      "window",
+      -0.9514995311147545,
+      10.681145066255977
+     ],
+     [
+      false,
+      "window",
+      -5.708997186688527,
+      10.552949589043942
+     ],
+     [
+      false,
+      "window",
+      4.0174424647067415,
+      10.385385952540899
+     ],
+     [
+      false,
+      "window",
+      -10.572217012386162,
+      10.48105237916189
+     ],
+     [
+      false,
+      "window",
+      -3.1716651037158483,
+      10.561544364126053
+     ],
+     [
+      false,
+      "window",
+      9.30355097089982,
+      10.382473209263155
+     ],
+     [
+      false,
+      "window",
+      -17.972768921056474,
+      10.866429731489864
+     ],
+     [
+      false,
+      "window",
+      -3.5945537842112945,
+      10.572993196066554
+     ],
+     [
+      false,
+      "window",
+      3.9117202945828793,
+      10.373730072378356
+     ],
+     [
+      false,
+      "window",
+      -1.7972768921056472,
+      10.607265549144609
+     ],
+     [
+      true,
+      "fit",
+      19.352071923215586,
+      9.169784197511069
+     ],
+     [
+      false,
+      "window",
+      -3.9117202945828793,
+      10.572993196066554
+     ],
+     [
+      false,
+      "window",
+      -13.215271265482702,
+      10.709424557279977
+     ],
+     [
+      false,
+      "window",
+      5.9204415269362505,
+      10.282949037479433
+     ],
+     [
+      false,
+      "window",
+      1.691554721981786,
+      10.443470219547137
+     ],
+     [
+      false,
+      "window",
+      -2.6430542530965404,
+      10.489706063624244
+     ],
+     [
+      false,
+      "window",
+      13.955326456349733,
+      10.417372377287258
+     ],
+     [
+      false,
+      "window",
+      -13.84960428622587,
+      10.521375345698345
+     ],
+     [
+      false,
+      "window",
+      4.65177548544991,
+      10.303517894513803
+     ],
+     [
+      false,
+      "window",
+      -4.546053315326049,
+      10.655629354801341
+     ],
+     [
+      true,
+      "fit",
+      19.37542325969424,
+      9.335657529491801
+     ],
+     [
+      false,
+      "window",
+      7.294829738546452,
+      10.382473209263155
+     ],
+     [
+      false,
+      "window",
+      -4.228886804954464,
+      10.57013215063572
+     ],
+     [
+      false,
+      "window",
+      -5.497552846440804,
+      10.51850026015602
+     ],
+     [
+      false,
+      "window",
+      -5.603275016564665,
+      10.652790503184477
+     ],
+     [
+      false,
+      "window",
+      -1.1629438713624776,
+      10.434778191225142
+     ],
+     [
+      false,
+      "window",
+      8.457773609908928,
+      10.341608663584854
+     ],
+     [
+      false,
+      "window",
+      -4.9689419958214955,
+      10.515624388534214
+     ],
+     [
+      false,
+      "window",
+      6.131885867183974,
+      10.460832609289195
+     ],
+     [
+      false,
+      "window",
+      -5.814719356812389,
+      10.538609387299122
+     ],
+     [
+      false,
+      "window",
+      -1.374388211610201,
+      10.558680216449218
+     ],
+     [
+      false,
+      "window",
+      5.180386336069219,
+      10.587286825948523
+     ],
+     [
+      false,
+      "window",
+      4.546053315326049,
+      10.443470219547137
+     ],
+     [
+      false,
+      "window",
+      1.1629438713624776,
+      10.661304790279539
+     ],
+     [
+      false,
+      "window",
+      -6.343330207431697,
+      10.638584882112086
+     ],
+     [
+      false,
+      "window",
+      6.55477454767942,
+      10.347456336465823
+     ],
+     [
+      false,
+      "window",
+      -8.669217950156652,
+      10.558680216449218
+     ],
+     [
+      false,
+      "window",
+      -6.449052377555558,
+      10.572993196066554
+     ],
+     [
+      false,
+      "window",
+      -9.514995311147546,
+      10.544347808300074
+     ],
+     [
+      false,
+      "window",
+      -8.246329269661206,
+      10.6698122831537
+     ],
+     [
+      false,
+      "window",
+      -5.708997186688527,
+      10.541478988274648
+     ],
+     [
+      false,
+      "window",
+      -9.514995311147546,
+      10.581571690943163
+     ],
+     [
+      false,
+      "window",
+      -2.9602207634681252,
+      10.498352614945611
+     ],
+     [
+      false,
+      "window",
+      -3.1716651037158483,
+      10.504113028336507
+     ],
+     [
+      false,
+      "window",
+      11.312272203253192,
+      10.440573680808981
+     ],
+     [
+      false,
+      "window",
+      -9.726439651395268,
+      10.460832609289195
+     ],
+     [
+      false,
+      "window",
+      10.995105692881609,
+      10.420275365326692
+     ],
+     [
+      false,
+      "window",
+      0.7400551908670313,
+      10.385385952540899
+     ],
+     [
+      false,
+      "window",
+      3.805998124459018,
+      10.512747730187805
+     ],
+     [
+      false,
+      "window",
+      0.845777360990893,
+      10.578712965592887
+     ],
+     [
+      false,
+      "window",
+      -2.0087212323533707,
+      10.564407735295411
+     ],
+     [
+      false,
+      "window",
+      4.65177548544991,
+      10.405752326401045
+     ],
+     [
+      false,
+      "window",
+      -6.449052377555558,
+      10.590143236853308
+     ],
+     [
+      false,
+      "window",
+      -6.237608037307835,
+      10.515624388534214
+     ],
+     [
+      false,
+      "window",
+      -8.246329269661206,
+      10.715071499173714
+     ],
+     [
+      false,
+      "window",
+      10.995105692881609,
+      10.42607891652311
+     ],
+     [
+      false,
+      "window",
+      -14.801103817340627,
+      10.564407735295411
+     ],
+     [
+      false,
+      "window",
+      -2.114443402477232,
+      10.47816622947777
+     ],
+     [
+      false,
+      "window",
+      5.603275016564665,
+      10.437676338258173
+     ],
+     [
+      false,
+      "window",
+      -13.10954909535884,
+      10.706599969453643
+     ],
+     [
+      false,
+      "window",
+      -7.189107568422589,
+      10.655629354801341
+     ],
+     [
+      false,
+      "window",
+      -1.5858325518579242,
+      10.48105237916189
+     ],
+     [
+      false,
+      "window",
+      11.946605223996361,
+      10.294707702313167
+     ],
+     [
+      false,
+      "window",
+      6.55477454767942,
+      10.483937734310606
+     ],
+     [
+      false,
+      "window",
+      5.074664165945357,
+      10.486822295579747
+     ],
+     [
+      false,
+      "window",
+      7.294829738546452,
+      10.27412120723223
+     ],
+     [
+      false,
+      "window",
+      -5.074664165945357,
+      10.552949589043942
+     ],
+     [
+      false,
+      "window",
+      -4.863219825697634,
+      10.52712316112063
+     ],
+     [
+      false,
+      "window",
+      8.140607099537345,
+      10.391208989697361
+     ],
+     [
+      false,
+      "window",
+      11.20655003312933,
+      10.38829787912344
+     ],
+     [
+      false,
+      "window",
+      4.123164634830603,
+      10.550083108048769
+     ],
+     [
+      false,
+      "window",
+      -5.497552846440804,
+      10.720715466643925
+     ],
+     [
+      false,
+      "window",
+      3.065942933591987,
+      10.466613672239056
+     ],
+     [
+      false,
+      "window",
+      8.774940120280514,
+      10.443470219547137
+     ],
+     [
+      false,
+      "window",
+      -7.189107568422589,
+      10.698121731379048
+     ],
+     [
+      false,
+      "window",
+      0.4228886804954465,
+      10.521375345698345
+     ],
+     [
+      false,
+      "window",
+      -8.034884929413483,
+      10.541478988274648
+     ],
+     [
+      false,
+      "window",
+      -9.726439651395268,
+      10.61296684788959
+     ],
+     [
+      false,
+      "window",
+      2.0087212323533707,
+      10.408658555287877
+     ],
+     [
+      false,
+      "window",
+      -1.374388211610201,
+      10.489706063624244
+     ],
+     [
+      false,
+      "window",
+      1.691554721981786,
+      10.39411928494829
+     ],
+     [
+      false,
+      "window",
+      -11.312272203253192,
+      10.561544364126053
+     ],
+     [
+      false,
+      "window",
+      -7.400551908670313,
+      10.538609387299122
+     ],
+     [
+      false,
+      "window",
+      2.5373320829726786,
+      10.397028765560894
+     ],
+     [
+      false,
+      "window",
+      -3.1716651037158483,
+      10.561544364126053
+     ],
+     [
+      false,
+      "window",
+      7.823440589165759,
+      10.321115717574644
+     ],
+     [
+      false,
+      "window",
+      -2.220165572601094,
+      10.492589039098117
+     ],
+     [
+      false,
+      "window",
+      10.043606161766853,
+      10.414468580052507
+     ],
+     [
+      false,
+      "window",
+      7.823440589165759,
+      10.457940879417967
+     ],
+     [
+      false,
+      "window",
+      -0.528610850619308,
+      10.475279284601518
+     ],
+     [
+      false,
+      "window",
+      10.043606161766853,
+      10.414468580052507
+     ],
+     [
+      false,
+      "window",
+      -6.660496717803281,
+      10.610116581463032
+     ],
+     [
+      false,
+      "window",
+      -0.528610850619308,
+      10.46950300664116
+     ],
+     [
+      false,
+      "window",
+      -10.4664948422623,
+      10.754517070642397
+     ],
+     [
+      false,
+      "window",
+      -2.114443402477232,
+      10.495471222654494
+     ],
+     [
+      false,
+      "window",
+      0.10572217012386162,
+      10.391208989697361
+     ],
+     [
+      false,
+      "window",
+      -2.8544985933442635,
+      10.501233216622799
+     ],
+     [
+      false,
+      "window",
+      -0.21144434024772324,
+      10.431879239039393
+     ],
+     [
+      false,
+      "window",
+      -2.431609912848817,
+      10.486822295579747
+     ],
+     [
+      false,
+      "window",
+      -4.334608975078326,
+      10.655629354801341
+     ],
+     [
+      false,
+      "window",
+      8.774940120280514,
+      10.38829787912344
+     ],
+     [
+      false,
+      "window",
+      -7.611996248918036,
+      10.509870284470791
+     ],
+     [
+      false,
+      "window",
+      11.100827863005469,
+      10.25644275213872
+     ],
+     [
+      false,
+      "window",
+      1.1629438713624776,
+      10.541478988274648
+     ],
+     [
+      false,
+      "window",
+      0.6343330207431697,
+      10.47816622947777
+     ],
+     [
+      false,
+      "window",
+      -9.514995311147546,
+      10.564407735295411
+     ],
+     [
+      false,
+      "window",
+      4.863219825697634,
+      10.391208989697361
+     ],
+     [
+      false,
+      "window",
+      -4.0174424647067415,
+      10.446365955141273
+     ],
+     [
+      false,
+      "window",
+      3.27738727383971,
+      10.561544364126053
+     ],
+     [
+      false,
+      "window",
+      5.708997186688527,
+      10.364979560426878
+     ],
+     [
+      false,
+      "window",
+      6.343330207431697,
+      10.501233216622799
+     ],
+     [
+      false,
+      "window",
+      8.034884929413483,
+      10.544347808300074
+     ],
+     [
+      false,
+      "window",
+      -7.189107568422589,
+      10.723536336437947
+     ],
+     [
+      false,
+      "window",
+      4.757497655573773,
+      10.457940879417967
+     ],
+     [
+      false,
+      "window",
+      1.7972768921056472,
+      10.658467450298414
+     ],
+     [
+      false,
+      "window",
+      -8.669217950156652,
+      10.515624388534214
+     ],
+     [
+      false,
+      "window",
+      -3.488831614087433,
+      10.578712965592887
+     ],
+     [
+      false,
+      "window",
+      7.400551908670313,
+      10.472391543875496
+     ],
+     [
+      false,
+      "window",
+      8.56349578003279,
+      10.420275365326692
+     ],
+     [
+      false,
+      "window",
+      1.5858325518579242,
+      10.449260888259099
+     ],
+     [
+      false,
+      "window",
+      -16.809825049693995,
+      10.6698122831537
+     ],
+     [
+      false,
+      "window",
+      -7.717718419041898,
+      10.498352614945611
+     ],
+     [
+      false,
+      "window",
+      13.532437775854287,
+      10.20618750616825
+     ],
+     [
+      false,
+      "window",
+      -3.7002759543351567,
+      10.303517894513803
+     ],
+     [
+      false,
+      "window",
+      18.184213261304198,
+      10.092947468838332
+     ],
+     [
+      false,
+      "window",
+      2.220165572601094,
+      10.434778191225142
+     ],
+     [
+      false,
+      "window",
+      -1.7972768921056472,
+      10.572993196066554
+     ],
+     [
+      false,
+      "window",
+      -6.237608037307835,
+      10.341608663584854
+     ],
+     [
+      false,
+      "window",
+      0.31716651037158483,
+      10.472391543875496
+     ],
+     [
+      false,
+      "window",
+      4.863219825697634,
+      10.379559648602655
+     ],
+     [
+      false,
+      "window",
+      -4.440331145202188,
+      10.48105237916189
+     ],
+     [
+      false,
+      "window",
+      -3.5945537842112945,
+      10.558680216449218
+     ],
+     [
+      false,
+      "window",
+      -13.215271265482702,
+      10.706599969453643
+     ],
+     [
+      false,
+      "window",
+      -7.083385398298728,
+      10.535739004735381
+     ],
+     [
+      false,
+      "window",
+      7.717718419041898,
+      10.428979481029504
+     ],
+     [
+      false,
+      "window",
+      24.210376958364307,
+      10.077952738423445
+     ],
+     [
+      false,
+      "window",
+      1.691554721981786,
+      10.57585346750967
+     ],
+     [
+      false,
+      "window",
+      2.0087212323533707,
+      10.440573680808981
+     ],
+     [
+      false,
+      "window",
+      -3.065942933591987,
+      10.695294158518406
+     ],
+     [
+      false,
+      "window",
+      7.294829738546452,
+      10.423177544846917
+     ],
+     [
+      false,
+      "window",
+      7.400551908670313,
+      10.443470219547137
+     ],
+     [
+      false,
+      "window",
+      12.580938244739531,
+      10.420275365326692
+     ],
+     [
+      false,
+      "window",
+      9.937883991642991,
+      10.38829787912344
+     ],
+     [
+      false,
+      "window",
+      -9.726439651395268,
+      10.449260888259099
+     ],
+     [
+      false,
+      "window",
+      -8.774940120280514,
+      10.7713780954778
+     ],
+     [
+      false,
+      "window",
+      -2.431609912848817,
+      10.431879239039393
+     ],
+     [
+      false,
+      "window",
+      5.286108506193081,
+      10.41156397294538
+     ],
+     [
+      false,
+      "window",
+      7.717718419041898,
+      10.402845285604995
+     ],
+     [
+      false,
+      "window",
+      -15.01254815758835,
+      10.760140347926326
+     ],
+     [
+      false,
+      "window",
+      2.325887742724955,
+      10.350378933992388
+     ],
+     [
+      false,
+      "window",
+      6.55477454767942,
+      10.312320559848121
+     ],
+     [
+      false,
+      "window",
+      2.220165572601094,
+      10.382473209263155
+     ],
+     [
+      false,
+      "window",
+      -2.8544985933442635,
+      10.558680216449218
+     ],
+     [
+      false,
+      "window",
+      2.748776423220402,
+      10.460832609289195
+     ],
+     [
+      false,
+      "window",
+      -14.906825987464488,
+      10.630052397208761
+     ],
+     [
+      false,
+      "window",
+      -3.065942933591987,
+      10.610116581463032
+     ],
+     [
+      false,
+      "window",
+      1.902999062229509,
+      10.532867839944435
+     ],
+     [
+      false,
+      "window",
+      -1.902999062229509,
+      10.472391543875496
+     ],
+     [
+      false,
+      "window",
+      7.823440589165759,
+      10.402845285604995
+     ],
+     [
+      false,
+      "window",
+      5.180386336069219,
+      10.244640167386654
+     ],
+     [
+      false,
+      "window",
+      -6.8719410580510045,
+      10.598707850656606
+     ],
+     [
+      false,
+      "window",
+      6.026163697060111,
+      10.376645269870881
+     ],
+     [
+      false,
+      "window",
+      -12.052327394120223,
+      10.672646607093496
+     ],
+     [
+      false,
+      "window",
+      -3.383109443963572,
+      10.535739004735381
+     ],
+     [
+      false,
+      "window",
+      3.27738727383971,
+      10.460832609289195
+     ],
+     [
+      false,
+      "window",
+      3.488831614087433,
+      10.414468580052507
+     ],
+     [
+      false,
+      "window",
+      -4.9689419958214955,
+      10.48105237916189
+     ],
+     [
+      false,
+      "window",
+      1.1629438713624776,
+      10.455048349732044
+     ],
+     [
+      false,
+      "window",
+      -0.528610850619308,
+      10.402845285604995
+     ],
+     [
+      false,
+      "window",
+      0.4228886804954465,
+      10.706599969453643
+     ],
+     [
+      false,
+      "window",
+      0.10572217012386162,
+      10.504113028336507
+     ],
+     [
+      false,
+      "window",
+      6.977663228174866,
+      10.446365955141273
+     ],
+     [
+      false,
+      "window",
+      6.026163697060111,
+      10.370814055434622
+     ],
+     [
+      false,
+      "window",
+      13.638159945978149,
+      10.495471222654494
+     ],
+     [
+      false,
+      "window",
+      0.528610850619308,
+      10.405752326401045
+     ],
+     [
+      false,
+      "window",
+      -5.814719356812389,
+      10.689636768988201
+     ],
+     [
+      false,
+      "window",
+      1.4801103817340626,
+      10.506992050736283
+     ],
+     [
+      false,
+      "window",
+      -4.440331145202188,
+      10.57013215063572
+     ],
+     [
+      false,
+      "window",
+      5.074664165945357,
+      10.420275365326692
+     ],
+     [
+      false,
+      "window",
+      -8.56349578003279,
+      10.658467450298414
+     ],
+     [
+      false,
+      "window",
+      -1.5858325518579242,
+      10.578712965592887
+     ],
+     [
+      false,
+      "window",
+      -3.488831614087433,
+      10.555815291632827
+     ],
+     [
+      false,
+      "window",
+      8.880662290404375,
+      10.405752326401045
+     ],
+     [
+      false,
+      "window",
+      4.123164634830603,
+      10.521375345698345
+     ],
+     [
+      false,
+      "window",
+      -1.691554721981786,
+      10.423177544846917
+     ],
+     [
+      false,
+      "window",
+      2.114443402477232,
+      10.466613672239056
+     ],
+     [
+      false,
+      "window",
+      -2.220165572601094,
+      10.379559648602655
+     ]
+    ]
+   },
+   "mc_bkg20000": {
+    "rows": [
+     [
+      false,
+      "window",
+      -4.228886804954464,
+      35.088207740192914
+     ],
+     [
+      false,
+      "window",
+      -8.352051439785066,
+      34.9578047744958
+     ],
+     [
+      false,
+      "window",
+      -0.845777360990893,
+      35.054573969375696
+     ],
+     [
+      false,
+      "window",
+      18.28993543142806,
+      35.02177153389157
+     ],
+     [
+      false,
+      "window",
+      -41.33736851842989,
+      35.17602094495535
+     ],
+     [
+      false,
+      "window",
+      -0.7400551908670313,
+      35.09768836095573
+     ],
+     [
+      false,
+      "window",
+      3.1716651037158483,
+      35.02954330777948
+     ],
+     [
+      false,
+      "window",
+      -0.21144434024772324,
+      35.19149464684526
+     ],
+     [
+      false,
+      "window",
+      -24.738987808983616,
+      35.282479906443776
+     ],
+     [
+      false,
+      "window",
+      5.497552846440804,
+      35.050259613355195
+     ],
+     [
+      false,
+      "window",
+      -9.30355097089982,
+      35.16656144203046
+     ],
+     [
+      false,
+      "window",
+      -17.972768921056474,
+      35.005358789347234
+     ],
+     [
+      false,
+      "window",
+      3.065942933591987,
+      35.114057949544005
+     ],
+     [
+      false,
+      "window",
+      4.65177548544991,
+      35.02004423880364
+     ],
+     [
+      false,
+      "window",
+      -7.294829738546452,
+      34.954343777034275
+     ],
+     [
+      false,
+      "window",
+      -10.677939182510022,
+      35.103720150119905
+     ],
+     [
+      false,
+      "window",
+      30.976595846291453,
+      34.791288532558745
+     ],
+     [
+      false,
+      "window",
+      2.748776423220402,
+      35.034723532584046
+     ],
+     [
+      false,
+      "window",
+      8.352051439785066,
+      34.937899357029565
+     ],
+     [
+      false,
+      "window",
+      -7.400551908670313,
+      35.22070420239502
+     ],
+     [
+      false,
+      "window",
+      5.391830676316943,
+      35.11922570810659
+     ],
+     [
+      false,
+      "window",
+      14.589659477092903,
+      34.92144719339048
+     ],
+     [
+      false,
+      "window",
+      -8.034884929413483,
+      35.076137789508685
+     ],
+     [
+      false,
+      "window",
+      7.717718419041898,
+      34.898054460703946
+     ],
+     [
+      false,
+      "window",
+      0.528610850619308,
+      35.17430122455319
+     ],
+     [
+      false,
+      "window",
+      -14.166770796597456,
+      35.10458174968192
+     ],
+     [
+      false,
+      "window",
+      -24.316099128488172,
+      35.22070420239502
+     ],
+     [
+      false,
+      "window",
+      32.350984057901655,
+      34.99844585740338
+     ],
+     [
+      false,
+      "window",
+      -1.057221701238616,
+      35.21211567189536
+     ],
+     [
+      false,
+      "window",
+      -53.706862422921695,
+      35.36382438812926
+     ],
+     [
+      false,
+      "window",
+      6.131885867183974,
+      34.94482426653854
+     ],
+     [
+      false,
+      "window",
+      -9.092106630652099,
+      35.03127013449457
+     ],
+     [
+      false,
+      "window",
+      6.026163697060111,
+      34.891120268700526
+     ],
+     [
+      false,
+      "window",
+      9.620717481271408,
+      35.14161054694661
+     ],
+     [
+      false,
+      "window",
+      -20.40437883390529,
+      35.22585631557601
+     ],
+     [
+      false,
+      "window",
+      -8.669217950156652,
+      35.16312099184936
+     ],
+     [
+      false,
+      "window",
+      -31.399484526786896,
+      35.19235409746135
+     ],
+     [
+      false,
+      "window",
+      -4.440331145202188,
+      34.99671741105532
+     ],
+     [
+      false,
+      "window",
+      -5.603275016564665,
+      35.0666513423333
+     ],
+     [
+      false,
+      "window",
+      19.558601472914397,
+      34.89198711806325
+     ],
+     [
+      false,
+      "window",
+      5.708997186688527,
+      35.12353159276226
+     ],
+     [
+      false,
+      "window",
+      12.47521607461567,
+      35.07182608615877
+     ],
+     [
+      false,
+      "window",
+      -1.374388211610201,
+      35.04421862259782
+     ],
+     [
+      false,
+      "window",
+      -12.792382584987255,
+      35.33901276962347
+     ],
+     [
+      false,
+      "window",
+      -2.748776423220402,
+      35.034723532584046
+     ],
+     [
+      false,
+      "window",
+      24.527543468735896,
+      35.01486184229153
+     ],
+     [
+      false,
+      "window",
+      -17.549880240561027,
+      35.15795968531787
+     ],
+     [
+      false,
+      "window",
+      -27.804930742575603,
+      35.22328035318554
+     ],
+     [
+      false,
+      "window",
+      15.11827032771221,
+      34.97856356775907
+     ],
+     [
+      false,
+      "window",
+      6.343330207431697,
+      34.94136198333708
+     ],
+     [
+      false,
+      "window",
+      -8.986384460528237,
+      35.11061235460396
+     ],
+     [
+      false,
+      "window",
+      -27.276319891956298,
+      35.1828989859743
+     ],
+     [
+      false,
+      "window",
+      -0.4228886804954465,
+      35.194072935729366
+     ],
+     [
+      false,
+      "window",
+      3.065942933591987,
+      35.10458174968192
+     ],
+     [
+      false,
+      "window",
+      3.805998124459018,
+      34.99326026223616
+     ],
+     [
+      false,
+      "window",
+      6.131885867183974,
+      34.98548042833049
+     ],
+     [
+      false,
+      "window",
+      10.783661352633885,
+      34.99153155973975
+     ],
+     [
+      false,
+      "window",
+      -5.180386336069219,
+      34.9906671764643
+     ],
+     [
+      false,
+      "window",
+      9.620717481271408,
+      34.92924128950213
+     ],
+     [
+      false,
+      "window",
+      -45.566255323384354,
+      35.25246357168211
+     ],
+     [
+      false,
+      "window",
+      -32.985317078644826,
+      35.04508168503247
+     ],
+     [
+      false,
+      "window",
+      45.35481098313663,
+      34.90152104007682
+     ],
+     [
+      false,
+      "window",
+      0.845777360990893,
+      35.02522586851889
+     ],
+     [
+      false,
+      "window",
+      -7.294829738546452,
+      35.10027354037668
+     ],
+     [
+      false,
+      "window",
+      42.606034559916225,
+      35.05198541948704
+     ],
+     [
+      false,
+      "window",
+      -51.80386336069219,
+      35.14247121753728
+     ],
+     [
+      false,
+      "window",
+      -15.01254815758835,
+      35.249031505902494
+     ],
+     [
+      false,
+      "window",
+      -4.863219825697634,
+      35.18891616905013
+     ],
+     [
+      false,
+      "window",
+      -17.867046750932612,
+      35.091655535007185
+     ],
+     [
+      false,
+      "window",
+      -48.420753916728614,
+      35.20524333893469
+     ],
+     [
+      false,
+      "window",
+      10.783661352633885,
+      35.03386021497532
+     ],
+     [
+      false,
+      "window",
+      13.003826925234979,
+      34.898054460703946
+     ],
+     [
+      false,
+      "window",
+      -3.383109443963572,
+      35.108027936481534
+     ],
+     [
+      false,
+      "window",
+      -2.0087212323533707,
+      34.96386069568017
+     ],
+     [
+      false,
+      "window",
+      -37.10848171347542,
+      35.2567531840867
+     ],
+     [
+      false,
+      "window",
+      -17.23271373018944,
+      35.08648371573589
+     ],
+     [
+      false,
+      "window",
+      -1.4801103817340626,
+      35.14161054694661
+     ],
+     [
+      false,
+      "window",
+      -15.541159008207657,
+      35.024362316801685
+     ],
+     [
+      false,
+      "window",
+      -66.3935228377851,
+      35.30561792813022
+     ],
+     [
+      false,
+      "window",
+      -15.964047688703102,
+      35.09251743078241
+     ],
+     [
+      false,
+      "window",
+      18.60710194179964,
+      34.954343777034275
+     ],
+     [
+      false,
+      "window",
+      -5.497552846440804,
+      34.952613149788405
+     ],
+     [
+      false,
+      "window",
+      -41.8659793690492,
+      35.23272462786465
+     ],
+     [
+      false,
+      "window",
+      -29.813651974928977,
+      35.3210348552546
+     ],
+     [
+      false,
+      "window",
+      33.408205759140266,
+      34.99326026223616
+     ],
+     [
+      false,
+      "window",
+      -32.985317078644826,
+      35.114057949544005
+     ],
+     [
+      false,
+      "window",
+      1.7972768921056472,
+      35.088207740192914
+     ],
+     [
+      false,
+      "window",
+      8.246329269661206,
+      34.84948614227939
+     ],
+     [
+      false,
+      "window",
+      77.3886285306667,
+      34.74605305301719
+     ],
+     [
+      false,
+      "window",
+      49.160809107595654,
+      34.795634998755055
+     ],
+     [
+      false,
+      "window",
+      15.11827032771221,
+      34.96126542933519
+     ],
+     [
+      false,
+      "window",
+      2.748776423220402,
+      35.07700006657876
+     ],
+     [
+      false,
+      "window",
+      10.889383522757747,
+      35.02004423880364
+     ],
+     [
+      false,
+      "window",
+      14.272492966721316,
+      34.773027441829875
+     ],
+     [
+      false,
+      "window",
+      12.369493904491808,
+      35.14677425435042
+     ],
+     [
+      false,
+      "window",
+      20.721545344276876,
+      35.05198541948704
+     ],
+     [
+      false,
+      "window",
+      15.541159008207657,
+      35.15107676440514
+     ],
+     [
+      false,
+      "window",
+      -19.875767983285982,
+      35.27733606291167
+     ],
+     [
+      false,
+      "window",
+      -5.708997186688527,
+      34.90758672561156
+     ],
+     [
+      false,
+      "window",
+      -10.043606161766853,
+      35.19493232338436
+     ],
+     [
+      false,
+      "window",
+      -10.783661352633885,
+      35.03040673177753
+     ],
+     [
+      false,
+      "window",
+      -12.580938244739531,
+      35.13988914252485
+     ],
+     [
+      false,
+      "window",
+      20.827267514400738,
+      35.057162328131064
+     ],
+     [
+      false,
+      "window",
+      9.19782880077596,
+      35.0191805593106
+     ],
+     [
+      false,
+      "window",
+      -14.166770796597456,
+      35.018316858516066
+     ],
+     [
+      false,
+      "window",
+      -26.536264701089266,
+      35.249889553674834
+     ],
+     [
+      false,
+      "window",
+      9.937883991642991,
+      35.091655535007185
+     ],
+     [
+      false,
+      "window",
+      -17.76132458080875,
+      35.05802507191612
+     ],
+     [
+      false,
+      "window",
+      15.752603348455379,
+      34.91538391576975
+     ],
+     [
+      false,
+      "window",
+      -23.47032176749728,
+      35.24645723725446
+     ],
+     [
+      false,
+      "window",
+      -16.492658539322413,
+      35.05543677686243
+     ],
+     [
+      false,
+      "window",
+      -41.33736851842989,
+      35.15451839331283
+     ],
+     [
+      false,
+      "window",
+      47.25781004536614,
+      35.03386021497532
+     ],
+     [
+      false,
+      "window",
+      -7.92916275928962,
+      34.98202216900031
+     ],
+     [
+      false,
+      "window",
+      12.369493904491808,
+      35.10027354037668
+     ],
+     [
+      false,
+      "window",
+      9.409273141023684,
+      35.13472442322461
+     ],
+     [
+      false,
+      "window",
+      -15.11827032771221,
+      35.088207740192914
+     ],
+     [
+      false,
+      "window",
+      -1.5858325518579242,
+      35.21211567189536
+     ],
+     [
+      false,
+      "window",
+      8.56349578003279,
+      34.84167420491476
+     ],
+     [
+      false,
+      "window",
+      29.91937414505284,
+      34.96818571155446
+     ],
+     [
+      false,
+      "window",
+      -64.49052377555559,
+      35.38349019704359
+     ],
+     [
+      false,
+      "window",
+      21.673044875391632,
+      34.904987275167315
+     ],
+     [
+      false,
+      "window",
+      -21.461600535143905,
+      35.103720150119905
+     ],
+     [
+      false,
+      "window",
+      6.977663228174866,
+      35.108027936481534
+     ],
+     [
+      false,
+      "window",
+      1.5858325518579242,
+      34.988938345851004
+     ],
+     [
+      false,
+      "window",
+      29.179318954185806,
+      34.85469312781169
+     ],
+     [
+      false,
+      "window",
+      23.893210447992722,
+      35.08993167994585
+     ],
+     [
+      false,
+      "window",
+      -26.641986871213124,
+      35.1614006405192
+     ],
+     [
+      false,
+      "window",
+      10.995105692881609,
+      34.89198711806325
+     ],
+     [
+      false,
+      "window",
+      -19.558601472914397,
+      35.219845443591026
+     ],
+     [
+      false,
+      "window",
+      -4.757497655573773,
+      34.96386069568017
+     ],
+     [
+      false,
+      "window",
+      -41.12592417818217,
+      35.267046125095426
+     ],
+     [
+      false,
+      "window",
+      24.104654788240445,
+      34.9906671764643
+     ],
+     [
+      false,
+      "window",
+      3.7002759543351567,
+      35.103720150119905
+     ],
+     [
+      false,
+      "window",
+      6.55477454767942,
+      34.90152104007682
+     ],
+     [
+      false,
+      "window",
+      -31.505206696910758,
+      35.15107676440514
+     ],
+     [
+      false,
+      "window",
+      30.13081848530056,
+      34.94049635893038
+     ],
+     [
+      false,
+      "window",
+      -6.660496717803281,
+      35.08303541265969
+     ],
+     [
+      false,
+      "window",
+      -5.9204415269362505,
+      34.91365135733098
+     ],
+     [
+      false,
+      "window",
+      8.880662290404375,
+      35.16484125901566
+     ],
+     [
+      false,
+      "window",
+      -18.60710194179964,
+      35.0562995631137
+     ],
+     [
+      false,
+      "window",
+      -7.400551908670313,
+      35.153658017674395
+     ],
+     [
+      false,
+      "window",
+      1.691554721981786,
+      35.10458174968192
+     ],
+     [
+      false,
+      "window",
+      -5.286108506193081,
+      35.12267045806173
+     ],
+     [
+      false,
+      "window",
+      39.54009162632424,
+      34.8312555630058
+     ],
+     [
+      false,
+      "window",
+      -16.809825049693995,
+      35.20438420298583
+     ],
+     [
+      false,
+      "window",
+      -19.241434962542815,
+      35.15795968531787
+     ],
+     [
+      false,
+      "window",
+      -21.673044875391632,
+      35.22328035318554
+     ],
+     [
+      false,
+      "window",
+      -12.898104755111117,
+      35.194072935729366
+     ],
+     [
+      false,
+      "window",
+      19.347157132666673,
+      34.794765748951676
+     ],
+     [
+      false,
+      "window",
+      5.074664165945357,
+      35.003630684353254
+     ],
+     [
+      false,
+      "window",
+      2.5373320829726786,
+      35.153658017674395
+     ],
+     [
+      false,
+      "window",
+      40.914479837934444,
+      35.0588877944704
+     ],
+     [
+      false,
+      "window",
+      -12.686660414863393,
+      35.231007675322125
+     ],
+     [
+      false,
+      "window",
+      -29.707929804805115,
+      35.1063048853683
+     ],
+     [
+      false,
+      "window",
+      -14.589659477092903,
+      35.053711140651934
+     ],
+     [
+      false,
+      "window",
+      -31.082318016415314,
+      35.14161054694661
+     ],
+     [
+      false,
+      "window",
+      -33.408205759140266,
+      35.330452998934845
+     ],
+     [
+      false,
+      "window",
+      14.48393730696904,
+      35.02954330777948
+     ],
+     [
+      false,
+      "window",
+      -47.68069872586159,
+      35.26447317149525
+     ],
+     [
+      false,
+      "window",
+      -17.338435900313304,
+      35.272191469238315
+     ],
+     [
+      false,
+      "window",
+      -6.449052377555558,
+      35.19836966418006
+     ],
+     [
+      false,
+      "window",
+      -2.5373320829726786,
+      35.08303541265969
+     ],
+     [
+      false,
+      "window",
+      6.977663228174866,
+      34.97164533913765
+     ],
+     [
+      false,
+      "window",
+      -17.338435900313304,
+      35.06061317589296
+     ],
+     [
+      false,
+      "window",
+      -18.184213261304198,
+      35.12353159276226
+     ],
+     [
+      false,
+      "window",
+      4.9689419958214955,
+      35.28419435431313
+     ],
+     [
+      false,
+      "window",
+      19.135712792418953,
+      35.01054259253819
+     ],
+     [
+      false,
+      "window",
+      -32.7738727383971,
+      35.054573969375696
+     ],
+     [
+      false,
+      "window",
+      10.360772672138438,
+      35.10716642149578
+     ],
+     [
+      false,
+      "window",
+      50.64091948932971,
+      34.9595351447369
+     ],
+     [
+      false,
+      "window",
+      -5.180386336069219,
+      35.14505310284701
+     ],
+     [
+      false,
+      "window",
+      -3.488831614087433,
+      34.96472574165419
+     ],
+     [
+      false,
+      "window",
+      20.087212323533706,
+      34.96818571155446
+     ],
+     [
+      false,
+      "window",
+      -0.528610850619308,
+      35.037313357777556
+     ],
+     [
+      false,
+      "window",
+      3.805998124459018,
+      35.07786232245251
+     ],
+     [
+      false,
+      "window",
+      -15.964047688703102,
+      35.1614006405192
+     ],
+     [
+      false,
+      "window",
+      30.976595846291453,
+      35.027816395934025
+     ],
+     [
+      false,
+      "window",
+      1.5858325518579242,
+      35.0390398015618
+     ],
+     [
+      false,
+      "window",
+      35.734093501865225,
+      34.8997877934321
+     ],
+     [
+      false,
+      "window",
+      -7.506274078794175,
+      35.255037401756844
+     ],
+     [
+      false,
+      "window",
+      2.325887742724955,
+      35.101996887550435
+     ],
+     [
+      false,
+      "window",
+      33.19676141889255,
+      34.932704774021246
+     ],
+     [
+      false,
+      "window",
+      31.399484526786896,
+      34.92058107532852
+     ],
+     [
+      false,
+      "window",
+      2.5373320829726786,
+      35.17516109526395
+     ],
+     [
+      false,
+      "window",
+      0.845777360990893,
+      35.133002681404875
+     ],
+     [
+      false,
+      "window",
+      -13.10954909535884,
+      34.92664345072054
+     ],
+     [
+      false,
+      "window",
+      -7.823440589165759,
+      35.0666513423333
+     ],
+     [
+      false,
+      "window",
+      -1.902999062229509,
+      35.01140648511706
+     ],
+     [
+      false,
+      "window",
+      24.210376958364307,
+      35.0044947475144
+     ],
+     [
+      false,
+      "window",
+      -21.778767045515494,
+      35.144192495485925
+     ],
+     [
+      false,
+      "window",
+      16.809825049693995,
+      35.1614006405192
+     ],
+     [
+      false,
+      "window",
+      20.827267514400738,
+      34.99585315586829
+     ],
+     [
+      false,
+      "window",
+      0.845777360990893,
+      34.93963071307796
+     ],
+     [
+      false,
+      "window",
+      35.5226491616175,
+      34.885051720038454
+     ],
+     [
+      false,
+      "window",
+      6.8719410580510045,
+      35.018316858516066
+     ],
+     [
+      false,
+      "window",
+      13.320993435606562,
+      35.054573969375696
+     ],
+     [
+      false,
+      "window",
+      17.338435900313304,
+      34.85208973228755
+     ],
+     [
+      false,
+      "window",
+      9.30355097089982,
+      35.08217328393107
+     ],
+     [
+      false,
+      "window",
+      32.45670622802552,
+      34.83299221972979
+     ],
+     [
+      false,
+      "window",
+      22.201655726010937,
+      34.881583503922116
+     ],
+     [
+      false,
+      "window",
+      -4.334608975078326,
+      35.267046125095426
+     ],
+     [
+      false,
+      "window",
+      33.408205759140266,
+      34.994124581460284
+     ],
+     [
+      false,
+      "window",
+      -23.681766107745002,
+      35.101996887550435
+     ],
+     [
+      false,
+      "window",
+      -8.880662290404375,
+      35.15795968531787
+     ],
+     [
+      false,
+      "window",
+      -17.02126938994172,
+      35.05802507191612
+     ],
+     [
+      false,
+      "window",
+      -4.228886804954464,
+      35.15795968531787
+     ],
+     [
+      false,
+      "window",
+      -40.28014681719128,
+      35.15709939389582
+     ],
+     [
+      false,
+      "window",
+      -11.100827863005469,
+      35.032133515932166
+     ],
+     [
+      false,
+      "window",
+      10.889383522757747,
+      35.16398113595222
+     ],
+     [
+      false,
+      "window",
+      -8.352051439785066,
+      35.053711140651934
+     ],
+     [
+      false,
+      "window",
+      51.80386336069219,
+      34.75649723532401
+     ],
+     [
+      false,
+      "window",
+      -20.615823174153014,
+      35.172581420067395
+     ],
+     [
+      false,
+      "window",
+      -1.691554721981786,
+      35.259326701031995
+     ],
+     [
+      false,
+      "window",
+      -15.646881178331517,
+      35.11922570810659
+     ],
+     [
+      false,
+      "window",
+      15.435436838083795,
+      34.96126542933519
+     ],
+     [
+      false,
+      "window",
+      -37.95425907446632,
+      35.053711140651934
+     ],
+     [
+      false,
+      "window",
+      -8.669217950156652,
+      35.13988914252485
+     ],
+     [
+      false,
+      "window",
+      25.47904299985065,
+      34.98461589554657
+     ],
+     [
+      false,
+      "window",
+      -26.641986871213124,
+      35.20524333893469
+     ],
+     [
+      false,
+      "window",
+      -18.184213261304198,
+      35.2026658681854
+     ],
+     [
+      false,
+      "window",
+      11.73516088374864,
+      34.93963071307796
+     ],
+     [
+      false,
+      "window",
+      -9.092106630652099,
+      35.18203930438235
+     ],
+     [
+      true,
+      "fit",
+      64.98517556358644,
+      32.34660243803117
+     ],
+     [
+      false,
+      "window",
+      -18.60710194179964,
+      35.15451839331283
+     ],
+     [
+      false,
+      "window",
+      -34.99403831099819,
+      35.245599105923
+     ],
+     [
+      false,
+      "window",
+      14.589659477092903,
+      34.84688235774361
+     ],
+     [
+      false,
+      "window",
+      10.149328331890715,
+      35.018316858516066
+     ],
+     [
+      false,
+      "window",
+      -8.140607099537345,
+      35.023498743792445
+     ],
+     [
+      false,
+      "window",
+      46.72919919474683,
+      34.9906671764643
+     ],
+     [
+      false,
+      "window",
+      -44.6147557922696,
+      35.10027354037668
+     ],
+     [
+      false,
+      "window",
+      11.100827863005469,
+      34.89892113782925
+     ],
+     [
+      false,
+      "window",
+      -8.457773609908928,
+      35.15968020501282
+     ],
+     [
+      false,
+      "window",
+      50.218030808834264,
+      34.7295100075126
+     ],
+     [
+      false,
+      "window",
+      9.19782880077596,
+      35.04594472621283
+     ],
+     [
+      false,
+      "window",
+      -19.135712792418953,
+      35.17086153148565
+     ],
+     [
+      false,
+      "window",
+      -23.57604393762114,
+      35.113196582506816
+     ],
+     [
+      false,
+      "window",
+      -11.946605223996361,
+      35.20953870422671
+     ],
+     [
+      false,
+      "window",
+      -5.9204415269362505,
+      34.992395921663174
+     ],
+     [
+      false,
+      "window",
+      31.928095377406205,
+      34.917982592241685
+     ],
+     [
+      false,
+      "window",
+      -11.523716543500916,
+      35.02608939894563
+     ],
+     [
+      false,
+      "window",
+      19.452879302790535,
+      35.03817659030311
+     ],
+     [
+      false,
+      "window",
+      -12.580938244739531,
+      35.0562995631137
+     ],
+     [
+      false,
+      "window",
+      -3.5945537842112945,
+      35.12697592045798
+     ],
+     [
+      false,
+      "window",
+      24.95043214923134,
+      35.17516109526395
+     ],
+     [
+      false,
+      "window",
+      13.003826925234979,
+      35.01054259253819
+     ],
+     [
+      false,
+      "window",
+      19.135712792418953,
+      35.10716642149578
+     ],
+     [
+      false,
+      "window",
+      -13.320993435606562,
+      35.14333186704987
+     ],
+     [
+      false,
+      "window",
+      27.170597721832436,
+      34.96299562830339
+     ],
+     [
+      false,
+      "window",
+      -21.355878365020043,
+      35.02177153389157
+     ],
+     [
+      false,
+      "window",
+      -17.549880240561027,
+      35.0355868289196
+     ],
+     [
+      false,
+      "window",
+      -30.447984995672144,
+      35.10458174968192
+     ],
+     [
+      false,
+      "window",
+      -32.350984057901655,
+      35.259326701031995
+     ],
+     [
+      false,
+      "window",
+      -30.13081848530056,
+      35.178600367928766
+     ],
+     [
+      false,
+      "window",
+      -37.637092564094736,
+      35.18805663446436
+     ],
+     [
+      false,
+      "window",
+      -16.069769858826966,
+      35.103720150119905
+     ],
+     [
+      false,
+      "window",
+      -11.629438713624777,
+      35.05284829068957
+     ],
+     [
+      false,
+      "window",
+      46.41203268437525,
+      34.97769886401327
+     ],
+     [
+      false,
+      "window",
+      -18.078491091180336,
+      34.97683413889011
+     ],
+     [
+      false,
+      "window",
+      29.813651974928977,
+      35.007086809034305
+     ],
+     [
+      false,
+      "window",
+      3.805998124459018,
+      34.934436387513976
+     ],
+     [
+      false,
+      "window",
+      23.47032176749728,
+      35.013134206329354
+     ],
+     [
+      false,
+      "window",
+      -0.845777360990893,
+      35.144192495485925
+     ],
+     [
+      false,
+      "window",
+      -0.21144434024772324,
+      35.07096368187791
+     ],
+     [
+      false,
+      "window",
+      14.906825987464488,
+      34.96559076622704
+     ],
+     [
+      false,
+      "window",
+      -1.1629438713624776,
+      35.13472442322461
+     ],
+     [
+      false,
+      "window",
+      -15.435436838083795,
+      35.06923880969283
+     ],
+     [
+      false,
+      "window",
+      -25.796209510222234,
+      35.21469245098471
+     ],
+     [
+      false,
+      "window",
+      13.638159945978149,
+      35.054573969375696
+     ],
+     [
+      false,
+      "window",
+      -51.38097468019674,
+      35.12094812531787
+     ],
+     [
+      false,
+      "window",
+      -4.334608975078326,
+      35.04680774614047
+     ],
+     [
+      false,
+      "window",
+      16.492658539322413,
+      35.01658939301623
+     ],
+     [
+      false,
+      "window",
+      -36.15698218236067,
+      35.22499768237664
+     ],
+     [
+      false,
+      "window",
+      -27.804930742575603,
+      35.278193422251306
+     ],
+     [
+      false,
+      "window",
+      17.23271373018944,
+      35.01658939301623
+     ],
+     [
+      false,
+      "window",
+      35.31120482136978,
+      34.87551329580576
+     ],
+     [
+      false,
+      "window",
+      26.536264701089266,
+      35.022635149489595
+     ],
+     [
+      false,
+      "window",
+      18.39565760155192,
+      35.00103836688415
+     ],
+     [
+      false,
+      "window",
+      31.71665103715848,
+      34.81735919079382
+     ],
+     [
+      false,
+      "window",
+      -13.215271265482702,
+      35.08217328393107
+     ],
+     [
+      false,
+      "window",
+      -9.409273141023684,
+      35.07441317177333
+     ],
+     [
+      false,
+      "window",
+      -6.55477454767942,
+      34.949151638202814
+     ],
+     [
+      false,
+      "window",
+      41.23164634830603,
+      34.98375134139794
+     ],
+     [
+      false,
+      "window",
+      8.140607099537345,
+      35.124392706350605
+     ],
+     [
+      false,
+      "window",
+      0.9514995311147545,
+      35.15193720322209
+     ],
+     [
+      false,
+      "window",
+      8.880662290404375,
+      35.01658939301623
+     ],
+     [
+      false,
+      "window",
+      32.66815056827324,
+      34.97856356775907
+     ],
+     [
+      false,
+      "window",
+      -31.928095377406205,
+      35.3167530505747
+     ],
+     [
+      false,
+      "window",
+      -16.175492028950828,
+      35.16398113595222
+     ],
+     [
+      false,
+      "window",
+      -24.633265638859758,
+      35.08993167994585
+     ],
+     [
+      false,
+      "window",
+      -30.76515150604373,
+      35.19751036045171
+     ],
+     [
+      false,
+      "window",
+      12.369493904491808,
+      34.97251019255832
+     ],
+     [
+      false,
+      "window",
+      -4.65177548544991,
+      35.05284829068957
+     ],
+     [
+      false,
+      "window",
+      5.497552846440804,
+      34.974239835240574
+     ],
+     [
+      false,
+      "window",
+      -42.606034559916225,
+      35.17000155565494
+     ],
+     [
+      false,
+      "window",
+      -14.589659477092903,
+      35.05284829068957
+     ],
+     [
+      false,
+      "window",
+      3.805998124459018,
+      35.013998034965915
+     ],
+     [
+      false,
+      "window",
+      -22.518822236382523,
+      35.14591368913466
+     ],
+     [
+      false,
+      "window",
+      10.783661352633885,
+      34.967320751175585
+     ],
+     [
+      false,
+      "window",
+      -27.064875551708575,
+      35.16312099184936
+     ],
+     [
+      false,
+      "window",
+      31.61092886703462,
+      35.007086809034305
+     ],
+     [
+      false,
+      "window",
+      19.77004581316212,
+      35.04853372224387
+     ],
+     [
+      false,
+      "window",
+      2.431609912848817,
+      35.04767074481696
+     ],
+     [
+      false,
+      "window",
+      29.285041124309668,
+      35.02177153389157
+     ],
+     [
+      false,
+      "window",
+      -14.272492966721316,
+      35.153658017674395
+     ],
+     [
+      false,
+      "window",
+      -18.818546282047368,
+      35.17172148628929
+     ],
+     [
+      false,
+      "window",
+      -28.650708103566494,
+      35.26190003015448
+     ],
+     [
+      false,
+      "window",
+      -15.85832551857924,
+      35.06406368403791
+     ],
+     [
+      false,
+      "window",
+      16.809825049693995,
+      34.88765265586463
+     ],
+     [
+      false,
+      "window",
+      -14.061048626473594,
+      35.102858529409936
+     ],
+     [
+      false,
+      "window",
+      -0.7400551908670313,
+      34.99153155973975
+     ],
+     [
+      false,
+      "window",
+      -5.497552846440804,
+      35.08648371573589
+     ],
+     [
+      false,
+      "window",
+      -14.061048626473594,
+      35.218986663847566
+     ],
+     [
+      false,
+      "window",
+      28.756430273690356,
+      34.955209058526044
+     ],
+     [
+      false,
+      "window",
+      -30.23654065542442,
+      35.15451839331283
+     ],
+     [
+      false,
+      "window",
+      32.45670622802552,
+      34.83993798095929
+     ],
+     [
+      false,
+      "window",
+      3.488831614087433,
+      35.114057949544005
+     ],
+     [
+      false,
+      "window",
+      -2.6430542530965404,
+      35.02090789699677
+     ],
+     [
+      false,
+      "window",
+      -28.650708103566494,
+      35.21555133544846
+     ],
+     [
+      false,
+      "window",
+      26.007653850469957,
+      34.962130539522256
+     ],
+     [
+      false,
+      "window",
+      -12.898104755111117,
+      34.99153155973975
+     ],
+     [
+      false,
+      "window",
+      13.426715605730424,
+      35.10113522453988
+     ],
+     [
+      false,
+      "window",
+      10.889383522757747,
+      34.94222758629966
+     ],
+     [
+      false,
+      "window",
+      36.57987086285612,
+      35.07527549124073
+     ],
+     [
+      false,
+      "window",
+      20.510101004029153,
+      35.11922570810659
+     ],
+     [
+      false,
+      "window",
+      -19.452879302790535,
+      35.25846888292146
+     ],
+     [
+      false,
+      "window",
+      14.272492966721316,
+      35.01658939301623
+     ],
+     [
+      false,
+      "window",
+      4.9689419958214955,
+      35.23529989980843
+     ],
+     [
+      false,
+      "window",
+      -32.45670622802552,
+      35.09682659216643
+     ],
+     [
+      false,
+      "window",
+      -12.898104755111117,
+      35.16312099184936
+     ],
+     [
+      false,
+      "window",
+      19.981490153409844,
+      35.0726884692339
+     ],
+     [
+      false,
+      "window",
+      22.41310006625866,
+      34.98461589554657
+     ],
+     [
+      false,
+      "window",
+      4.440331145202188,
+      35.023498743792445
+     ],
+     [
+      false,
+      "window",
+      -56.667083186389824,
+      35.234441496741134
+     ],
+     [
+      false,
+      "window",
+      -19.452879302790535,
+      35.04680774614047
+     ],
+     [
+      false,
+      "window",
+      39.6458137964481,
+      34.80954004351759
+     ],
+     [
+      false,
+      "window",
+      -13.10954909535884,
+      34.852957552402785
+     ],
+     [
+      false,
+      "window",
+      50.323752978958126,
+      34.70250179244646
+     ],
+     [
+      false,
+      "window",
+      4.757497655573773,
+      35.00795078689168
+     ],
+     [
+      false,
+      "window",
+      -0.528610850619308,
+      35.16828154090611
+     ],
+     [
+      false,
+      "window",
+      -16.175492028950828,
+      34.89545430017724
+     ],
+     [
+      false,
+      "window",
+      -4.440331145202188,
+      35.02954330777948
+     ],
+     [
+      false,
+      "window",
+      7.823440589165759,
+      34.86163456539663
+     ],
+     [
+      false,
+      "window",
+      -24.738987808983616,
+      35.053711140651934
+     ],
+     [
+      false,
+      "window",
+      -12.686660414863393,
+      35.18977568264118
+     ],
+     [
+      false,
+      "window",
+      -23.364599597373417,
+      35.115780620232094
+     ],
+     [
+      false,
+      "window",
+      -25.58476516997451,
+      35.11233519433877
+     ],
+     [
+      false,
+      "window",
+      25.373320829726786,
+      35.03817659030311
+     ],
+     [
+      false,
+      "window",
+      67.23930019877598,
+      34.721671077043766
+     ],
+     [
+      false,
+      "window",
+      17.23271373018944,
+      35.034723532584046
+     ],
+     [
+      false,
+      "window",
+      6.977663228174866,
+      34.98115755074812
+     ],
+     [
+      false,
+      "window",
+      -9.092106630652099,
+      35.27733606291167
+     ],
+     [
+      false,
+      "window",
+      30.13081848530056,
+      34.95174780403112
+     ],
+     [
+      false,
+      "window",
+      23.681766107745002,
+      35.0390398015618
+     ],
+     [
+      false,
+      "window",
+      27.064875551708575,
+      34.949151638202814
+     ],
+     [
+      false,
+      "window",
+      30.976595846291453,
+      34.988938345851004
+     ],
+     [
+      false,
+      "window",
+      -31.928095377406205,
+      35.005358789347234
+     ],
+     [
+      false,
+      "window",
+      -27.69920857245174,
+      35.322747431795904
+     ],
+     [
+      false,
+      "window",
+      -13.320993435606562,
+      35.00017421839397
+     ],
+     [
+      false,
+      "window",
+      12.369493904491808,
+      34.962130539522256
+     ],
+     [
+      false,
+      "window",
+      14.801103817340627,
+      34.92577746151964
+     ],
+     [
+      false,
+      "window",
+      -47.68069872586159,
+      35.309044493667294
+     ],
+     [
+      false,
+      "window",
+      17.44415807043717,
+      34.95693955725522
+     ],
+     [
+      false,
+      "window",
+      21.56732270526777,
+      34.88851959138457
+     ],
+     [
+      false,
+      "window",
+      10.995105692881609,
+      34.9249114508459
+     ],
+     [
+      false,
+      "window",
+      -35.94553784211295,
+      35.2790507607552
+     ],
+     [
+      false,
+      "window",
+      10.149328331890715,
+      35.03040673177753
+     ],
+     [
+      false,
+      "window",
+      -42.606034559916225,
+      35.20094744950442
+     ],
+     [
+      false,
+      "window",
+      -15.752603348455379,
+      35.19235409746135
+     ],
+     [
+      false,
+      "window",
+      3.5945537842112945,
+      35.09251743078241
+     ],
+     [
+      false,
+      "window",
+      -14.801103817340627,
+      35.09855010858617
+     ],
+     [
+      false,
+      "window",
+      21.355878365020043,
+      34.98461589554657
+     ],
+     [
+      false,
+      "window",
+      22.518822236382523,
+      34.83993798095929
+     ],
+     [
+      false,
+      "window",
+      -26.95915338158471,
+      35.19235409746135
+     ],
+     [
+      false,
+      "window",
+      -1.902999062229509,
+      35.07786232245251
+     ],
+     [
+      false,
+      "window",
+      -32.66815056827324,
+      35.217269041536134
+     ],
+     [
+      false,
+      "window",
+      -7.189107568422589,
+      35.0355868289196
+     ],
+     [
+      false,
+      "window",
+      11.20655003312933,
+      35.0191805593106
+     ],
+     [
+      false,
+      "window",
+      29.179318954185806,
+      34.86076696128602
+     ],
+     [
+      false,
+      "window",
+      -14.48393730696904,
+      35.07958677061728
+     ],
+     [
+      false,
+      "window",
+      4.228886804954464,
+      35.01745313641847
+     ],
+     [
+      false,
+      "window",
+      -3.488831614087433,
+      34.994124581460284
+     ],
+     [
+      false,
+      "window",
+      1.374388211610201,
+      35.308187883458565
+     ],
+     [
+      false,
+      "window",
+      19.02999062229509,
+      35.043355538907306
+     ],
+     [
+      false,
+      "window",
+      11.629438713624777,
+      35.076137789508685
+     ],
+     [
+      false,
+      "window",
+      27.910652912699465,
+      34.83212390219106
+     ],
+     [
+      false,
+      "window",
+      47.57497655573773,
+      35.03127013449457
+     ],
+     [
+      false,
+      "window",
+      1.1629438713624776,
+      34.97510462450535
+     ],
+     [
+      false,
+      "window",
+      -27.69920857245174,
+      35.271333964005976
+     ],
+     [
+      false,
+      "window",
+      -6.237608037307835,
+      35.111473785038335
+     ],
+     [
+      false,
+      "window",
+      -24.316099128488172,
+      35.15279762097799
+     ],
+     [
+      false,
+      "window",
+      12.580938244739531,
+      34.975969392387995
+     ],
+     [
+      false,
+      "window",
+      -30.553707165796006,
+      35.229290639101336
+     ],
+     [
+      false,
+      "window",
+      -4.228886804954464,
+      35.095964802216706
+     ],
+     [
+      false,
+      "window",
+      -12.686660414863393,
+      35.124392706350605
+     ],
+     [
+      false,
+      "window",
+      15.752603348455379,
+      35.080448962911426
+     ],
+     [
+      false,
+      "window",
+      17.44415807043717,
+      35.07010125638979
+     ],
+     [
+      false,
+      "window",
+      -11.312272203253192,
+      35.01140648511706
+     ],
+     [
+      false,
+      "window",
+      8.457773609908928,
+      35.043355538907306
+     ],
+     [
+      false,
+      "window",
+      -17.65560241068489,
+      34.93616791517916
+     ]
+    ]
+   }
+  }
+ },
+ "criteria": {
+  "RB8.C1": {
+   "value": "hpge_bkg1500 currie 661.7 keV (linear): L_C 99.247 vs 99.247 counts; hpge_bkg1500 iso11929 661.7 keV (linear): L_C 99.247 vs 99.247 counts; hpge_bkg20000 currie 661.7 keV (linear): L_C 331.89 vs 331.89 counts; hpge_bkg20000 iso11929 661.7 keV (linear): L_C 331.89 vs 331.89 counts; hpge_nobkgpeak currie 661.7 keV (linear): L_C 41.485 vs 41.485 counts; hpge_nobkgpeak iso11929 661.7 keV (linear): L_C 41.485 vs 41.485 counts; hpge_bkg1500_blank currie 661.7 keV (linear): L_C 146.69 vs 146.69 counts; hpge_bkg1500_blank iso11929 661.7 keV (linear): L_C 146.69 vs 146.69 counts; nai_co60 currie 661.7 keV (quadratic): L_C 476.1 vs 476.1 counts; nai_co60 currie 1173.2 keV (linear): L_C 336.39 vs 336.39 counts; nai_co60 iso11929 661.7 keV (quadratic): L_C 476.1 vs 476.1 counts; nai_co60 iso11929 1173.2 keV (linear): L_C 336.39 vs 336.39 counts",
+   "pass": true
+  },
+  "RB8.C2": {
+   "value": "primary result, its uncertainty, method and every other line field identical to before",
+   "pass": true
+  },
+  "RB8.C3a": {
+   "value": "spectrum mode and lines with a sample peak identical to before; nai_co60_peak_currie 1332.5 keV (curved): L_C 291.08 -> 314.42 counts (registered 314.42); nai_co60_peak_iso11929 1332.5 keV (curved): L_C 291.08 -> 314.42 counts (registered 314.42)",
+   "pass": true
+  },
+  "RB8.C4": {
+   "value": "mc_bkg1500: 396 results without a peak, false detections 0.0530, threshold ratio 0.9444; mc_bkg20000: 399 results without a peak, false detections 0.0526, threshold ratio 0.9397",
+   "pass": true
+  }
+ }
+}
