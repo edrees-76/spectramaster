@@ -27,6 +27,7 @@ STRINGS: dict[str, dict[str, str]] = {
                        "spectrum is used.",
         "da_activity": "Source activity (0 = no efficiency):",
         "da_activity_u": "Activity uncertainty (%):",
+        "da_bad_activity": "Source activity: '{text}' is not a finite number, 0 or more (a point for decimals, no thousands separator).",
         "da_ref_date": "Activity reference date:",
         "da_co57": "Co-57 spectrum (122 keV width, optional):",
         "da_co57_choose": "Choose...", "da_co57_none": "none",
@@ -55,6 +56,7 @@ STRINGS: dict[str, dict[str, str]] = {
         "da_geometry": "مصدر نقطي من Co-60 على بعد 25 سم على محور الكاشف (IEEE Std 325). يُستخدم الطيف المعروض.",
         "da_activity": "نشاط المصدر (0 = بلا كفاءة):",
         "da_activity_u": "عدم يقين النشاط (%):",
+        "da_bad_activity": "نشاط المصدر: ‏'{text}' ليس رقمًا منتهيًا، صفرًا أو أكثر (نقطة للكسور العشرية، دون فاصل للآلاف).",
         "da_ref_date": "التاريخ المرجعي للنشاط:",
         "da_co57": "طيف Co-57 (عرض ‎‪122 keV‬، اختياري):",
         "da_co57_choose": "اختيار...", "da_co57_none": "لا يوجد",
@@ -197,7 +199,11 @@ class AcceptanceDialog(QDialog):
                 self._error(str(exc))
 
     def calculate(self) -> Optional[dt.AcceptanceResult]:
-        a = self.activity.value_bq()
+        try:
+            a = self.activity.value_bq()      # "nan", "inf", "abc": refused, not 0 (round-8 review, Codex M3)
+        except ValueError:
+            self._error(tr("da_bad_activity", text=self.activity.number.text()))
+            return None
         ref = self.ref_date.dateTime().toPython() if a > 0 else None
         try:
             self.outcome = dt.acceptance_test(self.spectrum, a or None, a * self.activity_u.value() / 100.0, ref,

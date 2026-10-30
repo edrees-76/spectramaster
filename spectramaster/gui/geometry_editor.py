@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (QComboBox, QFileDialog, QGridLayout, QHBoxLayout,
                                QMessageBox, QPushButton, QVBoxLayout, QWidget)
 
 from ..lab.detector import GEOMETRY_KINDS, MeasurementGeometry
+from .number_text import decimal_text
 from .quant_strings import qtr
 
 CONTAINER_KINDS = ("marinelli", "cylinder", "other")
@@ -30,7 +31,7 @@ FILTER_DIMS = ("diameter_mm", "width_mm", "length_mm")
 
 def _parse(text: str) -> Optional[float]:
     """Number of a field ('' -> None); ValueError for text that is not a number."""
-    s = (text or "").strip().replace(",", ".")
+    s = decimal_text(text)                 # ambiguous "1,000": ValueError (round-8 review, Codex M1)
     if not s:
         return None
     return float(s)

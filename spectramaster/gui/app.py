@@ -31,6 +31,7 @@ from .dialogs import AboutDialog, BatchDialog, FormatDialog, expand_spectrum_pat
 from .i18n import tr
 from .icon import app_icon
 from .info_panel import InfoPanel
+from .number_text import decimal_text
 from .plot import Highlight, OverviewStrip, SpectrumPlot, Y_LINEAR, Y_LOG, Y_MODES, Y_SQRT
 from .roi_panel import RoiPanel, export_rois_csv
 from .settings import AUTO, Settings
@@ -859,9 +860,8 @@ class MainWindow(ReportActionsMixin, QMainWindow):
         self.goto_edit.selectAll()
 
     def goto_from_toolbar(self) -> bool:
-        text = self.goto_edit.text().strip().replace(",", ".")
         try:
-            value = float(text)
+            value = float(decimal_text(self.goto_edit.text()))     # round-8 review, Codex M1
         except ValueError:
             self.statusBar().showMessage(tr("goto_bad"), 5000)
             return False
