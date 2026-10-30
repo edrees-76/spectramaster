@@ -832,7 +832,8 @@ this model error and named in the curve warnings, so it cannot inflate every res
   <li>Select the <b>efficiency curve</b> (its validation status and geometry are shown). Optionally load a
       <b>background</b> spectrum: <i>peak by peak</i> or <i>full spectrum</i>. In both modes the peaks are fitted on
       sample − k × background (k = ratio of live times) with the variance sample + k² × background; in peak mode the
-      background under each line is also reported.</li>
+      background under each line is also reported. For a line without a sample peak, the window result and its
+      decision threshold use the same window estimate of the background in both modes.</li>
   <li>Enter the <b>sample quantity</b> and unit (kg, g, L, mL) with its uncertainty, and the <b>reference date</b>
       (sampling date; default = acquisition start). All activities are decay-corrected to this date.</li>
   <li>List the <b>nuclides of interest</b>; choose <i>key line</i> or <i>weighted mean of lines</i>, the <b>detection

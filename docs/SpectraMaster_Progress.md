@@ -1643,3 +1643,16 @@ Protocol `docs/baseline/round8_alt_limits_protocol.md`, committed before the cha
   the note; "curved" is marked in Arabic and English. ENGINE_VERSION 1.31.0.
 - **Result (`after_R8A`):** 6 PASS / 0 FAIL; benchmark 154 / 13 / 60 unchanged against `after_R7G`;
   suite 1659 passed, exit 0; 7 new tests, no existing test changed.
+
+### 2026-10-30 Round-8 review, Gemini H2 (R8-B): peak-mode limits of a line without a sample peak
+
+- Protocol `docs/baseline/round8_peak_mode_protocol.md` (14f3437) and amendment
+  `round8_peak_mode_amendment_protocol.md` (5e897d0). In the peak background mode a line without a
+  sample peak took the background term of its decision threshold from the background fitter's
+  full-peak area (`BackgroundFitter.at_energy`), while its primary result subtracts the window
+  estimator on the background counts. Now sigma0^2 = B (1 + n/2m) + k max(N_w, 0) + k^2 V_w with the
+  window estimator of the background (quadratic window: its quadratic counterpart), and the blank
+  covariance uses the window coefficients.
+- `after_R8B` 3 PASS / 1 FAIL (RB8.C3 drafting error: the curved line follows the change);
+  `after_R8B2` 4 PASS / 0 FAIL. Benchmark 154 / 13 / 60 unchanged. ENGINE_VERSION 1.32.0.
+- Same day, by subagents: R8-F scan cancel (#101), R8-E inputs (#102), R8-D truncated SPE (#103).
