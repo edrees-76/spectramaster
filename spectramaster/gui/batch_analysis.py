@@ -287,14 +287,28 @@ class BatchAnalysisDialog(QDialog):
         if self.busy:
             return False
         self._set_busy(True, i18n.tr("scan_folder_running"))
-        stop = call_stop(self)
+        stop = self._folder_stop = call_stop(self)
         start_call(self, lambda: scan_spectrum_files(Path(folder), recursive, stop), self._on_folder_scanned,
-                   self._on_scan_failed)
+                   self._on_folder_scan_failed)
         return True
+
+    def _folder_cancelled(self) -> bool:
+        """True when the folder search was cancelled: a result that still arrives is dropped
+        (round-8 review, Codex M4)."""
+        stop = self.__dict__.get("_folder_stop")
+        return stop is not None and stop()
 
     def _on_folder_scanned(self, paths) -> None:
         self._set_busy(False)
+        if self._folder_cancelled():
+            return
         self.add_paths(paths)
+
+    def _on_folder_scan_failed(self, msg: str) -> None:
+        if self._folder_cancelled():
+            self._set_busy(False)
+            return
+        self._on_scan_failed(msg)
 
     def add_paths(self, paths) -> None:
         known = set(self.paths)

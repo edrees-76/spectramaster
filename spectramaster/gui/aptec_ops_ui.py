@@ -19,6 +19,7 @@ from PySide6.QtWidgets import (QButtonGroup, QComboBox, QDialog, QDialogButtonBo
 
 from ..tools import spectrum_ops as ops
 from .aptec_ops_strings import otr
+from .number_text import decimal_text
 
 UNDO_DEPTH = 20
 COMPARE_COLOR_LIGHT = "#c2185b"
@@ -110,7 +111,7 @@ class NormalizeDialog(QDialog):
 
     def value(self) -> Optional[float]:
         try:
-            v = float(self.factor.text().strip().replace(",", "."))
+            v = float(decimal_text(self.factor.text()))     # round-8 review, Codex M1
         except ValueError:
             return None
         return v if math.isfinite(v) and abs(v) > 0.0 else None

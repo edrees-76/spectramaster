@@ -39,6 +39,7 @@ from . import i18n
 from .activity_input import UNITS, from_bq, to_bq
 from .geometry_editor import GeometryEditor
 from .i18n import ltr
+from .number_text import decimal_text
 from .quant_strings import qtr
 from .worker import start_call
 
@@ -1013,11 +1014,11 @@ class EfficiencyDialog(QDialog):
 
     def u_common(self) -> Optional[float]:
         """Common standard uncertainty (fraction) or None when not stated; ValueError if invalid."""
-        t = self.u_common_edit.text().strip().replace(",", ".").rstrip("%").strip()
+        t = self.u_common_edit.text().strip().rstrip("%").strip()
         if not t:
             return None
         try:
-            v = float(t)
+            v = float(decimal_text(t))         # ambiguous "1,000" refused (round-8 review, Codex M1)
         except ValueError:
             raise ValueError(qtr("eff_bad_u_common", text=self.u_common_edit.text())) from None
         if not 0 <= v < 100 or not math.isfinite(v):

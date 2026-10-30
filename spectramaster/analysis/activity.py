@@ -627,6 +627,18 @@ def _as_float(v) -> float:
     return float(v) if v is not None else 0.0
 
 
+def check_quantity_rel_unc(v) -> float:
+    """The relative uncertainty of the mass / volume as a float; ValueError when it is not a finite
+    number >= 0 (round-8 review, Codex M2: NaN, inf or a negative value reached the uncertainties)."""
+    try:
+        x = float(v)
+    except (TypeError, ValueError):
+        raise ValueError(f"quantity relative uncertainty must be a number, not {v!r}") from None
+    if not (math.isfinite(x) and x >= 0.0):
+        raise ValueError(f"quantity relative uncertainty must be finite and >= 0, not {v!r}")
+    return x
+
+
 # ------------------------------------------------------------------ main entry
 
 
@@ -663,6 +675,7 @@ def compute_activities(spectrum, curve: EfficiencyCurve, options: Optional[Activ
     ``blank``: results of the reagent blank (:func:`compute_activities` on the blank sample)."""
     from .peaks import IMPLAUSIBLE_PREFIX, checked_fwhm_model, find_peaks, implausible_note
     opt = options or ActivityOptions()
+    check_quantity_rel_unc(opt.quantity_rel_unc)
     if not spectrum.energy_coeffs:
         raise ValueError("the spectrum has no energy calibration")
     if opt.decision not in ("search", "iso11929"):
@@ -1587,6 +1600,7 @@ def concentrations(res: "QuantResults", sample, unit: str, quantity_rel_unc: flo
     added to the activity's relative uncertainty in quadrature (not to the MDA).  A nuclide not
     detected is reported as "< MDA" in the same unit, never as zero.
     """
+    quantity_rel_unc = check_quantity_rel_unc(quantity_rel_unc)
     missing = sample.concentration_unit_inputs(unit)
     out = {"unit": unit, "missing": missing, "rows": [], "notes": []}
     if missing:

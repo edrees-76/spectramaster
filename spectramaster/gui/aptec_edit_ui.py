@@ -30,6 +30,7 @@ from PySide6.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDateTim
 from ..analysis import decay_calc as dc
 from ..analysis.certificate import Certificate, CertificateLine, default_certificate_dir, safe_file_name
 from .aptec_edit_strings import etr
+from .number_text import decimal_text
 
 ENERGY, RESOLUTION, EFFICIENCY = "energy", "resolution", "efficiency"
 _EXTRA_SAMPLE = ("user_id", "geometry_id", "aptec_sample_id", "sample_start", "sample_stop")
@@ -345,11 +346,16 @@ class SpectrumDataDialog(QDialog):
 # ===================================================================== certificate / library / decay
 def parse_half_life(text: str) -> Optional[float]:
     """'30.08 y' -> seconds (units s, m, h, d, y; seconds without a unit)."""
-    t = (text or "").strip().lower().replace(",", ".")
+    t = (text or "").strip().lower()
     if not t:
         return None
     parts = t.split()
     try:
+        p0 = parts[0]                      # ambiguous "1,000 y" / "1,000y" refused (round-8 review, Codex M1)
+        if p0[-1:] in dc.TIME_UNITS:
+            parts[0] = decimal_text(p0[:-1]) + p0[-1]
+        else:
+            parts[0] = decimal_text(p0)
         if len(parts) == 2 and parts[1][:1] in dc.TIME_UNITS:
             return float(parts[0]) * dc.TIME_UNITS[parts[1][:1]]
         if len(parts) == 1 and parts[0][-1:] in dc.TIME_UNITS and parts[0][:-1]:
