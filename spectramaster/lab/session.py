@@ -124,7 +124,10 @@ SCHEMA_VERSION = 1
 #   1.34.0 2026-10-30 weighted mean of a nuclide's window results: the covariance of lines whose windows
 #          share channels, and the reference peak components summed before the norm
 #          (round8_line_covariance_protocol.md)
-ENGINE_VERSION = "1.34.0"
+#   1.35.0 2026-10-30 efficiency curves saved by engine 1.26.0 and earlier: the summing state of their
+#          points is read from the point notes whatever the curve flag, excluded points included
+#          (round9_legacy_tcs_protocol.md)
+ENGINE_VERSION = "1.35.0"
 
 
 class SessionSchemaError(ValueError):
