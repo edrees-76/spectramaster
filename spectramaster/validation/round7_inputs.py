@@ -1,10 +1,12 @@
 """Round-7 review, input validation (docs/baseline/round7_inputs_protocol.md): Codex M1, Gemini M4.
 
-    python -m spectramaster.validation.round7_inputs [--collect]
+    python -m spectramaster.validation.round7_inputs [--collect] [--rerun]
 
 ``--collect`` writes the observations only, to ``docs/baseline/after_R7E/round7_inputs_before.json``
 (the "before" values); without it the criteria (RE.C1-C5) are evaluated against that file.
 RE.C6 is the benchmark and the test suite.  Needs PySide6 (offscreen) for RE.C1 and RE.C5.
+``--rerun`` writes the results to RERUN (in the temporary folder) instead of the committed folder,
+which a re-run on a later engine then leaves as committed (round8_rerun_protocol.md).
 """
 from __future__ import annotations
 
@@ -19,6 +21,7 @@ from pathlib import Path
 from .round6_inputs import _app, _refused, _try
 
 OUT = Path(__file__).resolve().parents[2] / "docs" / "baseline" / "after_R7E"
+RERUN = Path(tempfile.gettempdir()) / "spectramaster_round7_inputs"     # --rerun: results here, OUT left as committed
 BEFORE_JSON = OUT / "round7_inputs_before.json"
 
 
@@ -227,20 +230,23 @@ def criteria(m: dict, b: dict) -> list[dict]:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("--collect", action="store_true", help="write the observations only (the 'before' values)")
+    ap.add_argument("--rerun", action="store_true",
+                    help=f"write the results to {RERUN}, not the committed folder")
     a = ap.parse_args(argv)
+    out = RERUN if a.rerun else OUT
     m = json.loads(json.dumps(collect(), default=str))
-    OUT.mkdir(parents=True, exist_ok=True)
+    out.mkdir(parents=True, exist_ok=True)
     if a.collect:
         BEFORE_JSON.write_text(json.dumps(m, indent=1, ensure_ascii=False), encoding="utf-8")
         print(f"wrote {BEFORE_JSON}")
         return 0
     b = json.loads(BEFORE_JSON.read_text(encoding="utf-8"))
     rows = criteria(m, b)
-    (OUT / "round7_inputs.json").write_text(json.dumps({"observations": m, "criteria": rows}, indent=1,
+    (out / "round7_inputs.json").write_text(json.dumps({"observations": m, "criteria": rows}, indent=1,
                                                        ensure_ascii=False), encoding="utf-8")
     lines = ["# Round-7 input validation (Codex M1, Gemini M4)", "", "| ID | value | result |", "|---|---|---|"]
     lines += [f"| {r['id']} | {r['value']} | {'PASS' if r['pass'] else 'FAIL'} |" for r in rows]
-    (OUT / "round7_inputs.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    (out / "round7_inputs.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     n = sum(r["pass"] for r in rows)
     print("\n".join(lines))
     print(f"{n} PASS / {len(rows) - n} FAIL")

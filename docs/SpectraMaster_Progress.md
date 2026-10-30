@@ -1666,3 +1666,14 @@ Protocol `docs/baseline/round8_alt_limits_protocol.md`, committed before the cha
   uncorrected cascade points is refused.
 - `after_R8C` 4 PASS / 0 FAIL after two disclosed harness errors (missing empty `tcs_partial`; the
   fit time compared). Benchmark 154 / 13 / 60 unchanged; suite 1748 passed. ENGINE_VERSION 1.33.0.
+
+### 2026-10-30 Round-8 review, Codex M6 / Gemini M2 (R8-G): re-runs of the round-7 harnesses
+
+- Protocol `docs/baseline/round8_rerun_protocol.md` (d2f9ce4). The five round-7 harnesses gain
+  `--rerun` (results to a fixed temporary folder, the committed `after_R7x` left as they are);
+  `validation/round8_rerun.py` runs each at its merge commit (temporary worktree) and on the current
+  code, and assigns every changed criterion state to the first later merge commit that changes it.
+- `after_R8G` 4 PASS / 0 FAIL: committed files unchanged; historical states as committed; on the
+  current code RB.C2 and RB.C5 of round7_combined fail from 3cd2aa7 (R7-C, #95), the intended
+  change 3 of round7_shared_background_protocol.md (the sample counts the blank level). Benchmark
+  154 / 13 / 60 unchanged; suite 1752 passed. No analysis change; ENGINE_VERSION unchanged.
