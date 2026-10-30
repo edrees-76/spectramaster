@@ -19,6 +19,7 @@ import tempfile
 from pathlib import Path
 
 from spectramaster.analysis import activity as act
+from spectramaster.validation import compare
 from spectramaster.validation import primary as pr
 from spectramaster.validation import round5_combined as r5
 from spectramaster.validation import scenarios
@@ -81,7 +82,8 @@ def collect() -> dict:
 
 
 def _same(a, b) -> bool:
-    return json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+    """Equal, numbers within relative 1e-12 (round9_harness_protocol.md)."""
+    return compare.same(a, b)
 
 
 def _usable(c) -> list:
@@ -111,8 +113,8 @@ def criteria(res: dict, before: dict) -> dict:
             good = (key["primary_method"] != "window" and alt is not key and len(_usable(c)) == 1
                     and nr["decision_threshold"] == alt["decision_threshold"] and nr["mda"] == alt["mda"]
                     and nr["specific_mda"] is not None and math.isclose(nr["specific_mda"], alt["mda"] / q, rel_tol=1e-12)
-                    and nr["key_energy"] == nb["key_energy"] and nr["primary"] == nb["primary"]
-                    and nr["primary_u"] == nb["primary_u"] and not nr["detected"]
+                    and _same([nr[k] for k in ("key_energy", "primary", "primary_u")],
+                              [nb[k] for k in ("key_energy", "primary", "primary_u")]) and not nr["detected"]
                     and f"limits from the {alt['energy']:.1f} keV line" in nr["note"])
             ok &= good
             vals.append(f"{name} {m}: threshold {nb['decision_threshold']:.4g} -> {nr['decision_threshold']:.4g} Bq, "

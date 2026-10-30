@@ -74,7 +74,7 @@ def _case(det, cont, seed, nuclides, method, mda_method) -> dict:
                 d["w_rel"] = _w_rel(l, opt)
                 if _quad(d):
                     _ld, mda = _expected_limits(d, mda_method)
-                    l = dataclasses.replace(l, decision_threshold=l.window_decision_threshold, mda=mda)
+                    l = _replace(l, decision_threshold=l.window_decision_threshold, mda=mda)
                 own.append(l)
             out["nuclides"][-1]["recombined"] = list(act.combined_limits(own, act._primary_weights(own, opt), opt))
         for ln in nr.lines:
@@ -82,6 +82,16 @@ def _case(det, cont, seed, nuclides, method, mda_method) -> dict:
             d["w_rel"] = _w_rel(ln, opt)
             out["lines"].append(d)
     out["notes"] = list(res.notes)
+    return out
+
+
+def _replace(ln, **kw):
+    """`dataclasses.replace` keeping the line's in-memory attributes (the window coefficients
+    `_cov_res` / `_ref_vec` of engine 1.34.0, which `combined_limits` uses; round9_harness_protocol.md)."""
+    out = dataclasses.replace(ln, **kw)
+    for k, v in vars(ln).items():
+        if k.startswith("_"):
+            setattr(out, k, v)
     return out
 
 
@@ -112,6 +122,11 @@ def _close(a, b, rel=REL) -> bool:
 
 def _same(a, b) -> bool:
     return json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+
+
+def _covariance_engine(engine: str) -> bool:
+    """Engine 1.34.0 or later: window lines carry the covariance of shared channels."""
+    return tuple(int(x) for x in engine.split(".")[:3]) >= (1, 34, 0)
 
 
 def _quad(ln) -> bool:
@@ -172,7 +187,7 @@ def criteria(res: dict, before: dict) -> dict:
         vals.append(f"{m}: Ba-133 mean {nb['decision_threshold']:.4g} / {nb['mda']:.4g} -> {nr['decision_threshold']:.4g} / "
                     f"{nr['mda']:.4g} Bq")
     out["RD.C2"] = {"value": "; ".join(vals), "pass": ok}
-    bad = []
+    bad, changed = [], []
     for name, c in res["cases"].items():
         b = before["cases"][name]
         for ln, lb in zip(c["lines"], b["lines"]):
@@ -181,13 +196,19 @@ def criteria(res: dict, before: dict) -> dict:
                 bad.append(f"{name} {ln['energy']:.1f} keV")
         quad_nucl = any(_quad(l) for l in b["lines"])
         for nr, nb in zip(c["nuclides"], b["nuclides"]):
-            keys = [k for k in nb if not (quad_nucl and k in ("decision_threshold", "mda", "recombined"))]
+            skip = ("decision_threshold", "mda", "recombined") if quad_nucl else ()
+            if name.startswith("nai_ba_mean") and _covariance_engine(res["engine"]):
+                skip += ("primary_u",)          # engine 1.34.0: cross terms of shared window channels
+                changed.append(f"{name} {nr['name']} primary_u {nb['primary_u']:.5g} -> {nr['primary_u']:.5g} Bq")
+            keys = [k for k in nb if k not in skip]
             if not _same({k: nr[k] for k in keys}, {k: nb[k] for k in keys}):
                 bad.append(f"{name} {nr['name']}")
         if not _same(c["notes"], b["notes"]):
             bad.append(f"{name} notes")
-    out["RD.C3"] = {"value": "; ".join(bad) or "every other number, decision and note identical to before",
-                    "pass": not bad}
+    txt = "; ".join(bad) or "every other number, decision and note identical to before"
+    if changed:
+        txt += " (excepted, the intended change of round8_line_covariance_protocol.md: " + "; ".join(changed) + ")"
+    out["RD.C3"] = {"value": txt, "pass": not bad}
     rows = [r for r in res["mc"] if r[0] == "quadratic" and r[1] == "window"]
     rows_b = [r for r in before["mc"] if r[0] == "quadratic" and r[1] == "window"]
     p = np.array([r[2] for r in rows], dtype=float)
