@@ -678,8 +678,7 @@ class EfficiencyCurve:
         known = {f for f in cls.__dataclass_fields__}
         c = cls(**{k: v for k, v in d.items() if k in known})
         c.points = pts
-        if c.summing_corrected:
-            _legacy_summing_points(c)
+        _legacy_summing_points(c)
         return c
 
     def save(self, path) -> Path:
@@ -714,16 +713,23 @@ def _cascade_points(points) -> list:
 
 
 def _legacy_summing_points(curve: "EfficiencyCurve") -> None:
-    """Summing fields of the cascade points of a corrected curve saved by engine 1.26.0 and earlier
-    (round7_tcs_refit_protocol.md): the COI from the point note, 1.0 without one; the partial
-    reason from the curve's ``tcs_partial``."""
-    cas = _cascade_points(curve.points)
+    """Summing fields of the cascade points of a curve saved by engine 1.26.0 and earlier
+    (round7_tcs_refit_protocol.md), in use or not and whatever the curve flag, which a refit of those
+    engines lost (round9_legacy_tcs_protocol.md): the COI from the point note; 1.0 for a point in
+    use without one on a curve marked corrected; the partial reason from the curve's ``tcs_partial``."""
+    from . import coincidence
+    cas = [p for p in curve.points if not p.manual and coincidence.has_cascades(p.nuclide)]
     if not cas or any(p.summing_coi is not None for p in cas):
         return
     why = {(n, round(float(e), 1)): r for n, e, r in curve.tcs_partial}
     for p in cas:
         m = re.search(r"summing corrected, COI ([0-9.]+)", p.note)
-        p.summing_coi = float(m.group(1)) if m else 1.0
+        if m:
+            p.summing_coi = float(m.group(1))
+        elif curve.summing_corrected and p.use:
+            p.summing_coi = 1.0
+        else:
+            continue
         p.summing_partial = why.get((p.nuclide, round(p.energy, 1)), "")
 
 
