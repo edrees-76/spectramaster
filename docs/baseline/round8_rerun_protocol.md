@@ -53,3 +53,32 @@ one of the assigned batch is stated in the results by reading that batch's proto
 - Historical runs use today's Python, NumPy, SciPy and SpecUtils; a difference from the committed
   results caused by them is reported as an RG8.C2 failure, not corrected.
 - `round6_inputs` and the round-8 harnesses are not re-run here (they already write elsewhere).
+
+---
+
+## Results (2026-10-30, HEAD 3e75c89, engine 1.32.0)
+
+`py -B -m spectramaster.validation.round8_rerun` (exit 0), results in `after_R8G/round8_rerun.{json,md}`.
+
+| ID | value | result |
+|---|---|---|
+| RG8.C1 | every committed after_R7x file byte-identical after the --rerun runs | PASS |
+| RG8.C2 | round7_tcs_refit at 1d610ac 6 / 0; round7_combined at 0b95938 5 / 0; round7_shared_background at 3cd2aa7 4 / 1; round7_quad_limits at 27a54b1 4 / 0; round7_inputs at 2469fda 5 / 0 (PASS / FAIL), each as committed (the round7_shared_background FAIL is RC.C3, disclosed in its protocol) | PASS |
+| RG8.C3 | current code: round7_tcs_refit 6 / 0, round7_combined 3 / 2, round7_shared_background 4 / 1, round7_quad_limits 4 / 0, round7_inputs 5 / 0; changed states RB.C2 and RB.C5 of round7_combined (PASS -> FAIL), both assigned to 3cd2aa7 (PR #95, R7-C) | PASS |
+| RG8.C4 | benchmark `after_R8G` 154 PASS / 13 FAIL / 60 REPORT, no criterion changed from `after_R8B2`; full suite 1752 passed, 69 skipped, exit 0; no existing test changed | PASS |
+
+**4 PASS / 0 FAIL.**
+
+Reading of the assigned changes (round7_shared_background_protocol.md, change 3): R7-C adds to
+sigma0 of every line with a blank the sample's own counting of the blank level
+(`var0 += max(blank_activity, 0) fwin / w`), which that protocol states "alters the limits of every
+blank case, by design" and lists the round-4 / round-5 tests it changed for it. RB.C2 (Currie blank
+cases identical to the 1.27.0 before-file) and RB.C5 (controls identical) compare blank cases with
+the values before R7-C: the failing entries are exactly the cases with a blank (blank_1173_rate_currie,
+blank_1332_currie; r5_ba133_iso_blank, r6_co60_ref_blank_iso, r6_co60_ref_blank_currie,
+r6_co60_ref_blank_rate_iso), e.g. blank_1332_currie threshold 6.551868 -> 6.568151 Bq, and the
+engine still equals RB.C1's independent full-covariance computation in that case (6.568151 Bq both).
+The change is therefore the intended one of R7-C, not a regression; the round-7 records stay as
+committed, and these two states stay failed on the current code against R7-B's before-file.
+(The line field `ref_g0` of a line without a blank peak, `None` in the 1.27.0 before-file and zeros
+now, is R7-B's own change; RB.C2 does not compare line fields.)
