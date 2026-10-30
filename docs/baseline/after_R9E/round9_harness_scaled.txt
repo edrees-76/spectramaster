@@ -1,0 +1,12 @@
+round8_alt_limits as is {'RA8.C1': True, 'RA8.C2': True, 'RA8.C3': True, 'RA8.C4': True}
+round8_alt_limits rel 1e-13 {'RA8.C1': False, 'RA8.C2': True, 'RA8.C3': True, 'RA8.C4': True}
+round8_alt_limits rel 1e-9 {'RA8.C1': False, 'RA8.C2': True, 'RA8.C3': False, 'RA8.C4': False}
+round8_alt_limits engine {'RA8.C1': True, 'RA8.C2': True, 'RA8.C3': True, 'RA8.C4': True}
+round8_peak_mode as is {'RB8.C1': True, 'RB8.C2': True, 'RB8.C3a': True, 'RB8.C4': True}
+round8_peak_mode rel 1e-13 {'RB8.C1': True, 'RB8.C2': True, 'RB8.C3a': True, 'RB8.C4': True}
+round8_peak_mode rel 1e-9 {'RB8.C1': True, 'RB8.C2': False, 'RB8.C3a': False, 'RB8.C4': True}
+round8_peak_mode engine {'RB8.C1': True, 'RB8.C2': True, 'RB8.C3a': True, 'RB8.C4': True}
+round8_coi_guard as is {'RC8.C1': True, 'RC8.C2': True, 'RC8.C3': True, 'RC8.C4': True}
+round8_coi_guard rel 1e-13 {'RC8.C1': True, 'RC8.C2': True, 'RC8.C3': True, 'RC8.C4': True}
+round8_coi_guard rel 1e-9 {'RC8.C1': True, 'RC8.C2': True, 'RC8.C3': True, 'RC8.C4': False}
+round8_coi_guard engine {'RC8.C1': True, 'RC8.C2': True, 'RC8.C3': True, 'RC8.C4': True}

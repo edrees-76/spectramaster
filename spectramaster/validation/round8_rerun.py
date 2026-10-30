@@ -44,12 +44,30 @@ def _states(md: str) -> dict:
     return out
 
 
-def _run(mod: str, cwd: Path, rerun: bool) -> dict:
+def _exec(cmd, cwd, env) -> tuple:
+    p = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True)
+    return p.returncode, p.stdout, p.stderr
+
+
+def _run(mod: str, cwd: Path, rerun: bool, md: Path) -> dict:
+    """Run the harness and read the states it writes to `md`: removed first, so only a file written by
+    this run counts, and only with exit 0 or 1 (round9_harness_protocol.md)."""
+    md.unlink(missing_ok=True)
     env = dict(os.environ, PYTHONPATH=str(cwd), QT_QPA_PLATFORM="offscreen", PYTHONHASHSEED="0")
     cmd = [sys.executable, "-B", "-m", f"spectramaster.validation.{mod}"] + (["--rerun"] if rerun else [])
-    p = subprocess.run(cmd, cwd=cwd, env=env, capture_output=True, text=True)
-    return {"exit": p.returncode,
-            "stderr_tail": p.stderr.strip().splitlines()[-3:] if p.returncode not in (0, 1) else []}
+    code, _out, err = _exec(cmd, cwd, env)
+    r = {"exit": code, "stderr_tail": err.strip().splitlines()[-3:] if code not in (0, 1) else [], "states": {}}
+    if code not in (0, 1):
+        r["error"] = f"exit {code}"
+    elif not md.exists():
+        r["error"] = "no results file written"
+    else:
+        r["states"] = _states(md.read_text(encoding="utf-8"))
+    return r
+
+
+def _rerun_md(mod: str) -> Path:
+    return Path(tempfile.gettempdir()) / f"spectramaster_{mod}" / f"{mod}.md"
 
 
 def _at_commit(mod: str, folder: str, sha: str) -> dict:
@@ -58,9 +76,7 @@ def _at_commit(mod: str, folder: str, sha: str) -> dict:
     wt = tmp / "wt"
     _git("worktree", "add", "--detach", str(wt), sha)
     try:
-        r = _run(mod, wt, rerun=False)
-        md = wt / "docs" / "baseline" / folder / f"{mod}.md"
-        r["states"] = _states(md.read_text(encoding="utf-8")) if md.exists() else {}
+        r = _run(mod, wt, False, wt / "docs" / "baseline" / folder / f"{mod}.md")
     finally:
         _git("worktree", "remove", "--force", str(wt))
     return r
@@ -77,9 +93,7 @@ def collect() -> dict:
     for mod, folder, sha in HARNESSES:
         before = _digests(folder)
         committed = _states(_git("show", f"HEAD:docs/baseline/{folder}/{mod}.md"))
-        cur = _run(mod, ROOT, rerun=True)
-        rerun_md = Path(tempfile.gettempdir()) / f"spectramaster_{mod}" / f"{mod}.md"
-        cur["states"] = _states(rerun_md.read_text(encoding="utf-8")) if rerun_md.exists() else {}
+        cur = _run(mod, ROOT, True, _rerun_md(mod))
         after = _digests(folder)
         hist = _at_commit(mod, folder, sha)
         changed = sorted(k for k in set(hist["states"]) | set(cur["states"])
@@ -90,7 +104,9 @@ def collect() -> dict:
             for c in later:
                 r = _at_commit(mod, folder, c)
                 steps.append({"commit": c[:7], "subject": _git("log", "-1", "--format=%s", c), "exit": r["exit"],
-                              "states": r["states"]})
+                              "states": r["states"], "error": r.get("error")})
+                if r.get("error"):
+                    continue
                 for k in changed:
                     if k not in assigned and r["states"].get(k) != hist["states"].get(k):
                         assigned[k] = c[:7]
@@ -114,7 +130,8 @@ def criteria(res: dict) -> dict:
         ok &= same
         n = sum(v == "PASS" for v in r["historical"]["states"].values())
         vals.append(f"{m} at {r['merge']}: {n} PASS / {len(r['historical']['states']) - n} FAIL"
-                    + ("" if same else f" (committed {r['committed']})"))
+                    + ("" if same else f" (committed {r['committed']})")
+                    + (f" (error: {r['historical']['error']})" if r["historical"].get("error") else ""))
     out["RG8.C2"] = {"value": "; ".join(vals), "pass": ok}
     vals, ok = [], True
     for m, r in h.items():
@@ -123,6 +140,8 @@ def criteria(res: dict) -> dict:
         if r["changed"]:
             txt += " (" + ", ".join(f"{k} {r['historical']['states'].get(k)} -> {r['current']['states'].get(k)} from "
                                     f"{r['assigned'].get(k, 'unassigned')}" for k in r["changed"]) + ")"
+        if r["current"].get("error"):
+            txt += f" (error: {r['current']['error']})"
         ok &= bool(r["current"]["states"]) and all(k in r["assigned"] for k in r["changed"])
         vals.append(txt)
     out["RG8.C3"] = {"value": "; ".join(vals), "pass": ok}
@@ -143,6 +162,7 @@ def main(argv=None) -> int:
              "| ID | value | result |", "|---|---|---|"]
     lines += [f"| {k} | {v['value']} | {'PASS' if v['pass'] else 'FAIL'} |" for k, v in crit.items()]
     steps = [f"- {m} at {s['commit']} ({s['subject']}): exit {s['exit']}, "
+             + (f"error: {s['error']}, " if s.get("error") else "")
              + ", ".join(f"{k} {v}" for k, v in sorted(s["states"].items()))
              for m, r in res["harnesses"].items() for s in r["steps"]]
     if steps:

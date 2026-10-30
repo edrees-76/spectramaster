@@ -25,6 +25,7 @@ import numpy as np
 from spectramaster.analysis import activity as act
 from spectramaster.analysis.background import BackgroundFitter
 from spectramaster.analysis.peaks import checked_fwhm_model
+from spectramaster.validation import compare
 from spectramaster.validation import primary as pr
 from spectramaster.validation import round5_combined as r5
 from spectramaster.validation import scenarios
@@ -110,7 +111,8 @@ def collect() -> dict:
 
 
 def _same(a, b) -> bool:
-    return json.dumps(a, sort_keys=True) == json.dumps(b, sort_keys=True)
+    """Equal, numbers within relative 1e-12 (round9_harness_protocol.md)."""
+    return compare.same(a, b)
 
 
 def _window_sigma0_sq(kind, area, extra, blank, ln) -> tuple[float, str]:

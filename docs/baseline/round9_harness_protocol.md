@@ -80,3 +80,17 @@ Before the change: RE9.C1, RE9.C2 and RE9.C3 fail; RE9.C4 is the control.
 - The tolerance applies to the three round-8 harnesses named by Gemini M1; the round-7 harnesses keep
   their registered comparisons (R8-G re-ran them on this platform).
 - A harness that exits 1 with a fresh file is a measured result (some criteria FAIL), not an error.
+
+---
+
+## Results
+
+First run (this commit, engine 1.34.0; outputs in `after_R9E`): RE9.C1, RE9.C2 and RE9.C4 PASS, RE9.C3
+FAIL; RE9.C5 and RE9.C6 not yet run (they are run once, on the code after the amendment below).
+
+| ID | result |
+|---|---|
+| RE9.C1 | PASS (`tests/test_round9_harness.py::test_rerun_ignores_a_stale_artifact`): with exit 99 and a stale results file, no states read, error "exit 99" recorded, RG8.C2 and RG8.C3 FAIL |
+| RE9.C2 | PASS: `round7_quad_limits --rerun` 4 PASS / 0 FAIL; Ba-133 mean limits equal the recombined ones (Currie 5.743 / 11.52 Bq, ISO 11929 5.743 / 16.22 Bq); RD.C3 excepts only the Ba-133 mean `primary_u` 4.8228 -> 4.4875 Bq (both methods); `after_R7D` unchanged |
+| RE9.C3 | FAIL: scaled by (1 + 1e-13) RA8.C1 still fails (`round9_harness_scaled.txt`); RA8.C3, RA8.C4, RB8.C2, RB8.C3a and RC8.C4 now pass, and scaled by (1 + 1e-9) they fail as required. RA8.C1 compares the nuclide's `key_energy`, `primary` and `primary_u` with the before values by `==`, not through `_same`, so the registered change does not reach it |
+| RE9.C4 | PASS: `round8_alt_limits` 4/0, `round8_peak_mode --amendment` 4/0, `round8_coi_guard` 4/0; committed folders unchanged |
