@@ -1404,8 +1404,10 @@ def _combine(res: NuclideResult, opt: ActivityOptions) -> None:
     if usable and (k is None or k.primary_method != "window"):
         alt = usable[0] if opt.method == "mean" else min(usable, key=lambda l: l.mda)
         if k is not None and alt is not k:
-            res.note = (res.note + f"; primary result from the {alt.energy:.1f} keV line (key line "
+            res.note = (res.note + f"; primary result and limits from the {alt.energy:.1f} keV line (key line "
                                    f"{k.energy:.1f} keV: {k.primary_method or 'none'})").strip("; ")
+            # the limits of the estimator whose result is reported (round8_alt_limits_protocol.md)
+            res.decision_threshold, res.mda = alt.decision_threshold, alt.mda
         k = alt
     if k is None or k.primary is None:
         return

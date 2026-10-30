@@ -84,3 +84,23 @@ Before the change: RA8.C1 and RA8.C6 fail; RA8.C2, RA8.C3 and RA8.C4 are the con
   change.
 
 ---
+
+## Results (`after_R8A`)
+
+Protocol committed in 09f3471 before the change (SHA-256 of the file
+923cb854fb74c053b8e54e1a6ff26bf3a1d189a60a24a0789488de6d31659e34; before file
+`after_R8A/round8_alt_limits_before.json` 5171f47a9c62980a0fab7ceb586a7fccb028d9ca66925786aa24175cd57ebcd7).
+First run: 6 PASS / 0 FAIL.
+
+| ID | value | result |
+|---|---|---|
+| RA8.C1 | eight cases: the nuclide's limits equal the used line's, e.g. HPGe interfering peak seed 0, Currie: threshold 2.876 -> 1.703 Bq, MDA 5.882 -> 3.553 Bq; ISO 11929: MDA 8.236 -> 4.971 Bq; Compton-edge case, Currie: 8.734 / 17.6 -> 6.531 / 13.21 Bq; specific MDA, primary result and key energy as required | PASS |
+| RA8.C2 | before, every substitution case reported the key line's limits (e.g. 2.876 / 5.882 Bq) | PASS |
+| RA8.C3 | NaI, both lines curved: "curved", 15.7 / 31.52 Bq (Currie) and 15.7 / 44.14 Bq (ISO 11929), identical to before | PASS |
+| RA8.C4 | every line, every other nuclide field and the notes identical to before | PASS |
+| RA8.C5 | benchmark 154 PASS / 13 FAIL / 60 REPORT, no criterion changed state against `after_R7G`; full suite 1659 passed, 69 skipped, exit 0; no existing test changed | PASS |
+| RA8.C6 | `tests/test_round8_alt_limits.py`: "curved" marked in Arabic and English, "interfered" as before, a usable result unmarked | PASS |
+
+New tests: `tests/test_round8_alt_limits.py` (7); on the code before the change (09f3471) 6 of them
+fail and the usable-key-line control passes. ENGINE_VERSION 1.31.0. The manual sources say that the
+replacing line's decision threshold and MDA are used.
